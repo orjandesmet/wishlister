@@ -1,19 +1,17 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
+import { addChild, addParent, getParents } from "../lib/api/children.ts";
 import {
-  addChild,
-  addParent,
   cancelInvite,
   deleteGroup,
   getGroup,
   getInvites,
-  getParents,
   inviteToGroup,
   removeMember,
   renameGroup,
   setMemberRole,
   type Member,
-} from "../lib/api.ts";
+} from "../lib/api/groups.ts";
 import { useMe } from "../lib/me.tsx";
 
 export default function GroupSettings() {

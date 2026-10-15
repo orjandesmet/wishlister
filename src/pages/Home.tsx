@@ -1,6 +1,6 @@
 import { A, useNavigate } from "@solidjs/router";
 import { createResource, createSignal, For, Show } from "solid-js";
-import { createGroup, getMyGroups, type Group } from "../lib/api.ts";
+import { createGroup, getMyGroups, type Group } from "../lib/api/groups.ts";
 import { useMe } from "../lib/me.tsx";
 
 function sortMembers(group: Group) {

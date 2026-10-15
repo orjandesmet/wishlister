@@ -6,7 +6,7 @@ import {
   type ParentComponent,
   type Resource,
 } from "solid-js";
-import { getManagedProfiles, getMyProfile, type Profile } from "./api.ts";
+import { getManagedProfiles, getMyProfile, type Profile } from "./api/profiles.ts";
 import { useAuth } from "./auth.tsx";
 
 type Me = {

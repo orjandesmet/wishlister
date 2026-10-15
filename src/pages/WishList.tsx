@@ -1,14 +1,8 @@
 import { A, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Match, Show, Switch } from "solid-js";
-import {
-  deleteItem,
-  getItems,
-  getProfileDetails,
-  getPurchases,
-  markBought,
-  undoBought,
-  type Item,
-} from "../lib/api.ts";
+import { deleteItem, getItems, type Item } from "../lib/api/items.ts";
+import { getProfileDetails } from "../lib/api/profiles.ts";
+import { getPurchases, markBought, undoBought } from "../lib/api/purchases.ts";
 import { useMe } from "../lib/me.tsx";
 
 export default function WishList() {

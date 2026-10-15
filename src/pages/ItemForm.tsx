@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import { createEffect, createResource, createSignal, For, on, Show } from "solid-js";
-import { addItem, getCategories, getItem, getProfileDetails, updateItem } from "../lib/api.ts";
+import { addItem, getCategories, getItem, updateItem } from "../lib/api/items.ts";
+import { getProfileDetails } from "../lib/api/profiles.ts";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {

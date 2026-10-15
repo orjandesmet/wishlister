@@ -1,6 +1,6 @@
 import { A } from "@solidjs/router";
 import { createSignal, For, Show } from "solid-js";
-import { renameProfile } from "../lib/api.ts";
+import { renameProfile } from "../lib/api/profiles.ts";
 import { supabase } from "../lib/supabase.ts";
 import { useMe } from "../lib/me.tsx";
 
