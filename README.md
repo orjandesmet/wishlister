@@ -32,8 +32,9 @@ vp check                     # format, lint and type check
 2. **SQL Editor**: run each file in `supabase/migrations/` in order.
 3. **Authentication > URL Configuration**: set _Site URL_ to your Netlify URL and add
    `http://localhost:5173` under _Redirect URLs_.
-4. **Authentication > Emails > Templates > Magic Link**: make the email include the one-time
-   code as well as the link, for example:
+4. **Authentication > Emails > Templates**: the default emails only contain a link. Edit both
+   **Magic Link** (returning users) and **Confirm signup** (someone's very first login) to include
+   the one-time code as well, for example:
 
    ```html
    <h2>Sign in to Wishlister</h2>
