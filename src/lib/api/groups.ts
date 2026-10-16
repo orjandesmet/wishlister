@@ -36,11 +36,13 @@ export async function deleteGroup(groupId: string) {
   must(await supabase.from("groups").delete().eq("id", groupId));
 }
 
-/** Returns "added", "invited" (no account yet) or "already_member". */
-export async function inviteToGroup(groupId: string, email: string): Promise<string> {
+/** "invited" means they have no account yet and join on their first sign-in. */
+export type InviteResult = "added" | "invited" | "already_invited" | "already_member";
+
+export async function inviteToGroup(groupId: string, email: string): Promise<InviteResult> {
   return must(
     await supabase.rpc("invite_to_group", { target_group: groupId, invitee_email: email }),
-  ) as string;
+  ) as InviteResult;
 }
 
 export async function getInvites(groupId: string): Promise<string[]> {

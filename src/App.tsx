@@ -1,13 +1,29 @@
 import { A, Navigate, Route, Router } from "@solidjs/router";
 import { Show, type ParentComponent } from "solid-js";
 import { AuthProvider, useAuth } from "./lib/auth.tsx";
-import { MeProvider } from "./lib/me.tsx";
+import { MeProvider, useMe } from "./lib/me.tsx";
 import GroupSettings from "./pages/GroupSettings.tsx";
 import Home from "./pages/Home.tsx";
 import ItemForm from "./pages/ItemForm.tsx";
 import Login from "./pages/Login.tsx";
 import MyLists from "./pages/MyLists.tsx";
 import WishList from "./pages/WishList.tsx";
+
+/** Bottom navigation. Without children to look after, "My list" opens your own list directly. */
+function Tabs() {
+  const me = useMe();
+  const hasChildren = () => (me().managed()?.length ?? 0) > 0;
+  return (
+    <nav class="tabs">
+      <A href="/" end>
+        Groups
+      </A>
+      <Show when={hasChildren()} fallback={<A href={`/lists/${me().profile.id}`}>My list</A>}>
+        <A href="/mine">My lists</A>
+      </Show>
+    </nav>
+  );
+}
 
 /** Layout route for signed-in pages: guards them and adds the bottom navigation. */
 const SignedIn: ParentComponent = (props) => {
@@ -17,12 +33,7 @@ const SignedIn: ParentComponent = (props) => {
       <Show when={session()} fallback={<Navigate href="/login" />}>
         <MeProvider>
           <main class="page">{props.children}</main>
-          <nav class="tabs">
-            <A href="/" end>
-              Groups
-            </A>
-            <A href="/mine">My lists</A>
-          </nav>
+          <Tabs />
         </MeProvider>
       </Show>
     </Show>

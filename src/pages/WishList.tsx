@@ -19,7 +19,7 @@ export default function WishList() {
   const [error, setError] = createSignal<string>();
 
   const isOwnList = () => profile()?.account_id === me().accountId;
-  const canEdit = () => isOwnList() || (profile()?.managerIds.includes(me().accountId) ?? false);
+  const canEdit = () => isOwnList() || (profile()?.managerIds.includes(me().profile.id) ?? false);
   const boughtBy = createMemo(
     () => new Map((purchases() ?? []).map((p) => [p.item_id, p.bought_by] as const)),
   );
@@ -50,6 +50,11 @@ export default function WishList() {
           {(p) => (isOwnList() ? "My wishlist" : `${p().display_name}'s wishlist`)}
         </Show>
       </h1>
+      <Show when={isOwnList() && !me().managed()?.length}>
+        <A class="link" href="/mine">
+          Your name and sign out
+        </A>
+      </Show>
       <Show when={profile.error || items.error}>
         <p class="error">This list isn't available. It may not be shared with you.</p>
       </Show>

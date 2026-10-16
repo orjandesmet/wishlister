@@ -25,7 +25,10 @@ export const MeProvider: ParentComponent = (props) => {
   const { session } = useAuth();
   const accountId = () => session()?.user.id;
   const [profile, { refetch: refetchProfile }] = createResource(accountId, getMyProfile);
-  const [managed, { refetch: refetchManaged }] = createResource(accountId, getManagedProfiles);
+  const [managed, { refetch: refetchManaged }] = createResource(
+    () => profile()?.id,
+    getManagedProfiles,
+  );
 
   return (
     <Show

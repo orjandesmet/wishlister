@@ -1,6 +1,6 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
-import { addChild, addParent, getParents } from "../lib/api/children.ts";
+import { addChild, addChildToGroup, addParent, getParents } from "../lib/api/children.ts";
 import {
   cancelInvite,
   deleteGroup,
@@ -10,6 +10,7 @@ import {
   removeMember,
   renameGroup,
   setMemberRole,
+  type InviteResult,
   type Member,
 } from "../lib/api/groups.ts";
 import { useMe } from "../lib/me.tsx";
@@ -38,12 +39,16 @@ export default function GroupSettings() {
     () => children().map((c) => c.profile_id),
     getParents,
   );
-  const nameOfAccount = (accountId: string) =>
-    adults().find((m) => m.profiles.account_id === accountId)?.profiles.display_name ?? "someone";
+  const nameOf = (profileId: string) =>
+    members().find((m) => m.profile_id === profileId)?.profiles.display_name ?? "someone";
+  // My children who aren't in this group yet.
+  const myOtherChildren = () =>
+    (me().managed() ?? []).filter((c) => !children().some((m) => m.profile_id === c.id));
 
   const [groupName, setGroupName] = createSignal<string>();
   const [inviteEmail, setInviteEmail] = createSignal("");
   const [childName, setChildName] = createSignal("");
+  const [childParent, setChildParent] = createSignal<string>();
   const [notice, setNotice] = createSignal<string>();
   const [error, setError] = createSignal<string>();
 
@@ -70,13 +75,14 @@ export default function GroupSettings() {
     event.preventDefault();
     void run(async () => {
       const result = await inviteToGroup(params.groupId, inviteEmail());
-      setNotice(
-        result === "added"
-          ? `${inviteEmail()} was added to the group.`
-          : result === "invited"
-            ? `${inviteEmail()} will join the group when they first sign in.`
-            : `${inviteEmail()} is already in the group.`,
-      );
+      const email = inviteEmail().trim();
+      const notices: Record<InviteResult, string> = {
+        added: `${email} was added to the group.`,
+        invited: `${email} will join the group when they first sign in.`,
+        already_invited: `${email} is already invited.`,
+        already_member: `${email} is already in the group.`,
+      };
+      setNotice(notices[result]);
       setInviteEmail("");
       await Promise.all([refetchGroup(), refetchInvites()]);
     });
@@ -85,13 +91,26 @@ export default function GroupSettings() {
   const onAddChild = (event: SubmitEvent) => {
     event.preventDefault();
     void run(async () => {
-      await addChild(params.groupId, childName());
-      setNotice(`Added ${childName()}. You manage their list.`);
+      const parent = childParent() ?? me().profile.id;
+      await addChild(params.groupId, childName(), parent);
+      setNotice(
+        parent === me().profile.id
+          ? `Added ${childName()}. You look after their list.`
+          : `Added ${childName()}. ${nameOf(parent)} looks after their list.`,
+      );
       setChildName("");
-      await refetchGroup();
+      setChildParent(undefined);
+      await Promise.all([refetchGroup(), refetchParents()]);
       me().refetchManaged();
     });
   };
+
+  const onAddMyChild = (childProfileId: string) =>
+    run(async () => {
+      if (!childProfileId) return;
+      await addChildToGroup(params.groupId, childProfileId);
+      await refetchGroup();
+    });
 
   const onRole = (member: Member, role: Member["role"]) =>
     run(async () => {
@@ -223,9 +242,9 @@ export default function GroupSettings() {
           <For each={children()} fallback={<li class="muted">No children in this group.</li>}>
             {(child) => {
               const childParents = () => parents()?.get(child.profile_id) ?? [];
-              const iAmParent = () => childParents().includes(me().accountId);
+              const iAmParent = () => childParents().includes(me().profile.id);
               const otherAdults = () =>
-                adults().filter((a) => !childParents().includes(a.profiles.account_id!));
+                adults().filter((a) => !childParents().includes(a.profile_id));
               return (
                 <li class="child">
                   <div class="list-row">
@@ -237,8 +256,7 @@ export default function GroupSettings() {
                     </Show>
                   </div>
                   <p class="muted small">
-                    Managed by{" "}
-                    {childParents().map(nameOfAccount).join(", ") || "nobody in this group"}
+                    Managed by {childParents().map(nameOf).join(", ") || "nobody in this group"}
                   </p>
                   <Show when={iAmParent() && otherAdults().length > 0}>
                     <select onChange={(e) => onAddParent(child, e.currentTarget.value)}>
@@ -255,16 +273,40 @@ export default function GroupSettings() {
             }}
           </For>
         </ul>
+        <Show when={myOtherChildren().length > 0}>
+          <select onChange={(e) => onAddMyChild(e.currentTarget.value)}>
+            <option value="">Add one of your children…</option>
+            <For each={myOtherChildren()}>
+              {(child) => <option value={child.id}>{child.display_name}</option>}
+            </For>
+          </select>
+        </Show>
         <Show when={isManager()}>
           <form onSubmit={onAddChild}>
             <label>
-              Add a child profile
+              Add a new child
               <input
                 required
                 placeholder="Name"
                 value={childName()}
                 onInput={(e) => setChildName(e.currentTarget.value)}
               />
+            </label>
+            <label>
+              Parent
+              <select
+                value={childParent() ?? me().profile.id}
+                onChange={(e) => setChildParent(e.currentTarget.value)}
+              >
+                <For each={adults()}>
+                  {(adult) => (
+                    <option value={adult.profile_id}>
+                      {adult.profiles.display_name}
+                      {adult.profile_id === me().profile.id ? " (you)" : ""}
+                    </option>
+                  )}
+                </For>
+              </select>
             </label>
             <button type="submit">Add child</button>
           </form>
