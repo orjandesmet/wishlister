@@ -1,6 +1,7 @@
 import { supabase } from "../supabase.ts";
 import { must } from "./must.ts";
 
+/** bought_by is the buyer's profile id. */
 export type Purchase = { item_id: string; bought_by: string };
 
 /** Purchases on the given items. The database hides them on your own list. */

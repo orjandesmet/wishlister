@@ -10,7 +10,6 @@ import { getManagedProfiles, getMyProfile, type Profile } from "./api/profiles.t
 import { useAuth } from "./auth.tsx";
 
 type Me = {
-  accountId: string;
   profile: Profile;
   /** Children whose lists I manage. */
   managed: Resource<Profile[]>;
@@ -42,7 +41,6 @@ export const MeProvider: ParentComponent = (props) => {
       {(loaded) => (
         <MeContext.Provider
           value={() => ({
-            accountId: loaded().account_id!,
             profile: loaded(),
             managed,
             refetchProfile: () => void refetchProfile(),

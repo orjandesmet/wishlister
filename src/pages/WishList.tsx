@@ -18,7 +18,7 @@ export default function WishList() {
   );
   const [error, setError] = createSignal<string>();
 
-  const isOwnList = () => profile()?.account_id === me().accountId;
+  const isOwnList = () => profile()?.id === me().profile.id;
   const canEdit = () => isOwnList() || (profile()?.managerIds.includes(me().profile.id) ?? false);
   const boughtBy = createMemo(
     () => new Map((purchases() ?? []).map((p) => [p.item_id, p.bought_by] as const)),
@@ -89,7 +89,7 @@ export default function WishList() {
               </Show>
               <Show when={!isOwnList()}>
                 <Switch>
-                  <Match when={boughtBy().get(item.id) === me().accountId}>
+                  <Match when={boughtBy().get(item.id) === me().profile.id}>
                     <div class="row">
                       <span class="bought">You bought this</span>
                       <button type="button" class="secondary small" onClick={() => onUndo(item)}>
