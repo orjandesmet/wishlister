@@ -11,3 +11,9 @@ PNPM_VERSION = "12.11.2"
 from = "/*"
 to = "/index.html"
 status = 200
+
+# Family-and-friends app: keep every page out of search engines.
+[[headers]]
+for = "/*"
+[headers.values]
+X-Robots-Tag = "noindex, nofollow, noarchive"
