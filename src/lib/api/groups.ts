@@ -52,6 +52,27 @@ export async function getInvites(groupId: string): Promise<string[]> {
   return rows.map((row) => row.email as string);
 }
 
+/**
+ * Emails someone with a pending invite a sign-in link. Sending it creates their
+ * account, so they move from the pending invites into the group's members.
+ * Runs in a Netlify function because it needs Supabase's secret key.
+ */
+export async function sendInviteEmail(groupId: string, email: string) {
+  const { data } = await supabase.auth.getSession();
+  const response = await fetch("/.netlify/functions/send-invite", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${data.session?.access_token ?? ""}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ groupId, email }),
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { message?: string } | null;
+    throw new Error(body?.message ?? `Couldn't send the invite email (${response.status})`);
+  }
+}
+
 export async function cancelInvite(groupId: string, email: string) {
   must(await supabase.from("group_invites").delete().eq("group_id", groupId).eq("email", email));
 }
