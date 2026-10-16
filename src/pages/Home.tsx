@@ -1,41 +1,90 @@
-import { createResource, Show } from "solid-js";
-import { useAuth } from "../lib/auth.tsx";
-import { supabase } from "../lib/supabase.ts";
+import { A, useNavigate } from "@solidjs/router";
+import { createResource, createSignal, For, Show } from "solid-js";
+import { createGroup, getMyGroups, type Group } from "../lib/api/groups.ts";
+import { useMe } from "../lib/me.tsx";
 
-async function fetchMyProfile(accountId: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("id, display_name")
-    .eq("account_id", accountId)
-    .single();
-  if (error) throw error;
-  return data;
+function sortMembers(group: Group) {
+  return [...group.group_members].sort((a, b) =>
+    a.profiles.display_name.localeCompare(b.profiles.display_name),
+  );
 }
 
 export default function Home() {
-  const { session } = useAuth();
-  // Re-fetches automatically whenever the signed-in account changes.
-  const [profile] = createResource(() => session()?.user.id, fetchMyProfile);
+  const me = useMe();
+  const navigate = useNavigate();
+  const [groups] = createResource(getMyGroups);
+  const [newName, setNewName] = createSignal("");
+  const [error, setError] = createSignal<string>();
+
+  async function onCreate(event: SubmitEvent) {
+    event.preventDefault();
+    setError(undefined);
+    try {
+      const id = await createGroup(newName());
+      navigate(`/groups/${id}`);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
+  const isManager = (group: Group) =>
+    group.group_members.some((m) => m.profile_id === me().profile.id && m.role === "manager");
 
   return (
     <>
-      <header>
-        <h1>My groups</h1>
-      </header>
-      <section class="card">
-        <Show
-          when={profile()}
-          fallback={
-            <p class="muted">{profile.error ? "Couldn't load your profile." : "Loading…"}</p>
-          }
-        >
-          {(p) => <p>Hi {p().display_name}, you're signed in.</p>}
+      <h1>My groups</h1>
+      <Show when={groups.error}>
+        <p class="error">Couldn't load your groups: {groups.error.message}</p>
+      </Show>
+      <Show when={groups()?.length === 0}>
+        <p class="muted">
+          You're not in a group yet. Create one below, or ask someone to invite your email address.
+        </p>
+      </Show>
+      <For each={groups()}>
+        {(group) => (
+          <section class="card">
+            <div class="row">
+              <h2>{group.name}</h2>
+              <A class="link" href={`/groups/${group.id}`}>
+                {isManager(group) ? "Manage" : "Details"}
+              </A>
+            </div>
+            <ul class="list">
+              <For each={sortMembers(group)}>
+                {(member) => (
+                  <li>
+                    <A class="list-row" href={`/lists/${member.profile_id}`}>
+                      <span>
+                        {member.profiles.display_name}
+                        {member.profile_id === me().profile.id ? " (you)" : ""}
+                      </span>
+                      <Show when={!member.profiles.account_id}>
+                        <span class="chip">child</span>
+                      </Show>
+                    </A>
+                  </li>
+                )}
+              </For>
+            </ul>
+          </section>
+        )}
+      </For>
+      <form class="card" onSubmit={onCreate}>
+        <label>
+          New group
+          <input
+            required
+            placeholder="e.g. Family"
+            value={newName()}
+            onInput={(e) => setNewName(e.currentTarget.value)}
+          />
+        </label>
+        <button type="submit">Create group</button>
+        <Show when={error()}>
+          <p class="error">{error()}</p>
         </Show>
-        <p class="muted">Your groups and wishlists arrive in the next step.</p>
-        <button type="button" class="secondary" onClick={() => void supabase.auth.signOut()}>
-          Sign out
-        </button>
-      </section>
+      </form>
     </>
   );
 }
