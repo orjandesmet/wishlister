@@ -35,6 +35,21 @@ export async function addParent(childProfileId: string, parentProfileId: string)
   );
 }
 
+/** Remove a parent from a child. A child always keeps at least one parent. */
+export async function removeParent(childProfileId: string, parentProfileId: string) {
+  must(
+    await supabase.rpc("remove_profile_manager", {
+      child_profile: childProfileId,
+      parent_profile: parentProfileId,
+    }),
+  );
+}
+
+/** Delete a child's profile and wishlist for everyone. */
+export async function deleteChild(childProfileId: string) {
+  must(await supabase.rpc("delete_child_profile", { child_profile: childProfileId }));
+}
+
 /** Parents per child: child profile id → parent profile ids. */
 export async function getParents(childProfileIds: string[]): Promise<Map<string, string[]>> {
   const parents = new Map<string, string[]>();

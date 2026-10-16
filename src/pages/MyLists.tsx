@@ -41,7 +41,7 @@ export default function MyLists() {
                 <li>
                   <A class="list-row" href={`/lists/${child.id}`}>
                     <span>{child.display_name}'s wishlist</span>
-                    <span class="chip">child</span>
+                    <span class="muted">›</span>
                   </A>
                 </li>
               )}

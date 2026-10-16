@@ -1,6 +1,13 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
-import { addChild, addChildToGroup, addParent, getParents } from "../lib/api/children.ts";
+import {
+  addChild,
+  addChildToGroup,
+  addParent,
+  deleteChild,
+  getParents,
+  removeParent,
+} from "../lib/api/children.ts";
 import {
   cancelInvite,
   deleteGroup,
@@ -118,16 +125,61 @@ export default function GroupSettings() {
       await refetchGroup();
     });
 
+  /** Children who'd have no parent left in this group once `adult` is gone. */
+  const childrenLeftBehind = (adult: Member) =>
+    children().filter((child) => {
+      const childParents = parents()?.get(child.profile_id) ?? [];
+      return !adults().some(
+        (a) => a.profile_id !== adult.profile_id && childParents.includes(a.profile_id),
+      );
+    });
+
   const onRemove = (member: Member) =>
     run(async () => {
+      const groupName = group()!.name;
       const leaving = member.profile_id === me().profile.id;
-      const question = leaving
-        ? `Leave ${group()!.name}?`
-        : `Remove ${member.profiles.display_name} from ${group()!.name}?`;
-      if (!confirm(question)) return;
-      await removeMember(params.groupId, member.profile_id);
-      if (leaving) navigate("/", { replace: true });
-      else await refetchGroup();
+      const isAdult = !!member.profiles.account_id;
+      const lines = [
+        leaving
+          ? `Leave ${groupName}?`
+          : `Remove ${member.profiles.display_name} from ${groupName}?`,
+      ];
+      if (isAdult) {
+        const leftBehind = childrenLeftBehind(member).map((c) => c.profiles.display_name);
+        if (leftBehind.length > 0) {
+          lines.push(
+            `${leftBehind.join(", ")} will have no parent left in this group, so they'll be removed from it too.`,
+          );
+        }
+        if (adults().length === 1) {
+          lines.push(`No one else is left, so ${groupName} will be deleted.`);
+        }
+      }
+      if (!confirm(lines.join("\n\n"))) return;
+      const result = await removeMember(params.groupId, member.profile_id);
+      if (leaving || result === "group_deleted") navigate("/", { replace: true });
+      else await Promise.all([refetchGroup(), refetchParents()]);
+    });
+
+  const onRemoveParent = (child: Member, parentProfileId: string) =>
+    run(async () => {
+      const childName = child.profiles.display_name;
+      if (!confirm(`Remove ${nameOf(parentProfileId)} as ${childName}'s parent?`)) return;
+      await removeParent(child.profile_id, parentProfileId);
+      await refetchParents();
+      me().refetchManaged();
+    });
+
+  const onDeleteChild = (child: Member) =>
+    run(async () => {
+      const childName = child.profiles.display_name;
+      if (
+        !confirm(`Delete ${childName}'s profile and wishlist for everyone? This can't be undone.`)
+      )
+        return;
+      await deleteChild(child.profile_id);
+      await refetchGroup();
+      me().refetchManaged();
     });
 
   const onAddParent = (child: Member, parentProfileId: string) =>
@@ -249,14 +301,44 @@ export default function GroupSettings() {
                 <li class="child">
                   <div class="list-row">
                     <A href={`/lists/${child.profile_id}`}>{child.profiles.display_name}</A>
-                    <Show when={isManager()}>
-                      <button type="button" class="link danger" onClick={() => onRemove(child)}>
-                        Remove
-                      </button>
-                    </Show>
+                    <span class="row">
+                      <Show when={isManager() || iAmParent()}>
+                        <button type="button" class="link danger" onClick={() => onRemove(child)}>
+                          Remove
+                        </button>
+                      </Show>
+                      <Show when={iAmParent()}>
+                        <button
+                          type="button"
+                          class="link danger"
+                          onClick={() => onDeleteChild(child)}
+                        >
+                          Delete
+                        </button>
+                      </Show>
+                    </span>
                   </div>
                   <p class="muted small">
-                    Managed by {childParents().map(nameOf).join(", ") || "nobody in this group"}
+                    Parents:{" "}
+                    <For each={childParents()} fallback="nobody in this group">
+                      {(parentId, i) => (
+                        <>
+                          {i() > 0 ? ", " : ""}
+                          {nameOf(parentId)}
+                          <Show when={iAmParent() && childParents().length > 1}>
+                            {" "}
+                            <button
+                              type="button"
+                              class="link danger"
+                              aria-label={`Remove ${nameOf(parentId)} as parent`}
+                              onClick={() => onRemoveParent(child, parentId)}
+                            >
+                              ×
+                            </button>
+                          </Show>
+                        </>
+                      )}
+                    </For>
                   </p>
                   <Show when={iAmParent() && otherAdults().length > 0}>
                     <select onChange={(e) => onAddParent(child, e.currentTarget.value)}>

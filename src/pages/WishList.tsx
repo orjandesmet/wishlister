@@ -1,5 +1,6 @@
-import { A, useParams } from "@solidjs/router";
+import { A, useNavigate, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Match, Show, Switch } from "solid-js";
+import { deleteChild } from "../lib/api/children.ts";
 import { deleteItem, getItems, type Item } from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
 import { getPurchases, markBought, undoBought } from "../lib/api/purchases.ts";
@@ -8,6 +9,7 @@ import { useMe } from "../lib/me.tsx";
 export default function WishList() {
   const params = useParams<{ profileId: string }>();
   const me = useMe();
+  const navigate = useNavigate();
 
   const [profile] = createResource(() => params.profileId, getProfileDetails);
   const [items, { refetch: refetchItems }] = createResource(() => params.profileId, getItems);
@@ -39,6 +41,15 @@ export default function WishList() {
       if (!confirm(`Remove "${item.name}" from the list?`)) return;
       await deleteItem(item.id);
       await refetchItems();
+    });
+  const onDeleteChild = () =>
+    run(async () => {
+      const name = profile()!.display_name;
+      if (!confirm(`Delete ${name}'s profile and wishlist for everyone? This can't be undone.`))
+        return;
+      await deleteChild(params.profileId);
+      me().refetchManaged();
+      navigate("/mine", { replace: true });
     });
   const onBuy = (item: Item) => run(() => markBought(item.id).then(() => void refetchPurchases()));
   const onUndo = (item: Item) => run(() => undoBought(item.id).then(() => void refetchPurchases()));
@@ -121,6 +132,11 @@ export default function WishList() {
           )}
         </For>
       </ul>
+      <Show when={canEdit() && !isOwnList()}>
+        <button type="button" class="secondary danger" onClick={onDeleteChild}>
+          Delete {profile()?.display_name}'s profile
+        </button>
+      </Show>
       <Show when={canEdit()}>
         <A class="button fab" href={`/lists/${params.profileId}/items/new`}>
           + Add item

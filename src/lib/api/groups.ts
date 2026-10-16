@@ -67,12 +67,15 @@ export async function setMemberRole(groupId: string, profileId: string, role: Ro
   );
 }
 
-export async function removeMember(groupId: string, profileId: string) {
-  must(
-    await supabase
-      .from("group_members")
-      .delete()
-      .eq("group_id", groupId)
-      .eq("profile_id", profileId),
-  );
+/**
+ * Leave, or remove someone from, a group. Children left without a parent in the
+ * group go too, and the group is deleted once no one with an account is left.
+ */
+export async function removeMember(
+  groupId: string,
+  profileId: string,
+): Promise<"removed" | "group_deleted"> {
+  return must(
+    await supabase.rpc("remove_from_group", { target_group: groupId, target_profile: profileId }),
+  ) as "removed" | "group_deleted";
 }
