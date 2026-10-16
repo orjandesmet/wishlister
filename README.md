@@ -15,14 +15,22 @@ vp check                     # format, lint and type check
 
 ## Project layout
 
-| Path                   | What it is                                                        |
-| ---------------------- | ----------------------------------------------------------------- |
-| `src/lib/supabase.ts`  | The Supabase client                                               |
-| `src/lib/auth.tsx`     | `AuthProvider` and `useAuth()`: the signed-in session as a signal |
-| `src/pages/`           | One component per screen                                          |
-| `src/index.css`        | Theme tokens (colours, spacing) and base styles                   |
-| `supabase/migrations/` | Database schema and row-level security policies                   |
-| `netlify/functions/`   | `keepalive`: daily ping so the free Supabase project never pauses |
+| Path                   | What it is                                                            |
+| ---------------------- | --------------------------------------------------------------------- |
+| `src/lib/supabase.ts`  | The Supabase client                                                   |
+| `src/lib/auth.tsx`     | `AuthProvider` and `useAuth()`: the signed-in session as a signal     |
+| `src/pages/`           | One component per screen                                              |
+| `src/index.css`        | Theme tokens (colours, spacing) and base styles                       |
+| `supabase/migrations/` | Database schema and row-level security policies                       |
+| `netlify/functions/`   | `keepalive`: daily ping so the free Supabase project never pauses     |
+| `public/pwa-icon.svg`  | Source of the home-screen icons (`pwa-*.png`, `apple-touch-icon.png`) |
+
+## Installing on a phone
+
+The app is a PWA: `vite-plugin-pwa` (see `vite.config.ts`) adds a web app manifest and a service
+worker to every build. Open the Netlify URL, then use _Share > Add to Home Screen_ (iOS Safari)
+or _Install app_ (Android Chrome). The service worker only runs in `vp build`/`vp preview`, not
+in `vp dev`. If you change `public/pwa-icon.svg`, re-export the PNGs at 192, 512 and 180 px.
 
 ## One-time setup
 
