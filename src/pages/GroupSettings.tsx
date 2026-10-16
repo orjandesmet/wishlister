@@ -198,6 +198,30 @@ export default function GroupSettings() {
 
   const myMembership = () => members().find((m) => m.profile_id === me().profile.id);
 
+  // The last manager picks a successor before leaving, unless they're the last adult.
+  const otherAdultsInGroup = () => adults().filter((a) => a.profile_id !== me().profile.id);
+  const mustHandOver = () =>
+    isManager() &&
+    !otherAdultsInGroup().some((a) => a.role === "manager") &&
+    otherAdultsInGroup().length > 0;
+  const [handingOver, setHandingOver] = createSignal(false);
+  const [successor, setSuccessor] = createSignal<string>();
+
+  const onLeave = (mine: Member) => {
+    if (mustHandOver()) setHandingOver(true);
+    else void onRemove(mine);
+  };
+
+  const onHandOverAndLeave = (mine: Member) =>
+    run(async () => {
+      const next = otherAdultsInGroup().find((a) => a.profile_id === successor());
+      if (!next) return;
+      await setMemberRole(params.groupId, next.profile_id, "manager");
+      await refetchGroup();
+      setHandingOver(false);
+      await onRemove(mine);
+    });
+
   return (
     <>
       <A class="link" href="/">
@@ -412,9 +436,43 @@ export default function GroupSettings() {
       <Show when={myMembership()}>
         {(mine) => (
           <div class="stack">
-            <button type="button" class="secondary" onClick={() => onRemove(mine())}>
-              Leave group
-            </button>
+            <Show
+              when={handingOver()}
+              fallback={
+                <button type="button" class="secondary" onClick={() => onLeave(mine())}>
+                  Leave group
+                </button>
+              }
+            >
+              <div class="card">
+                <label>
+                  You're the only manager. Who should manage {group()?.name} after you leave?
+                  <select
+                    value={successor() ?? ""}
+                    onChange={(e) => setSuccessor(e.currentTarget.value)}
+                  >
+                    <option value="" disabled>
+                      Choose a member…
+                    </option>
+                    <For each={otherAdultsInGroup()}>
+                      {(adult) => (
+                        <option value={adult.profile_id}>{adult.profiles.display_name}</option>
+                      )}
+                    </For>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  disabled={!successor()}
+                  onClick={() => onHandOverAndLeave(mine())}
+                >
+                  Make manager and leave
+                </button>
+                <button type="button" class="secondary" onClick={() => setHandingOver(false)}>
+                  Stay in the group
+                </button>
+              </div>
+            </Show>
             <Show when={isManager()}>
               <button type="button" class="secondary danger" onClick={onDeleteGroup}>
                 Delete group
