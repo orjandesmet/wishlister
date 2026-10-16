@@ -1,4 +1,4 @@
-import { useNavigate } from "@solidjs/router";
+import { useNavigate, useSearchParams } from "@solidjs/router";
 import { createEffect, createSignal, Match, Show, Switch } from "solid-js";
 import { useAuth } from "../lib/auth.tsx";
 import { supabase } from "../lib/supabase.ts";
@@ -11,6 +11,12 @@ import { supabase } from "../lib/supabase.ts";
 export default function Login() {
   const { session } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams<{ next?: string }>();
+  // Where to go after signing in, such as an invite link. Only paths inside the app.
+  const next = () => {
+    const path = searchParams.next;
+    return path?.startsWith("/") && !path.startsWith("//") ? path : "/";
+  };
 
   const [step, setStep] = createSignal<"email" | "code">("email");
   const [email, setEmail] = createSignal("");
@@ -19,7 +25,7 @@ export default function Login() {
   const [error, setError] = createSignal<string>();
 
   createEffect(() => {
-    if (session()) navigate("/", { replace: true });
+    if (session()) navigate(next(), { replace: true });
   });
 
   async function sendEmail(event: SubmitEvent) {
@@ -28,7 +34,7 @@ export default function Login() {
     setError(undefined);
     const { error } = await supabase.auth.signInWithOtp({
       email: email().trim(),
-      options: { emailRedirectTo: window.location.origin },
+      options: { emailRedirectTo: window.location.origin + next() },
     });
     setBusy(false);
     if (error) setError(error.message);
@@ -45,7 +51,7 @@ export default function Login() {
       type: "email",
     });
     setBusy(false);
-    // On success the auth listener updates the session and the effect above navigates home.
+    // On success the auth listener updates the session and the effect above navigates on.
     if (error) setError(error.message);
   }
 

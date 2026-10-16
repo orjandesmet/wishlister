@@ -13,9 +13,11 @@ import {
   deleteGroup,
   getGroup,
   getInvites,
+  getJoinLink,
   inviteToGroup,
   removeMember,
   renameGroup,
+  resetJoinLink,
   setMemberRole,
   type InviteResult,
   type Member,
@@ -94,6 +96,31 @@ export default function GroupSettings() {
       await Promise.all([refetchGroup(), refetchInvites()]);
     });
   };
+
+  /** Hands the link to the phone's share sheet, or copies it where there is none. */
+  async function shareLink(link: string) {
+    const name = group()!.name;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `Join ${name} on Wishlister`, url: link });
+      } catch (e) {
+        // Closing the share sheet isn't an error.
+        if ((e as Error).name !== "AbortError") throw e;
+      }
+    } else {
+      await navigator.clipboard.writeText(link);
+      setNotice("Invite link copied. Anyone who opens it can join the group.");
+    }
+  }
+
+  const onShareLink = () => run(async () => shareLink(await getJoinLink(params.groupId)));
+
+  const onResetLink = () =>
+    run(async () => {
+      if (!confirm("Make a new invite link? Links you shared before will stop working.")) return;
+      await resetJoinLink(params.groupId);
+      setNotice("New invite link made. Old links don't work anymore.");
+    });
 
   const onAddChild = (event: SubmitEvent) => {
     event.preventDefault();
@@ -308,6 +335,18 @@ export default function GroupSettings() {
             </label>
             <button type="submit">Invite</button>
           </form>
+          <h3>Invite link</h3>
+          <p class="muted small">
+            Anyone with the link can join, whatever email they sign in with.
+          </p>
+          <div class="row">
+            <button type="button" onClick={onShareLink}>
+              Share invite link
+            </button>
+            <button type="button" class="secondary" onClick={onResetLink}>
+              New link
+            </button>
+          </div>
         </Show>
       </section>
 

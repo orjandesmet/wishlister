@@ -38,7 +38,7 @@ export default function Home() {
       </Show>
       <Show when={groups()?.length === 0}>
         <p class="muted">
-          You're not in a group yet. Create one below, or ask someone to invite your email address.
+          You're not in a group yet. Create one below, or ask someone for an invite link.
         </p>
       </Show>
       <For each={groups()}>
