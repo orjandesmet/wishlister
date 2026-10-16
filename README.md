@@ -23,6 +23,7 @@ vp check                     # format, lint and type check
 | `src/index.css`        | Theme tokens (colours, spacing) and base styles                       |
 | `supabase/migrations/` | Database schema and row-level security policies                       |
 | `netlify/functions/`   | `keepalive`: daily ping so the free Supabase project never pauses     |
+|                        | `send-invite`: emails people invited to a group who have no account   |
 | `public/pwa-icon.svg`  | Source of the home-screen icons (`pwa-*.png`, `apple-touch-icon.png`) |
 
 ## Installing on a phone
@@ -57,7 +58,23 @@ in `vp dev`. If you change `public/pwa-icon.svg`, re-export the PNGs at 192, 512
    testing, so plug in a real one. With [Resend](https://resend.com) (free tier): host
    `smtp.resend.com`, port `465`, user `resend`, password = a Resend API key. Resend needs a
    domain you own to email people other than yourself.
-6. **Project Settings > API Keys**: copy the project URL and the publishable key.
+6. **Authentication > Emails > Templates > Invite user**: this email goes to someone a manager
+   invites who has no account yet. `{{ .Data.group_name }}` and `{{ .Data.invited_by }}` are
+   filled in by the app, for example:
+
+   Subject: `{{ .Data.invited_by }} added you to {{ .Data.group_name }} on Wishlister`
+
+   ```html
+   <h2>You're in {{ .Data.group_name }}</h2>
+   <p>
+     {{ .Data.invited_by }} added you to <strong>{{ .Data.group_name }}</strong> on Wishlister, to
+     share wishlists.
+   </p>
+   <p><a href="{{ .ConfirmationURL }}">Tap here to sign in</a>.</p>
+   <p>Later on, just sign in with this email address at {{ .SiteURL }}.</p>
+   ```
+
+7. **Project Settings > API Keys**: copy the project URL, the publishable key and a secret key.
 
 ### 2. Netlify
 
@@ -65,4 +82,6 @@ in `vp dev`. If you change `public/pwa-icon.svg`, re-export the PNGs at 192, 512
    sets the build command, Node and pnpm versions.
 2. _Site configuration > Environment variables_: add `VITE_SUPABASE_URL` and
    `VITE_SUPABASE_PUBLISHABLE_KEY`. The build and the `keepalive` function both use them.
+   Also add `SUPABASE_SECRET_KEY` (a secret key, `sb_secret_…`) for `send-invite`. It has no
+   `VITE_` prefix on purpose, so it never ends up in the app's JavaScript.
 3. Deploy, then put the site URL into Supabase's _Site URL_ (step 1.3).
