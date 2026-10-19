@@ -39,10 +39,13 @@ export async function getItem(itemId: ItemId): Promise<Item> {
   ) as Item;
 }
 
-/** Categories used on any list I can see, for the suggestions under the category field. */
+/**
+ * The category of every item I can see, duplicates included, so the suggestions
+ * under the category field can rank them by use (see suggestCategories).
+ */
 export async function getCategories(): Promise<string[]> {
   const rows = must(await supabase.from("items").select("category").not("category", "is", null));
-  return [...new Set(rows.map((row) => (row.category as string).trim()))].sort();
+  return rows.map((row) => row.category as string);
 }
 
 async function setItemGroups(itemId: ItemId, input: ItemInput) {
