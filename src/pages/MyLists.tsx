@@ -1,6 +1,9 @@
 import { A } from "@solidjs/router";
 import { createSignal, For, Show } from "solid-js";
+import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { renameProfile } from "../lib/api/profiles.ts";
+import { chooseLocale } from "../lib/accountLocale.ts";
+import { locale, t } from "../lib/i18n.ts";
 import { supabase } from "../lib/supabase.ts";
 import { useMe } from "../lib/me.tsx";
 
@@ -26,13 +29,13 @@ export default function MyLists() {
 
   return (
     <>
-      <h1>{hasChildren() ? "My lists" : "Account"}</h1>
+      <h1>{hasChildren() ? t("account.myLists") : t("account.title")}</h1>
       <Show when={hasChildren()}>
         <section class="card">
           <ul class="list">
             <li>
               <A class="list-row" href={`/lists/${me().profile.id}`}>
-                <span>My wishlist</span>
+                <span>{t("account.myWishlist")}</span>
                 <span class="muted">›</span>
               </A>
             </li>
@@ -40,7 +43,7 @@ export default function MyLists() {
               {(child) => (
                 <li>
                   <A class="list-row" href={`/lists/${child.id}`}>
-                    <span>{child.display_name}'s wishlist</span>
+                    <span>{t("account.childWishlist", { name: child.display_name })}</span>
                     <span class="muted">›</span>
                   </A>
                 </li>
@@ -51,19 +54,25 @@ export default function MyLists() {
       </Show>
       <form class="card" onSubmit={onRename}>
         <label>
-          Your name, as others see it
+          {t("account.yourName")}
           <input required value={name()} onInput={(e) => setName(e.currentTarget.value)} />
         </label>
-        <button type="submit">Save name</button>
+        <button type="submit">{t("account.saveName")}</button>
         <Show when={saved()}>
-          <p class="muted">Saved.</p>
+          <p class="muted">{t("account.saved")}</p>
         </Show>
         <Show when={error()}>
           <p class="error">{error()}</p>
         </Show>
       </form>
+      <section class="card">
+        <LanguageSelect
+          value={locale()}
+          onChange={(next) => chooseLocale(next).catch((e: Error) => setError(e.message))}
+        />
+      </section>
       <button type="button" class="secondary" onClick={() => void supabase.auth.signOut()}>
-        Sign out
+        {t("account.signOut")}
       </button>
     </>
   );

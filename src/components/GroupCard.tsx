@@ -1,6 +1,7 @@
 import { A } from "@solidjs/router";
 import { For, Show } from "solid-js";
 import type { Group } from "../lib/api/groups.ts";
+import { compareNames, t } from "../lib/i18n.ts";
 import type { ProfileId } from "../lib/ids.ts";
 
 export type GroupCardProps = {
@@ -13,7 +14,7 @@ export type GroupCardProps = {
 export function GroupCard(props: GroupCardProps) {
   const members = () =>
     [...props.group.group_members].sort((a, b) =>
-      a.profiles.display_name.localeCompare(b.profiles.display_name),
+      compareNames(a.profiles.display_name, b.profiles.display_name),
     );
   const isManager = () =>
     props.group.group_members.some(
@@ -25,7 +26,7 @@ export function GroupCard(props: GroupCardProps) {
       <div class="row">
         <h2>{props.group.name}</h2>
         <A class="link" href={`/groups/${props.group.id}`}>
-          {isManager() ? "Manage" : "Details"}
+          {isManager() ? t("groupCard.manage") : t("groupCard.details")}
         </A>
       </div>
       <ul class="list">
@@ -39,19 +40,19 @@ export function GroupCard(props: GroupCardProps) {
                   <div class="list-row">
                     <span class="muted">
                       {member.profiles.display_name}
-                      {member.profile_id === props.myProfileId ? " (you)" : ""}
+                      {member.profile_id === props.myProfileId ? t("common.you") : ""}
                     </span>
-                    <span class="chip">guardian</span>
+                    <span class="chip">{t("groupCard.guardian")}</span>
                   </div>
                 }
               >
                 <A class="list-row" href={`/lists/${member.profile_id}`}>
                   <span>
                     {member.profiles.display_name}
-                    {member.profile_id === props.myProfileId ? " (you)" : ""}
+                    {member.profile_id === props.myProfileId ? t("common.you") : ""}
                   </span>
                   <Show when={!member.profiles.account_id}>
-                    <span class="chip">child</span>
+                    <span class="chip">{t("groupCard.child")}</span>
                   </Show>
                 </A>
               </Show>

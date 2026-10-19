@@ -35,6 +35,22 @@ add a `.stories.tsx` file next to it. Use named exports for components
 (`export function ItemCard`): the Solid docs generator breaks on anonymous
 default exports.
 
+## Languages
+
+The app speaks English and Dutch. All UI text lives in `src/i18n/`:
+
+- `en.tsx` is the source and defines the keys. `nl.tsx` must have the same keys, or the type
+  check fails.
+- Components call `t("group.members")`, or `t("group.added", { email })` for text with values in
+  it (see `src/lib/i18n.ts`). Text with bold parts returns JSX from its dictionary function.
+- The first visit follows the browser's language. The account page has a language picker; the
+  choice is saved on the device and in the account's user metadata (`locale`), so other devices and
+  Supabase's emails follow it. Someone invited by email starts in the inviter's language.
+- Storybook has a globe in the toolbar to switch every story's language.
+
+To add a language, add its code to `src/i18n/locale.ts`, write a dictionary next to `nl.tsx`,
+register it in `src/lib/i18n.ts`, and add a branch for it to the email templates.
+
 ## Project layout
 
 | Path                   | What it is                                                            |
@@ -45,6 +61,8 @@ default exports.
 | `src/components/`      | Presentational components and their Storybook stories                 |
 | `.storybook/`          | Storybook config                                                      |
 | `src/index.css`        | Theme tokens (colours, spacing) and base styles                       |
+| `src/i18n/`            | UI text in English and Dutch, and language detection                  |
+| `supabase/templates/`  | Sign-in and invite email bodies, to paste into Supabase               |
 | `supabase/migrations/` | Database schema and row-level security policies                       |
 | `netlify/functions/`   | `keepalive`: daily ping so the free Supabase project never pauses     |
 |                        | `send-invite`: emails people invited to a group who have no account   |
@@ -68,16 +86,18 @@ in `vp dev`. If you change `public/pwa-icon.svg`, re-export the PNGs at 192, 512
    `http://localhost:5173` under _Redirect URLs_.
 4. **Authentication > Emails > Templates**: the default emails only contain a link. Edit both
    **Magic Link** (returning users) and **Confirm signup** (someone's very first login) to include
-   the one-time code as well, for example:
+   the one-time code as well. Paste `supabase/templates/login.html` as the body of both, with this
+   subject:
 
-   ```html
-   <h2>Sign in to Wishlister</h2>
-   <p>Your code is <strong>{{ .Token }}</strong></p>
-   <p>Or <a href="{{ .ConfirmationURL }}">tap here to sign in</a>.</p>
+   ```
+   {{ if eq .Data.locale "nl" }}Je aanmeldcode voor Wishlister{{ else }}Your Wishlister sign-in code{{ end }}
    ```
 
    The code matters on phones: a link opens in the default browser, but an app installed on the
    home screen keeps its own login, so you type the code there instead.
+
+   The templates are in English and Dutch. `{{ .Data.locale }}` is the language saved on the
+   account (see _Languages_ below); anything other than `nl` gets English.
 
 5. **Authentication > Emails > SMTP Settings**: Supabase's built-in sender is only meant for
    testing, so plug in a real one. With [Resend](https://resend.com) (free tier): host
@@ -85,18 +105,11 @@ in `vp dev`. If you change `public/pwa-icon.svg`, re-export the PNGs at 192, 512
    domain you own to email people other than yourself.
 6. **Authentication > Emails > Templates > Invite user**: this email goes to someone a manager
    invites who has no account yet. `{{ .Data.group_name }}` and `{{ .Data.invited_by }}` are
-   filled in by the app, for example:
+   filled in by the app, and `{{ .Data.locale }}` is the inviter's language. Paste
+   `supabase/templates/invite.html` as the body, with this subject:
 
-   Subject: `{{ .Data.invited_by }} added you to {{ .Data.group_name }} on Wishlister`
-
-   ```html
-   <h2>You're in {{ .Data.group_name }}</h2>
-   <p>
-     {{ .Data.invited_by }} added you to <strong>{{ .Data.group_name }}</strong> on Wishlister, to
-     share wishlists.
-   </p>
-   <p><a href="{{ .ConfirmationURL }}">Tap here to sign in</a>.</p>
-   <p>Later on, just sign in with this email address at {{ .SiteURL }}.</p>
+   ```
+   {{ if eq .Data.locale "nl" }}{{ .Data.invited_by }} heeft je toegevoegd aan {{ .Data.group_name }} op Wishlister{{ else }}{{ .Data.invited_by }} added you to {{ .Data.group_name }} on Wishlister{{ end }}
    ```
 
 7. **Project Settings > API Keys**: copy the project URL, the publishable key and a secret key.

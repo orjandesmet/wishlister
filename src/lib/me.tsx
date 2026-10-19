@@ -8,6 +8,7 @@ import {
 } from "solid-js";
 import { getManagedProfiles, getMyProfile, type Profile } from "./api/profiles.ts";
 import { useAuth } from "./auth.tsx";
+import { t } from "./i18n.ts";
 import type { AccountId } from "./ids.ts";
 
 type Me = {
@@ -35,7 +36,9 @@ export const MeProvider: ParentComponent = (props) => {
       when={profile()}
       fallback={
         <p class="center muted">
-          {profile.error ? `Couldn't load your profile: ${profile.error.message}` : "Loading…"}
+          {profile.error
+            ? t("me.loadFailed", { message: profile.error.message })
+            : t("common.loading")}
         </p>
       }
     >

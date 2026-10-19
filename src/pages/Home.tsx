@@ -2,6 +2,7 @@ import { useNavigate } from "@solidjs/router";
 import { createResource, createSignal, For, Show } from "solid-js";
 import { GroupCard } from "../components/GroupCard.tsx";
 import { createGroup, getMyGroups } from "../lib/api/groups.ts";
+import { t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
 
 export default function Home() {
@@ -24,29 +25,27 @@ export default function Home() {
 
   return (
     <>
-      <h1>My groups</h1>
+      <h1>{t("home.title")}</h1>
       <Show when={groups.error}>
-        <p class="error">Couldn't load your groups: {groups.error.message}</p>
+        <p class="error">{t("home.loadFailed", { message: groups.error.message })}</p>
       </Show>
       <Show when={groups()?.length === 0}>
-        <p class="muted">
-          You're not in a group yet. Create one below, or ask someone for an invite link.
-        </p>
+        <p class="muted">{t("home.empty")}</p>
       </Show>
       <For each={groups()}>
         {(group) => <GroupCard group={group} myProfileId={me().profile.id} />}
       </For>
       <form class="card" onSubmit={onCreate}>
         <label>
-          New group
+          {t("home.newGroup")}
           <input
             required
-            placeholder="e.g. Family"
+            placeholder={t("home.newGroupPlaceholder")}
             value={newName()}
             onInput={(e) => setNewName(e.currentTarget.value)}
           />
         </label>
-        <button type="submit">Create group</button>
+        <button type="submit">{t("home.create")}</button>
         <Show when={error()}>
           <p class="error">{error()}</p>
         </Show>

@@ -1,6 +1,7 @@
 import { A } from "@solidjs/router";
 import { Match, Show, Switch } from "solid-js";
 import type { Item } from "../lib/api/items.ts";
+import { formatList, t } from "../lib/i18n.ts";
 
 /**
  * Whether you can mark the item as bought. "hidden" shows nothing: your own list,
@@ -38,33 +39,37 @@ export function ItemCard(props: ItemCardProps) {
         )}
       </Show>
       <Show when={props.canEdit && !props.item.visible_in_all_groups}>
-        <p class="muted small">Only visible in {props.groupNames.join(", ") || "no groups"}</p>
+        <p class="muted small">
+          {t("item.onlyVisibleIn", {
+            groups: props.groupNames.length > 0 ? formatList(props.groupNames) : t("item.noGroups"),
+          })}
+        </p>
       </Show>
       <Switch>
         <Match when={props.purchase === "mine"}>
           <div class="row">
-            <span class="bought">You bought this</span>
+            <span class="bought">{t("item.youBought")}</span>
             <button type="button" class="secondary small" onClick={() => props.onUndo()}>
-              Undo
+              {t("item.undo")}
             </button>
           </div>
         </Match>
         <Match when={props.purchase === "someone"}>
-          <span class="bought">Someone bought this</span>
+          <span class="bought">{t("item.someoneBought")}</span>
         </Match>
         <Match when={props.purchase === "available"}>
           <button type="button" onClick={() => props.onBuy()}>
-            I bought this
+            {t("item.iBought")}
           </button>
         </Match>
       </Switch>
       <Show when={props.canEdit}>
         <div class="row">
           <A class="link" href={`/items/${props.item.id}/edit`}>
-            Edit
+            {t("common.edit")}
           </A>
           <button type="button" class="link danger" onClick={() => props.onRemove()}>
-            Remove
+            {t("common.remove")}
           </button>
         </div>
       </Show>

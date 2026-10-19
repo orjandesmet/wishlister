@@ -1,6 +1,9 @@
 import { useNavigate, useSearchParams } from "@solidjs/router";
 import { createEffect, createSignal, Match, Show, Switch } from "solid-js";
+import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { useAuth } from "../lib/auth.tsx";
+import { chooseLocale } from "../lib/accountLocale.ts";
+import { locale, t } from "../lib/i18n.ts";
 import { supabase } from "../lib/supabase.ts";
 
 /**
@@ -34,7 +37,11 @@ export default function Login() {
     setError(undefined);
     const { error } = await supabase.auth.signInWithOtp({
       email: email().trim(),
-      options: { emailRedirectTo: window.location.origin + next() },
+      options: {
+        emailRedirectTo: window.location.origin + next(),
+        // Saved on a new account, so its first email (and the app) speak this language.
+        data: { locale: locale() },
+      },
     });
     setBusy(false);
     if (error) setError(error.message);
@@ -60,10 +67,10 @@ export default function Login() {
       <h1>Wishlister</h1>
       <Switch>
         <Match when={step() === "email"}>
-          <p class="muted">Sign in with your email. We'll send you a link and a code.</p>
+          <p class="muted">{t("login.intro")}</p>
           <form onSubmit={sendEmail}>
             <label>
-              Email address
+              {t("login.email")}
               <input
                 type="email"
                 autocomplete="email"
@@ -73,17 +80,15 @@ export default function Login() {
               />
             </label>
             <button type="submit" disabled={busy()}>
-              {busy() ? "Sending…" : "Send me a login link"}
+              {busy() ? t("login.sending") : t("login.send")}
             </button>
           </form>
         </Match>
         <Match when={step() === "code"}>
-          <p>
-            Check your inbox at <strong>{email()}</strong>. Tap the link, or type the code here.
-          </p>
+          <p>{t("login.checkInbox", { email: email() })}</p>
           <form onSubmit={verifyCode}>
             <label>
-              Code
+              {t("login.code")}
               <input
                 class="code-input"
                 inputmode="numeric"
@@ -94,10 +99,10 @@ export default function Login() {
               />
             </label>
             <button type="submit" disabled={busy()}>
-              {busy() ? "Checking…" : "Sign in"}
+              {busy() ? t("login.checking") : t("login.signIn")}
             </button>
             <button type="button" class="secondary" onClick={() => setStep("email")}>
-              Use a different email
+              {t("login.otherEmail")}
             </button>
           </form>
         </Match>
@@ -107,6 +112,7 @@ export default function Login() {
           {error()}
         </p>
       </Show>
+      <LanguageSelect value={locale()} onChange={(next) => void chooseLocale(next)} />
     </main>
   );
 }

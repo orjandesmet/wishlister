@@ -2,6 +2,7 @@ import { useNavigate, useParams } from "@solidjs/router";
 import { createEffect, createResource, createSignal, For, on, Show } from "solid-js";
 import { addItem, getCategories, getItem, updateItem } from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
+import { t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
@@ -40,7 +41,7 @@ export default function ItemForm() {
   async function onSubmit(event: SubmitEvent) {
     event.preventDefault();
     if (!allGroups() && groupIds().length === 0) {
-      setError("Pick at least one group, or show the item in all groups.");
+      setError(t("itemForm.pickGroup"));
       return;
     }
     setBusy(true);
@@ -64,14 +65,14 @@ export default function ItemForm() {
 
   return (
     <>
-      <h1>{params.itemId ? "Edit item" : "Add item"}</h1>
+      <h1>{params.itemId ? t("itemForm.editTitle") : t("itemForm.addTitle")}</h1>
       <form class="card" onSubmit={onSubmit}>
         <label>
-          Name
+          {t("itemForm.name")}
           <input required value={name()} onInput={(e) => setName(e.currentTarget.value)} />
         </label>
         <label>
-          Link (optional)
+          {t("itemForm.link")}
           <input
             type="url"
             inputmode="url"
@@ -81,7 +82,7 @@ export default function ItemForm() {
           />
         </label>
         <label>
-          Category (optional)
+          {t("itemForm.category")}
           <input
             list="category-suggestions"
             value={category()}
@@ -103,7 +104,7 @@ export default function ItemForm() {
           </div>
         </Show>
         <fieldset>
-          <legend>Who can see it</legend>
+          <legend>{t("itemForm.visibility")}</legend>
           <label class="check">
             <input
               type="radio"
@@ -111,7 +112,7 @@ export default function ItemForm() {
               checked={allGroups()}
               onChange={() => setAllGroups(true)}
             />
-            All my groups
+            {t("itemForm.allGroups")}
           </label>
           <label class="check">
             <input
@@ -120,13 +121,13 @@ export default function ItemForm() {
               checked={!allGroups()}
               onChange={() => setAllGroups(false)}
             />
-            Only selected groups
+            {t("itemForm.selectedGroups")}
           </label>
           <Show when={!allGroups()}>
             <div class="indent">
               <For
                 each={profile()?.groups}
-                fallback={<p class="muted small">This list isn't in any groups yet.</p>}
+                fallback={<p class="muted small">{t("itemForm.noGroups")}</p>}
               >
                 {(group) => (
                   <label class="check">
@@ -143,10 +144,10 @@ export default function ItemForm() {
           </Show>
         </fieldset>
         <button type="submit" disabled={busy()}>
-          {busy() ? "Saving…" : "Save"}
+          {busy() ? t("common.saving") : t("common.save")}
         </button>
         <button type="button" class="secondary" onClick={() => history.back()}>
-          Cancel
+          {t("common.cancel")}
         </button>
         <Show when={error()}>
           <p class="error">{error()}</p>

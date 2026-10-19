@@ -1,4 +1,5 @@
 import { Match, Switch } from "solid-js";
+import { t } from "../lib/i18n.ts";
 
 export type InstallBannerProps = {
   /** "prompt" when the browser can install the app itself, "ios" for the share-menu steps. */
@@ -10,13 +11,13 @@ export type InstallBannerProps = {
 /** Suggests adding the app to the home screen. Only shows things; the caller decides when. */
 export function InstallBanner(props: InstallBannerProps) {
   return (
-    <aside class="notice install-banner" aria-label="Add to home screen">
+    <aside class="notice install-banner" aria-label={t("install.label")}>
       <div class="row">
-        <strong>Add Wishlister to your home screen</strong>
+        <strong>{t("install.title")}</strong>
         <button
           type="button"
           class="link small"
-          aria-label="Dismiss"
+          aria-label={t("install.dismiss")}
           onClick={() => props.onDismiss()}
         >
           ✕
@@ -24,15 +25,14 @@ export function InstallBanner(props: InstallBannerProps) {
       </div>
       <Switch>
         <Match when={props.mode === "prompt"}>
-          <p class="muted small">It opens like an app, without the browser around it.</p>
+          <p class="muted small">{t("install.promptText")}</p>
           <button type="button" onClick={() => props.onInstall()}>
-            Install
+            {t("install.install")}
           </button>
         </Match>
         <Match when={props.mode === "ios"}>
           <p class="muted small">
-            Tap the Share button <span aria-hidden="true">(□↑)</span>, then{" "}
-            <strong>Add to Home Screen</strong>.
+            {t("install.iosSteps", { shareIcon: <span aria-hidden="true">(□↑)</span> })}
           </p>
         </Match>
       </Switch>

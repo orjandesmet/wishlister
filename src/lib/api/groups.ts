@@ -6,11 +6,6 @@ import type { Profile } from "./profiles.ts";
 /** A guardian is only in the group to look after their children: their own list isn't shown there. */
 export type Role = "manager" | "member" | "guardian";
 
-export const roleLabels: Record<Role, string> = {
-  manager: "Manager",
-  member: "Member",
-  guardian: "Guardian",
-};
 export type Member = { profile_id: ProfileId; role: Role; profiles: Profile };
 export type Group = { id: GroupId; name: string; group_members: Member[] };
 

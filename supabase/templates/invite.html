@@ -1,0 +1,17 @@
+{{ if eq .Data.locale "nl" }}
+<h2>Je zit in {{ .Data.group_name }}</h2>
+<p>
+  {{ .Data.invited_by }} heeft je toegevoegd aan <strong>{{ .Data.group_name }}</strong> op
+  Wishlister, om verlanglijstjes te delen.
+</p>
+<p><a href="{{ .ConfirmationURL }}">Tik hier om je aan te melden</a>.</p>
+<p>Later meld je je gewoon aan met dit e-mailadres op {{ .SiteURL }}.</p>
+{{ else }}
+<h2>You're in {{ .Data.group_name }}</h2>
+<p>
+  {{ .Data.invited_by }} added you to <strong>{{ .Data.group_name }}</strong> on Wishlister, to
+  share wishlists.
+</p>
+<p><a href="{{ .ConfirmationURL }}">Tap here to sign in</a>.</p>
+<p>Later on, just sign in with this email address at {{ .SiteURL }}.</p>
+{{ end }}
