@@ -60,10 +60,16 @@ export const nl: Dictionary = {
     title: "Mijn groepen",
     loadFailed: (p) => `Je groepen konden niet geladen worden: ${p.message}`,
     empty:
-      "Je zit nog niet in een groep. Maak er hieronder een aan, of vraag iemand om een uitnodigingslink.",
+      "Je zit nog niet in een groep. Maak er hieronder een aan, of vraag iemand om een uitnodigingslink of -code.",
     newGroup: "Nieuwe groep",
     newGroupPlaceholder: "bv. Familie",
     create: "Groep aanmaken",
+  },
+  joinCode: {
+    label: "Met een code bij een groep komen",
+    placeholder: "Uitnodigingscode of -link",
+    submit: "Bij groep komen",
+    invalid: "Dat lijkt geen uitnodigingscode. Plak de code of de hele uitnodigingslink.",
   },
   groupCard: {
     manage: "Beheren",
@@ -157,7 +163,7 @@ export const nl: Dictionary = {
   join: {
     title: "Bij een groep komen",
     openFailed: (p) => `Deze uitnodiging kon niet geopend worden: ${p.message}`,
-    expired: "Deze uitnodigingslink werkt niet meer. Vraag een nieuwe.",
+    expired: "Deze uitnodigingslink of -code werkt niet. Vraag een nieuwe.",
     toGroups: "Naar mijn groepen",
     alreadyIn: (p) => `Je zit al in ${p.group}.`,
     open: (p) => `${p.group} openen`,

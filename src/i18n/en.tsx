@@ -65,10 +65,17 @@ export const en = {
   home: {
     title: "My groups",
     loadFailed: (p: { message: string }) => `Couldn't load your groups: ${p.message}`,
-    empty: "You're not in a group yet. Create one below, or ask someone for an invite link.",
+    empty:
+      "You're not in a group yet. Create one below, or ask someone for an invite link or code.",
     newGroup: "New group",
     newGroupPlaceholder: "e.g. Family",
     create: "Create group",
+  },
+  joinCode: {
+    label: "Join with a code",
+    placeholder: "Invite code or link",
+    submit: "Join",
+    invalid: "That doesn't look like an invite code. Paste the code or the whole invite link.",
   },
   groupCard: {
     manage: "Manage",
@@ -165,7 +172,7 @@ export const en = {
   join: {
     title: "Join a group",
     openFailed: (p: { message: string }) => `Couldn't open this invite: ${p.message}`,
-    expired: "This invite link doesn't work anymore. Ask for a new one.",
+    expired: "This invite link or code doesn't work. Ask for a new one.",
     toGroups: "Go to my groups",
     alreadyIn: (p: { group: string }) => `You're already in ${p.group}.`,
     open: (p: { group: string }) => `Open ${p.group}`,

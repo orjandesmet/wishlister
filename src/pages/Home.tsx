@@ -1,6 +1,7 @@
 import { useNavigate } from "@solidjs/router";
 import { createResource, createSignal, For, Show } from "solid-js";
 import { GroupCard } from "../components/GroupCard.tsx";
+import { JoinCodeForm } from "../components/JoinCodeForm.tsx";
 import { createGroup, getMyGroups } from "../lib/api/groups.ts";
 import { t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
@@ -50,6 +51,8 @@ export default function Home() {
           <p class="error">{error()}</p>
         </Show>
       </form>
+      {/* The join page shows which group the code is for before you join. */}
+      <JoinCodeForm onJoin={(code) => navigate(`/join/${code}`)} />
     </>
   );
 }
