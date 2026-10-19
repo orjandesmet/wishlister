@@ -3,7 +3,14 @@ import type { GroupId, ProfileId } from "../ids.ts";
 import { must } from "./must.ts";
 import type { Profile } from "./profiles.ts";
 
-export type Role = "manager" | "member";
+/** A guardian is only in the group to look after their children: their own list isn't shown there. */
+export type Role = "manager" | "member" | "guardian";
+
+export const roleLabels: Record<Role, string> = {
+  manager: "Manager",
+  member: "Member",
+  guardian: "Guardian",
+};
 export type Member = { profile_id: ProfileId; role: Role; profiles: Profile };
 export type Group = { id: GroupId; name: string; group_members: Member[] };
 
@@ -78,6 +85,7 @@ export async function cancelInvite(groupId: GroupId, email: string) {
   must(await supabase.from("group_invites").delete().eq("group_id", groupId).eq("email", email));
 }
 
+/** Managers set anyone's role; members can switch themselves between member and guardian. */
 export async function setMemberRole(groupId: GroupId, profileId: ProfileId, role: Role) {
   must(
     await supabase

@@ -1,5 +1,5 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
-import { createMemo, createResource, createSignal, For, Show } from "solid-js";
+import { createMemo, createResource, createSignal, For, Match, Show, Switch } from "solid-js";
 import {
   addChild,
   addChildToGroup,
@@ -19,6 +19,7 @@ import {
   renameGroup,
   resetJoinLink,
   sendInviteEmail,
+  roleLabels,
   setMemberRole,
   type InviteResult,
   type Member,
@@ -296,29 +297,43 @@ export default function GroupSettings() {
                   {member.profiles.display_name}
                   {member.profile_id === me().profile.id ? " (you)" : ""}
                 </span>
-                <Show
-                  when={isManager() && member.profile_id !== me().profile.id}
-                  fallback={
-                    <span class="chip">{member.role === "manager" ? "Manager" : "Member"}</span>
-                  }
-                >
-                  <span class="row">
+                <Switch fallback={<span class="chip">{roleLabels[member.role]}</span>}>
+                  <Match when={isManager() && member.profile_id !== me().profile.id}>
+                    <span class="row">
+                      <select
+                        value={member.role}
+                        onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
+                      >
+                        <option value="member">Member</option>
+                        <option value="guardian">Guardian</option>
+                        <option value="manager">Manager</option>
+                      </select>
+                      <button type="button" class="link danger" onClick={() => onRemove(member)}>
+                        Remove
+                      </button>
+                    </span>
+                  </Match>
+                  {/* Members choose for themselves whether their own list shows in this group. */}
+                  <Match when={member.profile_id === me().profile.id && member.role !== "manager"}>
                     <select
                       value={member.role}
                       onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
                     >
                       <option value="member">Member</option>
-                      <option value="manager">Manager</option>
+                      <option value="guardian">Guardian</option>
                     </select>
-                    <button type="button" class="link danger" onClick={() => onRemove(member)}>
-                      Remove
-                    </button>
-                  </span>
-                </Show>
+                  </Match>
+                </Switch>
               </li>
             )}
           </For>
         </ul>
+        <Show when={adults().some((m) => m.role === "guardian") || !isManager()}>
+          <p class="muted small">
+            A guardian is only here to look after their children. Their own list isn't shown in this
+            group.
+          </p>
+        </Show>
         <Show when={isManager() && (invites()?.length ?? 0) > 0}>
           <h3>Waiting for first sign-in</h3>
           <ul class="list">

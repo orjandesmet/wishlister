@@ -32,15 +32,29 @@ export function GroupCard(props: GroupCardProps) {
         <For each={members()}>
           {(member) => (
             <li>
-              <A class="list-row" href={`/lists/${member.profile_id}`}>
-                <span>
-                  {member.profiles.display_name}
-                  {member.profile_id === props.myProfileId ? " (you)" : ""}
-                </span>
-                <Show when={!member.profiles.account_id}>
-                  <span class="chip">child</span>
-                </Show>
-              </A>
+              {/* A guardian's own list isn't shown in this group, so there's nothing to open. */}
+              <Show
+                when={member.role !== "guardian"}
+                fallback={
+                  <div class="list-row">
+                    <span class="muted">
+                      {member.profiles.display_name}
+                      {member.profile_id === props.myProfileId ? " (you)" : ""}
+                    </span>
+                    <span class="chip">guardian</span>
+                  </div>
+                }
+              >
+                <A class="list-row" href={`/lists/${member.profile_id}`}>
+                  <span>
+                    {member.profiles.display_name}
+                    {member.profile_id === props.myProfileId ? " (you)" : ""}
+                  </span>
+                  <Show when={!member.profiles.account_id}>
+                    <span class="chip">child</span>
+                  </Show>
+                </A>
+              </Show>
             </li>
           )}
         </For>
