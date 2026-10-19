@@ -254,6 +254,11 @@ a {
   gap: 8px;
 }
 
+.item.pending {
+  border-style: dashed;
+  box-shadow: none;
+}
+
 .item-name {
   color: var(--text-strong);
   overflow-wrap: anywhere;

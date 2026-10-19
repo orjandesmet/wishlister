@@ -142,6 +142,13 @@ export const nl: Dictionary = {
     someoneBought: "Iemand heeft dit gekocht",
     iBought: "Ik heb dit gekocht",
   },
+  quickAdd: {
+    label: "Snel toevoegen",
+    placeholder: "Typ een wens en druk op Enter",
+    saving: "Opslaan…",
+    notSaved: "Nog niet opgeslagen",
+    retrying: "Opslaan mislukt. We proberen het opnieuw…",
+  },
   itemForm: {
     addTitle: "Item toevoegen",
     editTitle: "Item bewerken",

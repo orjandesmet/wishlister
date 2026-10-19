@@ -1,6 +1,7 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
 import { ItemCard, type PurchaseState } from "../components/ItemCard.tsx";
+import { QuickAdd } from "../components/QuickAdd.tsx";
 import { deleteChild } from "../lib/api/children.ts";
 import { deleteItem, getItems, type Item } from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
@@ -8,6 +9,7 @@ import { getPurchases, markBought, undoBought } from "../lib/api/purchases.ts";
 import { t } from "../lib/i18n.ts";
 import type { GroupId, ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
+import { useQuickAdd } from "../lib/quickAdd.ts";
 
 export default function WishList() {
   const params = useParams<{ profileId: ProfileId }>();
@@ -15,7 +17,14 @@ export default function WishList() {
   const navigate = useNavigate();
 
   const [profile] = createResource(() => params.profileId, getProfileDetails);
-  const [items, { refetch: refetchItems }] = createResource(() => params.profileId, getItems);
+  const [items, { refetch: refetchItems, mutate: setItems }] = createResource(
+    () => params.profileId,
+    getItems,
+  );
+  // A memo, so moving to another list switches queues (and flushes the old one).
+  const quickAdd = createMemo(() =>
+    useQuickAdd(params.profileId, (saved) => setItems((prev) => [...(prev ?? []), ...saved])),
+  );
   // Runs again whenever the items change. The database leaves out purchases on your own list.
   const [purchases, { refetch: refetchPurchases }] = createResource(
     () => items()?.map((item) => item.id),
@@ -83,7 +92,7 @@ export default function WishList() {
       <Show when={error()}>
         <p class="error">{error()}</p>
       </Show>
-      <Show when={items()?.length === 0}>
+      <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
         <p class="muted">{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>
       </Show>
       <ul class="list cards">
@@ -101,6 +110,14 @@ export default function WishList() {
           )}
         </For>
       </ul>
+      <Show when={canEdit()}>
+        <QuickAdd
+          pending={quickAdd().state().pending}
+          retrying={quickAdd().state().retrying}
+          onAdd={(name) => quickAdd().add(name)}
+          onCancel={() => quickAdd().cancel()}
+        />
+      </Show>
       <Show when={canEdit() && !isOwnList()}>
         <button type="button" class="secondary danger" onClick={onDeleteChild}>
           {t("wishlist.deleteProfile", { name: profile()?.display_name ?? "" })}

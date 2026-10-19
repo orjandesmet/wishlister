@@ -150,6 +150,13 @@ export const en = {
     someoneBought: "Someone bought this",
     iBought: "I bought this",
   },
+  quickAdd: {
+    label: "Quick add",
+    placeholder: "Type a wish and press Enter",
+    saving: "Saving…",
+    notSaved: "Not saved yet",
+    retrying: "Couldn't save. Trying again…",
+  },
   itemForm: {
     addTitle: "Add item",
     editTitle: "Edit item",

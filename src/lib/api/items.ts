@@ -83,3 +83,13 @@ export async function updateItem(itemId: ItemId, input: ItemInput) {
 export async function deleteItem(itemId: ItemId) {
   must(await supabase.from("items").delete().eq("id", itemId));
 }
+
+/** Adds several items by name in one insert, visible in all groups. Returns them in order. */
+export async function addItemsByName(profileId: ProfileId, names: string[]): Promise<Item[]> {
+  return must(
+    await supabase
+      .from("items")
+      .insert(names.map((name) => ({ profile_id: profileId, name: name.trim() })))
+      .select("id, profile_id, name, url, category, visible_in_all_groups, item_groups(group_id)"),
+  ) as Item[];
+}
