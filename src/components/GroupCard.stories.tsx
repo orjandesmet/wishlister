@@ -57,3 +57,18 @@ export const OnlyYou: Story = {
     },
   },
 };
+
+/** A parent who's only there for their child: their own list isn't shown in this group. */
+export const WithGuardian: Story = {
+  args: {
+    group: {
+      id: "group-3" as GroupId,
+      name: "Grandparents",
+      group_members: [
+        makeMember("oma", "Oma", "manager"),
+        makeMember("me", "Orjan", "guardian"),
+        makeMember("lucas", "Lucas", "member", true),
+      ],
+    },
+  },
+};

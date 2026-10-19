@@ -1,5 +1,6 @@
 import { supabase } from "../supabase.ts";
 import type { AccountId, GroupId, ProfileId } from "../ids.ts";
+import type { Role } from "./groups.ts";
 import { must } from "./must.ts";
 
 export type Profile = { id: ProfileId; display_name: string; account_id: AccountId | null };
@@ -31,6 +32,7 @@ export async function getManagedProfiles(myProfileId: ProfileId): Promise<Profil
 export type ProfileDetails = Profile & {
   /** Profile ids of the parents, for a child's profile. */
   managerIds: ProfileId[];
+  /** Groups where this list is shown: not the ones where they're a guardian. */
   groups: { id: GroupId; name: string }[];
 };
 
@@ -39,13 +41,13 @@ export async function getProfileDetails(profileId: ProfileId): Promise<ProfileDe
     await supabase
       .from("profiles")
       .select(
-        "id, display_name, account_id, profile_managers!profile_managers_profile_id_fkey(manager_profile_id), group_members(groups(id, name))",
+        "id, display_name, account_id, profile_managers!profile_managers_profile_id_fkey(manager_profile_id), group_members(role, groups(id, name))",
       )
       .eq("id", profileId)
       .single(),
   ) as unknown as Profile & {
     profile_managers: { manager_profile_id: ProfileId }[];
-    group_members: { groups: { id: GroupId; name: string } | null }[];
+    group_members: { role: Role; groups: { id: GroupId; name: string } | null }[];
   };
   return {
     id: row.id,
@@ -53,7 +55,8 @@ export async function getProfileDetails(profileId: ProfileId): Promise<ProfileDe
     account_id: row.account_id,
     managerIds: row.profile_managers.map((m) => m.manager_profile_id),
     // Only groups I'm also in come back; that's all the visibility picker needs.
-    groups: row.group_members.flatMap((m) => (m.groups ? [m.groups] : [])),
+    // A guardian's list isn't shown in that group, so it's no choice there.
+    groups: row.group_members.flatMap((m) => (m.groups && m.role !== "guardian" ? [m.groups] : [])),
   };
 }
 
