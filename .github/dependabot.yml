@@ -1,0 +1,57 @@
+# Dependabot keeps dependencies up to date with weekly PRs.
+# Minor and patch updates are grouped so they land as a few PRs instead of many;
+# major updates still get a PR of their own so breaking changes stay visible.
+version: 2
+updates:
+  - package-ecosystem: npm
+    # Dependabot uses pnpm-lock.yaml and also updates the catalog in pnpm-workspace.yaml.
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: deps
+    groups:
+      # Vite+ bundles Vite, Vitest, Oxlint and friends; vite is an alias for its core package.
+      vite-plus:
+        patterns:
+          - vite-plus
+          - vite
+          - "@voidzero-dev/*"
+          - vite-plugin-pwa
+        update-types: [minor, patch]
+      solid:
+        patterns:
+          - solid-js
+          - "@solidjs/*"
+          - "@solid-primitives/*"
+          - vite-plugin-solid
+        update-types: [minor, patch]
+      supabase:
+        patterns:
+          - "@supabase/*"
+        update-types: [minor, patch]
+      storybook:
+        patterns:
+          - storybook
+          - "@storybook/*"
+          - storybook-solidjs-vite
+        update-types: [minor, patch]
+      # Everything else (TypeScript, testing libraries, types, ...).
+      other:
+        patterns:
+          - "*"
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: ci
+    groups:
+      github-actions:
+        patterns:
+          - "*"
