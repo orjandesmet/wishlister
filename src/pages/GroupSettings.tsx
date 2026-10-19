@@ -18,6 +18,7 @@ import {
   removeMember,
   renameGroup,
   resetJoinLink,
+  sendInviteEmail,
   setMemberRole,
   type InviteResult,
   type Member,
@@ -85,17 +86,36 @@ export default function GroupSettings() {
     void run(async () => {
       const result = await inviteToGroup(params.groupId, inviteEmail());
       const email = inviteEmail().trim();
-      const notices: Record<InviteResult, string> = {
+      setInviteEmail("");
+      if (result === "invited") {
+        // No account yet: email them. The invite is saved either way, so if the
+        // email fails they still join on first sign-in and can be emailed again.
+        await emailInvite(email);
+        return;
+      }
+      const notices: Record<Exclude<InviteResult, "invited">, string> = {
         added: `${email} was added to the group.`,
-        invited: `${email} will join the group when they first sign in.`,
         already_invited: `${email} is already invited.`,
         already_member: `${email} is already in the group.`,
       };
       setNotice(notices[result]);
-      setInviteEmail("");
       await Promise.all([refetchGroup(), refetchInvites()]);
     });
   };
+
+  /** Emails a pending invite and shows them as a member, since that creates their account. */
+  async function emailInvite(email: string) {
+    try {
+      await sendInviteEmail(params.groupId, email);
+      setNotice(`${email} is in the group now. We emailed them a link to sign in.`);
+    } catch (e) {
+      setError(
+        `${email} will join when they first sign in, but the email didn't go out: ${(e as Error).message}`,
+      );
+    } finally {
+      await Promise.all([refetchGroup(), refetchInvites()]);
+    }
+  }
 
   /** Hands the link to the phone's share sheet, or copies it where there is none. */
   async function shareLink(link: string) {
@@ -305,18 +325,27 @@ export default function GroupSettings() {
               {(email) => (
                 <li class="list-row">
                   <span class="muted truncate">{email}</span>
-                  <button
-                    type="button"
-                    class="link danger"
-                    onClick={() =>
-                      run(async () => {
-                        await cancelInvite(params.groupId, email);
-                        await refetchInvites();
-                      })
-                    }
-                  >
-                    Cancel
-                  </button>
+                  <span class="row">
+                    <button
+                      type="button"
+                      class="link"
+                      onClick={() => run(() => emailInvite(email))}
+                    >
+                      Email
+                    </button>
+                    <button
+                      type="button"
+                      class="link danger"
+                      onClick={() =>
+                        run(async () => {
+                          await cancelInvite(params.groupId, email);
+                          await refetchInvites();
+                        })
+                      }
+                    >
+                      Cancel
+                    </button>
+                  </span>
                 </li>
               )}
             </For>
