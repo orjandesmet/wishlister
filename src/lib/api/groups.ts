@@ -100,3 +100,36 @@ export async function removeMember(
     await supabase.rpc("remove_from_group", { target_group: groupId, target_profile: profileId }),
   ) as "removed" | "group_deleted";
 }
+
+/** The group's invite link. Anyone signed in who opens it joins the group. Managers only. */
+export async function getJoinLink(groupId: string): Promise<string> {
+  const code = must(await supabase.rpc("group_join_code", { target_group: groupId })) as string;
+  return joinLink(code);
+}
+
+/** Makes a new invite link; links shared before stop working. Managers only. */
+export async function resetJoinLink(groupId: string): Promise<string> {
+  const code = must(
+    await supabase.rpc("reset_group_join_code", { target_group: groupId }),
+  ) as string;
+  return joinLink(code);
+}
+
+function joinLink(code: string) {
+  return `${window.location.origin}/join/${code}`;
+}
+
+export type JoinPreview = { group_id: string; group_name: string; is_member: boolean };
+
+/** The group behind an invite code, or null when the code is wrong or was reset. */
+export async function getJoinPreview(code: string): Promise<JoinPreview | null> {
+  const rows = must(
+    await supabase.rpc("group_for_join_code", { join_code: code }),
+  ) as JoinPreview[];
+  return rows[0] ?? null;
+}
+
+/** Joins the group behind an invite code and returns its id. */
+export async function joinGroup(code: string): Promise<string> {
+  return must(await supabase.rpc("join_group_by_code", { join_code: code })) as string;
+}

@@ -13,6 +13,26 @@ vp dev                       # http://localhost:5173
 vp check                     # format, lint and type check
 ```
 
+## Storybook
+
+```bash
+vp run storybook             # http://localhost:6006
+```
+
+Storybook shows components on their own, with made-up data, so you can work on
+looks without signing in or touching Supabase. It needs no `.env.local`.
+
+- `src/components/*.stories.tsx`: one file per component, one export per state
+  (bought, own list, long name…). Change the args in the Controls panel to try more.
+- `src/stories/Styles.stories.tsx`: colours, type, buttons and form fields from
+  `src/index.css` on one page. Edit a token there and every story updates live.
+
+To make a piece of a page available in Storybook, move it into `src/components/`
+as a component that only takes props (no Supabase calls), like `ItemCard`, and
+add a `.stories.tsx` file next to it. Use named exports for components
+(`export function ItemCard`): the Solid docs generator breaks on anonymous
+default exports.
+
 ## Project layout
 
 | Path                   | What it is                                                            |
@@ -20,6 +40,8 @@ vp check                     # format, lint and type check
 | `src/lib/supabase.ts`  | The Supabase client                                                   |
 | `src/lib/auth.tsx`     | `AuthProvider` and `useAuth()`: the signed-in session as a signal     |
 | `src/pages/`           | One component per screen                                              |
+| `src/components/`      | Presentational components and their Storybook stories                 |
+| `.storybook/`          | Storybook config                                                      |
 | `src/index.css`        | Theme tokens (colours, spacing) and base styles                       |
 | `supabase/migrations/` | Database schema and row-level security policies                       |
 | `netlify/functions/`   | `keepalive`: daily ping so the free Supabase project never pauses     |
