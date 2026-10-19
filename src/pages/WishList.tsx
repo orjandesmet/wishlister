@@ -5,10 +5,11 @@ import { deleteChild } from "../lib/api/children.ts";
 import { deleteItem, getItems, type Item } from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
 import { getPurchases, markBought, undoBought } from "../lib/api/purchases.ts";
+import type { GroupId, ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
 
 export default function WishList() {
-  const params = useParams<{ profileId: string }>();
+  const params = useParams<{ profileId: ProfileId }>();
   const me = useMe();
   const navigate = useNavigate();
 
@@ -32,7 +33,7 @@ export default function WishList() {
     if (buyer === undefined) return "available";
     return buyer === me().profile.id ? "mine" : "someone";
   };
-  const groupName = (id: string) => profile()?.groups.find((g) => g.id === id)?.name ?? "a group";
+  const groupName = (id: GroupId) => profile()?.groups.find((g) => g.id === id)?.name ?? "a group";
 
   async function run(action: () => Promise<void>) {
     setError(undefined);

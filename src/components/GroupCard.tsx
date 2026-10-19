@@ -1,11 +1,12 @@
 import { A } from "@solidjs/router";
 import { For, Show } from "solid-js";
 import type { Group } from "../lib/api/groups.ts";
+import type { ProfileId } from "../lib/ids.ts";
 
 export type GroupCardProps = {
   group: Group;
   /** Your own profile id, to mark "(you)" and pick Manage or Details. */
-  myProfileId: string;
+  myProfileId: ProfileId;
 };
 
 /** A group on the home page: its name and a link to each member's list. */

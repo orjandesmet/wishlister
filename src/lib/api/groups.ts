@@ -1,10 +1,11 @@
 import { supabase } from "../supabase.ts";
+import type { GroupId, ProfileId } from "../ids.ts";
 import { must } from "./must.ts";
 import type { Profile } from "./profiles.ts";
 
 export type Role = "manager" | "member";
-export type Member = { profile_id: string; role: Role; profiles: Profile };
-export type Group = { id: string; name: string; group_members: Member[] };
+export type Member = { profile_id: ProfileId; role: Role; profiles: Profile };
+export type Group = { id: GroupId; name: string; group_members: Member[] };
 
 const memberFields = "profile_id, role, profiles(id, display_name, account_id)";
 
@@ -14,7 +15,7 @@ export async function getMyGroups(): Promise<Group[]> {
   ) as unknown as Group[];
 }
 
-export async function getGroup(groupId: string): Promise<Group> {
+export async function getGroup(groupId: GroupId): Promise<Group> {
   return must(
     await supabase
       .from("groups")
@@ -24,28 +25,28 @@ export async function getGroup(groupId: string): Promise<Group> {
   ) as unknown as Group;
 }
 
-export async function createGroup(name: string): Promise<string> {
-  return must(await supabase.rpc("create_group", { group_name: name.trim() })) as string;
+export async function createGroup(name: string): Promise<GroupId> {
+  return must(await supabase.rpc("create_group", { group_name: name.trim() })) as GroupId;
 }
 
-export async function renameGroup(groupId: string, name: string) {
+export async function renameGroup(groupId: GroupId, name: string) {
   must(await supabase.from("groups").update({ name: name.trim() }).eq("id", groupId).select("id"));
 }
 
-export async function deleteGroup(groupId: string) {
+export async function deleteGroup(groupId: GroupId) {
   must(await supabase.from("groups").delete().eq("id", groupId));
 }
 
 /** "invited" means they have no account yet and join on their first sign-in. */
 export type InviteResult = "added" | "invited" | "already_invited" | "already_member";
 
-export async function inviteToGroup(groupId: string, email: string): Promise<InviteResult> {
+export async function inviteToGroup(groupId: GroupId, email: string): Promise<InviteResult> {
   return must(
     await supabase.rpc("invite_to_group", { target_group: groupId, invitee_email: email }),
   ) as InviteResult;
 }
 
-export async function getInvites(groupId: string): Promise<string[]> {
+export async function getInvites(groupId: GroupId): Promise<string[]> {
   const rows = must(
     await supabase.from("group_invites").select("email").eq("group_id", groupId).order("email"),
   );
@@ -57,7 +58,7 @@ export async function getInvites(groupId: string): Promise<string[]> {
  * account, so they move from the pending invites into the group's members.
  * Runs in a Netlify function because it needs Supabase's secret key.
  */
-export async function sendInviteEmail(groupId: string, email: string) {
+export async function sendInviteEmail(groupId: GroupId, email: string) {
   const { data } = await supabase.auth.getSession();
   const response = await fetch("/.netlify/functions/send-invite", {
     method: "POST",
@@ -73,11 +74,11 @@ export async function sendInviteEmail(groupId: string, email: string) {
   }
 }
 
-export async function cancelInvite(groupId: string, email: string) {
+export async function cancelInvite(groupId: GroupId, email: string) {
   must(await supabase.from("group_invites").delete().eq("group_id", groupId).eq("email", email));
 }
 
-export async function setMemberRole(groupId: string, profileId: string, role: Role) {
+export async function setMemberRole(groupId: GroupId, profileId: ProfileId, role: Role) {
   must(
     await supabase
       .from("group_members")
@@ -93,8 +94,8 @@ export async function setMemberRole(groupId: string, profileId: string, role: Ro
  * group go too, and the group is deleted once no one with an account is left.
  */
 export async function removeMember(
-  groupId: string,
-  profileId: string,
+  groupId: GroupId,
+  profileId: ProfileId,
 ): Promise<"removed" | "group_deleted"> {
   return must(
     await supabase.rpc("remove_from_group", { target_group: groupId, target_profile: profileId }),
@@ -102,13 +103,13 @@ export async function removeMember(
 }
 
 /** The group's invite link. Anyone signed in who opens it joins the group. Managers only. */
-export async function getJoinLink(groupId: string): Promise<string> {
+export async function getJoinLink(groupId: GroupId): Promise<string> {
   const code = must(await supabase.rpc("group_join_code", { target_group: groupId })) as string;
   return joinLink(code);
 }
 
 /** Makes a new invite link; links shared before stop working. Managers only. */
-export async function resetJoinLink(groupId: string): Promise<string> {
+export async function resetJoinLink(groupId: GroupId): Promise<string> {
   const code = must(
     await supabase.rpc("reset_group_join_code", { target_group: groupId }),
   ) as string;
@@ -119,7 +120,7 @@ function joinLink(code: string) {
   return `${window.location.origin}/join/${code}`;
 }
 
-export type JoinPreview = { group_id: string; group_name: string; is_member: boolean };
+export type JoinPreview = { group_id: GroupId; group_name: string; is_member: boolean };
 
 /** The group behind an invite code, or null when the code is wrong or was reset. */
 export async function getJoinPreview(code: string): Promise<JoinPreview | null> {
@@ -130,6 +131,6 @@ export async function getJoinPreview(code: string): Promise<JoinPreview | null> 
 }
 
 /** Joins the group behind an invite code and returns its id. */
-export async function joinGroup(code: string): Promise<string> {
-  return must(await supabase.rpc("join_group_by_code", { join_code: code })) as string;
+export async function joinGroup(code: string): Promise<GroupId> {
+  return must(await supabase.rpc("join_group_by_code", { join_code: code })) as GroupId;
 }

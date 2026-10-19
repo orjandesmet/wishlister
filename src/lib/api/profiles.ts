@@ -1,9 +1,10 @@
 import { supabase } from "../supabase.ts";
+import type { AccountId, GroupId, ProfileId } from "../ids.ts";
 import { must } from "./must.ts";
 
-export type Profile = { id: string; display_name: string; account_id: string | null };
+export type Profile = { id: ProfileId; display_name: string; account_id: AccountId | null };
 
-export async function getMyProfile(accountId: string): Promise<Profile> {
+export async function getMyProfile(accountId: AccountId): Promise<Profile> {
   return must(
     await supabase
       .from("profiles")
@@ -14,7 +15,7 @@ export async function getMyProfile(accountId: string): Promise<Profile> {
 }
 
 /** Children (profiles without an account) whose lists I manage. */
-export async function getManagedProfiles(myProfileId: string): Promise<Profile[]> {
+export async function getManagedProfiles(myProfileId: ProfileId): Promise<Profile[]> {
   const rows = must(
     await supabase
       .from("profile_managers")
@@ -29,11 +30,11 @@ export async function getManagedProfiles(myProfileId: string): Promise<Profile[]
 
 export type ProfileDetails = Profile & {
   /** Profile ids of the parents, for a child's profile. */
-  managerIds: string[];
-  groups: { id: string; name: string }[];
+  managerIds: ProfileId[];
+  groups: { id: GroupId; name: string }[];
 };
 
-export async function getProfileDetails(profileId: string): Promise<ProfileDetails> {
+export async function getProfileDetails(profileId: ProfileId): Promise<ProfileDetails> {
   const row = must(
     await supabase
       .from("profiles")
@@ -43,8 +44,8 @@ export async function getProfileDetails(profileId: string): Promise<ProfileDetai
       .eq("id", profileId)
       .single(),
   ) as unknown as Profile & {
-    profile_managers: { manager_profile_id: string }[];
-    group_members: { groups: { id: string; name: string } | null }[];
+    profile_managers: { manager_profile_id: ProfileId }[];
+    group_members: { groups: { id: GroupId; name: string } | null }[];
   };
   return {
     id: row.id,
@@ -56,7 +57,7 @@ export async function getProfileDetails(profileId: string): Promise<ProfileDetai
   };
 }
 
-export async function renameProfile(profileId: string, displayName: string) {
+export async function renameProfile(profileId: ProfileId, displayName: string) {
   must(
     await supabase
       .from("profiles")

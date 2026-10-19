@@ -2,10 +2,11 @@ import { useNavigate, useParams } from "@solidjs/router";
 import { createEffect, createResource, createSignal, For, on, Show } from "solid-js";
 import { addItem, getCategories, getItem, updateItem } from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
+import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {
-  const params = useParams<{ profileId?: string; itemId?: string }>();
+  const params = useParams<{ profileId?: ProfileId; itemId?: ItemId }>();
   const navigate = useNavigate();
 
   const [item] = createResource(() => params.itemId, getItem);
@@ -17,7 +18,7 @@ export default function ItemForm() {
   const [url, setUrl] = createSignal("");
   const [category, setCategory] = createSignal("");
   const [allGroups, setAllGroups] = createSignal(true);
-  const [groupIds, setGroupIds] = createSignal<string[]>([]);
+  const [groupIds, setGroupIds] = createSignal<GroupId[]>([]);
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
 
@@ -33,7 +34,7 @@ export default function ItemForm() {
     }),
   );
 
-  const toggleGroup = (id: string, checked: boolean) =>
+  const toggleGroup = (id: GroupId, checked: boolean) =>
     setGroupIds((ids) => (checked ? [...ids, id] : ids.filter((other) => other !== id)));
 
   async function onSubmit(event: SubmitEvent) {

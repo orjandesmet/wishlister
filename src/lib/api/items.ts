@@ -1,24 +1,25 @@
 import { supabase } from "../supabase.ts";
+import type { GroupId, ItemId, ProfileId } from "../ids.ts";
 import { must } from "./must.ts";
 
 export type Item = {
-  id: string;
-  profile_id: string;
+  id: ItemId;
+  profile_id: ProfileId;
   name: string;
   url: string | null;
   category: string | null;
   visible_in_all_groups: boolean;
-  item_groups: { group_id: string }[];
+  item_groups: { group_id: GroupId }[];
 };
 export type ItemInput = {
   name: string;
   url: string | null;
   category: string | null;
   visible_in_all_groups: boolean;
-  groupIds: string[];
+  groupIds: GroupId[];
 };
 
-export async function getItems(profileId: string): Promise<Item[]> {
+export async function getItems(profileId: ProfileId): Promise<Item[]> {
   return must(
     await supabase
       .from("items")
@@ -28,7 +29,7 @@ export async function getItems(profileId: string): Promise<Item[]> {
   ) as Item[];
 }
 
-export async function getItem(itemId: string): Promise<Item> {
+export async function getItem(itemId: ItemId): Promise<Item> {
   return must(
     await supabase
       .from("items")
@@ -44,7 +45,7 @@ export async function getCategories(): Promise<string[]> {
   return [...new Set(rows.map((row) => (row.category as string).trim()))].sort();
 }
 
-async function setItemGroups(itemId: string, input: ItemInput) {
+async function setItemGroups(itemId: ItemId, input: ItemInput) {
   must(await supabase.from("item_groups").delete().eq("item_id", itemId));
   if (input.visible_in_all_groups || input.groupIds.length === 0) return;
   must(
@@ -63,22 +64,22 @@ function itemColumns(input: ItemInput) {
   };
 }
 
-export async function addItem(profileId: string, input: ItemInput) {
+export async function addItem(profileId: ProfileId, input: ItemInput) {
   const { id } = must(
     await supabase
       .from("items")
       .insert({ profile_id: profileId, ...itemColumns(input) })
       .select("id")
       .single(),
-  ) as { id: string };
+  ) as { id: ItemId };
   await setItemGroups(id, input);
 }
 
-export async function updateItem(itemId: string, input: ItemInput) {
+export async function updateItem(itemId: ItemId, input: ItemInput) {
   must(await supabase.from("items").update(itemColumns(input)).eq("id", itemId).select("id"));
   await setItemGroups(itemId, input);
 }
 
-export async function deleteItem(itemId: string) {
+export async function deleteItem(itemId: ItemId) {
   must(await supabase.from("items").delete().eq("id", itemId));
 }
