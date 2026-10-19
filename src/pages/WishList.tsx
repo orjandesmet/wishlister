@@ -5,6 +5,7 @@ import { deleteChild } from "../lib/api/children.ts";
 import { deleteItem, getItems, type Item } from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
 import { getPurchases, markBought, undoBought } from "../lib/api/purchases.ts";
+import { t } from "../lib/i18n.ts";
 import type { GroupId, ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
 
@@ -33,7 +34,8 @@ export default function WishList() {
     if (buyer === undefined) return "available";
     return buyer === me().profile.id ? "mine" : "someone";
   };
-  const groupName = (id: GroupId) => profile()?.groups.find((g) => g.id === id)?.name ?? "a group";
+  const groupName = (id: GroupId) =>
+    profile()?.groups.find((g) => g.id === id)?.name ?? t("wishlist.aGroup");
 
   async function run(action: () => Promise<void>) {
     setError(undefined);
@@ -46,15 +48,14 @@ export default function WishList() {
 
   const onDelete = (item: Item) =>
     run(async () => {
-      if (!confirm(`Remove "${item.name}" from the list?`)) return;
+      if (!confirm(t("wishlist.confirmRemoveItem", { item: item.name }))) return;
       await deleteItem(item.id);
       await refetchItems();
     });
   const onDeleteChild = () =>
     run(async () => {
       const name = profile()!.display_name;
-      if (!confirm(`Delete ${name}'s profile and wishlist for everyone? This can't be undone.`))
-        return;
+      if (!confirm(t("child.confirmDelete", { name }))) return;
       await deleteChild(params.profileId);
       me().refetchManaged();
       navigate("/mine", { replace: true });
@@ -65,23 +66,25 @@ export default function WishList() {
   return (
     <>
       <h1>
-        <Show when={profile()} fallback="Wishlist">
-          {(p) => (isOwnList() ? "My wishlist" : `${p().display_name}'s wishlist`)}
+        <Show when={profile()} fallback={t("wishlist.fallbackTitle")}>
+          {(p) =>
+            isOwnList() ? t("wishlist.mine") : t("wishlist.theirs", { name: p().display_name })
+          }
         </Show>
       </h1>
       <Show when={isOwnList() && !me().managed()?.length}>
         <A class="link" href="/mine">
-          Your name and sign out
+          {t("wishlist.accountLink")}
         </A>
       </Show>
       <Show when={profile.error || items.error}>
-        <p class="error">This list isn't available. It may not be shared with you.</p>
+        <p class="error">{t("wishlist.unavailable")}</p>
       </Show>
       <Show when={error()}>
         <p class="error">{error()}</p>
       </Show>
       <Show when={items()?.length === 0}>
-        <p class="muted">{canEdit() ? "Nothing on this list yet." : "This list is still empty."}</p>
+        <p class="muted">{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>
       </Show>
       <ul class="list cards">
         <For each={items()}>
@@ -100,12 +103,12 @@ export default function WishList() {
       </ul>
       <Show when={canEdit() && !isOwnList()}>
         <button type="button" class="secondary danger" onClick={onDeleteChild}>
-          Delete {profile()?.display_name}'s profile
+          {t("wishlist.deleteProfile", { name: profile()?.display_name ?? "" })}
         </button>
       </Show>
       <Show when={canEdit()}>
         <A class="button fab" href={`/lists/${params.profileId}/items/new`}>
-          + Add item
+          {t("wishlist.addItem")}
         </A>
       </Show>
     </>

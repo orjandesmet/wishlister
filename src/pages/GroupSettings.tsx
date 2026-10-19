@@ -19,11 +19,11 @@ import {
   renameGroup,
   resetJoinLink,
   sendInviteEmail,
-  roleLabels,
   setMemberRole,
   type InviteResult,
   type Member,
 } from "../lib/api/groups.ts";
+import { compareNames, formatList, t } from "../lib/i18n.ts";
 import type { GroupId, ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
 
@@ -35,7 +35,7 @@ export default function GroupSettings() {
   const [group, { refetch: refetchGroup }] = createResource(() => params.groupId, getGroup);
   const members = createMemo(() =>
     [...(group()?.group_members ?? [])].sort((a, b) =>
-      a.profiles.display_name.localeCompare(b.profiles.display_name),
+      compareNames(a.profiles.display_name, b.profiles.display_name),
     ),
   );
   const adults = () => members().filter((m) => m.profiles.account_id);
@@ -52,7 +52,7 @@ export default function GroupSettings() {
     getParents,
   );
   const nameOf = (profileId: ProfileId) =>
-    members().find((m) => m.profile_id === profileId)?.profiles.display_name ?? "someone";
+    members().find((m) => m.profile_id === profileId)?.profiles.display_name ?? t("common.someone");
   // My children who aren't in this group yet.
   const myOtherChildren = () =>
     (me().managed() ?? []).filter((c) => !children().some((m) => m.profile_id === c.id));
@@ -79,7 +79,7 @@ export default function GroupSettings() {
     void run(async () => {
       await renameGroup(params.groupId, groupName() ?? group()!.name);
       await refetchGroup();
-      setNotice("Group renamed.");
+      setNotice(t("group.renamed"));
     });
   };
 
@@ -96,9 +96,9 @@ export default function GroupSettings() {
         return;
       }
       const notices: Record<Exclude<InviteResult, "invited">, string> = {
-        added: `${email} was added to the group.`,
-        already_invited: `${email} is already invited.`,
-        already_member: `${email} is already in the group.`,
+        added: t("group.added", { email }),
+        already_invited: t("group.alreadyInvited", { email }),
+        already_member: t("group.alreadyMember", { email }),
       };
       setNotice(notices[result]);
       await Promise.all([refetchGroup(), refetchInvites()]);
@@ -109,11 +109,9 @@ export default function GroupSettings() {
   async function emailInvite(email: string) {
     try {
       await sendInviteEmail(params.groupId, email);
-      setNotice(`${email} is in the group now. We emailed them a link to sign in.`);
+      setNotice(t("group.inviteSent", { email }));
     } catch (e) {
-      setError(
-        `${email} will join when they first sign in, but the email didn't go out: ${(e as Error).message}`,
-      );
+      setError(t("group.inviteEmailFailed", { email, message: (e as Error).message }));
     } finally {
       await Promise.all([refetchGroup(), refetchInvites()]);
     }
@@ -124,14 +122,14 @@ export default function GroupSettings() {
     const name = group()!.name;
     if (navigator.share) {
       try {
-        await navigator.share({ title: `Join ${name} on Wishlister`, url: link });
+        await navigator.share({ title: t("group.shareTitle", { group: name }), url: link });
       } catch (e) {
         // Closing the share sheet isn't an error.
         if ((e as Error).name !== "AbortError") throw e;
       }
     } else {
       await navigator.clipboard.writeText(link);
-      setNotice("Invite link copied. Anyone who opens it can join the group.");
+      setNotice(t("group.linkCopied"));
     }
   }
 
@@ -139,9 +137,9 @@ export default function GroupSettings() {
 
   const onResetLink = () =>
     run(async () => {
-      if (!confirm("Make a new invite link? Links you shared before will stop working.")) return;
+      if (!confirm(t("group.confirmNewLink"))) return;
       await resetJoinLink(params.groupId);
-      setNotice("New invite link made. Old links don't work anymore.");
+      setNotice(t("group.newLinkMade"));
     });
 
   const onAddChild = (event: SubmitEvent) => {
@@ -151,8 +149,8 @@ export default function GroupSettings() {
       await addChild(params.groupId, childName(), parent);
       setNotice(
         parent === me().profile.id
-          ? `Added ${childName()}. You look after their list.`
-          : `Added ${childName()}. ${nameOf(parent)} looks after their list.`,
+          ? t("group.childAddedByMe", { child: childName() })
+          : t("group.childAdded", { child: childName(), parent: nameOf(parent) }),
       );
       setChildName("");
       setChildParent(undefined);
@@ -190,18 +188,16 @@ export default function GroupSettings() {
       const isAdult = !!member.profiles.account_id;
       const lines = [
         leaving
-          ? `Leave ${groupName}?`
-          : `Remove ${member.profiles.display_name} from ${groupName}?`,
+          ? t("group.confirmLeave", { group: groupName })
+          : t("group.confirmRemove", { name: member.profiles.display_name, group: groupName }),
       ];
       if (isAdult) {
         const leftBehind = childrenLeftBehind(member).map((c) => c.profiles.display_name);
         if (leftBehind.length > 0) {
-          lines.push(
-            `${leftBehind.join(", ")} will have no parent left in this group, so they'll be removed from it too.`,
-          );
+          lines.push(t("group.childrenLeftBehind", { names: formatList(leftBehind) }));
         }
         if (adults().length === 1) {
-          lines.push(`No one else is left, so ${groupName} will be deleted.`);
+          lines.push(t("group.groupWillBeDeleted", { group: groupName }));
         }
       }
       if (!confirm(lines.join("\n\n"))) return;
@@ -213,7 +209,12 @@ export default function GroupSettings() {
   const onRemoveParent = (child: Member, parentProfileId: ProfileId) =>
     run(async () => {
       const childName = child.profiles.display_name;
-      if (!confirm(`Remove ${nameOf(parentProfileId)} as ${childName}'s parent?`)) return;
+      if (
+        !confirm(
+          t("group.confirmRemoveParent", { parent: nameOf(parentProfileId), child: childName }),
+        )
+      )
+        return;
       await removeParent(child.profile_id, parentProfileId);
       await refetchParents();
       me().refetchManaged();
@@ -222,10 +223,7 @@ export default function GroupSettings() {
   const onDeleteChild = (child: Member) =>
     run(async () => {
       const childName = child.profiles.display_name;
-      if (
-        !confirm(`Delete ${childName}'s profile and wishlist for everyone? This can't be undone.`)
-      )
-        return;
+      if (!confirm(t("child.confirmDelete", { name: childName }))) return;
       await deleteChild(child.profile_id);
       await refetchGroup();
       me().refetchManaged();
@@ -240,7 +238,7 @@ export default function GroupSettings() {
 
   const onDeleteGroup = () =>
     run(async () => {
-      if (!confirm(`Delete ${group()!.name} for everyone? Lists and items are kept.`)) return;
+      if (!confirm(t("group.confirmDeleteGroup", { group: group()!.name }))) return;
       await deleteGroup(params.groupId);
       navigate("/", { replace: true });
     });
@@ -274,11 +272,11 @@ export default function GroupSettings() {
   return (
     <>
       <A class="link" href="/">
-        ‹ Groups
+        {t("group.back")}
       </A>
-      <h1>{group()?.name ?? "Group"}</h1>
+      <h1>{group()?.name ?? t("group.fallbackTitle")}</h1>
       <Show when={group.error}>
-        <p class="error">This group isn't available.</p>
+        <p class="error">{t("group.unavailable")}</p>
       </Show>
       <Show when={notice()}>
         <p class="notice">{notice()}</p>
@@ -288,28 +286,28 @@ export default function GroupSettings() {
       </Show>
 
       <section class="card">
-        <h2>Members</h2>
+        <h2>{t("group.members")}</h2>
         <ul class="list">
           <For each={adults()}>
             {(member) => (
               <li class="list-row">
                 <span>
                   {member.profiles.display_name}
-                  {member.profile_id === me().profile.id ? " (you)" : ""}
+                  {member.profile_id === me().profile.id ? t("common.you") : ""}
                 </span>
-                <Switch fallback={<span class="chip">{roleLabels[member.role]}</span>}>
+                <Switch fallback={<span class="chip">{t(`roles.${member.role}`)}</span>}>
                   <Match when={isManager() && member.profile_id !== me().profile.id}>
                     <span class="row">
                       <select
                         value={member.role}
                         onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
                       >
-                        <option value="member">Member</option>
-                        <option value="guardian">Guardian</option>
-                        <option value="manager">Manager</option>
+                        <option value="member">{t("roles.member")}</option>
+                        <option value="guardian">{t("roles.guardian")}</option>
+                        <option value="manager">{t("roles.manager")}</option>
                       </select>
                       <button type="button" class="link danger" onClick={() => onRemove(member)}>
-                        Remove
+                        {t("common.remove")}
                       </button>
                     </span>
                   </Match>
@@ -319,8 +317,8 @@ export default function GroupSettings() {
                       value={member.role}
                       onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
                     >
-                      <option value="member">Member</option>
-                      <option value="guardian">Guardian</option>
+                      <option value="member">{t("roles.member")}</option>
+                      <option value="guardian">{t("roles.guardian")}</option>
                     </select>
                   </Match>
                 </Switch>
@@ -329,13 +327,10 @@ export default function GroupSettings() {
           </For>
         </ul>
         <Show when={adults().some((m) => m.role === "guardian") || !isManager()}>
-          <p class="muted small">
-            A guardian is only here to look after their children. Their own list isn't shown in this
-            group.
-          </p>
+          <p class="muted small">{t("group.guardianHelp")}</p>
         </Show>
         <Show when={isManager() && (invites()?.length ?? 0) > 0}>
-          <h3>Waiting for first sign-in</h3>
+          <h3>{t("group.pendingInvites")}</h3>
           <ul class="list">
             <For each={invites()}>
               {(email) => (
@@ -347,7 +342,7 @@ export default function GroupSettings() {
                       class="link"
                       onClick={() => run(() => emailInvite(email))}
                     >
-                      Email
+                      {t("group.emailInvite")}
                     </button>
                     <button
                       type="button"
@@ -359,7 +354,7 @@ export default function GroupSettings() {
                         })
                       }
                     >
-                      Cancel
+                      {t("common.cancel")}
                     </button>
                   </span>
                 </li>
@@ -370,7 +365,7 @@ export default function GroupSettings() {
         <Show when={isManager()}>
           <form onSubmit={onInvite}>
             <label>
-              Invite by email
+              {t("group.inviteByEmail")}
               <input
                 type="email"
                 required
@@ -378,28 +373,26 @@ export default function GroupSettings() {
                 onInput={(e) => setInviteEmail(e.currentTarget.value)}
               />
             </label>
-            <button type="submit">Invite</button>
+            <button type="submit">{t("group.invite")}</button>
           </form>
-          <h3>Invite link</h3>
-          <p class="muted small">
-            Anyone with the link can join, whatever email they sign in with.
-          </p>
+          <h3>{t("group.inviteLink")}</h3>
+          <p class="muted small">{t("group.inviteLinkHelp")}</p>
           <div class="row">
             <button type="button" onClick={onShareLink}>
-              Share invite link
+              {t("group.shareLink")}
             </button>
             <button type="button" class="secondary" onClick={onResetLink}>
-              New link
+              {t("group.newLink")}
             </button>
           </div>
         </Show>
       </section>
 
       <section class="card">
-        <h2>Children</h2>
-        <p class="muted small">Children don't sign in. Their parents look after their list.</p>
+        <h2>{t("group.children")}</h2>
+        <p class="muted small">{t("group.childrenHelp")}</p>
         <ul class="list">
-          <For each={children()} fallback={<li class="muted">No children in this group.</li>}>
+          <For each={children()} fallback={<li class="muted">{t("group.noChildren")}</li>}>
             {(child) => {
               const childParents = () => parents()?.get(child.profile_id) ?? [];
               const iAmParent = () => childParents().includes(me().profile.id);
@@ -412,7 +405,7 @@ export default function GroupSettings() {
                     <span class="row">
                       <Show when={isManager() || iAmParent()}>
                         <button type="button" class="link danger" onClick={() => onRemove(child)}>
-                          Remove
+                          {t("common.remove")}
                         </button>
                       </Show>
                       <Show when={iAmParent()}>
@@ -421,14 +414,14 @@ export default function GroupSettings() {
                           class="link danger"
                           onClick={() => onDeleteChild(child)}
                         >
-                          Delete
+                          {t("common.delete")}
                         </button>
                       </Show>
                     </span>
                   </div>
                   <p class="muted small">
-                    Parents:{" "}
-                    <For each={childParents()} fallback="nobody in this group">
+                    {t("group.parents")}{" "}
+                    <For each={childParents()} fallback={t("group.noParents")}>
                       {(parentId, i) => (
                         <>
                           {i() > 0 ? ", " : ""}
@@ -438,7 +431,7 @@ export default function GroupSettings() {
                             <button
                               type="button"
                               class="link danger"
-                              aria-label={`Remove ${nameOf(parentId)} as parent`}
+                              aria-label={t("group.removeParentLabel", { name: nameOf(parentId) })}
                               onClick={() => onRemoveParent(child, parentId)}
                             >
                               ×
@@ -452,7 +445,7 @@ export default function GroupSettings() {
                     <select
                       onChange={(e) => onAddParent(child, e.currentTarget.value as ProfileId)}
                     >
-                      <option value="">Add a parent…</option>
+                      <option value="">{t("group.addParent")}</option>
                       <For each={otherAdults()}>
                         {(adult) => (
                           <option value={adult.profile_id}>{adult.profiles.display_name}</option>
@@ -467,7 +460,7 @@ export default function GroupSettings() {
         </ul>
         <Show when={myOtherChildren().length > 0}>
           <select onChange={(e) => onAddMyChild(e.currentTarget.value as ProfileId)}>
-            <option value="">Add one of your children…</option>
+            <option value="">{t("group.addMyChild")}</option>
             <For each={myOtherChildren()}>
               {(child) => <option value={child.id}>{child.display_name}</option>}
             </For>
@@ -476,16 +469,16 @@ export default function GroupSettings() {
         <Show when={isManager()}>
           <form onSubmit={onAddChild}>
             <label>
-              Add a new child
+              {t("group.addNewChild")}
               <input
                 required
-                placeholder="Name"
+                placeholder={t("group.childName")}
                 value={childName()}
                 onInput={(e) => setChildName(e.currentTarget.value)}
               />
             </label>
             <label>
-              Parent
+              {t("group.parent")}
               <select
                 value={childParent() ?? me().profile.id}
                 onChange={(e) => setChildParent(e.currentTarget.value as ProfileId)}
@@ -494,13 +487,13 @@ export default function GroupSettings() {
                   {(adult) => (
                     <option value={adult.profile_id}>
                       {adult.profiles.display_name}
-                      {adult.profile_id === me().profile.id ? " (you)" : ""}
+                      {adult.profile_id === me().profile.id ? t("common.you") : ""}
                     </option>
                   )}
                 </For>
               </select>
             </label>
-            <button type="submit">Add child</button>
+            <button type="submit">{t("group.addChild")}</button>
           </form>
         </Show>
       </section>
@@ -508,14 +501,14 @@ export default function GroupSettings() {
       <Show when={isManager()}>
         <form class="card" onSubmit={onRename}>
           <label>
-            Group name
+            {t("group.groupName")}
             <input
               required
               value={groupName() ?? group()?.name ?? ""}
               onInput={(e) => setGroupName(e.currentTarget.value)}
             />
           </label>
-          <button type="submit">Rename</button>
+          <button type="submit">{t("group.rename")}</button>
         </form>
       </Show>
 
@@ -526,19 +519,19 @@ export default function GroupSettings() {
               when={handingOver()}
               fallback={
                 <button type="button" class="secondary" onClick={() => onLeave(mine())}>
-                  Leave group
+                  {t("group.leave")}
                 </button>
               }
             >
               <div class="card">
                 <label>
-                  You're the only manager. Who should manage {group()?.name} after you leave?
+                  {t("group.chooseSuccessor", { group: group()?.name ?? "" })}
                   <select
                     value={successor() ?? ""}
                     onChange={(e) => setSuccessor(e.currentTarget.value as ProfileId)}
                   >
                     <option value="" disabled>
-                      Choose a member…
+                      {t("group.chooseMember")}
                     </option>
                     <For each={otherAdultsInGroup()}>
                       {(adult) => (
@@ -552,16 +545,16 @@ export default function GroupSettings() {
                   disabled={!successor()}
                   onClick={() => onHandOverAndLeave(mine())}
                 >
-                  Make manager and leave
+                  {t("group.handOverAndLeave")}
                 </button>
                 <button type="button" class="secondary" onClick={() => setHandingOver(false)}>
-                  Stay in the group
+                  {t("group.stay")}
                 </button>
               </div>
             </Show>
             <Show when={isManager()}>
               <button type="button" class="secondary danger" onClick={onDeleteGroup}>
-                Delete group
+                {t("group.deleteGroup")}
               </button>
             </Show>
           </div>

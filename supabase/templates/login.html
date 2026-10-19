@@ -1,0 +1,9 @@
+{{ if eq .Data.locale "nl" }}
+<h2>Aanmelden bij Wishlister</h2>
+<p>Je code is <strong>{{ .Token }}</strong></p>
+<p>Of <a href="{{ .ConfirmationURL }}">tik hier om je aan te melden</a>.</p>
+{{ else }}
+<h2>Sign in to Wishlister</h2>
+<p>Your code is <strong>{{ .Token }}</strong></p>
+<p>Or <a href="{{ .ConfirmationURL }}">tap here to sign in</a>.</p>
+{{ end }}

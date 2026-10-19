@@ -2,6 +2,8 @@ import { A, Navigate, Route, Router, useLocation } from "@solidjs/router";
 import { Show, type ParentComponent } from "solid-js";
 import { InstallBanner } from "./components/InstallBanner.tsx";
 import { AuthProvider, useAuth } from "./lib/auth.tsx";
+import { syncLocaleWithAccount } from "./lib/accountLocale.ts";
+import { t } from "./lib/i18n.ts";
 import { dismiss, install, installOffer } from "./lib/install.ts";
 import { MeProvider, useMe } from "./lib/me.tsx";
 import GroupSettings from "./pages/GroupSettings.tsx";
@@ -19,10 +21,13 @@ function Tabs() {
   return (
     <nav class="tabs">
       <A href="/" end>
-        Groups
+        {t("nav.groups")}
       </A>
-      <Show when={hasChildren()} fallback={<A href={`/lists/${me().profile.id}`}>My list</A>}>
-        <A href="/mine">My lists</A>
+      <Show
+        when={hasChildren()}
+        fallback={<A href={`/lists/${me().profile.id}`}>{t("nav.myList")}</A>}
+      >
+        <A href="/mine">{t("nav.myLists")}</A>
       </Show>
     </nav>
   );
@@ -35,7 +40,7 @@ const SignedIn: ParentComponent = (props) => {
   // Remember where they were going (an invite link, say) to come back after signing in.
   const login = () => `/login?next=${encodeURIComponent(location.pathname)}`;
   return (
-    <Show when={!loading()} fallback={<p class="center muted">Loading…</p>}>
+    <Show when={!loading()} fallback={<p class="center muted">{t("common.loading")}</p>}>
       <Show when={session()} fallback={<Navigate href={login()} />}>
         <MeProvider>
           <main class="page">{props.children}</main>
@@ -45,6 +50,12 @@ const SignedIn: ParentComponent = (props) => {
     </Show>
   );
 };
+
+/** Follows the language saved on the account once someone signs in. */
+function LocaleSync() {
+  syncLocaleWithAccount(useAuth().session);
+  return null;
+}
 
 /** Shown above every page, signed in or not, until it's dismissed or the app is installed. */
 function InstallOffer() {
@@ -62,6 +73,7 @@ function App() {
     <Router
       root={(props) => (
         <AuthProvider>
+          <LocaleSync />
           <InstallOffer />
           {props.children}
         </AuthProvider>

@@ -55,9 +55,17 @@ export default async (request: Request) => {
 
   const groupName = (invite.groups as unknown as { name: string } | null)?.name ?? "a group";
   const admin = createClient(url, secretKey, { auth: { persistSession: false } });
+  // The new account starts in the inviter's language: the email is written in it,
+  // and the app opens in it. They can switch on their account page.
+  const locale = user.user.user_metadata.locale === "nl" ? "nl" : "en";
   const { error } = await admin.auth.admin.inviteUserByEmail(normalized, {
-    // Available in the email template as {{ .Data.group_name }} and {{ .Data.invited_by }}.
-    data: { group_name: groupName, invited_by: inviter?.display_name ?? "Someone" },
+    // Available in the email template as {{ .Data.group_name }}, {{ .Data.invited_by }}
+    // and {{ .Data.locale }}.
+    data: {
+      group_name: groupName,
+      invited_by: inviter?.display_name ?? (locale === "nl" ? "Iemand" : "Someone"),
+      locale,
+    },
     redirectTo: new URL(request.url).origin,
   });
   if (error) return message(502, error.message);

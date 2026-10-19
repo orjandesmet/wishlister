@@ -1,6 +1,7 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
 import { createResource, createSignal, Show } from "solid-js";
 import { getJoinPreview, joinGroup } from "../lib/api/groups.ts";
+import { t } from "../lib/i18n.ts";
 
 /** Opened from a group's invite link: shows which group it is and lets you join. */
 export default function Join() {
@@ -24,14 +25,14 @@ export default function Join() {
 
   return (
     <>
-      <h1>Join a group</h1>
+      <h1>{t("join.title")}</h1>
       <Show when={preview.error}>
-        <p class="error">Couldn't open this invite: {preview.error.message}</p>
+        <p class="error">{t("join.openFailed", { message: preview.error.message })}</p>
       </Show>
       <Show when={preview() === null}>
-        <p class="muted">This invite link doesn't work anymore. Ask for a new one.</p>
+        <p class="muted">{t("join.expired")}</p>
         <A class="link" href="/">
-          Go to my groups
+          {t("join.toGroups")}
         </A>
       </Show>
       <Show when={preview()}>
@@ -41,19 +42,16 @@ export default function Join() {
               when={!group().is_member}
               fallback={
                 <>
-                  <p>You're already in {group().group_name}.</p>
+                  <p>{t("join.alreadyIn", { group: group().group_name })}</p>
                   <A class="link" href={`/groups/${group().group_id}`}>
-                    Open {group().group_name}
+                    {t("join.open", { group: group().group_name })}
                   </A>
                 </>
               }
             >
-              <p>
-                You've been invited to <strong>{group().group_name}</strong>. Join to see everyone's
-                wishlists and share yours.
-              </p>
+              <p>{t("join.invited", { group: group().group_name })}</p>
               <button type="button" disabled={busy()} onClick={onJoin}>
-                {busy() ? "Joining…" : `Join ${group().group_name}`}
+                {busy() ? t("join.joining") : t("join.join", { group: group().group_name })}
               </button>
             </Show>
             <Show when={error()}>
