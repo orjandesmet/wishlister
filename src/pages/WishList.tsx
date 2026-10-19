@@ -1,5 +1,6 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
-import { createMemo, createResource, createSignal, For, Match, Show, Switch } from "solid-js";
+import { createMemo, createResource, createSignal, For, Show } from "solid-js";
+import { ItemCard, type PurchaseState } from "../components/ItemCard.tsx";
 import { deleteChild } from "../lib/api/children.ts";
 import { deleteItem, getItems, type Item } from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
@@ -25,6 +26,12 @@ export default function WishList() {
   const boughtBy = createMemo(
     () => new Map((purchases() ?? []).map((p) => [p.item_id, p.bought_by] as const)),
   );
+  const purchase = (item: Item): PurchaseState => {
+    if (isOwnList() || !purchases()) return "hidden";
+    const buyer = boughtBy().get(item.id);
+    if (buyer === undefined) return "available";
+    return buyer === me().profile.id ? "mine" : "someone";
+  };
   const groupName = (id: string) => profile()?.groups.find((g) => g.id === id)?.name ?? "a group";
 
   async function run(action: () => Promise<void>) {
@@ -78,57 +85,15 @@ export default function WishList() {
       <ul class="list cards">
         <For each={items()}>
           {(item) => (
-            <li class="card item">
-              <div class="row">
-                <strong class="item-name">{item.name}</strong>
-                <Show when={item.category}>
-                  <span class="chip">{item.category}</span>
-                </Show>
-              </div>
-              <Show when={item.url}>
-                {(url) => (
-                  <a class="link truncate" href={url()} target="_blank" rel="noopener noreferrer">
-                    {url()}
-                  </a>
-                )}
-              </Show>
-              <Show when={canEdit() && !item.visible_in_all_groups}>
-                <p class="muted small">
-                  Only visible in{" "}
-                  {item.item_groups.map((g) => groupName(g.group_id)).join(", ") || "no groups"}
-                </p>
-              </Show>
-              <Show when={!isOwnList()}>
-                <Switch>
-                  <Match when={boughtBy().get(item.id) === me().profile.id}>
-                    <div class="row">
-                      <span class="bought">You bought this</span>
-                      <button type="button" class="secondary small" onClick={() => onUndo(item)}>
-                        Undo
-                      </button>
-                    </div>
-                  </Match>
-                  <Match when={boughtBy().has(item.id)}>
-                    <span class="bought">Someone bought this</span>
-                  </Match>
-                  <Match when={purchases()}>
-                    <button type="button" onClick={() => onBuy(item)}>
-                      I bought this
-                    </button>
-                  </Match>
-                </Switch>
-              </Show>
-              <Show when={canEdit()}>
-                <div class="row">
-                  <A class="link" href={`/items/${item.id}/edit`}>
-                    Edit
-                  </A>
-                  <button type="button" class="link danger" onClick={() => onDelete(item)}>
-                    Remove
-                  </button>
-                </div>
-              </Show>
-            </li>
+            <ItemCard
+              item={item}
+              purchase={purchase(item)}
+              canEdit={canEdit()}
+              groupNames={item.item_groups.map((g) => groupName(g.group_id))}
+              onBuy={() => onBuy(item)}
+              onUndo={() => onUndo(item)}
+              onRemove={() => onDelete(item)}
+            />
           )}
         </For>
       </ul>
