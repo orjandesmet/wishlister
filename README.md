@@ -1,3 +1,5 @@
+[![Netlify Status](https://api.netlify.com/api/v1/badges/df086ce0-22b8-4bb9-9b0b-0ddf951b099e/deploy-status)](https://app.netlify.com/projects/orjan-wishlister/deploys)
+
 # Wishlister
 
 A mobile-first web app for sharing wishlists with family and friends.
