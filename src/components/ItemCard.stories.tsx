@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { fn } from "storybook/test";
+import type { ItemId, ProfileId } from "../lib/ids.ts";
 import { ItemCard } from "./ItemCard.tsx";
 
 const meta = {
@@ -15,8 +16,8 @@ const meta = {
   ],
   args: {
     item: {
-      id: "item-1",
-      profile_id: "profile-1",
+      id: "item-1" as ItemId,
+      profile_id: "profile-1" as ProfileId,
       name: "LEGO Botanical bonsai tree",
       url: "https://www.lego.com/en-be/product/bonsai-tree-10281",
       category: "Toys",

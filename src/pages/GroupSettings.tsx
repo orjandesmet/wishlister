@@ -23,10 +23,11 @@ import {
   type InviteResult,
   type Member,
 } from "../lib/api/groups.ts";
+import type { GroupId, ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
 
 export default function GroupSettings() {
-  const params = useParams<{ groupId: string }>();
+  const params = useParams<{ groupId: GroupId }>();
   const navigate = useNavigate();
   const me = useMe();
 
@@ -49,7 +50,7 @@ export default function GroupSettings() {
     () => children().map((c) => c.profile_id),
     getParents,
   );
-  const nameOf = (profileId: string) =>
+  const nameOf = (profileId: ProfileId) =>
     members().find((m) => m.profile_id === profileId)?.profiles.display_name ?? "someone";
   // My children who aren't in this group yet.
   const myOtherChildren = () =>
@@ -58,7 +59,7 @@ export default function GroupSettings() {
   const [groupName, setGroupName] = createSignal<string>();
   const [inviteEmail, setInviteEmail] = createSignal("");
   const [childName, setChildName] = createSignal("");
-  const [childParent, setChildParent] = createSignal<string>();
+  const [childParent, setChildParent] = createSignal<ProfileId>();
   const [notice, setNotice] = createSignal<string>();
   const [error, setError] = createSignal<string>();
 
@@ -159,7 +160,7 @@ export default function GroupSettings() {
     });
   };
 
-  const onAddMyChild = (childProfileId: string) =>
+  const onAddMyChild = (childProfileId: ProfileId) =>
     run(async () => {
       if (!childProfileId) return;
       await addChildToGroup(params.groupId, childProfileId);
@@ -208,7 +209,7 @@ export default function GroupSettings() {
       else await Promise.all([refetchGroup(), refetchParents()]);
     });
 
-  const onRemoveParent = (child: Member, parentProfileId: string) =>
+  const onRemoveParent = (child: Member, parentProfileId: ProfileId) =>
     run(async () => {
       const childName = child.profiles.display_name;
       if (!confirm(`Remove ${nameOf(parentProfileId)} as ${childName}'s parent?`)) return;
@@ -229,7 +230,7 @@ export default function GroupSettings() {
       me().refetchManaged();
     });
 
-  const onAddParent = (child: Member, parentProfileId: string) =>
+  const onAddParent = (child: Member, parentProfileId: ProfileId) =>
     run(async () => {
       if (!parentProfileId) return;
       await addParent(child.profile_id, parentProfileId);
@@ -252,7 +253,7 @@ export default function GroupSettings() {
     !otherAdultsInGroup().some((a) => a.role === "manager") &&
     otherAdultsInGroup().length > 0;
   const [handingOver, setHandingOver] = createSignal(false);
-  const [successor, setSuccessor] = createSignal<string>();
+  const [successor, setSuccessor] = createSignal<ProfileId>();
 
   const onLeave = (mine: Member) => {
     if (mustHandOver()) setHandingOver(true);
@@ -433,7 +434,9 @@ export default function GroupSettings() {
                     </For>
                   </p>
                   <Show when={iAmParent() && otherAdults().length > 0}>
-                    <select onChange={(e) => onAddParent(child, e.currentTarget.value)}>
+                    <select
+                      onChange={(e) => onAddParent(child, e.currentTarget.value as ProfileId)}
+                    >
                       <option value="">Add a parent…</option>
                       <For each={otherAdults()}>
                         {(adult) => (
@@ -448,7 +451,7 @@ export default function GroupSettings() {
           </For>
         </ul>
         <Show when={myOtherChildren().length > 0}>
-          <select onChange={(e) => onAddMyChild(e.currentTarget.value)}>
+          <select onChange={(e) => onAddMyChild(e.currentTarget.value as ProfileId)}>
             <option value="">Add one of your children…</option>
             <For each={myOtherChildren()}>
               {(child) => <option value={child.id}>{child.display_name}</option>}
@@ -470,7 +473,7 @@ export default function GroupSettings() {
               Parent
               <select
                 value={childParent() ?? me().profile.id}
-                onChange={(e) => setChildParent(e.currentTarget.value)}
+                onChange={(e) => setChildParent(e.currentTarget.value as ProfileId)}
               >
                 <For each={adults()}>
                   {(adult) => (
@@ -517,7 +520,7 @@ export default function GroupSettings() {
                   You're the only manager. Who should manage {group()?.name} after you leave?
                   <select
                     value={successor() ?? ""}
-                    onChange={(e) => setSuccessor(e.currentTarget.value)}
+                    onChange={(e) => setSuccessor(e.currentTarget.value as ProfileId)}
                   >
                     <option value="" disabled>
                       Choose a member…

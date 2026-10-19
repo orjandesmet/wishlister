@@ -8,6 +8,7 @@ import {
 } from "solid-js";
 import { getManagedProfiles, getMyProfile, type Profile } from "./api/profiles.ts";
 import { useAuth } from "./auth.tsx";
+import type { AccountId } from "./ids.ts";
 
 type Me = {
   profile: Profile;
@@ -22,7 +23,7 @@ const MeContext = createContext<() => Me>();
 /** Loads the signed-in person's profile once and shares it with every page below. */
 export const MeProvider: ParentComponent = (props) => {
   const { session } = useAuth();
-  const accountId = () => session()?.user.id;
+  const accountId = () => session()?.user.id as AccountId | undefined;
   const [profile, { refetch: refetchProfile }] = createResource(accountId, getMyProfile);
   const [managed, { refetch: refetchManaged }] = createResource(
     () => profile()?.id,
