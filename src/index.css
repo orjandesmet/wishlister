@@ -398,3 +398,17 @@ select {
   border: 1px solid var(--border);
   border-radius: 8px;
 }
+
+.install-banner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.install-banner p {
+  margin: 0;
+}
+
+.install-banner button.link {
+  text-decoration: none;
+}

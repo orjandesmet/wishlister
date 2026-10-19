@@ -1,6 +1,8 @@
 import { A, Navigate, Route, Router, useLocation } from "@solidjs/router";
 import { Show, type ParentComponent } from "solid-js";
+import { InstallBanner } from "./components/InstallBanner.tsx";
 import { AuthProvider, useAuth } from "./lib/auth.tsx";
+import { dismiss, install, installOffer } from "./lib/install.ts";
 import { MeProvider, useMe } from "./lib/me.tsx";
 import GroupSettings from "./pages/GroupSettings.tsx";
 import Home from "./pages/Home.tsx";
@@ -44,9 +46,27 @@ const SignedIn: ParentComponent = (props) => {
   );
 };
 
+/** Shown above every page, signed in or not, until it's dismissed or the app is installed. */
+function InstallOffer() {
+  return (
+    <Show when={installOffer()}>
+      {(mode) => (
+        <InstallBanner mode={mode()} onInstall={() => void install()} onDismiss={dismiss} />
+      )}
+    </Show>
+  );
+}
+
 function App() {
   return (
-    <Router root={(props) => <AuthProvider>{props.children}</AuthProvider>}>
+    <Router
+      root={(props) => (
+        <AuthProvider>
+          <InstallOffer />
+          {props.children}
+        </AuthProvider>
+      )}
+    >
       <Route path="/login" component={Login} />
       <Route component={SignedIn}>
         <Route path="/" component={Home} />
