@@ -48,6 +48,7 @@ default exports.
 | `supabase/migrations/` | Database schema and row-level security policies                       |
 | `netlify/functions/`   | `keepalive`: daily ping so the free Supabase project never pauses     |
 |                        | `send-invite`: emails people invited to a group who have no account   |
+| `netlify/lib/mail.ts`  | `sendEmail()`: app emails (not sign-in emails) through Resend         |
 | `public/pwa-icon.svg`  | Source of the home-screen icons (`pwa-*.png`, `apple-touch-icon.png`) |
 
 ## Installing on a phone
@@ -108,4 +109,20 @@ in `vp dev`. If you change `public/pwa-icon.svg`, re-export the PNGs at 192, 512
    `VITE_SUPABASE_PUBLISHABLE_KEY`. The build and the `keepalive` function both use them.
    Also add `SUPABASE_SECRET_KEY` (a secret key, `sb_secret_…`) for `send-invite`. It has no
    `VITE_` prefix on purpose, so it never ends up in the app's JavaScript.
+   For app emails (see _3. Resend_ below), also add `RESEND_API_KEY` and `MAIL_FROM`.
 3. Deploy, then put the site URL into Supabase's _Site URL_ (step 1.3).
+
+### 3. Resend (app emails)
+
+Sign-in and invite emails come from Supabase. Every other email the app sends (for example
+"you were added to a group" or "a list you follow changed") goes through
+`netlify/lib/mail.ts`, which calls [Resend](https://resend.com)'s API. The free plan sends
+3,000 emails a month, at most 100 a day.
+
+1. Create a Resend account and, under _Domains_, add the domain to send from. Add the DNS
+   records it shows (SPF, DKIM and optionally DMARC) at your DNS provider and wait until the
+   domain shows _Verified_. If Supabase already sends through Resend SMTP (step 1.5), this
+   domain is already there.
+2. _API Keys_: create a key with _Sending access_, limited to that domain.
+3. In Netlify, add `RESEND_API_KEY` (that key) and `MAIL_FROM`, the sender on the verified
+   domain, e.g. `Wishlister <wishlister@example.com>`. Redeploy so functions pick them up.
