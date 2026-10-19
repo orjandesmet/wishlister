@@ -1,9 +1,22 @@
 import { useNavigate, useParams } from "@solidjs/router";
-import { createEffect, createResource, createSignal, For, on, Show } from "solid-js";
+import { createEffect, createMemo, createResource, createSignal, For, on, Show } from "solid-js";
+import { CategoryChips } from "../components/CategoryChips.tsx";
 import { addItem, getCategories, getItem, updateItem } from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
+import { suggestCategories } from "../lib/categories.ts";
 import { t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
+
+const starterKeys = [
+  "books",
+  "clothes",
+  "toys",
+  "games",
+  "music",
+  "experiences",
+  "home",
+  "sports",
+] as const;
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {
@@ -20,6 +33,14 @@ export default function ItemForm() {
   const [category, setCategory] = createSignal("");
   const [allGroups, setAllGroups] = createSignal(true);
   const [groupIds, setGroupIds] = createSignal<GroupId[]>([]);
+  // Categories in use plus the starter set in the active language, filtered on what's typed.
+  const starterCategories = () => starterKeys.map((key) => t(`categories.${key}`));
+  const allSuggestions = createMemo(() =>
+    suggestCategories(categories() ?? [], starterCategories(), "", Infinity),
+  );
+  const chips = createMemo(() =>
+    suggestCategories(categories() ?? [], starterCategories(), category()),
+  );
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
 
@@ -89,20 +110,10 @@ export default function ItemForm() {
             onInput={(e) => setCategory(e.currentTarget.value)}
           />
           <datalist id="category-suggestions">
-            <For each={categories()}>{(c) => <option value={c} />}</For>
+            <For each={allSuggestions()}>{(c) => <option value={c} />}</For>
           </datalist>
         </label>
-        <Show when={(categories()?.length ?? 0) > 0}>
-          <div class="chips">
-            <For each={categories()?.slice(0, 8)}>
-              {(c) => (
-                <button type="button" class="chip-button" onClick={() => setCategory(c)}>
-                  {c}
-                </button>
-              )}
-            </For>
-          </div>
-        </Show>
+        <CategoryChips categories={chips()} onPick={setCategory} />
         <fieldset>
           <legend>{t("itemForm.visibility")}</legend>
           <label class="check">
