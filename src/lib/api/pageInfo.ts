@@ -19,7 +19,7 @@ export async function getPageInfo(url: string): Promise<PageInfo> {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({ url }),
-      signal: AbortSignal.timeout(8000),
+      signal: AbortSignal.timeout(9500),
     });
     if (!response.ok) return NOTHING;
     const info = (await response.json()) as Partial<PageInfo>;

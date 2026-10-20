@@ -9,7 +9,9 @@ export type PageInfo = { title: string | null; image: string | null };
 /** Stop reading the page after this much: some shops put megabytes of inline CSS in the <head>. */
 const MAX_BYTES = 2 * 1024 * 1024;
 const MAX_REDIRECTS = 8;
-const TIMEOUT_MS = 6000;
+const TIMEOUT_MS = 4000;
+/** Both together stay under the 9.5s the app waits (and Netlify's 10s limit). */
+const MICROLINK_TIMEOUT_MS = 3500;
 /** Longer titles are cut, so a name still fits on a card. */
 const MAX_TITLE = 150;
 
@@ -60,6 +62,58 @@ export function parsePageInfo(html: string, pageUrl: string): PageInfo {
     .map((value) => (value ? absoluteHttpUrl(decodeEntities(value.trim()), pageUrl) : null))
     .find((value) => value !== null);
   return { title: title ? truncate(title, MAX_TITLE) : null, image: image ?? null };
+}
+
+/**
+ * Reads the page ourselves first. Big shops behind bot protection (lego.com…)
+ * refuse that, so then Microlink, which opens the page in a real browser, is
+ * asked instead. Never throws.
+ */
+export async function lookUpPage(
+  url: string,
+  microlinkKey: string | undefined,
+  fetchImpl: typeof fetch = fetch,
+): Promise<PageInfo> {
+  const direct = await fetchPageInfo(url, fetchImpl);
+  if (direct.title) return direct;
+  const microlink = await fetchMicrolink(url, microlinkKey, fetchImpl);
+  return { title: microlink.title, image: direct.image ?? microlink.image };
+}
+
+/**
+ * Asks Microlink (https://microlink.io) for the page's title and picture. Without
+ * an API key it uses the free endpoint (50 links a day); with MICROLINK_API_KEY
+ * it uses the Pro endpoint. Never throws.
+ */
+export async function fetchMicrolink(
+  url: string,
+  apiKey: string | undefined,
+  fetchImpl: typeof fetch = fetch,
+): Promise<PageInfo> {
+  const endpoint = new URL(apiKey ? "https://pro.microlink.io/" : "https://api.microlink.io/");
+  endpoint.searchParams.set("url", url);
+  try {
+    const response = await fetchImpl(endpoint, {
+      headers: apiKey ? { "x-api-key": apiKey } : {},
+      signal: AbortSignal.timeout(MICROLINK_TIMEOUT_MS),
+    });
+    const body = (await response.json().catch(() => null)) as {
+      status?: string;
+      message?: string;
+      data?: { title?: unknown; image?: { url?: unknown } | null };
+    } | null;
+    if (!response.ok || body?.status !== "success") {
+      return failed(url, `microlink: ${response.status} ${body?.message ?? ""}`.trim(), url);
+    }
+    const title = typeof body.data?.title === "string" ? cleanText(body.data.title) : "";
+    const image = body.data?.image?.url;
+    return {
+      title: title ? truncate(title, MAX_TITLE) : null,
+      image: typeof image === "string" ? absoluteHttpUrl(image, url) : null,
+    };
+  } catch (error) {
+    return failed(url, `microlink: ${String(error)}`, url);
+  }
 }
 
 /**

@@ -4,8 +4,10 @@
 // POST /.netlify/functions/page-info with { url } and the user's access token as
 // "Authorization: Bearer …". Answers { title, image }, either of which can be null.
 // Browsers can't read other sites' pages (CORS), so the app asks this function.
+// Shops that block it are looked up through Microlink; set MICROLINK_API_KEY in
+// Netlify to use a Microlink plan instead of the free 50 links a day.
 import { createClient } from "@supabase/supabase-js";
-import { fetchPageInfo, isFetchableUrl } from "../lib/pageInfo.ts";
+import { isFetchableUrl, lookUpPage } from "../lib/pageInfo.ts";
 
 export default async (request: Request) => {
   if (request.method !== "POST") return message(405, "Method not allowed");
@@ -24,7 +26,7 @@ export default async (request: Request) => {
   const { url: pageUrl } = (await request.json().catch(() => ({}))) as { url?: string };
   if (!pageUrl || !isFetchableUrl(pageUrl)) return message(400, "A public http(s) url is required");
 
-  return Response.json(await fetchPageInfo(pageUrl));
+  return Response.json(await lookUpPage(pageUrl, process.env.MICROLINK_API_KEY));
 };
 
 function message(status: number, text: string) {

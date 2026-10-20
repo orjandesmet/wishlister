@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from "vite-plus/test";
-import { fetchPageInfo, isFetchableUrl, parsePageInfo } from "./pageInfo.ts";
+import {
+  fetchMicrolink,
+  fetchPageInfo,
+  isFetchableUrl,
+  lookUpPage,
+  parsePageInfo,
+} from "./pageInfo.ts";
 
 describe("isFetchableUrl", () => {
   it("accepts public http(s) pages", () => {
@@ -128,5 +134,55 @@ describe("fetchPageInfo", () => {
         throw new TypeError("network");
       }),
     ).toEqual({ title: null, image: null });
+  });
+});
+
+describe("Microlink fallback", () => {
+  const microlinkOk = Response.json({
+    status: "success",
+    data: { title: "Mercedes-AMG F1 W15", image: { url: "https://cdn.example/car.jpg" } },
+  });
+
+  it("asks Microlink when the shop blocks us", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
+      new URL(url instanceof Request ? url.url : url).hostname.endsWith("microlink.io")
+        ? microlinkOk.clone()
+        : new Response("Access denied", { status: 403, headers: { "content-type": "text/html" } }),
+    );
+    expect(
+      await lookUpPage("https://www.lego.com/nl-nl/product/x-77244", undefined, fetch),
+    ).toEqual({
+      title: "Mercedes-AMG F1 W15",
+      image: "https://cdn.example/car.jpg",
+    });
+    const [endpoint] = fetch.mock.calls[1] as [URL];
+    expect(endpoint.origin).toBe("https://api.microlink.io");
+    expect(endpoint.searchParams.get("url")).toBe("https://www.lego.com/nl-nl/product/x-77244");
+  });
+
+  it("doesn't ask Microlink when the page itself has a title", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(
+      async () => new Response("<title>Mine</title>", { headers: { "content-type": "text/html" } }),
+    );
+    expect((await lookUpPage("https://x.example", undefined, fetch)).title).toBe("Mine");
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("uses the Pro endpoint with an API key", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => microlinkOk.clone());
+    await fetchMicrolink("https://x.example", "key_1", fetch);
+    const [endpoint, init] = fetch.mock.calls[0] as [URL, RequestInit];
+    expect(endpoint.origin).toBe("https://pro.microlink.io");
+    expect(new Headers(init.headers).get("x-api-key")).toBe("key_1");
+  });
+
+  it("gives nulls when Microlink fails", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      Response.json({ status: "fail", message: "rate limit" }, { status: 429 }),
+    );
+    expect(await fetchMicrolink("https://x.example", undefined, fetch)).toEqual({
+      title: null,
+      image: null,
+    });
   });
 });
