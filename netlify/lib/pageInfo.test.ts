@@ -62,6 +62,13 @@ describe("parsePageInfo", () => {
     expect(long.endsWith("…")).toBe(true);
   });
 
+  it("uses a JSON-LD product name before the title tag", () => {
+    const html = `<title>Shop | Home</title><script type="application/ld+json">
+      {"@context":"https://schema.org","@graph":[{"@type":"WebPage"},{"@type":"Product","name":"Race car"}]}
+    </script>`;
+    expect(parsePageInfo(html, "https://x.example").title).toBe("Race car");
+  });
+
   it("gives nulls when the page has neither", () => {
     expect(parsePageInfo("<p>hi</p>", "https://x.example")).toEqual({ title: null, image: null });
   });
@@ -81,6 +88,19 @@ describe("fetchPageInfo", () => {
       title: "The item",
       image: null,
     });
+    expect(fetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("sends cookies back on a redirect to the same page", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (_url, init) =>
+      new Headers(init?.headers).get("cookie") === "locale=nl"
+        ? html("<title>Hello</title>")
+        : new Response(null, {
+            status: 302,
+            headers: { location: "/same", "set-cookie": "locale=nl; Path=/; Secure" },
+          }),
+    );
+    expect((await fetchPageInfo("https://shop.example/same", fetch)).title).toBe("Hello");
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 

@@ -6,9 +6,9 @@
 
 export type PageInfo = { title: string | null; image: string | null };
 
-/** Stop reading the page after this much: the <head> comes first anyway. */
-const MAX_BYTES = 512 * 1024;
-const MAX_REDIRECTS = 5;
+/** Stop reading the page after this much: some shops put megabytes of inline CSS in the <head>. */
+const MAX_BYTES = 2 * 1024 * 1024;
+const MAX_REDIRECTS = 8;
 const TIMEOUT_MS = 6000;
 /** Longer titles are cut, so a name still fits on a card. */
 const MAX_TITLE = 150;
@@ -53,7 +53,7 @@ export function parsePageInfo(html: string, pageUrl: string): PageInfo {
     if (key && attrs.content !== undefined && !meta.has(key)) meta.set(key, attrs.content);
   }
   const titleTag = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
-  const title = [meta.get("og:title"), meta.get("twitter:title"), titleTag]
+  const title = [meta.get("og:title"), meta.get("twitter:title"), productName(html), titleTag]
     .map((value) => (value === undefined ? "" : cleanText(value)))
     .find((value) => value.length > 0);
   const image = [meta.get("og:image:secure_url"), meta.get("og:image"), meta.get("twitter:image")]
@@ -70,23 +70,24 @@ export async function fetchPageInfo(
   rawUrl: string,
   fetchImpl: typeof fetch = fetch,
 ): Promise<PageInfo> {
-  const empty: PageInfo = { title: null, image: null };
   const signal = AbortSignal.timeout(TIMEOUT_MS);
+  // Many shops set a cookie (locale, consent) and redirect to the same page;
+  // without sending it back they keep redirecting.
+  const cookies = new Map<string, string>();
   try {
     let url = rawUrl;
     for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
-      if (!isFetchableUrl(url)) return empty;
+      if (!isFetchableUrl(url)) return failed(rawUrl, "not a public url", url);
       const response = await fetchImpl(url, {
         redirect: "manual",
         signal,
-        headers: {
-          // Some shops only answer browsers.
-          "User-Agent":
-            "Mozilla/5.0 (compatible; Wishlister/1.0; +https://github.com/orjandesmet/wishlister)",
-          Accept: "text/html,application/xhtml+xml",
-          "Accept-Language": "nl,en;q=0.8",
-        },
+        headers: { ...BROWSER_HEADERS, ...cookieHeader(cookies) },
       });
+      for (const cookie of response.headers.getSetCookie?.() ?? []) {
+        const [pair] = cookie.split(";");
+        const eq = pair.indexOf("=");
+        if (eq > 0) cookies.set(pair.slice(0, eq).trim(), pair.slice(eq + 1).trim());
+      }
       const location = response.headers.get("location");
       if (response.status >= 300 && response.status < 400 && location) {
         await response.body?.cancel();
@@ -96,14 +97,66 @@ export async function fetchPageInfo(
       const type = response.headers.get("content-type") ?? "";
       if (!response.ok || !/html/i.test(type)) {
         await response.body?.cancel();
-        return empty;
+        return failed(rawUrl, `status ${response.status}, ${type || "no content type"}`, url);
       }
-      return parsePageInfo(await readStart(response, type), url);
+      const info = parsePageInfo(await readStart(response, type), url);
+      if (!info.title) failed(rawUrl, "no title found in the page", url);
+      return info;
     }
-    return empty;
-  } catch {
-    return empty;
+    return failed(rawUrl, "too many redirects", url);
+  } catch (error) {
+    return failed(rawUrl, String(error), rawUrl);
   }
+}
+
+// Shops behind bot protection often refuse anything that doesn't look like a browser.
+const BROWSER_HEADERS = {
+  "User-Agent":
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "nl-BE,nl;q=0.9,en;q=0.8",
+};
+
+function cookieHeader(cookies: Map<string, string>): Record<string, string> {
+  if (cookies.size === 0) return {};
+  return { Cookie: [...cookies].map(([name, value]) => `${name}=${value}`).join("; ") };
+}
+
+/** Logs why a page gave nothing (shows in Netlify's function log) and gives nulls. */
+function failed(rawUrl: string, reason: string, finalUrl: string): PageInfo {
+  console.log(`page-info: nothing found for ${rawUrl} (${reason}; last url ${finalUrl})`);
+  return { title: null, image: null };
+}
+
+/** The "name" of a schema.org Product in the page's JSON-LD, if there is one. */
+function productName(html: string): string | undefined {
+  for (const match of html.matchAll(
+    /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+  )) {
+    try {
+      const found = findProduct(JSON.parse(match[1]));
+      if (found) return found;
+    } catch {
+      // Broken JSON-LD: try the next one.
+    }
+  }
+  return undefined;
+}
+
+function findProduct(node: unknown): string | undefined {
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findProduct(child);
+      if (found) return found;
+    }
+    return undefined;
+  }
+  if (!node || typeof node !== "object") return undefined;
+  const record = node as Record<string, unknown>;
+  const type = record["@type"];
+  const isProduct = type === "Product" || (Array.isArray(type) && type.includes("Product"));
+  if (isProduct && typeof record.name === "string") return record.name;
+  return findProduct(record["@graph"]);
 }
 
 /** Reads at most MAX_BYTES of the body, decoded with the page's charset. */

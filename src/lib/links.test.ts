@@ -37,7 +37,16 @@ describe("splitLink", () => {
 });
 
 describe("linkLabel", () => {
-  it("shows the site and path without www or a trailing slash", () => {
+  it("turns a readable slug into words", () => {
+    expect(linkLabel("https://www.lego.com/nl-nl/product/mercedes-amg-f1-w15-race-car-77244")).toBe(
+      "Mercedes amg f1 w15 race car 77244",
+    );
+    expect(
+      linkLabel("https://www.bol.com/nl/nl/p/lego-icons-kasteel/9300000134968437/?bltgh=x"),
+    ).toBe("Lego icons kasteel");
+  });
+
+  it("shows the site and path when there's no slug", () => {
     expect(linkLabel("https://www.bol.com/nl/p/lego/")).toBe("bol.com/nl/p/lego");
   });
 

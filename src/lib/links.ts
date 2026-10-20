@@ -24,10 +24,24 @@ export function splitLink(text: string): { url: string | null; name: string } {
   return { url, name };
 }
 
-/** A short stand-in name for a link, until (or if) the page's title is found. */
+/**
+ * A stand-in name for a link, until (or if) the page's title is found. Most shop
+ * links end in a readable slug, e.g. ".../product/mercedes-amg-f1-w15-race-car-77244"
+ * gives "Mercedes amg f1 w15 race car 77244"; otherwise the short link itself.
+ */
 export function linkLabel(url: string): string {
   try {
     const { hostname, pathname } = new URL(url);
+    const slug = pathname
+      .split("/")
+      .map((part) => decodeURIComponent(part).replace(/\.html?$/i, ""))
+      .reverse()
+      // Words joined by dashes or underscores, not an id like "9300000134968437" or "B0C1234XYZ".
+      .find((part) => /[a-z].*[-_].*[a-z]/i.test(part) && part.split(/[-_]+/).length >= 2);
+    if (slug) {
+      const words = slug.split(/[-_]+/).filter(Boolean).join(" ");
+      return words.charAt(0).toUpperCase() + words.slice(1);
+    }
     const label = (hostname.replace(/^www\./, "") + pathname).replace(/\/+$/, "");
     return label.length > 60 ? `${label.slice(0, 59)}…` : label;
   } catch {
