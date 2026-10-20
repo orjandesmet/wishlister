@@ -143,3 +143,40 @@ export async function addQuickItems(profileId: ProfileId, items: QuickItem[]): P
   const order = new Map(items.map((item, index) => [item.id, index]));
   return saved.sort((a, b) => order.get(a.id)! - order.get(b.id)!);
 }
+
+/** Gives all these items the same category; null or blank clears it. */
+export async function setItemsCategory(itemIds: ItemId[], category: string | null) {
+  must(
+    await supabase
+      .from("items")
+      .update({ category: category?.trim() || null })
+      .in("id", itemIds)
+      .select("id"),
+  );
+}
+
+/** Makes all these items visible in the same groups, replacing what each had. */
+export async function setItemsGroups(itemIds: ItemId[], groups: GroupSelection) {
+  must(
+    await supabase
+      .from("items")
+      .update({ visible_in_all_groups: groups === "all" })
+      .in("id", itemIds)
+      .select("id"),
+  );
+  must(await supabase.from("item_groups").delete().in("item_id", itemIds));
+  if (groups === "all" || groups.length === 0) return;
+  must(
+    await supabase
+      .from("item_groups")
+      .insert(
+        itemIds.flatMap((itemId) =>
+          groups.map((groupId) => ({ item_id: itemId, group_id: groupId })),
+        ),
+      ),
+  );
+}
+
+export async function deleteItems(itemIds: ItemId[]) {
+  must(await supabase.from("items").delete().in("id", itemIds));
+}
