@@ -144,11 +144,21 @@ export const en = {
   },
   item: {
     onlyVisibleIn: (p: { groups: string }) => `Only visible in ${p.groups}`,
-    noGroups: "no groups",
+    private: "🔒 Not shared with any group",
     youBought: "You bought this",
     undo: "Undo",
     someoneBought: "Someone bought this",
     iBought: "I bought this",
+  },
+  quickAdd: {
+    label: "Quick add",
+    placeholder: "Type a wish and press Enter",
+    visibleIn: "Who can see new items",
+    allGroups: "All groups",
+    noGroupsHint: "No group picked: only you see them until you share them.",
+    saving: "Saving…",
+    notSaved: "Not saved yet",
+    retrying: "Couldn't save. Trying again…",
   },
   itemForm: {
     addTitle: "Add item",
@@ -160,7 +170,7 @@ export const en = {
     allGroups: "All my groups",
     selectedGroups: "Only selected groups",
     noGroups: "This list isn't in any groups yet.",
-    pickGroup: "Pick at least one group, or show the item in all groups.",
+    noGroupsOption: "No groups (only me)",
   },
   // Suggested under the category field, even before anyone has used a category.
   categories: {

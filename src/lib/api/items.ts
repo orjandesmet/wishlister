@@ -86,3 +86,50 @@ export async function updateItem(itemId: ItemId, input: ItemInput) {
 export async function deleteItem(itemId: ItemId) {
   must(await supabase.from("items").delete().eq("id", itemId));
 }
+
+/** Which groups see an item: all of them, or only these (none at all when empty). */
+export type GroupSelection = "all" | GroupId[];
+
+export type QuickItem = { id: ItemId; name: string; groups: GroupSelection };
+
+/**
+ * Adds several items in one insert, then their groups in one more. The ids are
+ * made by the caller and duplicates are skipped, so retrying a batch that half
+ * worked doesn't add anything twice. Returns the items in the order given.
+ */
+export async function addQuickItems(profileId: ProfileId, items: QuickItem[]): Promise<Item[]> {
+  must(
+    await supabase.from("items").upsert(
+      items.map((item) => ({
+        id: item.id,
+        profile_id: profileId,
+        name: item.name.trim(),
+        visible_in_all_groups: item.groups === "all",
+      })),
+      { onConflict: "id", ignoreDuplicates: true },
+    ),
+  );
+  const links = items.flatMap((item) =>
+    item.groups === "all"
+      ? []
+      : item.groups.map((groupId) => ({ item_id: item.id, group_id: groupId })),
+  );
+  if (links.length > 0) {
+    must(
+      await supabase
+        .from("item_groups")
+        .upsert(links, { onConflict: "item_id,group_id", ignoreDuplicates: true }),
+    );
+  }
+  const saved = must(
+    await supabase
+      .from("items")
+      .select("id, profile_id, name, url, category, visible_in_all_groups, item_groups(group_id)")
+      .in(
+        "id",
+        items.map((item) => item.id),
+      ),
+  ) as Item[];
+  const order = new Map(items.map((item, index) => [item.id, index]));
+  return saved.sort((a, b) => order.get(a.id)! - order.get(b.id)!);
+}

@@ -31,7 +31,8 @@ export default function ItemForm() {
   const [name, setName] = createSignal("");
   const [url, setUrl] = createSignal("");
   const [category, setCategory] = createSignal("");
-  const [allGroups, setAllGroups] = createSignal(true);
+  /** "some" with nothing ticked saves the same as "none". */
+  const [visibility, setVisibility] = createSignal<"all" | "some" | "none">("all");
   const [groupIds, setGroupIds] = createSignal<GroupId[]>([]);
   // Categories in use plus the starter set in the active language, filtered on what's typed.
   const starterCategories = () => starterKeys.map((key) => t(`categories.${key}`));
@@ -51,8 +52,9 @@ export default function ItemForm() {
       setName(loaded.name);
       setUrl(loaded.url ?? "");
       setCategory(loaded.category ?? "");
-      setAllGroups(loaded.visible_in_all_groups);
-      setGroupIds(loaded.item_groups.map((g) => g.group_id));
+      const ids = loaded.item_groups.map((g) => g.group_id);
+      setVisibility(loaded.visible_in_all_groups ? "all" : ids.length > 0 ? "some" : "none");
+      setGroupIds(ids);
     }),
   );
 
@@ -61,18 +63,14 @@ export default function ItemForm() {
 
   async function onSubmit(event: SubmitEvent) {
     event.preventDefault();
-    if (!allGroups() && groupIds().length === 0) {
-      setError(t("itemForm.pickGroup"));
-      return;
-    }
     setBusy(true);
     setError(undefined);
     const input = {
       name: name(),
       url: url(),
       category: category(),
-      visible_in_all_groups: allGroups(),
-      groupIds: groupIds(),
+      visible_in_all_groups: visibility() === "all",
+      groupIds: visibility() === "some" ? groupIds() : [],
     };
     try {
       if (params.itemId) await updateItem(params.itemId, input);
@@ -120,8 +118,8 @@ export default function ItemForm() {
             <input
               type="radio"
               name="visibility"
-              checked={allGroups()}
-              onChange={() => setAllGroups(true)}
+              checked={visibility() === "all"}
+              onChange={() => setVisibility("all")}
             />
             {t("itemForm.allGroups")}
           </label>
@@ -129,12 +127,12 @@ export default function ItemForm() {
             <input
               type="radio"
               name="visibility"
-              checked={!allGroups()}
-              onChange={() => setAllGroups(false)}
+              checked={visibility() === "some"}
+              onChange={() => setVisibility("some")}
             />
             {t("itemForm.selectedGroups")}
           </label>
-          <Show when={!allGroups()}>
+          <Show when={visibility() === "some"}>
             <div class="indent">
               <For
                 each={profile()?.groups}
@@ -153,6 +151,15 @@ export default function ItemForm() {
               </For>
             </div>
           </Show>
+          <label class="check">
+            <input
+              type="radio"
+              name="visibility"
+              checked={visibility() === "none"}
+              onChange={() => setVisibility("none")}
+            />
+            {t("itemForm.noGroupsOption")}
+          </label>
         </fieldset>
         <button type="submit" disabled={busy()}>
           {busy() ? t("common.saving") : t("common.save")}
