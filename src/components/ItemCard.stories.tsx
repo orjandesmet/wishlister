@@ -81,3 +81,18 @@ export const LongNameAndUrl: Story = {
     },
   },
 };
+
+/** Picking items for a bulk edit: tap the card to tick it. */
+export const Selecting: Story = {
+  args: {
+    purchase: "hidden",
+    canEdit: true,
+    selecting: true,
+    selected: false,
+    onToggleSelect: fn(),
+  },
+};
+
+export const Selected: Story = {
+  args: { ...Selecting.args, selected: true },
+};

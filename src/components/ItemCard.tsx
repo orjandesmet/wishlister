@@ -19,6 +19,10 @@ export type ItemCardProps = {
   onBuy: () => void;
   onUndo: () => void;
   onRemove: () => void;
+  /** Picking items for a bulk action: the card becomes a checkbox and hides its buttons. */
+  selecting?: boolean;
+  selected?: boolean;
+  onToggleSelect?: () => void;
 };
 
 /** One wish on a list. Only shows things; the page decides what the buttons do. */
@@ -26,17 +30,35 @@ export function ItemCard(props: ItemCardProps) {
   // Limited to groups, but none picked: nobody but the list's editors sees it.
   const isPrivate = () => !props.item.visible_in_all_groups && props.groupNames.length === 0;
   return (
-    <li class="card item" classList={{ private: isPrivate() }}>
+    <li class="card item" classList={{ private: isPrivate(), selected: props.selected }}>
       <Show when={props.canEdit && isPrivate()}>
         <span class="badge-private">{t("item.private")}</span>
       </Show>
-      <div class="row">
-        <strong class="item-name">{props.item.name}</strong>
-        <Show when={props.item.category}>
-          <span class="chip">{props.item.category}</span>
-        </Show>
-      </div>
-      <Show when={props.item.url}>
+      <Show
+        when={props.selecting}
+        fallback={
+          <div class="row">
+            <strong class="item-name">{props.item.name}</strong>
+            <Show when={props.item.category}>
+              <span class="chip">{props.item.category}</span>
+            </Show>
+          </div>
+        }
+      >
+        {/* The whole row is the label, so tapping anywhere on it ticks the box. */}
+        <label class="check select-row">
+          <input
+            type="checkbox"
+            checked={props.selected ?? false}
+            onChange={() => props.onToggleSelect?.()}
+          />
+          <strong class="item-name">{props.item.name}</strong>
+          <Show when={props.item.category}>
+            <span class="chip">{props.item.category}</span>
+          </Show>
+        </label>
+      </Show>
+      <Show when={!props.selecting && props.item.url}>
         {(url) => (
           <a class="link truncate" href={url()} target="_blank" rel="noopener noreferrer">
             {url()}
@@ -49,6 +71,7 @@ export function ItemCard(props: ItemCardProps) {
         </p>
       </Show>
       <Switch>
+        <Match when={props.selecting}>{null}</Match>
         <Match when={props.purchase === "mine"}>
           <div class="row">
             <span class="bought">{t("item.youBought")}</span>
@@ -66,7 +89,7 @@ export function ItemCard(props: ItemCardProps) {
           </button>
         </Match>
       </Switch>
-      <Show when={props.canEdit}>
+      <Show when={props.canEdit && !props.selecting}>
         <div class="row">
           <A class="link" href={`/items/${props.item.id}/edit`}>
             {t("common.edit")}

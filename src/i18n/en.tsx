@@ -161,7 +161,7 @@ export const en = {
   },
   quickAdd: {
     label: "Quick add",
-    placeholder: "Type a wish and press Enter",
+    placeholder: "Type a wish or paste a link, then press Enter",
     visibleIn: "Who can see new items",
     allGroups: "All groups",
     noGroupsHint: "No group picked: only you see them until you share them.",
@@ -217,6 +217,22 @@ export const en = {
     saveName: "Save name",
     saved: "Saved.",
     signOut: "Sign out",
+  },
+  bulk: {
+    title: "Edit several items",
+    select: "Select",
+    selected: (p: { count: number }) => (p.count === 1 ? "1 selected" : `${p.count} selected`),
+    selectAll: "Select all",
+    selectNone: "Select none",
+    setCategory: "Category",
+    setGroups: "Groups",
+    done: "Done",
+    apply: "Apply",
+    categoryLabel: "Category for the selected items",
+    categoryPlaceholder: "Leave empty to remove it",
+    clearCategory: "Remove category",
+    confirmDelete: (p: { count: number }) =>
+      p.count === 1 ? "Remove 1 item from the list?" : `Remove ${p.count} items from the list?`,
   },
   wishlist: {
     fallbackTitle: "Wishlist",

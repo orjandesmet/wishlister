@@ -1,3 +1,15 @@
+/** The categories suggested even before anyone used one; translated as `categories.<key>`. */
+export const starterCategoryKeys = [
+  "books",
+  "clothes",
+  "toys",
+  "games",
+  "music",
+  "experiences",
+  "home",
+  "sports",
+] as const;
+
 /**
  * Picks the category suggestions under the item form's category field.
  *

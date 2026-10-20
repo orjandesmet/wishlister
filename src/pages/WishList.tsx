@@ -1,14 +1,25 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
+import { BulkActions } from "../components/BulkActions.tsx";
 import { ItemCard, type PurchaseState } from "../components/ItemCard.tsx";
 import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
 import { QuickAdd } from "../components/QuickAdd.tsx";
 import { deleteChild } from "../lib/api/children.ts";
-import { deleteItem, getItems, type Item } from "../lib/api/items.ts";
+import {
+  deleteItem,
+  deleteItems,
+  getCategories,
+  getItems,
+  setItemsCategory,
+  setItemsGroups,
+  type GroupSelection,
+  type Item,
+} from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
 import { getPurchases, markBought, undoBought } from "../lib/api/purchases.ts";
+import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { compareNames, t } from "../lib/i18n.ts";
-import type { GroupId, ProfileId } from "../lib/ids.ts";
+import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
 import { arrangeItems, readListOrder, saveListOrder, type ListOrder } from "../lib/listOrder.ts";
 import { useMe } from "../lib/me.tsx";
 import { useQuickAdd } from "../lib/quickAdd.ts";
@@ -33,6 +44,33 @@ export default function WishList() {
     getPurchases,
   );
   const [error, setError] = createSignal<string>();
+
+  // Bulk edit: tick items, then apply one action to all of them.
+  const [selecting, setSelecting] = createSignal(false);
+  const [selected, setSelected] = createSignal<ReadonlySet<ItemId>>(new Set());
+  const [bulkBusy, setBulkBusy] = createSignal(false);
+  // Only loaded once someone starts selecting, for the category suggestions.
+  const [categories] = createResource(selecting, () => getCategories());
+  const suggest = (typed: string) =>
+    suggestCategories(
+      categories() ?? [],
+      starterCategoryKeys.map((key) => t(`categories.${key}`)),
+      typed,
+    );
+  // Items deleted elsewhere drop out of the selection when the list reloads.
+  const selectedIds = createMemo(() =>
+    (items() ?? []).map((item) => item.id).filter((id) => selected().has(id)),
+  );
+  const toggleSelected = (id: ItemId) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  const stopSelecting = () => {
+    setSelecting(false);
+    setSelected(new Set<ItemId>());
+  };
 
   const isOwnList = () => profile()?.id === me().profile.id;
   const canEdit = () => isOwnList() || (profile()?.managerIds.includes(me().profile.id) ?? false);
@@ -79,6 +117,25 @@ export default function WishList() {
       await deleteItem(item.id);
       await refetchItems();
     });
+  async function bulk(action: (ids: ItemId[]) => Promise<void>) {
+    setBulkBusy(true);
+    await run(async () => {
+      await action(selectedIds());
+      await refetchItems();
+    });
+    setBulkBusy(false);
+  }
+  const onBulkCategory = (category: string | null) =>
+    bulk((ids) => setItemsCategory(ids, category));
+  const onBulkGroups = (groups: GroupSelection) => bulk((ids) => setItemsGroups(ids, groups));
+  const onBulkDelete = () => {
+    const count = selectedIds().length;
+    if (!confirm(t("bulk.confirmDelete", { count }))) return;
+    void bulk(async (ids) => {
+      await deleteItems(ids);
+      setSelected(new Set<ItemId>());
+    });
+  };
   const onDeleteChild = () =>
     run(async () => {
       const name = profile()!.display_name;
@@ -92,13 +149,20 @@ export default function WishList() {
 
   return (
     <>
-      <h1>
-        <Show when={profile()} fallback={t("wishlist.fallbackTitle")}>
-          {(p) =>
-            isOwnList() ? t("wishlist.mine") : t("wishlist.theirs", { name: p().display_name })
-          }
+      <div class="row">
+        <h1>
+          <Show when={profile()} fallback={t("wishlist.fallbackTitle")}>
+            {(p) =>
+              isOwnList() ? t("wishlist.mine") : t("wishlist.theirs", { name: p().display_name })
+            }
+          </Show>
+        </h1>
+        <Show when={canEdit() && !selecting() && (items()?.length ?? 0) > 1}>
+          <button type="button" class="secondary small" onClick={() => setSelecting(true)}>
+            {t("bulk.select")}
+          </button>
         </Show>
-      </h1>
+      </div>
       <Show when={isOwnList() && !me().managed()?.length}>
         <A class="link" href="/mine">
           {t("wishlist.accountLink")}
@@ -133,6 +197,9 @@ export default function WishList() {
                     onBuy={() => onBuy(item)}
                     onUndo={() => onUndo(item)}
                     onRemove={() => onDelete(item)}
+                    selecting={selecting()}
+                    selected={selected().has(item.id)}
+                    onToggleSelect={() => toggleSelected(item.id)}
                   />
                 )}
               </For>
@@ -140,7 +207,22 @@ export default function WishList() {
           </section>
         )}
       </For>
-      <Show when={canEdit()}>
+      <Show when={selecting()}>
+        <BulkActions
+          selected={selectedIds().length}
+          total={items()?.length ?? 0}
+          groups={profile()?.groups ?? []}
+          suggestCategories={suggest}
+          busy={bulkBusy()}
+          onSelectAll={() => setSelected(new Set((items() ?? []).map((item) => item.id)))}
+          onSelectNone={() => setSelected(new Set<ItemId>())}
+          onSetCategory={onBulkCategory}
+          onSetGroups={onBulkGroups}
+          onDelete={onBulkDelete}
+          onDone={stopSelecting}
+        />
+      </Show>
+      <Show when={canEdit() && !selecting()}>
         <QuickAdd
           pending={quickAdd().state().pending}
           groups={profile()?.groups ?? []}
@@ -149,12 +231,12 @@ export default function WishList() {
           onCancel={() => quickAdd().cancel()}
         />
       </Show>
-      <Show when={canEdit() && !isOwnList()}>
+      <Show when={canEdit() && !isOwnList() && !selecting()}>
         <button type="button" class="secondary danger" onClick={onDeleteChild}>
           {t("wishlist.deleteProfile", { name: profile()?.display_name ?? "" })}
         </button>
       </Show>
-      <Show when={canEdit()}>
+      <Show when={canEdit() && !selecting()}>
         <A class="button fab" href={`/lists/${params.profileId}/items/new`}>
           {t("wishlist.addItem")}
         </A>

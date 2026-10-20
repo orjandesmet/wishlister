@@ -90,7 +90,14 @@ export async function deleteItem(itemId: ItemId) {
 /** Which groups see an item: all of them, or only these (none at all when empty). */
 export type GroupSelection = "all" | GroupId[];
 
-export type QuickItem = { id: ItemId; name: string; groups: GroupSelection };
+export type QuickItem = {
+  id: ItemId;
+  name: string;
+  groups: GroupSelection;
+  url?: string | null;
+  /** The linked page's picture, stored for later (not shown yet). */
+  imageUrl?: string | null;
+};
 
 /**
  * Adds several items in one insert, then their groups in one more. The ids are
@@ -104,6 +111,9 @@ export async function addQuickItems(profileId: ProfileId, items: QuickItem[]): P
         id: item.id,
         profile_id: profileId,
         name: item.name.trim(),
+        url: item.url ?? null,
+        // Only sent when there is one, so lists without links don't depend on the column.
+        ...(item.imageUrl ? { image_url: item.imageUrl } : {}),
         visible_in_all_groups: item.groups === "all",
       })),
       { onConflict: "id", ignoreDuplicates: true },
@@ -132,4 +142,41 @@ export async function addQuickItems(profileId: ProfileId, items: QuickItem[]): P
   ) as Item[];
   const order = new Map(items.map((item, index) => [item.id, index]));
   return saved.sort((a, b) => order.get(a.id)! - order.get(b.id)!);
+}
+
+/** Gives all these items the same category; null or blank clears it. */
+export async function setItemsCategory(itemIds: ItemId[], category: string | null) {
+  must(
+    await supabase
+      .from("items")
+      .update({ category: category?.trim() || null })
+      .in("id", itemIds)
+      .select("id"),
+  );
+}
+
+/** Makes all these items visible in the same groups, replacing what each had. */
+export async function setItemsGroups(itemIds: ItemId[], groups: GroupSelection) {
+  must(
+    await supabase
+      .from("items")
+      .update({ visible_in_all_groups: groups === "all" })
+      .in("id", itemIds)
+      .select("id"),
+  );
+  must(await supabase.from("item_groups").delete().in("item_id", itemIds));
+  if (groups === "all" || groups.length === 0) return;
+  must(
+    await supabase
+      .from("item_groups")
+      .insert(
+        itemIds.flatMap((itemId) =>
+          groups.map((groupId) => ({ item_id: itemId, group_id: groupId })),
+        ),
+      ),
+  );
+}
+
+export async function deleteItems(itemIds: ItemId[]) {
+  must(await supabase.from("items").delete().in("id", itemIds));
 }

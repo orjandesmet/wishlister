@@ -3,20 +3,9 @@ import { createEffect, createMemo, createResource, createSignal, For, on, Show }
 import { CategoryChips } from "../components/CategoryChips.tsx";
 import { addItem, getCategories, getItem, updateItem } from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
-import { suggestCategories } from "../lib/categories.ts";
+import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
-
-const starterKeys = [
-  "books",
-  "clothes",
-  "toys",
-  "games",
-  "music",
-  "experiences",
-  "home",
-  "sports",
-] as const;
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {
@@ -35,7 +24,7 @@ export default function ItemForm() {
   const [visibility, setVisibility] = createSignal<"all" | "some" | "none">("all");
   const [groupIds, setGroupIds] = createSignal<GroupId[]>([]);
   // Categories in use plus the starter set in the active language, filtered on what's typed.
-  const starterCategories = () => starterKeys.map((key) => t(`categories.${key}`));
+  const starterCategories = () => starterCategoryKeys.map((key) => t(`categories.${key}`));
   const allSuggestions = createMemo(() =>
     suggestCategories(categories() ?? [], starterCategories(), "", Infinity),
   );
