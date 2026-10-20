@@ -142,6 +142,15 @@ export const nl: Dictionary = {
     someoneBought: "Iemand heeft dit gekocht",
     iBought: "Ik heb dit gekocht",
   },
+  listOrder: {
+    label: "Sorteren op",
+    added: "Datum toegevoegd",
+    newest: "Nieuwste eerst",
+    name: "Naam (A tot Z)",
+    category: "Categorie",
+    available: "Nog niet gekocht eerst",
+    uncategorised: "Geen categorie",
+  },
   quickAdd: {
     label: "Snel toevoegen",
     placeholder: "Typ een wens of plak een link en druk op Enter",

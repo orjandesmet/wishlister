@@ -2,6 +2,7 @@ import { A, useNavigate, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
 import { BulkActions } from "../components/BulkActions.tsx";
 import { ItemCard, type PurchaseState } from "../components/ItemCard.tsx";
+import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
 import { QuickAdd } from "../components/QuickAdd.tsx";
 import { deleteChild } from "../lib/api/children.ts";
 import {
@@ -17,8 +18,9 @@ import {
 import { getProfileDetails } from "../lib/api/profiles.ts";
 import { getPurchases, markBought, undoBought } from "../lib/api/purchases.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
-import { t } from "../lib/i18n.ts";
+import { compareNames, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
+import { arrangeItems, readListOrder, saveListOrder, type ListOrder } from "../lib/listOrder.ts";
 import { useMe } from "../lib/me.tsx";
 import { useQuickAdd } from "../lib/quickAdd.ts";
 
@@ -81,6 +83,22 @@ export default function WishList() {
     if (buyer === undefined) return "available";
     return buyer === me().profile.id ? "mine" : "someone";
   };
+  // The same choice on every list, remembered on this device.
+  const [order, setOrder] = createSignal<ListOrder>(readListOrder());
+  const chooseOrder = (next: ListOrder) => {
+    setOrder(next);
+    saveListOrder(next);
+  };
+  // Owners never learn what was bought, so "not bought first" only exists on other lists.
+  const showBought = () => !isOwnList() && purchases() !== undefined;
+  const sections = createMemo(() => {
+    const list = items() ?? [];
+    return arrangeItems(list, order(), {
+      compare: compareNames,
+      isBought: showBought() ? (i) => boughtBy().has(list[i].id) : undefined,
+    });
+  });
+  const isGrouped = () => sections().some((s) => s.category !== null);
   const groupName = (id: GroupId) =>
     profile()?.groups.find((g) => g.id === id)?.name ?? t("wishlist.aGroup");
 
@@ -159,24 +177,36 @@ export default function WishList() {
       <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
         <p class="muted">{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>
       </Show>
-      <ul class="list cards">
-        <For each={items()}>
-          {(item) => (
-            <ItemCard
-              item={item}
-              purchase={purchase(item)}
-              canEdit={canEdit()}
-              groupNames={item.item_groups.map((g) => groupName(g.group_id))}
-              onBuy={() => onBuy(item)}
-              onUndo={() => onUndo(item)}
-              onRemove={() => onDelete(item)}
-              selecting={selecting()}
-              selected={selected().has(item.id)}
-              onToggleSelect={() => toggleSelected(item.id)}
-            />
-          )}
-        </For>
-      </ul>
+      <Show when={(items()?.length ?? 0) > 1}>
+        <ListOrderSelect value={order()} showBought={showBought()} onChange={chooseOrder} />
+      </Show>
+      <For each={sections()}>
+        {(section) => (
+          <section class="stack">
+            <Show when={isGrouped()}>
+              <h2>{section.category ?? t("listOrder.uncategorised")}</h2>
+            </Show>
+            <ul class="list cards">
+              <For each={section.items}>
+                {(item) => (
+                  <ItemCard
+                    item={item}
+                    purchase={purchase(item)}
+                    canEdit={canEdit()}
+                    groupNames={item.item_groups.map((g) => groupName(g.group_id))}
+                    onBuy={() => onBuy(item)}
+                    onUndo={() => onUndo(item)}
+                    onRemove={() => onDelete(item)}
+                    selecting={selecting()}
+                    selected={selected().has(item.id)}
+                    onToggleSelect={() => toggleSelected(item.id)}
+                  />
+                )}
+              </For>
+            </ul>
+          </section>
+        )}
+      </For>
       <Show when={selecting()}>
         <BulkActions
           selected={selectedIds().length}

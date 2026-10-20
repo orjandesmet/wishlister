@@ -150,6 +150,15 @@ export const en = {
     someoneBought: "Someone bought this",
     iBought: "I bought this",
   },
+  listOrder: {
+    label: "Sort by",
+    added: "Date added",
+    newest: "Newest first",
+    name: "Name (A to Z)",
+    category: "Category",
+    available: "Not bought yet first",
+    uncategorised: "No category",
+  },
   quickAdd: {
     label: "Quick add",
     placeholder: "Type a wish or paste a link, then press Enter",
