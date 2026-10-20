@@ -1,16 +1,25 @@
 import { createSignal, onCleanup, type Accessor } from "solid-js";
-import { addItemsByName, type Item } from "./api/items.ts";
-import type { ProfileId } from "./ids.ts";
+import { addQuickItems, type GroupSelection, type Item } from "./api/items.ts";
+import type { ItemId, ProfileId } from "./ids.ts";
 import { QuickAddQueue, type QuickAddState } from "./quickAddQueue.ts";
+
+/** What quick add keeps with each typed name until it's saved. */
+type QuickItemData = { id: ItemId; groups: GroupSelection };
 
 // One queue per list, kept outside the page: leaving the page flushes it, and a
 // retry that is still running shows up again when you come back.
-const queues = new Map<ProfileId, QuickAddQueue<Item>>();
+const queues = new Map<ProfileId, QuickAddQueue<QuickItemData, Item>>();
 
 function queueFor(profileId: ProfileId) {
   let queue = queues.get(profileId);
   if (!queue) {
-    queue = new QuickAddQueue({ save: (names) => addItemsByName(profileId, names) });
+    queue = new QuickAddQueue({
+      save: (pending) =>
+        addQuickItems(
+          profileId,
+          pending.map((item) => ({ name: item.name, ...item.data })),
+        ),
+    });
     queues.set(profileId, queue);
   }
   return queue;
@@ -31,7 +40,7 @@ if (typeof window !== "undefined") {
  */
 export function useQuickAdd(profileId: ProfileId, onSaved: (items: Item[]) => void) {
   const queue = queueFor(profileId);
-  const [state, setState] = createSignal<QuickAddState>(queue.state);
+  const [state, setState] = createSignal<QuickAddState<QuickItemData>>(queue.state);
   const stopState = queue.subscribe(setState);
   const stopSaved = queue.onSaved(onSaved);
   onCleanup(() => {
@@ -40,8 +49,10 @@ export function useQuickAdd(profileId: ProfileId, onSaved: (items: Item[]) => vo
     queue.flush();
   });
   return {
-    state: state as Accessor<QuickAddState>,
-    add: (name: string) => queue.add(name),
+    state: state as Accessor<QuickAddState<QuickItemData>>,
+    // The id is made now, so every retry of this item saves the same row.
+    add: (name: string, groups: GroupSelection) =>
+      queue.add(name, { id: crypto.randomUUID() as ItemId, groups }),
     cancel: () => queue.cancel(),
   };
 }

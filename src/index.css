@@ -280,6 +280,39 @@ a {
   gap: 8px;
 }
 
+button.chip-button[aria-pressed="true"] {
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.field-label {
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.stack.small-gap {
+  gap: 6px;
+}
+
+/* An item no group can see: only you (and other editors of the list) see it. */
+.item.private {
+  background: var(--bg);
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.badge-private {
+  align-self: flex-start;
+  padding: 2px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-strong);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
 button.chip-button {
   min-height: 36px;
   padding: 0 12px;

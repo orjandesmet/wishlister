@@ -113,8 +113,9 @@ export default function WishList() {
       <Show when={canEdit()}>
         <QuickAdd
           pending={quickAdd().state().pending}
+          groups={profile()?.groups ?? []}
           retrying={quickAdd().state().retrying}
-          onAdd={(name) => quickAdd().add(name)}
+          onAdd={(name, groups) => quickAdd().add(name, groups)}
           onCancel={() => quickAdd().cancel()}
         />
       </Show>

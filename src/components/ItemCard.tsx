@@ -23,8 +23,13 @@ export type ItemCardProps = {
 
 /** One wish on a list. Only shows things; the page decides what the buttons do. */
 export function ItemCard(props: ItemCardProps) {
+  // Limited to groups, but none picked: nobody but the list's editors sees it.
+  const isPrivate = () => !props.item.visible_in_all_groups && props.groupNames.length === 0;
   return (
-    <li class="card item">
+    <li class="card item" classList={{ private: isPrivate() }}>
+      <Show when={props.canEdit && isPrivate()}>
+        <span class="badge-private">{t("item.private")}</span>
+      </Show>
       <div class="row">
         <strong class="item-name">{props.item.name}</strong>
         <Show when={props.item.category}>
@@ -38,11 +43,9 @@ export function ItemCard(props: ItemCardProps) {
           </a>
         )}
       </Show>
-      <Show when={props.canEdit && !props.item.visible_in_all_groups}>
+      <Show when={props.canEdit && !props.item.visible_in_all_groups && !isPrivate()}>
         <p class="muted small">
-          {t("item.onlyVisibleIn", {
-            groups: props.groupNames.length > 0 ? formatList(props.groupNames) : t("item.noGroups"),
-          })}
+          {t("item.onlyVisibleIn", { groups: formatList(props.groupNames) })}
         </p>
       </Show>
       <Switch>

@@ -58,6 +58,16 @@ export const OnlyInSomeGroups: Story = {
   },
 };
 
+/** In no group at all: only you see it, and it says so. */
+export const NotShared: Story = {
+  args: {
+    purchase: "hidden",
+    canEdit: true,
+    item: { ...meta.args.item, visible_in_all_groups: false },
+    groupNames: [],
+  },
+};
+
 export const NameOnly: Story = {
   args: { item: { ...meta.args.item, name: "Warm socks", url: null, category: null } },
 };

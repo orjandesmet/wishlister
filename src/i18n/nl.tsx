@@ -136,7 +136,7 @@ export const nl: Dictionary = {
   },
   item: {
     onlyVisibleIn: (p) => `Alleen zichtbaar in ${p.groups}`,
-    noGroups: "geen enkele groep",
+    private: "🔒 Met geen enkele groep gedeeld",
     youBought: "Jij hebt dit gekocht",
     undo: "Ongedaan maken",
     someoneBought: "Iemand heeft dit gekocht",
@@ -145,6 +145,9 @@ export const nl: Dictionary = {
   quickAdd: {
     label: "Snel toevoegen",
     placeholder: "Typ een wens en druk op Enter",
+    visibleIn: "Wie ziet nieuwe items",
+    allGroups: "Alle groepen",
+    noGroupsHint: "Geen groep gekozen: alleen jij ziet ze tot je ze deelt.",
     saving: "Opslaan…",
     notSaved: "Nog niet opgeslagen",
     retrying: "Opslaan mislukt. We proberen het opnieuw…",
@@ -159,7 +162,7 @@ export const nl: Dictionary = {
     allGroups: "Al mijn groepen",
     selectedGroups: "Alleen gekozen groepen",
     noGroups: "Dit lijstje zit nog in geen enkele groep.",
-    pickGroup: "Kies minstens één groep, of toon het item in alle groepen.",
+    noGroupsOption: "Geen groepen (alleen ik)",
   },
   categories: {
     books: "Boeken",

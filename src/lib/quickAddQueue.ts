@@ -1,19 +1,24 @@
 /** An item typed in quick add that isn't saved yet. */
-export type PendingItem = {
+export type PendingItem<D = unknown> = {
   /** Stays the same while the item is pending, for keyed lists. */
   key: number;
   name: string;
+  /** Whatever else was chosen with it, such as its groups. Kept across retries. */
+  data: D;
 };
 
-export type QuickAddState = {
-  pending: PendingItem[];
+export type QuickAddState<D = unknown> = {
+  pending: PendingItem<D>[];
   /** The last save failed and a retry is scheduled. */
   retrying: boolean;
 };
 
-export type QuickAddOptions<T> = {
-  /** Saves the names in one go and returns what was saved. */
-  save: (names: string[]) => Promise<T[]>;
+export type QuickAddOptions<D, T> = {
+  /**
+   * Saves the items in one go and returns what was saved. A retry sends the same
+   * items again, so it must not create duplicates.
+   */
+  save: (items: PendingItem<D>[]) => Promise<T[]>;
   /** Called with the saved rows, before they leave `pending`. */
   onSaved?: (saved: T[]) => void;
   /** Wait this long after the last item before saving. */
@@ -30,30 +35,30 @@ export type QuickAddOptions<T> = {
  *
  * Plain TypeScript (no Solid), so it can be tested with fake timers.
  */
-export class QuickAddQueue<T> {
-  private waiting: PendingItem[] = [];
-  private inFlight: PendingItem[] = [];
+export class QuickAddQueue<D, T> {
+  private waiting: PendingItem<D>[] = [];
+  private inFlight: PendingItem<D>[] = [];
   private failures = 0;
   private timer: ReturnType<typeof setTimeout> | undefined;
   private nextKey = 0;
   /** Goes up on `cancel()`, so a save that was already running can't restart retries. */
   private generation = 0;
-  private listeners = new Set<(state: QuickAddState) => void>();
+  private listeners = new Set<(state: QuickAddState<D>) => void>();
   private savedListeners = new Set<(saved: T[]) => void>();
 
-  private options: QuickAddOptions<T>;
+  private options: QuickAddOptions<D, T>;
 
-  constructor(options: QuickAddOptions<T>) {
+  constructor(options: QuickAddOptions<D, T>) {
     this.options = options;
     if (options.onSaved) this.savedListeners.add(options.onSaved);
   }
 
-  get state(): QuickAddState {
+  get state(): QuickAddState<D> {
     return { pending: [...this.inFlight, ...this.waiting], retrying: this.failures > 0 };
   }
 
   /** Calls `listener` on every change; returns a function that stops it. */
-  subscribe(listener: (state: QuickAddState) => void): () => void {
+  subscribe(listener: (state: QuickAddState<D>) => void): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
   }
@@ -64,10 +69,10 @@ export class QuickAddQueue<T> {
     return () => this.savedListeners.delete(listener);
   }
 
-  add(name: string) {
+  add(name: string, data: D) {
     const trimmed = name.trim();
     if (!trimmed) return;
-    this.waiting.push({ key: this.nextKey++, name: trimmed });
+    this.waiting.push({ key: this.nextKey++, name: trimmed, data });
     // While retrying, new items join the batch the retry timer will send.
     if (this.failures === 0) this.schedule(this.options.debounceMs ?? 3000);
     this.emit();
@@ -83,7 +88,7 @@ export class QuickAddQueue<T> {
     this.inFlight = batch;
     this.emit();
     const generation = this.generation;
-    this.options.save(batch.map((item) => item.name)).then(
+    this.options.save(batch).then(
       (saved) => {
         this.failures = 0;
         for (const listener of this.savedListeners) listener(saved);
