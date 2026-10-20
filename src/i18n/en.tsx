@@ -169,6 +169,17 @@ export const en = {
     noGroups: "This list isn't in any groups yet.",
     pickGroup: "Pick at least one group, or show the item in all groups.",
   },
+  // Suggested under the category field, even before anyone has used a category.
+  categories: {
+    books: "Books",
+    clothes: "Clothes",
+    toys: "Toys",
+    games: "Games",
+    music: "Music",
+    experiences: "Experiences",
+    home: "Home",
+    sports: "Sports",
+  },
   join: {
     title: "Join a group",
     openFailed: (p: { message: string }) => `Couldn't open this invite: ${p.message}`,

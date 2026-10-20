@@ -161,6 +161,16 @@ export const nl: Dictionary = {
     noGroups: "Dit lijstje zit nog in geen enkele groep.",
     pickGroup: "Kies minstens één groep, of toon het item in alle groepen.",
   },
+  categories: {
+    books: "Boeken",
+    clothes: "Kleding",
+    toys: "Speelgoed",
+    games: "Spellen",
+    music: "Muziek",
+    experiences: "Belevenissen",
+    home: "Huis",
+    sports: "Sport",
+  },
   join: {
     title: "Bij een groep komen",
     openFailed: (p) => `Deze uitnodiging kon niet geopend worden: ${p.message}`,
