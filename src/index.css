@@ -450,3 +450,13 @@ select {
 .install-banner button.link {
   text-decoration: none;
 }
+
+/* "Sort by [select]" on one line above a wish list. */
+label.list-order {
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  font-weight: 400;
+  color: var(--text);
+}
