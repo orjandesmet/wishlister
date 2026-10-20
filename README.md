@@ -53,21 +53,23 @@ register it in `src/lib/i18n.ts`, and add a branch for it to the email templates
 
 ## Project layout
 
-| Path                   | What it is                                                            |
-| ---------------------- | --------------------------------------------------------------------- |
-| `src/lib/supabase.ts`  | The Supabase client                                                   |
-| `src/lib/auth.tsx`     | `AuthProvider` and `useAuth()`: the signed-in session as a signal     |
-| `src/pages/`           | One component per screen                                              |
-| `src/components/`      | Presentational components and their Storybook stories                 |
-| `.storybook/`          | Storybook config                                                      |
-| `src/index.css`        | Theme tokens (colours, spacing) and base styles                       |
-| `src/i18n/`            | UI text in English and Dutch, and language detection                  |
-| `supabase/templates/`  | Sign-in and invite email bodies, to paste into Supabase               |
-| `supabase/migrations/` | Database schema and row-level security policies                       |
-| `netlify/functions/`   | `keepalive`: daily ping so the free Supabase project never pauses     |
-|                        | `send-invite`: emails people invited to a group who have no account   |
-| `netlify/lib/mail.ts`  | `sendEmail()`: app emails (not sign-in emails) through Resend         |
-| `public/pwa-icon.svg`  | Source of the home-screen icons (`pwa-*.png`, `apple-touch-icon.png`) |
+| Path                      | What it is                                                            |
+| ------------------------- | --------------------------------------------------------------------- |
+| `src/lib/supabase.ts`     | The Supabase client                                                   |
+| `src/lib/auth.tsx`        | `AuthProvider` and `useAuth()`: the signed-in session as a signal     |
+| `src/pages/`              | One component per screen                                              |
+| `src/components/`         | Presentational components and their Storybook stories                 |
+| `.storybook/`             | Storybook config                                                      |
+| `src/index.css`           | Theme tokens (colours, spacing) and base styles                       |
+| `src/i18n/`               | UI text in English and Dutch, and language detection                  |
+| `supabase/templates/`     | Sign-in and invite email bodies, to paste into Supabase               |
+| `supabase/migrations/`    | Database schema and row-level security policies                       |
+| `netlify/functions/`      | `keepalive`: daily ping so the free Supabase project never pauses     |
+|                           | `send-invite`: emails people invited to a group who have no account   |
+|                           | `page-info`: title and picture of a link pasted into quick add        |
+| `netlify/lib/mail.ts`     | `sendEmail()`: app emails (not sign-in emails) through Resend         |
+| `netlify/lib/pageInfo.ts` | Reads a page's `og:` tags, with Microlink as fallback                 |
+| `public/pwa-icon.svg`     | Source of the home-screen icons (`pwa-*.png`, `apple-touch-icon.png`) |
 
 ## Installing on a phone
 
@@ -123,6 +125,7 @@ in `vp dev`. If you change `public/pwa-icon.svg`, re-export the PNGs at 192, 512
    Also add `SUPABASE_SECRET_KEY` (a secret key, `sb_secret_…`) for `send-invite`. It has no
    `VITE_` prefix on purpose, so it never ends up in the app's JavaScript.
    For app emails (see _3. Resend_ below), also add `RESEND_API_KEY` and `MAIL_FROM`.
+   Optionally add `MICROLINK_API_KEY` (see _4. Microlink_ below).
 3. Deploy, then put the site URL into Supabase's _Site URL_ (step 1.3).
 
 ### 3. Resend (app emails)
@@ -139,3 +142,15 @@ Sign-in and invite emails come from Supabase. Every other email the app sends (f
 2. _API Keys_: create a key with _Sending access_, limited to that domain.
 3. In Netlify, add `RESEND_API_KEY` (that key) and `MAIL_FROM`, the sender on the verified
    domain, e.g. `Wishlister <wishlister@example.com>`. Redeploy so functions pick them up.
+
+### 4. Microlink (link titles in quick add)
+
+When a link is pasted into quick add, the `page-info` function reads the page's `og:title`
+and `og:image` itself. Big shops behind bot protection (lego.com, for example) refuse requests
+that don't come from a real browser, so then it asks [Microlink](https://microlink.io), which
+opens the page in a browser and returns its title and picture. Microlink only gets a request
+when our own lookup finds no title. If it fails too, the item is named after the link.
+
+Without a key, the free endpoint is used. To use your Microlink account's plan instead, add
+`MICROLINK_API_KEY` in Netlify and redeploy. Keep an eye on the plan's monthly limit; when it
+runs out, blocked shops just get the name from the link.
