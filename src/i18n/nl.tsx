@@ -200,6 +200,24 @@ export const nl: Dictionary = {
     saved: "Opgeslagen.",
     signOut: "Afmelden",
   },
+  bulk: {
+    title: "Meerdere items bewerken",
+    select: "Selecteren",
+    selected: (p) => `${p.count} geselecteerd`,
+    selectAll: "Alles selecteren",
+    selectNone: "Niets selecteren",
+    setCategory: "Categorie",
+    setGroups: "Groepen",
+    done: "Klaar",
+    apply: "Toepassen",
+    categoryLabel: "Categorie voor de geselecteerde items",
+    categoryPlaceholder: "Laat leeg om ze weg te halen",
+    clearCategory: "Categorie weghalen",
+    confirmDelete: (p) =>
+      p.count === 1
+        ? "1 item van het lijstje verwijderen?"
+        : `${p.count} items van het lijstje verwijderen?`,
+  },
   wishlist: {
     fallbackTitle: "Verlanglijstje",
     mine: "Mijn verlanglijstje",
