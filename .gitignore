@@ -32,3 +32,4 @@ dist-ssr
 !.env.example
 storybook-static
 *storybook.log
+.vitest/
