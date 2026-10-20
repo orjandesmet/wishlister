@@ -90,7 +90,14 @@ export async function deleteItem(itemId: ItemId) {
 /** Which groups see an item: all of them, or only these (none at all when empty). */
 export type GroupSelection = "all" | GroupId[];
 
-export type QuickItem = { id: ItemId; name: string; groups: GroupSelection };
+export type QuickItem = {
+  id: ItemId;
+  name: string;
+  groups: GroupSelection;
+  url?: string | null;
+  /** The linked page's picture, stored for later (not shown yet). */
+  imageUrl?: string | null;
+};
 
 /**
  * Adds several items in one insert, then their groups in one more. The ids are
@@ -104,6 +111,9 @@ export async function addQuickItems(profileId: ProfileId, items: QuickItem[]): P
         id: item.id,
         profile_id: profileId,
         name: item.name.trim(),
+        url: item.url ?? null,
+        // Only sent when there is one, so lists without links don't depend on the column.
+        ...(item.imageUrl ? { image_url: item.imageUrl } : {}),
         visible_in_all_groups: item.groups === "all",
       })),
       { onConflict: "id", ignoreDuplicates: true },

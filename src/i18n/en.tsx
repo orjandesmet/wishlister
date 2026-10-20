@@ -152,7 +152,7 @@ export const en = {
   },
   quickAdd: {
     label: "Quick add",
-    placeholder: "Type a wish and press Enter",
+    placeholder: "Type a wish or paste a link, then press Enter",
     visibleIn: "Who can see new items",
     allGroups: "All groups",
     noGroupsHint: "No group picked: only you see them until you share them.",
