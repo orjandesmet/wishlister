@@ -144,7 +144,7 @@ export const nl: Dictionary = {
   },
   quickAdd: {
     label: "Snel toevoegen",
-    placeholder: "Typ een wens en druk op Enter",
+    placeholder: "Typ een wens of plak een link en druk op Enter",
     visibleIn: "Wie ziet nieuwe items",
     allGroups: "Alle groepen",
     noGroupsHint: "Geen groep gekozen: alleen jij ziet ze tot je ze deelt.",

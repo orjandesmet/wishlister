@@ -1,10 +1,36 @@
 import { createSignal, onCleanup, type Accessor } from "solid-js";
 import { addQuickItems, type GroupSelection, type Item } from "./api/items.ts";
+import { getPageInfo, type PageInfo } from "./api/pageInfo.ts";
 import type { ItemId, ProfileId } from "./ids.ts";
-import { QuickAddQueue, type QuickAddState } from "./quickAddQueue.ts";
+import { linkLabel, splitLink } from "./links.ts";
+import { QuickAddQueue, type PendingItem, type QuickAddState } from "./quickAddQueue.ts";
 
 /** What quick add keeps with each typed name until it's saved. */
-type QuickItemData = { id: ItemId; groups: GroupSelection };
+type QuickItemData = {
+  id: ItemId;
+  groups: GroupSelection;
+  /** A link that was pasted with (or instead of) the name. */
+  url: string | null;
+  /** No name was typed, only a link: the page's title becomes the name. */
+  nameFromPage: boolean;
+  /**
+   * The linked page's title and picture, looked up as soon as the link is added so
+   * it's usually there by the time the batch saves. Kept across retries.
+   */
+  page: Promise<PageInfo> | null;
+};
+
+/** The row to save for a pending item, once its page lookup (if any) is done. */
+async function toQuickItem({ name, data }: PendingItem<QuickItemData>) {
+  const page = data.page ? await data.page : null;
+  return {
+    id: data.id,
+    name: (data.nameFromPage && page?.title) || name,
+    groups: data.groups,
+    url: data.url,
+    imageUrl: page?.image ?? null,
+  };
+}
 
 // One queue per list, kept outside the page: leaving the page flushes it, and a
 // retry that is still running shows up again when you come back.
@@ -14,11 +40,8 @@ function queueFor(profileId: ProfileId) {
   let queue = queues.get(profileId);
   if (!queue) {
     queue = new QuickAddQueue({
-      save: (pending) =>
-        addQuickItems(
-          profileId,
-          pending.map((item) => ({ name: item.name, ...item.data })),
-        ),
+      save: async (pending) =>
+        addQuickItems(profileId, await Promise.all(pending.map(toQuickItem))),
     });
     queues.set(profileId, queue);
   }
@@ -51,8 +74,18 @@ export function useQuickAdd(profileId: ProfileId, onSaved: (items: Item[]) => vo
   return {
     state: state as Accessor<QuickAddState<QuickItemData>>,
     // The id is made now, so every retry of this item saves the same row.
-    add: (name: string, groups: GroupSelection) =>
-      queue.add(name, { id: crypto.randomUUID() as ItemId, groups }),
+    add: (text: string, groups: GroupSelection) => {
+      // A pasted link becomes the item's link. Until the page's title is found, an
+      // item with only a link shows a short version of it as its name.
+      const { url, name } = splitLink(text);
+      queue.add(name || (url ? linkLabel(url) : ""), {
+        id: crypto.randomUUID() as ItemId,
+        groups,
+        url,
+        nameFromPage: !name && url !== null,
+        page: url ? getPageInfo(url) : null,
+      });
+    },
     cancel: () => queue.cancel(),
   };
 }
