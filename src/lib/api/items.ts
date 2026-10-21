@@ -9,6 +9,8 @@ export type Item = {
   url: string | null;
   category: string | null;
   visible_in_all_groups: boolean;
+  /** A "please don't buy" entry instead of a wish. Nobody can buy it. */
+  not_wanted: boolean;
   item_groups: { group_id: GroupId }[];
 };
 export type ItemInput = {
@@ -16,27 +18,21 @@ export type ItemInput = {
   url: string | null;
   category: string | null;
   visible_in_all_groups: boolean;
+  not_wanted: boolean;
   groupIds: GroupId[];
 };
 
+const itemSelect =
+  "id, profile_id, name, url, category, visible_in_all_groups, not_wanted, item_groups(group_id)";
+
 export async function getItems(profileId: ProfileId): Promise<Item[]> {
   return must(
-    await supabase
-      .from("items")
-      .select("id, profile_id, name, url, category, visible_in_all_groups, item_groups(group_id)")
-      .eq("profile_id", profileId)
-      .order("created_at"),
+    await supabase.from("items").select(itemSelect).eq("profile_id", profileId).order("created_at"),
   ) as Item[];
 }
 
 export async function getItem(itemId: ItemId): Promise<Item> {
-  return must(
-    await supabase
-      .from("items")
-      .select("id, profile_id, name, url, category, visible_in_all_groups, item_groups(group_id)")
-      .eq("id", itemId)
-      .single(),
-  ) as Item;
+  return must(await supabase.from("items").select(itemSelect).eq("id", itemId).single()) as Item;
 }
 
 /**
@@ -64,6 +60,7 @@ function itemColumns(input: ItemInput) {
     url: input.url?.trim() || null,
     category: input.category?.trim() || null,
     visible_in_all_groups: input.visible_in_all_groups,
+    not_wanted: input.not_wanted,
   };
 }
 
@@ -95,6 +92,8 @@ export type QuickItem = {
   name: string;
   groups: GroupSelection;
   url?: string | null;
+  /** Typed with a leading "!": a "please don't buy" entry. */
+  notWanted?: boolean;
   /** The linked page's picture, stored for later (not shown yet). */
   imageUrl?: string | null;
 };
@@ -115,6 +114,7 @@ export async function addQuickItems(profileId: ProfileId, items: QuickItem[]): P
         // Only sent when there is one, so lists without links don't depend on the column.
         ...(item.imageUrl ? { image_url: item.imageUrl } : {}),
         visible_in_all_groups: item.groups === "all",
+        not_wanted: item.notWanted ?? false,
       })),
       { onConflict: "id", ignoreDuplicates: true },
     ),
@@ -134,7 +134,7 @@ export async function addQuickItems(profileId: ProfileId, items: QuickItem[]): P
   const saved = must(
     await supabase
       .from("items")
-      .select("id, profile_id, name, url, category, visible_in_all_groups, item_groups(group_id)")
+      .select(itemSelect)
       .in(
         "id",
         items.map((item) => item.id),

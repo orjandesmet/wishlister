@@ -164,6 +164,7 @@ export const en = {
     youBoughtFor: (p: { occasion: string }) => `You bought this for ${p.occasion}`,
     forWhichOccasion: "Which occasion is it for?",
     noOccasion: "Not for an occasion",
+    notWanted: "🚫 Please don't buy",
   },
   unfollow: {
     title: "Stop following",
@@ -193,6 +194,7 @@ export const en = {
     category: "Category",
     available: "Not bought yet first",
     uncategorised: "No category",
+    notWanted: "Please don't buy",
   },
   quickAdd: {
     label: "Quick add",
@@ -203,6 +205,7 @@ export const en = {
     saving: "Saving…",
     notSaved: "Not saved yet",
     retrying: "Couldn't save. Trying again…",
+    notWantedHint: "Start with ! for something you don't want, like !mugs.",
   },
   itemForm: {
     addTitle: "Add item",
@@ -215,6 +218,7 @@ export const en = {
     selectedGroups: "Only selected groups",
     noGroups: "This list isn't in any groups yet.",
     noGroupsOption: "No groups (only me)",
+    notWanted: "Please don't buy this: something I don't want",
   },
   // Suggested under the category field, even before anyone has used a category.
   categories: {

@@ -109,7 +109,7 @@ export default function WishList() {
     () => new Map((purchases() ?? []).map((p) => [p.item_id, p] as const)),
   );
   const purchase = (item: Item): PurchaseState => {
-    if (isOwnList() || !purchases()) return "hidden";
+    if (isOwnList() || item.not_wanted || !purchases()) return "hidden";
     const bought = purchaseOf().get(item.id);
     if (bought === undefined) return "available";
     return bought.bought_by === me().profile.id ? "mine" : "someone";
@@ -122,8 +122,10 @@ export default function WishList() {
   };
   // Owners never learn what was bought, so "not bought first" only exists on other lists.
   const showBought = () => !isOwnList() && purchases() !== undefined;
+  // "Please don't buy" entries get their own section at the bottom, in the order added.
+  const notWanted = createMemo(() => (items() ?? []).filter((item) => item.not_wanted));
   const sections = createMemo(() => {
-    const list = items() ?? [];
+    const list = (items() ?? []).filter((item) => !item.not_wanted);
     return arrangeItems(list, order(), {
       compare: compareNames,
       isBought: showBought() ? (i) => purchaseOf().has(list[i].id) : undefined,
@@ -194,6 +196,25 @@ export default function WishList() {
     choosing()?.itemId === item.id ? choosing()?.occasions : undefined;
   const onUndo = (item: Item) => run(() => undoBought(item.id).then(() => void refetchPurchases()));
 
+  const card = (item: Item) => (
+    <ItemCard
+      item={item}
+      purchase={purchase(item)}
+      canEdit={canEdit()}
+      groupNames={item.item_groups.map((g) => groupName(g.group_id))}
+      boughtFor={purchaseOf().get(item.id)?.occasion?.name}
+      onBuy={() => onBuy(item)}
+      occasionChoices={occasionChoices(item)}
+      onPickOccasion={(occasionId) => buy(item, occasionId)}
+      onCancelPick={() => setChoosing(undefined)}
+      onUndo={() => onUndo(item)}
+      onRemove={() => onDelete(item)}
+      selecting={selecting()}
+      selected={selected().has(item.id)}
+      onToggleSelect={() => toggleSelected(item.id)}
+    />
+  );
+
   return (
     <>
       <div class="row">
@@ -246,30 +267,19 @@ export default function WishList() {
               <h2>{section.category ?? t("listOrder.uncategorised")}</h2>
             </Show>
             <ul class="list cards">
-              <For each={section.items}>
-                {(item) => (
-                  <ItemCard
-                    item={item}
-                    purchase={purchase(item)}
-                    canEdit={canEdit()}
-                    groupNames={item.item_groups.map((g) => groupName(g.group_id))}
-                    boughtFor={purchaseOf().get(item.id)?.occasion?.name}
-                    onBuy={() => onBuy(item)}
-                    occasionChoices={occasionChoices(item)}
-                    onPickOccasion={(occasionId) => buy(item, occasionId)}
-                    onCancelPick={() => setChoosing(undefined)}
-                    onUndo={() => onUndo(item)}
-                    onRemove={() => onDelete(item)}
-                    selecting={selecting()}
-                    selected={selected().has(item.id)}
-                    onToggleSelect={() => toggleSelected(item.id)}
-                  />
-                )}
-              </For>
+              <For each={section.items}>{card}</For>
             </ul>
           </section>
         )}
       </For>
+      <Show when={notWanted().length > 0}>
+        <section class="stack">
+          <h2>{t("listOrder.notWanted")}</h2>
+          <ul class="list cards">
+            <For each={notWanted()}>{card}</For>
+          </ul>
+        </section>
+      </Show>
       <Show when={selecting()}>
         <BulkActions
           selected={selectedIds().length}

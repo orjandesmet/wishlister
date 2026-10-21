@@ -22,6 +22,7 @@ const meta = {
       url: "https://www.lego.com/en-be/product/bonsai-tree-10281",
       category: "Toys",
       visible_in_all_groups: true,
+      not_wanted: false,
       item_groups: [],
     },
     purchase: "available",
@@ -121,4 +122,16 @@ export const Selecting: Story = {
 
 export const Selected: Story = {
   args: { ...Selecting.args, selected: true },
+};
+
+/** "Please don't buy": shown apart, and nobody can buy it. */
+export const NotWanted: Story = {
+  args: {
+    purchase: "hidden",
+    item: { ...meta.args.item, name: "More mugs", url: null, category: null, not_wanted: true },
+  },
+};
+
+export const NotWantedOnYourOwnList: Story = {
+  args: { ...NotWanted.args, canEdit: true },
 };

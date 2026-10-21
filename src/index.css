@@ -302,6 +302,23 @@ button.chip-button[aria-pressed="true"] {
   box-shadow: none;
 }
 
+/* A "please don't buy" entry: set apart from the wishes, never bought. */
+.item.not-wanted {
+  border-color: var(--danger);
+  border-style: dashed;
+  box-shadow: none;
+}
+
+.badge-not-wanted {
+  align-self: flex-start;
+  padding: 2px 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: 999px;
+}
+
 .badge-private {
   align-self: flex-start;
   padding: 2px 10px;

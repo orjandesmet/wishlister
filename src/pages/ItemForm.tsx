@@ -20,6 +20,7 @@ export default function ItemForm() {
   const [name, setName] = createSignal("");
   const [url, setUrl] = createSignal("");
   const [category, setCategory] = createSignal("");
+  const [notWanted, setNotWanted] = createSignal(false);
   /** "some" with nothing ticked saves the same as "none". */
   const [visibility, setVisibility] = createSignal<"all" | "some" | "none">("all");
   const [groupIds, setGroupIds] = createSignal<GroupId[]>([]);
@@ -41,6 +42,7 @@ export default function ItemForm() {
       setName(loaded.name);
       setUrl(loaded.url ?? "");
       setCategory(loaded.category ?? "");
+      setNotWanted(loaded.not_wanted);
       const ids = loaded.item_groups.map((g) => g.group_id);
       setVisibility(loaded.visible_in_all_groups ? "all" : ids.length > 0 ? "some" : "none");
       setGroupIds(ids);
@@ -59,6 +61,7 @@ export default function ItemForm() {
       url: url(),
       category: category(),
       visible_in_all_groups: visibility() === "all",
+      not_wanted: notWanted(),
       groupIds: visibility() === "some" ? groupIds() : [],
     };
     try {
@@ -101,6 +104,14 @@ export default function ItemForm() {
           </datalist>
         </label>
         <CategoryChips categories={chips()} onPick={setCategory} />
+        <label class="check">
+          <input
+            type="checkbox"
+            checked={notWanted()}
+            onChange={(e) => setNotWanted(e.currentTarget.checked)}
+          />
+          {t("itemForm.notWanted")}
+        </label>
         <fieldset>
           <legend>{t("itemForm.visibility")}</legend>
           <label class="check">
