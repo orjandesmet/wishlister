@@ -138,6 +138,18 @@ export const en = {
     stay: "Stay in the group",
     deleteGroup: "Delete group",
   },
+  occasions: {
+    title: "Occasions",
+    help: "Dates this group gives presents for, like Christmas or a birthday.",
+    none: "No upcoming occasions.",
+    past: (p: { count: number }) => `Past occasions (${p.count})`,
+    name: "Name",
+    namePlaceholder: "e.g. Christmas 2026",
+    date: "Date",
+    add: "Add occasion",
+    new: "New occasion",
+    confirmDelete: (p: { name: string }) => `Delete ${p.name} for the whole group?`,
+  },
   child: {
     confirmDelete: (p: { name: string }) =>
       `Delete ${p.name}'s profile and wishlist for everyone? This can't be undone.`,

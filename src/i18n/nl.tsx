@@ -130,6 +130,18 @@ export const nl: Dictionary = {
     stay: "In de groep blijven",
     deleteGroup: "Groep wissen",
   },
+  occasions: {
+    title: "Gelegenheden",
+    help: "Momenten waarop deze groep cadeaus geeft, zoals Kerstmis of een verjaardag.",
+    none: "Geen gelegenheden gepland.",
+    past: (p: { count: number }) => `Voorbije gelegenheden (${p.count})`,
+    name: "Naam",
+    namePlaceholder: "bv. Kerstmis 2026",
+    date: "Datum",
+    add: "Gelegenheid toevoegen",
+    new: "Nieuwe gelegenheid",
+    confirmDelete: (p: { name: string }) => `${p.name} wissen voor de hele groep?`,
+  },
   child: {
     confirmDelete: (p) =>
       `Het profiel en verlanglijstje van ${p.name} voor iedereen wissen? Dit kan niet ongedaan gemaakt worden.`,
