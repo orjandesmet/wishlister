@@ -1,5 +1,6 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
 import { createResource, createSignal, Show } from "solid-js";
+import { usePageTitle } from "../lib/a11y.ts";
 import { getJoinPreview, joinGroup } from "../lib/api/groups.ts";
 import { t } from "../lib/i18n.ts";
 
@@ -10,6 +11,7 @@ export default function Join() {
   const [preview] = createResource(() => params.code, getJoinPreview);
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
+  usePageTitle(() => t("join.title"));
 
   async function onJoin() {
     setBusy(true);
@@ -27,7 +29,9 @@ export default function Join() {
     <>
       <h1>{t("join.title")}</h1>
       <Show when={preview.error}>
-        <p class="error">{t("join.openFailed", { message: preview.error.message })}</p>
+        <p class="error" role="alert">
+          {t("join.openFailed", { message: preview.error.message })}
+        </p>
       </Show>
       <Show when={preview() === null}>
         <p class="muted">{t("join.expired")}</p>
@@ -55,7 +59,9 @@ export default function Join() {
               </button>
             </Show>
             <Show when={error()}>
-              <p class="error">{error()}</p>
+              <p class="error" role="alert">
+                {error()}
+              </p>
             </Show>
           </section>
         )}

@@ -32,6 +32,7 @@ import {
   type OccasionInput,
 } from "../lib/api/occasions.ts";
 import { Occasions } from "../components/Occasions.tsx";
+import { announce, focusHeading, focusSoon, named, usePageTitle } from "../lib/a11y.ts";
 import { compareNames, formatList, t } from "../lib/i18n.ts";
 import type { GroupId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
@@ -77,6 +78,13 @@ export default function GroupSettings() {
   const [childParent, setChildParent] = createSignal<ProfileId>();
   const [notice, setNotice] = createSignal<string>();
   const [error, setError] = createSignal<string>();
+  usePageTitle(() => group()?.name);
+
+  /** After a row disappears, tell screen readers and put focus back at the top. */
+  const gone = (name: string) => {
+    announce(t("a11y.removed", { item: name }));
+    focusHeading();
+  };
 
   async function run(action: () => Promise<unknown>) {
     setError(undefined);
@@ -173,9 +181,9 @@ export default function GroupSettings() {
   const onUpdateOccasion = (id: OccasionId, input: OccasionInput) =>
     changeOccasions(() => updateOccasion(id, input));
 
-  const onDeleteOccasion = (occasion: Occasion) => {
-    if (!confirm(t("occasions.confirmDelete", { name: occasion.name }))) return;
-    void changeOccasions(() => deleteOccasion(occasion.id));
+  const onDeleteOccasion = async (occasion: Occasion) => {
+    if (!confirm(t("occasions.confirmDelete", { name: occasion.name }))) return false;
+    return changeOccasions(() => deleteOccasion(occasion.id));
   };
 
   const onAddChild = (event: SubmitEvent) => {
@@ -239,7 +247,10 @@ export default function GroupSettings() {
       if (!confirm(lines.join("\n\n"))) return;
       const result = await removeMember(params.groupId, member.profile_id);
       if (leaving || result === "group_deleted") navigate("/", { replace: true });
-      else await Promise.all([refetchGroup(), refetchParents()]);
+      else {
+        await Promise.all([refetchGroup(), refetchParents()]);
+        gone(member.profiles.display_name);
+      }
     });
 
   const onRemoveParent = (child: Member, parentProfileId: ProfileId) =>
@@ -254,6 +265,7 @@ export default function GroupSettings() {
       await removeParent(child.profile_id, parentProfileId);
       await refetchParents();
       me().refetchManaged();
+      gone(nameOf(parentProfileId));
     });
 
   const onDeleteChild = (child: Member) =>
@@ -263,6 +275,7 @@ export default function GroupSettings() {
       await deleteChild(child.profile_id);
       await refetchGroup();
       me().refetchManaged();
+      gone(childName);
     });
 
   const onAddParent = (child: Member, parentProfileId: ProfileId) =>
@@ -290,9 +303,17 @@ export default function GroupSettings() {
   const [handingOver, setHandingOver] = createSignal(false);
   const [successor, setSuccessor] = createSignal<ProfileId>();
 
+  // Asking for a successor swaps the Leave button for a form, so focus follows.
+  let leaveButton: HTMLButtonElement | undefined;
+  let successorSelect: HTMLSelectElement | undefined;
   const onLeave = (mine: Member) => {
-    if (mustHandOver()) setHandingOver(true);
-    else void onRemove(mine);
+    if (!mustHandOver()) return void onRemove(mine);
+    setHandingOver(true);
+    focusSoon(() => successorSelect);
+  };
+  const onStay = () => {
+    setHandingOver(false);
+    focusSoon(() => leaveButton);
   };
 
   const onHandOverAndLeave = (mine: Member) =>
@@ -314,11 +335,16 @@ export default function GroupSettings() {
       <Show when={group.error}>
         <p class="error">{t("group.unavailable")}</p>
       </Show>
-      <Show when={notice()}>
-        <p class="notice">{notice()}</p>
-      </Show>
+      {/* Always there, so screen readers notice when a message appears in it. */}
+      <div role="status">
+        <Show when={notice()}>
+          <p class="notice">{notice()}</p>
+        </Show>
+      </div>
       <Show when={error()}>
-        <p class="error">{error()}</p>
+        <p class="error" role="alert">
+          {error()}
+        </p>
       </Show>
 
       <section class="card">
@@ -335,6 +361,7 @@ export default function GroupSettings() {
                   <Match when={isManager() && member.profile_id !== me().profile.id}>
                     <span class="row">
                       <select
+                        aria-label={t("a11y.roleOf", { name: member.profiles.display_name })}
                         value={member.role}
                         onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
                       >
@@ -342,7 +369,12 @@ export default function GroupSettings() {
                         <option value="guardian">{t("roles.guardian")}</option>
                         <option value="manager">{t("roles.manager")}</option>
                       </select>
-                      <button type="button" class="link danger" onClick={() => onRemove(member)}>
+                      <button
+                        type="button"
+                        class="link danger"
+                        aria-label={named(t("common.remove"), member.profiles.display_name)}
+                        onClick={() => onRemove(member)}
+                      >
                         {t("common.remove")}
                       </button>
                     </span>
@@ -350,6 +382,7 @@ export default function GroupSettings() {
                   {/* Members choose for themselves whether their own list shows in this group. */}
                   <Match when={member.profile_id === me().profile.id && member.role !== "manager"}>
                     <select
+                      aria-label={t("a11y.roleOf", { name: member.profiles.display_name })}
                       value={member.role}
                       onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
                     >
@@ -376,6 +409,7 @@ export default function GroupSettings() {
                     <button
                       type="button"
                       class="link"
+                      aria-label={named(t("group.emailInvite"), email)}
                       onClick={() => run(() => emailInvite(email))}
                     >
                       {t("group.emailInvite")}
@@ -383,10 +417,12 @@ export default function GroupSettings() {
                     <button
                       type="button"
                       class="link danger"
+                      aria-label={named(t("common.cancel"), email)}
                       onClick={() =>
                         run(async () => {
                           await cancelInvite(params.groupId, email);
                           await refetchInvites();
+                          gone(email);
                         })
                       }
                     >
@@ -440,7 +476,12 @@ export default function GroupSettings() {
                     <A href={`/lists/${child.profile_id}`}>{child.profiles.display_name}</A>
                     <span class="row">
                       <Show when={isManager() || iAmParent()}>
-                        <button type="button" class="link danger" onClick={() => onRemove(child)}>
+                        <button
+                          type="button"
+                          class="link danger"
+                          aria-label={named(t("common.remove"), child.profiles.display_name)}
+                          onClick={() => onRemove(child)}
+                        >
                           {t("common.remove")}
                         </button>
                       </Show>
@@ -448,6 +489,7 @@ export default function GroupSettings() {
                         <button
                           type="button"
                           class="link danger"
+                          aria-label={named(t("common.delete"), child.profiles.display_name)}
                           onClick={() => onDeleteChild(child)}
                         >
                           {t("common.delete")}
@@ -479,6 +521,7 @@ export default function GroupSettings() {
                   </p>
                   <Show when={iAmParent() && otherAdults().length > 0}>
                     <select
+                      aria-label={t("a11y.addParentFor", { child: child.profiles.display_name })}
                       onChange={(e) => onAddParent(child, e.currentTarget.value as ProfileId)}
                     >
                       <option value="">{t("group.addParent")}</option>
@@ -495,7 +538,10 @@ export default function GroupSettings() {
           </For>
         </ul>
         <Show when={myOtherChildren().length > 0}>
-          <select onChange={(e) => onAddMyChild(e.currentTarget.value as ProfileId)}>
+          <select
+            aria-label={t("group.addMyChild")}
+            onChange={(e) => onAddMyChild(e.currentTarget.value as ProfileId)}
+          >
             <option value="">{t("group.addMyChild")}</option>
             <For each={myOtherChildren()}>
               {(child) => <option value={child.id}>{child.display_name}</option>}
@@ -563,7 +609,12 @@ export default function GroupSettings() {
             <Show
               when={handingOver()}
               fallback={
-                <button type="button" class="secondary" onClick={() => onLeave(mine())}>
+                <button
+                  ref={(el) => (leaveButton = el)}
+                  type="button"
+                  class="secondary"
+                  onClick={() => onLeave(mine())}
+                >
                   {t("group.leave")}
                 </button>
               }
@@ -572,6 +623,7 @@ export default function GroupSettings() {
                 <label>
                   {t("group.chooseSuccessor", { group: group()?.name ?? "" })}
                   <select
+                    ref={(el) => (successorSelect = el)}
                     value={successor() ?? ""}
                     onChange={(e) => setSuccessor(e.currentTarget.value as ProfileId)}
                   >
@@ -592,7 +644,7 @@ export default function GroupSettings() {
                 >
                   {t("group.handOverAndLeave")}
                 </button>
-                <button type="button" class="secondary" onClick={() => setHandingOver(false)}>
+                <button type="button" class="secondary" onClick={onStay}>
                   {t("group.stay")}
                 </button>
               </div>

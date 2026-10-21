@@ -1,6 +1,7 @@
 import { A } from "@solidjs/router";
 import { createSignal, For, Show } from "solid-js";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
+import { usePageTitle } from "../lib/a11y.ts";
 import { renameProfile } from "../lib/api/profiles.ts";
 import { chooseLocale } from "../lib/accountLocale.ts";
 import { locale, t } from "../lib/i18n.ts";
@@ -13,6 +14,8 @@ export default function MyLists() {
   const [saved, setSaved] = createSignal(false);
   const [error, setError] = createSignal<string>();
   const hasChildren = () => (me().managed()?.length ?? 0) > 0;
+  const title = () => (hasChildren() ? t("account.myLists") : t("account.title"));
+  usePageTitle(title);
 
   async function onRename(event: SubmitEvent) {
     event.preventDefault();
@@ -29,14 +32,16 @@ export default function MyLists() {
 
   return (
     <>
-      <h1>{hasChildren() ? t("account.myLists") : t("account.title")}</h1>
+      <h1>{title()}</h1>
       <Show when={hasChildren()}>
         <section class="card">
           <ul class="list">
             <li>
               <A class="list-row" href={`/lists/${me().profile.id}`}>
                 <span>{t("account.myWishlist")}</span>
-                <span class="muted">›</span>
+                <span class="muted" aria-hidden="true">
+                  ›
+                </span>
               </A>
             </li>
             <For each={me().managed()}>
@@ -44,7 +49,9 @@ export default function MyLists() {
                 <li>
                   <A class="list-row" href={`/lists/${child.id}`}>
                     <span>{t("account.childWishlist", { name: child.display_name })}</span>
-                    <span class="muted">›</span>
+                    <span class="muted" aria-hidden="true">
+                      ›
+                    </span>
                   </A>
                 </li>
               )}
@@ -58,11 +65,16 @@ export default function MyLists() {
           <input required value={name()} onInput={(e) => setName(e.currentTarget.value)} />
         </label>
         <button type="submit">{t("account.saveName")}</button>
-        <Show when={saved()}>
-          <p class="muted">{t("account.saved")}</p>
-        </Show>
+        {/* Always there, so screen readers notice when "Saved." appears in it. */}
+        <div role="status">
+          <Show when={saved()}>
+            <p class="muted">{t("account.saved")}</p>
+          </Show>
+        </div>
         <Show when={error()}>
-          <p class="error">{error()}</p>
+          <p class="error" role="alert">
+            {error()}
+          </p>
         </Show>
       </form>
       <section class="card">

@@ -5,6 +5,7 @@ import { FollowList } from "../components/FollowList.tsx";
 import { ItemCard, type PurchaseState } from "../components/ItemCard.tsx";
 import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
 import { QuickAdd } from "../components/QuickAdd.tsx";
+import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { deleteChild } from "../lib/api/children.ts";
 import { followList, getFollowUntil, unfollowList } from "../lib/api/follows.ts";
 import {
@@ -26,10 +27,10 @@ import {
   undoBought,
 } from "../lib/api/purchases.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
-import { compareNames, t } from "../lib/i18n.ts";
+import { compareNames, formatList, locale, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { arrangeItems, readListOrder, saveListOrder, type ListOrder } from "../lib/listOrder.ts";
-import { addDays, today, type IsoDate } from "../lib/occasions.ts";
+import { addDays, formatOccasionDate, today, type IsoDate } from "../lib/occasions.ts";
 import { useMe } from "../lib/me.tsx";
 import { useQuickAdd } from "../lib/quickAdd.ts";
 
@@ -48,7 +49,10 @@ export default function WishList() {
   );
   // A memo, so moving to another list switches queues (and flushes the old one).
   const quickAdd = createMemo(() =>
-    useQuickAdd(params.profileId, (saved) => setItems((prev) => [...(prev ?? []), ...saved])),
+    useQuickAdd(params.profileId, (saved) => {
+      setItems((prev) => [...(prev ?? []), ...saved]);
+      announce(t("a11y.added", { items: formatList(saved.map((item) => item.name)) }));
+    }),
   );
   // Runs again whenever the items change. The database leaves out purchases on your own list.
   const [purchases, { refetch: refetchPurchases }] = createResource(
@@ -79,12 +83,26 @@ export default function WishList() {
       if (!next.delete(id)) next.add(id);
       return next;
     });
+  // The Select button and the cards' buttons swap with checkboxes, so focus goes
+  // to the first checkbox, and back to Select when done.
+  let selectButton: HTMLButtonElement | undefined;
+  const startSelecting = () => {
+    setSelecting(true);
+    focusSoon(() => document.querySelector<HTMLElement>("main .select-row input"));
+  };
   const stopSelecting = () => {
     setSelecting(false);
     setSelected(new Set<ItemId>());
+    focusSoon(() => selectButton);
   };
 
   const isOwnList = () => profile()?.id === me().profile.id;
+  const title = () => {
+    const p = profile();
+    if (!p) return t("wishlist.fallbackTitle");
+    return isOwnList() ? t("wishlist.mine") : t("wishlist.theirs", { name: p.display_name });
+  };
+  usePageTitle(title);
 
   // Following someone else's list. Only loaded once we know it isn't your own.
   const otherList = () => (profile() && !isOwnList() ? params.profileId : undefined);
@@ -102,8 +120,16 @@ export default function WishList() {
     });
     setFollowBusy(false);
   };
-  const onFollow = (until: IsoDate) => changeFollow(() => followList(params.profileId, until));
-  const onUnfollow = () => changeFollow(() => unfollowList(params.profileId));
+  const onFollow = (until: IsoDate) =>
+    changeFollow(async () => {
+      await followList(params.profileId, until);
+      announce(t("follow.following", { date: formatOccasionDate(until, locale()) }));
+    });
+  const onUnfollow = () =>
+    changeFollow(async () => {
+      await unfollowList(params.profileId);
+      announce(t("a11y.unfollowed"));
+    });
   const canEdit = () => isOwnList() || (profile()?.managerIds.includes(me().profile.id) ?? false);
   const purchaseOf = createMemo(
     () => new Map((purchases() ?? []).map((p) => [p.item_id, p] as const)),
@@ -147,25 +173,35 @@ export default function WishList() {
       if (!confirm(t("wishlist.confirmRemoveItem", { item: item.name }))) return;
       await deleteItem(item.id);
       await refetchItems();
+      // Its card, and the button just pressed, are gone.
+      announce(t("a11y.removed", { item: item.name }));
+      focusHeading();
     });
-  async function bulk(action: (ids: ItemId[]) => Promise<void>) {
+  async function bulk(action: (ids: ItemId[]) => Promise<void>, done: (count: number) => string) {
     setBulkBusy(true);
+    const count = selectedIds().length;
     await run(async () => {
       await action(selectedIds());
       await refetchItems();
+      announce(done(count));
     });
     setBulkBusy(false);
   }
+  const changed = (count: number) => t("a11y.changed", { count });
   const onBulkCategory = (category: string | null) =>
-    bulk((ids) => setItemsCategory(ids, category));
-  const onBulkGroups = (groups: GroupSelection) => bulk((ids) => setItemsGroups(ids, groups));
+    bulk((ids) => setItemsCategory(ids, category), changed);
+  const onBulkGroups = (groups: GroupSelection) =>
+    bulk((ids) => setItemsGroups(ids, groups), changed);
   const onBulkDelete = () => {
     const count = selectedIds().length;
     if (!confirm(t("bulk.confirmDelete", { count }))) return;
-    void bulk(async (ids) => {
-      await deleteItems(ids);
-      setSelected(new Set<ItemId>());
-    });
+    void bulk(
+      async (ids) => {
+        await deleteItems(ids);
+        setSelected(new Set<ItemId>());
+      },
+      (count) => t("a11y.deleted", { count }),
+    );
   };
   const onDeleteChild = () =>
     run(async () => {
@@ -183,6 +219,7 @@ export default function WishList() {
       await markBought(item.id, occasionId);
       // Buying follows the list, so its end date may have moved too.
       await Promise.all([refetchPurchases(), refetchFollow()]);
+      announce(t("a11y.bought", { item: item.name }));
     });
   const onBuy = (item: Item) =>
     run(async () => {
@@ -192,20 +229,24 @@ export default function WishList() {
     });
   const occasionChoices = (item: Item) =>
     choosing()?.itemId === item.id ? choosing()?.occasions : undefined;
-  const onUndo = (item: Item) => run(() => undoBought(item.id).then(() => void refetchPurchases()));
+  const onUndo = (item: Item) =>
+    run(async () => {
+      await undoBought(item.id);
+      await refetchPurchases();
+      announce(t("a11y.unbought", { item: item.name }));
+    });
 
   return (
     <>
       <div class="row">
-        <h1>
-          <Show when={profile()} fallback={t("wishlist.fallbackTitle")}>
-            {(p) =>
-              isOwnList() ? t("wishlist.mine") : t("wishlist.theirs", { name: p().display_name })
-            }
-          </Show>
-        </h1>
+        <h1>{title()}</h1>
         <Show when={canEdit() && !selecting() && (items()?.length ?? 0) > 1}>
-          <button type="button" class="secondary small" onClick={() => setSelecting(true)}>
+          <button
+            ref={(el) => (selectButton = el)}
+            type="button"
+            class="secondary small"
+            onClick={startSelecting}
+          >
             {t("bulk.select")}
           </button>
         </Show>
@@ -216,10 +257,14 @@ export default function WishList() {
         </A>
       </Show>
       <Show when={profile.error || items.error}>
-        <p class="error">{t("wishlist.unavailable")}</p>
+        <p class="error" role="alert">
+          {t("wishlist.unavailable")}
+        </p>
       </Show>
       <Show when={error()}>
-        <p class="error">{error()}</p>
+        <p class="error" role="alert">
+          {error()}
+        </p>
       </Show>
       <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
         <p class="muted">{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>

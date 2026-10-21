@@ -1,5 +1,6 @@
 import { A } from "@solidjs/router";
 import { For, Show } from "solid-js";
+import { named } from "../lib/a11y.ts";
 import type { Group } from "../lib/api/groups.ts";
 import { compareNames, t } from "../lib/i18n.ts";
 import type { ProfileId } from "../lib/ids.ts";
@@ -21,12 +22,18 @@ export function GroupCard(props: GroupCardProps) {
       (m) => m.profile_id === props.myProfileId && m.role === "manager",
     );
 
+  const linkText = () => (isManager() ? t("groupCard.manage") : t("groupCard.details"));
+
   return (
     <section class="card">
       <div class="row">
         <h2>{props.group.name}</h2>
-        <A class="link" href={`/groups/${props.group.id}`}>
-          {isManager() ? t("groupCard.manage") : t("groupCard.details")}
+        <A
+          class="link"
+          href={`/groups/${props.group.id}`}
+          aria-label={named(linkText(), props.group.name)}
+        >
+          {linkText()}
         </A>
       </div>
       <ul class="list">

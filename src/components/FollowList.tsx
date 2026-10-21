@@ -1,4 +1,5 @@
 import { createSignal, Show } from "solid-js";
+import { focusSoon } from "../lib/a11y.ts";
 import { locale, t } from "../lib/i18n.ts";
 import { formatOccasionDate, type IsoDate } from "../lib/occasions.ts";
 
@@ -23,18 +24,31 @@ export function FollowList(props: FollowListProps) {
   const [date, setDate] = createSignal<IsoDate>("");
   const following = () => props.until !== null && props.until >= props.today;
 
+  // The buttons inside swap with every step, so focus moves to the date field while
+  // editing, and back to the card itself after.
+  let card: HTMLElement | undefined;
+  let dateInput: HTMLInputElement | undefined;
   const startEditing = () => {
     setDate(following() ? props.until! : props.suggestedUntil);
     setEditing(true);
+    focusSoon(() => dateInput);
+  };
+  const stopEditing = () => {
+    setEditing(false);
+    focusSoon(() => card);
   };
   const onSubmit = (event: SubmitEvent) => {
     event.preventDefault();
     props.onFollow(date());
-    setEditing(false);
+    stopEditing();
+  };
+  const onUnfollow = () => {
+    props.onUnfollow();
+    focusSoon(() => card);
   };
 
   return (
-    <section class="card follow">
+    <section ref={(el) => (card = el)} class="card follow" tabIndex={-1}>
       <Show
         when={editing()}
         fallback={
@@ -58,12 +72,7 @@ export function FollowList(props: FollowListProps) {
               <button type="button" class="link" disabled={props.busy} onClick={startEditing}>
                 {t("follow.changeDate")}
               </button>
-              <button
-                type="button"
-                class="link danger"
-                disabled={props.busy}
-                onClick={() => props.onUnfollow()}
-              >
+              <button type="button" class="link danger" disabled={props.busy} onClick={onUnfollow}>
                 {t("follow.stop")}
               </button>
             </div>
@@ -75,6 +84,7 @@ export function FollowList(props: FollowListProps) {
           <label>
             {t("follow.until")}
             <input
+              ref={(el) => (dateInput = el)}
               type="date"
               required
               min={props.today}
@@ -91,7 +101,7 @@ export function FollowList(props: FollowListProps) {
             <button type="submit" disabled={props.busy}>
               {following() ? t("common.save") : t("follow.follow")}
             </button>
-            <button type="button" class="secondary" onClick={() => setEditing(false)}>
+            <button type="button" class="secondary" onClick={stopEditing}>
               {t("common.cancel")}
             </button>
           </div>

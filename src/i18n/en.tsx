@@ -282,6 +282,23 @@ export const en = {
     addItem: "+ Add item",
     aGroup: "a group",
   },
+  // Only for screen readers: names of unlabelled controls, and announcements of
+  // changes that happen out of sight.
+  a11y: {
+    mainNav: "Main",
+    categorySuggestions: "Category suggestions",
+    roleOf: (p: { name: string }) => `Role of ${p.name}`,
+    addParentFor: (p: { child: string }) => `Add a parent for ${p.child}`,
+    added: (p: { items: string }) => `Added ${p.items}.`,
+    removed: (p: { item: string }) => `Removed ${p.item}.`,
+    bought: (p: { item: string }) => `Marked ${p.item} as bought.`,
+    unbought: (p: { item: string }) => `${p.item} is no longer marked as bought.`,
+    changed: (p: { count: number }) =>
+      p.count === 1 ? "1 item changed." : `${p.count} items changed.`,
+    deleted: (p: { count: number }) =>
+      p.count === 1 ? "1 item removed." : `${p.count} items removed.`,
+    unfollowed: "You stopped following this list.",
+  },
 };
 
 export type Dictionary = typeof en;

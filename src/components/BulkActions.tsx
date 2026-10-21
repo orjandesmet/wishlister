@@ -1,4 +1,5 @@
 import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js";
+import { focusSoon } from "../lib/a11y.ts";
 import type { GroupSelection } from "../lib/api/items.ts";
 import { t } from "../lib/i18n.ts";
 import type { GroupId } from "../lib/ids.ts";
@@ -40,20 +41,52 @@ export function BulkActions(props: BulkActionsProps) {
 
   const nothing = () => props.selected === 0 || props.busy;
 
+  // Switching panels replaces the buttons, so focus moves along: into the form that
+  // opened, and back to the button that opened it.
+  let categoryButton: HTMLButtonElement | undefined;
+  let groupsButton: HTMLButtonElement | undefined;
+  let categoryInput: HTMLInputElement | undefined;
+  let groupsFieldset: HTMLFieldSetElement | undefined;
+  let bar: HTMLElement | undefined;
+  const open = (next: "category" | "groups") => {
+    setPanel(next);
+    focusSoon(() =>
+      next === "category" ? categoryInput : groupsFieldset?.querySelector("input:checked"),
+    );
+  };
+  const close = () => {
+    const from = panel();
+    setPanel("actions");
+    focusSoon(() => {
+      const button = from === "category" ? categoryButton : groupsButton;
+      // Disabled while the change saves; the bar itself then holds focus.
+      return button && !button.disabled ? button : bar;
+    });
+  };
+  const pickCategory = (picked: string) => {
+    setCategory(picked);
+    focusSoon(() => categoryInput);
+  };
+
   function applyCategory(event: SubmitEvent) {
     event.preventDefault();
     props.onSetCategory(category().trim() || null);
-    setPanel("actions");
+    close();
   }
   function applyGroups(event: SubmitEvent) {
     event.preventDefault();
     const v = visibility();
     props.onSetGroups(v === "all" ? "all" : v === "some" ? groupIds() : []);
-    setPanel("actions");
+    close();
   }
 
   return (
-    <section class="card bulk-actions" aria-label={t("bulk.title")}>
+    <section
+      ref={(el) => (bar = el)}
+      class="card bulk-actions"
+      aria-label={t("bulk.title")}
+      tabIndex={-1}
+    >
       <div class="row">
         <strong class="bulk-count" aria-live="polite">
           {t("bulk.selected", { count: props.selected })}
@@ -75,18 +108,20 @@ export function BulkActions(props: BulkActionsProps) {
         <Match when={panel() === "actions"}>
           <div class="bulk-buttons">
             <button
+              ref={(el) => (categoryButton = el)}
               type="button"
               class="secondary small"
               disabled={nothing()}
-              onClick={() => setPanel("category")}
+              onClick={() => open("category")}
             >
               {t("bulk.setCategory")}
             </button>
             <button
+              ref={(el) => (groupsButton = el)}
               type="button"
               class="secondary small"
               disabled={nothing()}
-              onClick={() => setPanel("groups")}
+              onClick={() => open("groups")}
             >
               {t("bulk.setGroups")}
             </button>
@@ -108,6 +143,7 @@ export function BulkActions(props: BulkActionsProps) {
             <label>
               {t("bulk.categoryLabel")}
               <input
+                ref={(el) => (categoryInput = el)}
                 value={category()}
                 onInput={(e) => setCategory(e.currentTarget.value)}
                 placeholder={t("bulk.categoryPlaceholder")}
@@ -115,12 +151,12 @@ export function BulkActions(props: BulkActionsProps) {
                 autocomplete="off"
               />
             </label>
-            <CategoryChips categories={chips()} onPick={setCategory} />
+            <CategoryChips categories={chips()} onPick={pickCategory} />
             <div class="bulk-buttons">
               <button type="submit" class="small" disabled={nothing()}>
                 {category().trim() ? t("bulk.apply") : t("bulk.clearCategory")}
               </button>
-              <button type="button" class="secondary small" onClick={() => setPanel("actions")}>
+              <button type="button" class="secondary small" onClick={close}>
                 {t("common.cancel")}
               </button>
             </div>
@@ -128,7 +164,7 @@ export function BulkActions(props: BulkActionsProps) {
         </Match>
         <Match when={panel() === "groups"}>
           <form class="stack" onSubmit={applyGroups}>
-            <fieldset>
+            <fieldset ref={(el) => (groupsFieldset = el)}>
               <legend>{t("itemForm.visibility")}</legend>
               <label class="check">
                 <input
@@ -181,7 +217,7 @@ export function BulkActions(props: BulkActionsProps) {
               <button type="submit" class="small" disabled={nothing()}>
                 {t("bulk.apply")}
               </button>
-              <button type="button" class="secondary small" onClick={() => setPanel("actions")}>
+              <button type="button" class="secondary small" onClick={close}>
                 {t("common.cancel")}
               </button>
             </div>

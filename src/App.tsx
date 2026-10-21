@@ -1,7 +1,8 @@
 import { A, Navigate, Route, Router, useLocation } from "@solidjs/router";
-import { Show, type ParentComponent } from "solid-js";
+import { createEffect, on, Show, type ParentComponent } from "solid-js";
 import { InstallBanner } from "./components/InstallBanner.tsx";
 import { AuthProvider, useAuth } from "./lib/auth.tsx";
+import { focusHeading } from "./lib/a11y.ts";
 import { syncLocaleWithAccount } from "./lib/accountLocale.ts";
 import { t } from "./lib/i18n.ts";
 import { dismiss, install, installOffer } from "./lib/install.ts";
@@ -20,7 +21,7 @@ function Tabs() {
   const me = useMe();
   const hasChildren = () => (me().managed()?.length ?? 0) > 0;
   return (
-    <nav class="tabs">
+    <nav class="tabs" aria-label={t("a11y.mainNav")}>
       <A href="/" end>
         {t("nav.groups")}
       </A>
@@ -40,6 +41,15 @@ const SignedIn: ParentComponent = (props) => {
   const location = useLocation();
   // Remember where they were going (an invite link, say) to come back after signing in.
   const login = () => `/login?next=${encodeURIComponent(location.pathname)}`;
+  // After following a link, a screen reader (and Tab) starts at the new page's heading,
+  // like after a full page load. Waits a frame, so the new page has rendered.
+  createEffect(
+    on(
+      () => location.pathname,
+      () => requestAnimationFrame(focusHeading),
+      { defer: true },
+    ),
+  );
   return (
     <Show when={!loading()} fallback={<p class="center muted">{t("common.loading")}</p>}>
       <Show when={session()} fallback={<Navigate href={login()} />}>

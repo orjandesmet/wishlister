@@ -275,4 +275,17 @@ export const nl: Dictionary = {
     addItem: "+ Item toevoegen",
     aGroup: "een groep",
   },
+  a11y: {
+    mainNav: "Hoofdmenu",
+    categorySuggestions: "Voorgestelde categorieën",
+    roleOf: (p) => `Rol van ${p.name}`,
+    addParentFor: (p) => `Een ouder toevoegen voor ${p.child}`,
+    added: (p) => `${p.items} toegevoegd.`,
+    removed: (p) => `${p.item} verwijderd.`,
+    bought: (p) => `${p.item} gemarkeerd als gekocht.`,
+    unbought: (p) => `${p.item} is niet meer gemarkeerd als gekocht.`,
+    changed: (p) => (p.count === 1 ? "1 item gewijzigd." : `${p.count} items gewijzigd.`),
+    deleted: (p) => (p.count === 1 ? "1 item verwijderd." : `${p.count} items verwijderd.`),
+    unfollowed: "Je volgt dit lijstje niet meer.",
+  },
 };

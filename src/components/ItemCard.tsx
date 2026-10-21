@@ -1,5 +1,6 @@
 import { A } from "@solidjs/router";
-import { For, Match, Show, Switch } from "solid-js";
+import { createEffect, createUniqueId, For, Match, on, Show, Switch } from "solid-js";
+import { named } from "../lib/a11y.ts";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
 import { formatList, locale, t } from "../lib/i18n.ts";
@@ -42,8 +43,37 @@ export type ItemCardProps = {
 export function ItemCard(props: ItemCardProps) {
   // Limited to groups, but none picked: nobody but the list's editors sees it.
   const isPrivate = () => !props.item.visible_in_all_groups && props.groupNames.length === 0;
+
+  // "I bought this", Undo and the occasion buttons replace each other once the page
+  // has saved, so the pressed button is gone. Focus then moves to whatever replaced
+  // it (or the card), instead of dropping to the top of the page.
+  let card: HTMLLIElement | undefined;
+  let refocus = false;
+  const pressed = (action: () => void) => () => {
+    refocus = true;
+    action();
+  };
+  createEffect(
+    on(
+      () => [props.purchase, props.occasionChoices],
+      () => {
+        const lost = !document.activeElement || document.activeElement === document.body;
+        if (!refocus || !lost || !card) return;
+        refocus = false;
+        (card.querySelector<HTMLElement>("[data-purchase]") ?? card).focus();
+      },
+      { defer: true },
+    ),
+  );
+  const occasionLabel = createUniqueId();
+
   return (
-    <li class="card item" classList={{ private: isPrivate(), selected: props.selected }}>
+    <li
+      ref={(el) => (card = el)}
+      class="card item"
+      classList={{ private: isPrivate(), selected: props.selected }}
+      tabIndex={-1}
+    >
       <Show when={props.canEdit && isPrivate()}>
         <span class="badge-private">{t("item.private")}</span>
       </Show>
@@ -92,7 +122,13 @@ export function ItemCard(props: ItemCardProps) {
                 ? t("item.youBoughtFor", { occasion: props.boughtFor })
                 : t("item.youBought")}
             </span>
-            <button type="button" class="secondary small" onClick={() => props.onUndo()}>
+            <button
+              type="button"
+              class="secondary small"
+              data-purchase
+              aria-label={named(t("item.undo"), props.item.name)}
+              onClick={pressed(() => props.onUndo())}
+            >
               {t("item.undo")}
             </button>
           </div>
@@ -102,24 +138,31 @@ export function ItemCard(props: ItemCardProps) {
         </Match>
         <Match when={props.purchase === "available" && props.occasionChoices}>
           {(choices) => (
-            <div class="stack small-gap buy-for">
-              <span class="field-label">{t("item.forWhichOccasion")}</span>
+            <div class="stack small-gap buy-for" role="group" aria-labelledby={occasionLabel}>
+              <span class="field-label" id={occasionLabel}>
+                {t("item.forWhichOccasion")}
+              </span>
               <For each={choices()}>
                 {(occasion) => (
                   <button
                     type="button"
                     class="secondary"
-                    onClick={() => props.onPickOccasion?.(occasion.id)}
+                    data-purchase
+                    onClick={pressed(() => props.onPickOccasion?.(occasion.id))}
                   >
                     {occasion.name} · {formatOccasionDate(occasion.date, locale())}
                   </button>
                 )}
               </For>
               <div class="row">
-                <button type="button" class="link" onClick={() => props.onPickOccasion?.(null)}>
+                <button
+                  type="button"
+                  class="link"
+                  onClick={pressed(() => props.onPickOccasion?.(null))}
+                >
                   {t("item.noOccasion")}
                 </button>
-                <button type="button" class="link" onClick={() => props.onCancelPick?.()}>
+                <button type="button" class="link" onClick={pressed(() => props.onCancelPick?.())}>
                   {t("common.cancel")}
                 </button>
               </div>
@@ -127,17 +170,31 @@ export function ItemCard(props: ItemCardProps) {
           )}
         </Match>
         <Match when={props.purchase === "available"}>
-          <button type="button" onClick={() => props.onBuy()}>
+          <button
+            type="button"
+            data-purchase
+            aria-label={named(t("item.iBought"), props.item.name)}
+            onClick={pressed(() => props.onBuy())}
+          >
             {t("item.iBought")}
           </button>
         </Match>
       </Switch>
       <Show when={props.canEdit && !props.selecting}>
         <div class="row">
-          <A class="link" href={`/items/${props.item.id}/edit`}>
+          <A
+            class="link"
+            href={`/items/${props.item.id}/edit`}
+            aria-label={named(t("common.edit"), props.item.name)}
+          >
             {t("common.edit")}
           </A>
-          <button type="button" class="link danger" onClick={() => props.onRemove()}>
+          <button
+            type="button"
+            class="link danger"
+            aria-label={named(t("common.remove"), props.item.name)}
+            onClick={() => props.onRemove()}
+          >
             {t("common.remove")}
           </button>
         </div>

@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "@solidjs/router";
 import { createEffect, createMemo, createResource, createSignal, For, on, Show } from "solid-js";
 import { CategoryChips } from "../components/CategoryChips.tsx";
+import { focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { addItem, getCategories, getItem, updateItem } from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
@@ -33,6 +34,14 @@ export default function ItemForm() {
   );
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
+  const title = () => (params.itemId ? t("itemForm.editTitle") : t("itemForm.addTitle"));
+  usePageTitle(title);
+  // A picked chip may vanish from the suggestions, so focus goes back to the field.
+  let categoryInput: HTMLInputElement | undefined;
+  const pickCategory = (picked: string) => {
+    setCategory(picked);
+    focusSoon(() => categoryInput);
+  };
 
   // When editing, copy the loaded item into the form once.
   createEffect(
@@ -73,7 +82,7 @@ export default function ItemForm() {
 
   return (
     <>
-      <h1>{params.itemId ? t("itemForm.editTitle") : t("itemForm.addTitle")}</h1>
+      <h1>{title()}</h1>
       <form class="card" onSubmit={onSubmit}>
         <label>
           {t("itemForm.name")}
@@ -92,6 +101,7 @@ export default function ItemForm() {
         <label>
           {t("itemForm.category")}
           <input
+            ref={(el) => (categoryInput = el)}
             list="category-suggestions"
             value={category()}
             onInput={(e) => setCategory(e.currentTarget.value)}
@@ -100,7 +110,7 @@ export default function ItemForm() {
             <For each={allSuggestions()}>{(c) => <option value={c} />}</For>
           </datalist>
         </label>
-        <CategoryChips categories={chips()} onPick={setCategory} />
+        <CategoryChips categories={chips()} onPick={pickCategory} />
         <fieldset>
           <legend>{t("itemForm.visibility")}</legend>
           <label class="check">
@@ -157,7 +167,9 @@ export default function ItemForm() {
           {t("common.cancel")}
         </button>
         <Show when={error()}>
-          <p class="error">{error()}</p>
+          <p class="error" role="alert">
+            {error()}
+          </p>
         </Show>
       </form>
     </>
