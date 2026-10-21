@@ -152,7 +152,7 @@ export async function fetchMicrolink(
     if (!response.ok || body?.status !== "success") {
       return failed(
         url,
-        `microlink (${via}): ${response.status} ${body?.message ?? ""}`.trim(),
+        `microlink (${via}): ${response.status} ${body?.message ?? ""} ${quota(response)}`.trim(),
         url,
       );
     }
@@ -230,6 +230,19 @@ const BROWSER_HEADERS = {
 function cookieHeader(cookies: Map<string, string>): Record<string, string> {
   if (cookies.size === 0) return {};
   return { Cookie: [...cookies].map(([name, value]) => `${name}=${value}`).join("; ") };
+}
+
+/**
+ * Microlink's quota headers, e.g. "(quota 0/100 left, resets 2026-11-01T00:00:00.000Z)",
+ * so a 429 shows whether the plan ran out and when it comes back.
+ */
+function quota(response: Response): string {
+  const limit = response.headers.get("x-rate-limit-limit");
+  const remaining = response.headers.get("x-rate-limit-remaining");
+  const reset = Number(response.headers.get("x-rate-limit-reset"));
+  if (limit === null && remaining === null) return "";
+  const resets = reset > 0 ? `, resets ${new Date(reset * 1000).toISOString()}` : "";
+  return `(quota ${remaining ?? "?"}/${limit ?? "?"} left${resets})`;
 }
 
 /** Logs why a page gave nothing (shows in Netlify's function log) and gives nulls. */
