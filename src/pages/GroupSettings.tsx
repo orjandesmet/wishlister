@@ -32,6 +32,7 @@ import {
   type OccasionInput,
 } from "../lib/api/occasions.ts";
 import { Occasions } from "../components/Occasions.tsx";
+import { ParentSelect } from "../components/ParentSelect.tsx";
 import { compareNames, formatList, t } from "../lib/i18n.ts";
 import type { GroupId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
@@ -180,8 +181,10 @@ export default function GroupSettings() {
 
   const onAddChild = (event: SubmitEvent) => {
     event.preventDefault();
+    // Read the parent from the form: it's exactly what the select shows.
+    const form = new FormData(event.currentTarget as HTMLFormElement);
+    const parent = (form.get("parent") as ProfileId | null) ?? me().profile.id;
     void run(async () => {
-      const parent = childParent() ?? me().profile.id;
       await addChild(params.groupId, childName(), parent);
       setNotice(
         parent === me().profile.id
@@ -515,19 +518,17 @@ export default function GroupSettings() {
             </label>
             <label>
               {t("group.parent")}
-              <select
+              <ParentSelect
+                name="parent"
+                options={adults().map((adult) => ({
+                  id: adult.profile_id,
+                  name:
+                    adult.profiles.display_name +
+                    (adult.profile_id === me().profile.id ? t("common.you") : ""),
+                }))}
                 value={childParent() ?? me().profile.id}
-                onChange={(e) => setChildParent(e.currentTarget.value as ProfileId)}
-              >
-                <For each={adults()}>
-                  {(adult) => (
-                    <option value={adult.profile_id}>
-                      {adult.profiles.display_name}
-                      {adult.profile_id === me().profile.id ? t("common.you") : ""}
-                    </option>
-                  )}
-                </For>
-              </select>
+                onChange={setChildParent}
+              />
             </label>
             <button type="submit">{t("group.addChild")}</button>
           </form>
