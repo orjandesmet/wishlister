@@ -15,3 +15,5 @@ export type ProfileId = Brand<string, "ProfileId">;
 export type GroupId = Brand<string, "GroupId">;
 /** items.id */
 export type ItemId = Brand<string, "ItemId">;
+/** occasions.id */
+export type OccasionId = Brand<string, "OccasionId">;

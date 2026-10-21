@@ -23,9 +23,19 @@ import {
   type InviteResult,
   type Member,
 } from "../lib/api/groups.ts";
+import {
+  addOccasion,
+  deleteOccasion,
+  getOccasions,
+  updateOccasion,
+  type Occasion,
+  type OccasionInput,
+} from "../lib/api/occasions.ts";
+import { Occasions } from "../components/Occasions.tsx";
 import { compareNames, formatList, t } from "../lib/i18n.ts";
-import type { GroupId, ProfileId } from "../lib/ids.ts";
+import type { GroupId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
+import { today } from "../lib/occasions.ts";
 
 export default function GroupSettings() {
   const params = useParams<{ groupId: GroupId }>();
@@ -46,6 +56,10 @@ export default function GroupSettings() {
   const [invites, { refetch: refetchInvites }] = createResource(
     () => (isManager() ? params.groupId : undefined),
     getInvites,
+  );
+  const [occasions, { refetch: refetchOccasions }] = createResource(
+    () => params.groupId,
+    getOccasions,
   );
   const [parents, { refetch: refetchParents }] = createResource(
     () => children().map((c) => c.profile_id),
@@ -141,6 +155,28 @@ export default function GroupSettings() {
       await resetJoinLink(params.groupId);
       setNotice(t("group.newLinkMade"));
     });
+
+  /** Runs a change to the occasions and reloads them. True when it worked. */
+  async function changeOccasions(action: () => Promise<unknown>) {
+    let saved = false;
+    await run(async () => {
+      await action();
+      saved = true;
+      await refetchOccasions();
+    });
+    return saved;
+  }
+
+  const onAddOccasion = (input: OccasionInput) =>
+    changeOccasions(() => addOccasion(params.groupId, input));
+
+  const onUpdateOccasion = (id: OccasionId, input: OccasionInput) =>
+    changeOccasions(() => updateOccasion(id, input));
+
+  const onDeleteOccasion = (occasion: Occasion) => {
+    if (!confirm(t("occasions.confirmDelete", { name: occasion.name }))) return;
+    void changeOccasions(() => deleteOccasion(occasion.id));
+  };
 
   const onAddChild = (event: SubmitEvent) => {
     event.preventDefault();
@@ -497,6 +533,15 @@ export default function GroupSettings() {
           </form>
         </Show>
       </section>
+
+      <Occasions
+        occasions={occasions() ?? []}
+        today={today()}
+        canEdit={isManager()}
+        onAdd={onAddOccasion}
+        onUpdate={onUpdateOccasion}
+        onDelete={onDeleteOccasion}
+      />
 
       <Show when={isManager()}>
         <form class="card" onSubmit={onRename}>

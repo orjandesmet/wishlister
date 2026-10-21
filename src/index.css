@@ -496,3 +496,18 @@ label.check.select-row .item-name {
   flex: 1 1 auto;
   padding: 0 12px;
 }
+
+.occasion .stack {
+  gap: 2px;
+}
+
+.past-occasions summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.occasion {
+  padding: 8px 0;
+}
