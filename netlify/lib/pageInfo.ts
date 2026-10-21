@@ -125,12 +125,15 @@ export async function lookUpPage(
  * same way as a page we fetch ourselves: Microlink's own metadata has no price.
  * What's found in the HTML wins; Microlink's title and picture fill the gaps.
  * Without an API key it uses the free endpoint (50 links a day); with
- * MICROLINK_API_KEY it uses the Pro endpoint. Never throws.
+ * MICROLINK_API_KEY it uses the Pro endpoint, and the free one when the Pro
+ * endpoint refuses the key (429: the plan's quota is used up). Both share one
+ * timeout, so the fallback doesn't make the app wait longer. Never throws.
  */
 export async function fetchMicrolink(
   url: string,
   apiKey: string | undefined,
   fetchImpl: typeof fetch = fetch,
+  signal: AbortSignal = AbortSignal.timeout(MICROLINK_TIMEOUT_MS),
 ): Promise<PageInfo> {
   const endpoint = new URL(apiKey ? "https://pro.microlink.io/" : "https://api.microlink.io/");
   endpoint.searchParams.set("url", url);
@@ -142,7 +145,7 @@ export async function fetchMicrolink(
   try {
     const response = await fetchImpl(endpoint, {
       headers: apiKey ? { "x-api-key": apiKey } : {},
-      signal: AbortSignal.timeout(MICROLINK_TIMEOUT_MS),
+      signal,
     });
     const body = (await response.json().catch(() => null)) as {
       status?: string;
@@ -150,6 +153,10 @@ export async function fetchMicrolink(
       data?: { title?: unknown; image?: { url?: unknown } | null; html?: unknown };
     } | null;
     if (!response.ok || body?.status !== "success") {
+      if (apiKey && response.status === 429) {
+        console.log(`page-info: Microlink refused the key (429), trying the free endpoint`);
+        return fetchMicrolink(url, undefined, fetchImpl, signal);
+      }
       return failed(
         url,
         `microlink (${via}): ${response.status} ${body?.message ?? ""} ${quota(response)}`.trim(),

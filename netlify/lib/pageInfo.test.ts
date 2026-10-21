@@ -261,6 +261,20 @@ describe("Microlink fallback", () => {
     expect(new Headers(init.headers).get("x-api-key")).toBe("key_1");
   });
 
+  it("falls back to the free endpoint when the Pro one answers 429", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
+      (url as URL).host === "pro.microlink.io"
+        ? Response.json({ status: "fail", message: "Too Many Requests" }, { status: 429 })
+        : microlinkOk.clone(),
+    );
+    expect((await fetchMicrolink("https://x.example", "key_1", fetch)).title).toBe(
+      "Mercedes-AMG F1 W15",
+    );
+    const [free, init] = fetch.mock.calls[1] as [URL, RequestInit];
+    expect(free.origin).toBe("https://api.microlink.io");
+    expect(new Headers(init.headers).has("x-api-key")).toBe(false);
+  });
+
   it("gives nulls when Microlink fails", async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () =>
       Response.json({ status: "fail", message: "rate limit" }, { status: 429 }),
