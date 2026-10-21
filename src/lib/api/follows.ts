@@ -22,3 +22,11 @@ export async function followList(listId: ProfileId, until: IsoDate) {
 export async function unfollowList(listId: ProfileId) {
   must(await supabase.from("list_follows").delete().eq("list_id", listId));
 }
+
+/**
+ * The "stop following" link in the emails; works without signing in. Returns whose
+ * list it was, or null when the link no longer works (already unfollowed, or ended).
+ */
+export async function unfollowByToken(token: string): Promise<string | null> {
+  return must(await supabase.rpc("unfollow_by_token", { token })) as string | null;
+}

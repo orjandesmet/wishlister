@@ -12,6 +12,7 @@ import Join from "./pages/Join.tsx";
 import ItemForm from "./pages/ItemForm.tsx";
 import Login from "./pages/Login.tsx";
 import MyLists from "./pages/MyLists.tsx";
+import Unfollow from "./pages/Unfollow.tsx";
 import WishList from "./pages/WishList.tsx";
 
 /** Bottom navigation. Without children to look after, "My list" opens your own list directly. */
@@ -80,6 +81,7 @@ function App() {
       )}
     >
       <Route path="/login" component={Login} />
+      <Route path="/unfollow/:token" component={Unfollow} />
       <Route component={SignedIn}>
         <Route path="/" component={Home} />
         <Route path="/mine" component={MyLists} />

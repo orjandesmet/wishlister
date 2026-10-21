@@ -157,6 +157,14 @@ export const nl: Dictionary = {
     forWhichOccasion: "Voor welke gelegenheid is het?",
     noOccasion: "Niet voor een gelegenheid",
   },
+  unfollow: {
+    title: "Niet meer volgen",
+    done: (p) =>
+      `Je volgt het lijstje van ${p.name} niet meer. Je kan het opnieuw volgen vanop het lijstje zelf.`,
+    notFound: "Je volgde dit lijstje al niet meer, of het volgen was afgelopen.",
+    failed: (p) => `Dat lukte niet: ${p.message}`,
+    toApp: "Wishlister openen",
+  },
   follow: {
     pitch: (p) =>
       `Volg het lijstje van ${p.name} en krijg een e-mail op dagen dat er iets bijkomt, verdwijnt of gekocht wordt.`,

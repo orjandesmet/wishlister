@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vite-plus/test";
-import { escapeHtml, mailConfigured, sendEmail } from "./mail.ts";
+import { escapeHtml, mailConfigured, sendEmail, sendEmails } from "./mail.ts";
 
 const env = { RESEND_API_KEY: "re_test", MAIL_FROM: "Wishlister <wishlister@example.com>" };
 const email = { to: "ann@example.com", subject: "Hi", html: "<p>Hi</p>" };
@@ -41,6 +41,43 @@ describe("sendEmail", () => {
     expect(fetch).not.toHaveBeenCalled();
     expect(mailConfigured({})).toBe(false);
     expect(mailConfigured(env)).toBe(true);
+  });
+});
+
+describe("sendEmails", () => {
+  it("sends up to 100 emails per batch call", async () => {
+    const fetch = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      const batch = JSON.parse(init?.body as string) as unknown[];
+      return Response.json({ data: batch.map((_, i) => ({ id: `email_${i}` })) });
+    });
+    const emails = Array.from({ length: 150 }, () => email);
+    expect(await sendEmails(emails, env, fetch)).toEqual({ sent: 150, errors: [] });
+
+    expect(fetch).toHaveBeenCalledTimes(2);
+    const [url, init] = fetch.mock.calls[0];
+    expect(url).toBe("https://api.resend.com/emails/batch");
+    const first = JSON.parse(init?.body as string) as unknown[];
+    expect(first).toHaveLength(100);
+    expect(first[0]).toEqual({ from: env.MAIL_FROM, ...email });
+  });
+
+  it("reports a failed batch and carries on", async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(Response.json({ message: "Too many requests" }, { status: 429 }))
+      .mockResolvedValueOnce(Response.json({ data: [{ id: "email_1" }] }));
+    const emails = Array.from({ length: 101 }, () => email);
+    expect(await sendEmails(emails, env, fetch)).toEqual({
+      sent: 1,
+      errors: ["Too many requests"],
+    });
+  });
+
+  it("doesn't call Resend when it isn't set up", async () => {
+    const fetch = vi.fn();
+    const result = await sendEmails([email], {}, fetch);
+    expect(result.sent).toBe(0);
+    expect(fetch).not.toHaveBeenCalled();
   });
 });
 

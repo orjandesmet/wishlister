@@ -67,7 +67,9 @@ register it in `src/lib/i18n.ts`, and add a branch for it to the email templates
 | `netlify/functions/`      | `keepalive`: daily ping so the free Supabase project never pauses     |
 |                           | `send-invite`: emails people invited to a group who have no account   |
 |                           | `page-info`: title and picture of a link pasted into quick add        |
+|                           | `send-digests`: evening email to followers of lists that changed      |
 | `netlify/lib/mail.ts`     | `sendEmail()`: app emails (not sign-in emails) through Resend         |
+| `netlify/lib/digest.ts`   | Builds the daily "what changed on lists you follow" emails            |
 | `netlify/lib/pageInfo.ts` | Reads a page's `og:` tags, with Microlink as fallback                 |
 | `public/pwa-icon.svg`     | Source of the home-screen icons (`pwa-*.png`, `apple-touch-icon.png`) |
 
@@ -142,6 +144,12 @@ Sign-in and invite emails come from Supabase. Every other email the app sends (f
 2. _API Keys_: create a key with _Sending access_, limited to that domain.
 3. In Netlify, add `RESEND_API_KEY` (that key) and `MAIL_FROM`, the sender on the verified
    domain, e.g. `Wishlister <wishlister@example.com>`. Redeploy so functions pick them up.
+
+The `send-digests` function mails followers of a list what changed on it, every day at 17:00
+UTC. It also needs `SUPABASE_SECRET_KEY` (see `send-invite`). Until Resend is set up it sends
+nothing, and changes from that time are never mailed. One digest goes to each follower per
+day, so the 100-a-day limit holds as long as fewer than 100 people follow a list on the same
+day.
 
 ### 4. Microlink (link titles in quick add)
 

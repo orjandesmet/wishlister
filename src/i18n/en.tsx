@@ -165,6 +165,14 @@ export const en = {
     forWhichOccasion: "Which occasion is it for?",
     noOccasion: "Not for an occasion",
   },
+  unfollow: {
+    title: "Stop following",
+    done: (p: { name: string }) =>
+      `You no longer follow ${p.name}'s list. You can follow it again from the list itself.`,
+    notFound: "You already stopped following this list, or it ended.",
+    failed: (p: { message: string }) => `That didn't work: ${p.message}`,
+    toApp: "Open Wishlister",
+  },
   follow: {
     pitch: (p: { name: string }) =>
       `Follow ${p.name}'s list to get an email on days something is added, removed or bought.`,
