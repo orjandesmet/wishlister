@@ -1,8 +1,10 @@
 import { A } from "@solidjs/router";
 import { createSignal, For, Show } from "solid-js";
+import { CurrencySelect } from "../components/CurrencySelect.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { renameProfile } from "../lib/api/profiles.ts";
 import { chooseLocale } from "../lib/accountLocale.ts";
+import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
 import { supabase } from "../lib/supabase.ts";
 import { useMe } from "../lib/me.tsx";
@@ -70,6 +72,7 @@ export default function MyLists() {
           value={locale()}
           onChange={(next) => chooseLocale(next).catch((e: Error) => setError(e.message))}
         />
+        <CurrencySelect value={displayCurrency()} onChange={setDisplayCurrency} />
       </section>
       <button type="button" class="secondary" onClick={() => void supabase.auth.signOut()}>
         {t("account.signOut")}

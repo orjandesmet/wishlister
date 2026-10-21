@@ -15,6 +15,29 @@ vp dev                       # http://localhost:5173
 vp check                     # format, lint and type check
 ```
 
+## Local Supabase
+
+To work without touching the real project, run Supabase on your machine. It needs
+[Docker](https://www.docker.com/products/docker-desktop/) running; the CLI is fetched by `pnpx`.
+
+```bash
+vp run db:start              # first run downloads images; prints URLs and keys
+vp run db:reset              # wipe, re-run supabase/migrations/ and supabase/seed.sql
+vp run db:status             # URLs and keys again
+vp run db:stop
+```
+
+Then use the local lines from `.env.example` in `.env.local` and restart `vp dev`.
+
+- Sign in as `alice@example.com`, `bob@example.com` or `carol@example.com` (see
+  `supabase/seed.sql` for who is in which group). No email is sent: the code arrives in
+  Mailpit at http://127.0.0.1:54324, using the templates in `supabase/templates/`.
+- Studio (tables, SQL editor, auth users) is at http://127.0.0.1:54323.
+- `supabase/config.toml` only configures this local stack; production settings are still
+  made in the dashboard (see _One-time setup_).
+- App emails from Netlify functions still go through Resend. Leave `RESEND_API_KEY` out of
+  `.env.local` to send none.
+
 ## Storybook
 
 ```bash
@@ -64,6 +87,8 @@ register it in `src/lib/i18n.ts`, and add a branch for it to the email templates
 | `src/i18n/`               | UI text in English and Dutch, and language detection                  |
 | `supabase/templates/`     | Sign-in and invite email bodies, to paste into Supabase               |
 | `supabase/migrations/`    | Database schema and row-level security policies                       |
+| `supabase/seed.sql`       | Made-up accounts, groups and items for the local Supabase             |
+| `supabase/config.toml`    | Settings for the local Supabase (`vp run db:start`)                   |
 | `netlify/functions/`      | `keepalive`: daily ping so the free Supabase project never pauses     |
 |                           | `send-invite`: emails people invited to a group who have no account   |
 |                           | `page-info`: title and picture of a link pasted into quick add        |

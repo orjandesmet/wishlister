@@ -2,6 +2,7 @@ import { A } from "@solidjs/router";
 import { For, Match, Show, Switch } from "solid-js";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
+import { convertAmount, displayCurrency, exchangeRates, formatPrice } from "../lib/currency.ts";
 import { formatList, locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
@@ -39,6 +40,26 @@ export type ItemCardProps = {
   onToggleSelect?: () => void;
 };
 
+/**
+ * The item's price as the shop showed it, and roughly what that is in your
+ * currency when it's another one.
+ */
+function PriceTag(props: { amount: number; currency: string }) {
+  const converted = () => {
+    if (props.currency === displayCurrency()) return null;
+    const amount = convertAmount(props.amount, props.currency, displayCurrency(), exchangeRates());
+    return amount === null ? null : formatPrice(amount, displayCurrency(), locale());
+  };
+  return (
+    <span class="price">
+      {formatPrice(props.amount, props.currency, locale())}
+      <Show when={converted()}>
+        {(price) => <span class="muted"> {t("item.convertedPrice", { price: price() })}</span>}
+      </Show>
+    </span>
+  );
+}
+
 /** One wish on a list. Only shows things; the page decides what the buttons do. */
 export function ItemCard(props: ItemCardProps) {
   // Limited to groups, but none picked: nobody but the list's editors sees it.
@@ -74,6 +95,9 @@ export function ItemCard(props: ItemCardProps) {
             <span class="chip">{props.item.category}</span>
           </Show>
         </label>
+      </Show>
+      <Show when={props.item.price !== null && props.item.price_currency}>
+        {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
       </Show>
       <Show when={!props.selecting && props.item.url}>
         {(url) => (
