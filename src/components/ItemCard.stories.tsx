@@ -23,6 +23,8 @@ const meta = {
       category: "Toys",
       visible_in_all_groups: true,
       item_groups: [],
+      price: 49.99,
+      price_currency: "EUR",
     },
     purchase: "available",
     canEdit: false,
@@ -95,7 +97,21 @@ export const NotShared: Story = {
 };
 
 export const NameOnly: Story = {
-  args: { item: { ...meta.args.item, name: "Warm socks", url: null, category: null } },
+  args: {
+    item: {
+      ...meta.args.item,
+      name: "Warm socks",
+      url: null,
+      category: null,
+      price: null,
+      price_currency: null,
+    },
+  },
+};
+
+/** A price in another currency also shows roughly what it is in yours (EUR by default). */
+export const ForeignPrice: Story = {
+  args: { item: { ...meta.args.item, price: 59.99, price_currency: "USD" } },
 };
 
 export const LongNameAndUrl: Story = {

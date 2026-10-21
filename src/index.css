@@ -360,6 +360,19 @@ button.small {
   white-space: nowrap;
 }
 
+.price-fields {
+  align-items: flex-end;
+}
+
+.price-fields > label:first-child {
+  flex: 1;
+}
+
+.price {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 .bought {
   font-weight: 600;
   color: var(--text-strong);

@@ -1,6 +1,7 @@
 import { supabase } from "../supabase.ts";
 import type { GroupId, ItemId, ProfileId } from "../ids.ts";
 import { must } from "./must.ts";
+import type { Price } from "./pageInfo.ts";
 
 export type Item = {
   id: ItemId;
@@ -10,6 +11,9 @@ export type Item = {
   category: string | null;
   visible_in_all_groups: boolean;
   item_groups: { group_id: GroupId }[];
+  /** Both set or both null. */
+  price: number | null;
+  price_currency: string | null;
 };
 export type ItemInput = {
   name: string;
@@ -17,26 +21,24 @@ export type ItemInput = {
   category: string | null;
   visible_in_all_groups: boolean;
   groupIds: GroupId[];
+  price: Price | null;
 };
+
+const ITEM_COLUMNS =
+  "id, profile_id, name, url, category, visible_in_all_groups, item_groups(group_id), price, price_currency";
 
 export async function getItems(profileId: ProfileId): Promise<Item[]> {
   return must(
     await supabase
       .from("items")
-      .select("id, profile_id, name, url, category, visible_in_all_groups, item_groups(group_id)")
+      .select(ITEM_COLUMNS)
       .eq("profile_id", profileId)
       .order("created_at"),
   ) as Item[];
 }
 
 export async function getItem(itemId: ItemId): Promise<Item> {
-  return must(
-    await supabase
-      .from("items")
-      .select("id, profile_id, name, url, category, visible_in_all_groups, item_groups(group_id)")
-      .eq("id", itemId)
-      .single(),
-  ) as Item;
+  return must(await supabase.from("items").select(ITEM_COLUMNS).eq("id", itemId).single()) as Item;
 }
 
 /**
@@ -64,6 +66,8 @@ function itemColumns(input: ItemInput) {
     url: input.url?.trim() || null,
     category: input.category?.trim() || null,
     visible_in_all_groups: input.visible_in_all_groups,
+    price: input.price?.amount ?? null,
+    price_currency: input.price?.currency ?? null,
   };
 }
 
@@ -97,6 +101,8 @@ export type QuickItem = {
   url?: string | null;
   /** The linked page's picture, stored for later (not shown yet). */
   imageUrl?: string | null;
+  /** The price found on the linked page. */
+  price?: Price | null;
 };
 
 /**
@@ -114,6 +120,7 @@ export async function addQuickItems(profileId: ProfileId, items: QuickItem[]): P
         url: item.url ?? null,
         // Only sent when there is one, so lists without links don't depend on the column.
         ...(item.imageUrl ? { image_url: item.imageUrl } : {}),
+        ...(item.price ? { price: item.price.amount, price_currency: item.price.currency } : {}),
         visible_in_all_groups: item.groups === "all",
       })),
       { onConflict: "id", ignoreDuplicates: true },
@@ -134,7 +141,7 @@ export async function addQuickItems(profileId: ProfileId, items: QuickItem[]): P
   const saved = must(
     await supabase
       .from("items")
-      .select("id, profile_id, name, url, category, visible_in_all_groups, item_groups(group_id)")
+      .select(ITEM_COLUMNS)
       .in(
         "id",
         items.map((item) => item.id),

@@ -5,6 +5,7 @@ import {
   isFetchableUrl,
   lookUpPage,
   parsePageInfo,
+  toPrice,
 } from "./pageInfo.ts";
 
 describe("isFetchableUrl", () => {
@@ -43,6 +44,7 @@ describe("parsePageInfo", () => {
     expect(parsePageInfo(html, "https://shop.example/p/10305")).toEqual({
       title: "LEGO Icons Lion Knights' Castle",
       image: "https://shop.example/img/castle.jpg",
+      price: null,
     });
   });
 
@@ -52,10 +54,11 @@ describe("parsePageInfo", () => {
         `<meta name="twitter:title" content="A book"><meta name="twitter:image" content="https://cdn.example/b.png">`,
         "https://example.com",
       ),
-    ).toEqual({ title: "A book", image: "https://cdn.example/b.png" });
+    ).toEqual({ title: "A book", image: "https://cdn.example/b.png", price: null });
     expect(parsePageInfo("<title>\n  Plain   title\n</title>", "https://example.com")).toEqual({
       title: "Plain title",
       image: null,
+      price: null,
     });
   });
 
@@ -75,8 +78,65 @@ describe("parsePageInfo", () => {
     expect(parsePageInfo(html, "https://x.example").title).toBe("Race car");
   });
 
+  it("reads the price from product meta tags", () => {
+    const html = `<meta property="og:title" content="Bonsai">
+      <meta property="product:price:amount" content="49.99">
+      <meta property="product:price:currency" content="eur">`;
+    expect(parsePageInfo(html, "https://x.example").price).toEqual({
+      amount: 49.99,
+      currency: "EUR",
+    });
+  });
+
+  it("reads the price from a JSON-LD offer", () => {
+    const html = `<script type="application/ld+json">
+      {"@type":"Product","name":"Race car","offers":[{"@type":"Offer","price":"1.299,00","priceCurrency":"EUR"}]}
+    </script>`;
+    expect(parsePageInfo(html, "https://x.example")).toEqual({
+      title: "Race car",
+      image: null,
+      price: { amount: 1299, currency: "EUR" },
+    });
+    const aggregate = `<script type="application/ld+json">
+      {"@type":"Product","name":"Book","offers":{"@type":"AggregateOffer","lowPrice":12.5,"priceCurrency":"USD"}}
+    </script>`;
+    expect(parsePageInfo(aggregate, "https://x.example").price).toEqual({
+      amount: 12.5,
+      currency: "USD",
+    });
+  });
+
+  it("reads microdata price tags", () => {
+    const html = `<meta itemprop="price" content="19,95"><meta itemprop="priceCurrency" content="GBP">`;
+    expect(parsePageInfo(html, "https://x.example").price).toEqual({
+      amount: 19.95,
+      currency: "GBP",
+    });
+  });
+
   it("gives nulls when the page has neither", () => {
-    expect(parsePageInfo("<p>hi</p>", "https://x.example")).toEqual({ title: null, image: null });
+    expect(parsePageInfo("<p>hi</p>", "https://x.example")).toEqual({
+      title: null,
+      image: null,
+      price: null,
+    });
+  });
+});
+
+describe("toPrice", () => {
+  it("reads the ways shops write amounts", () => {
+    expect(toPrice("19.99", "EUR")).toEqual({ amount: 19.99, currency: "EUR" });
+    expect(toPrice("€ 1,299.00", "EUR")?.amount).toBe(1299);
+    expect(toPrice("1.299", "EUR")?.amount).toBe(1299);
+    expect(toPrice(7, "usd")).toEqual({ amount: 7, currency: "USD" });
+  });
+
+  it("skips prices without a currency, zero or junk", () => {
+    expect(toPrice("19.99", undefined)).toBeNull();
+    expect(toPrice("19.99", "€")).toBeNull();
+    expect(toPrice("0.00", "EUR")).toBeNull();
+    expect(toPrice("free", "EUR")).toBeNull();
+    expect(toPrice({}, "EUR")).toBeNull();
   });
 });
 
@@ -93,6 +153,7 @@ describe("fetchPageInfo", () => {
     expect(await fetchPageInfo("https://short.example/x", fetch)).toEqual({
       title: "The item",
       image: null,
+      price: null,
     });
     expect(fetch).toHaveBeenCalledTimes(2);
   });
@@ -118,6 +179,7 @@ describe("fetchPageInfo", () => {
     expect(await fetchPageInfo("https://evil.example", fetch)).toEqual({
       title: null,
       image: null,
+      price: null,
     });
     expect(fetch).toHaveBeenCalledTimes(1);
   });
@@ -125,15 +187,15 @@ describe("fetchPageInfo", () => {
   it("gives nulls for errors, non-HTML and network failures", async () => {
     expect(
       await fetchPageInfo("https://x.example", async () => html("<title>x</title>", 404)),
-    ).toEqual({ title: null, image: null });
+    ).toEqual({ title: null, image: null, price: null });
     expect(
       await fetchPageInfo("https://x.example", async () => Response.json({ title: "x" })),
-    ).toEqual({ title: null, image: null });
+    ).toEqual({ title: null, image: null, price: null });
     expect(
       await fetchPageInfo("https://x.example", async () => {
         throw new TypeError("network");
       }),
-    ).toEqual({ title: null, image: null });
+    ).toEqual({ title: null, image: null, price: null });
   });
 });
 
@@ -154,6 +216,7 @@ describe("Microlink fallback", () => {
     ).toEqual({
       title: "Mercedes-AMG F1 W15",
       image: "https://cdn.example/car.jpg",
+      price: null,
     });
     const [endpoint] = fetch.mock.calls[1] as [URL];
     expect(endpoint.origin).toBe("https://api.microlink.io");
@@ -166,6 +229,28 @@ describe("Microlink fallback", () => {
     );
     expect((await lookUpPage("https://x.example", undefined, fetch)).title).toBe("Mine");
     expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("reads the price from the HTML Microlink returns", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      Response.json({
+        status: "success",
+        data: {
+          title: "Microlink's title",
+          image: { url: "https://cdn.example/car.jpg" },
+          html: `<head><meta property="og:title" content="F1 car"></head><body>
+            <script type="application/ld+json">{"@type":"Product","name":"F1 car",
+              "offers":{"@type":"Offer","price":"229.99","priceCurrency":"EUR"}}</script></body>`,
+        },
+      }),
+    );
+    expect(await fetchMicrolink("https://www.lego.com/x", undefined, fetch)).toEqual({
+      title: "F1 car",
+      image: "https://cdn.example/car.jpg",
+      price: { amount: 229.99, currency: "EUR" },
+    });
+    const [endpoint] = fetch.mock.calls[0] as [URL];
+    expect(endpoint.searchParams.get("data.html.attr")).toBe("html");
   });
 
   it("uses the Pro endpoint with an API key", async () => {
@@ -183,6 +268,7 @@ describe("Microlink fallback", () => {
     expect(await fetchMicrolink("https://x.example", undefined, fetch)).toEqual({
       title: null,
       image: null,
+      price: null,
     });
   });
 });
