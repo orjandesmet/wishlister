@@ -1,14 +1,22 @@
 import { useNavigate } from "@solidjs/router";
-import { createResource, createSignal, For, Show } from "solid-js";
+import { createMemo, createResource, createSignal, For, Show } from "solid-js";
 import { GroupCard } from "../components/GroupCard.tsx";
 import { createGroup, getMyGroups } from "../lib/api/groups.ts";
-import { t } from "../lib/i18n.ts";
+import { getUpcomingOccasions } from "../lib/api/occasions.ts";
+import { compareNames, t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
+import { nextOccasionPerGroup, today } from "../lib/occasions.ts";
 
 export default function Home() {
   const me = useMe();
   const navigate = useNavigate();
   const [groups] = createResource(getMyGroups);
+  const day = today();
+  // Occasions are a nice extra here: if they fail to load, the groups still show.
+  const [occasions] = createResource(() => getUpcomingOccasions(day).catch(() => []));
+  const nextOccasions = createMemo(() =>
+    nextOccasionPerGroup(occasions() ?? [], day, compareNames),
+  );
   const [newName, setNewName] = createSignal("");
   const [error, setError] = createSignal<string>();
 
@@ -33,7 +41,14 @@ export default function Home() {
         <p class="muted">{t("home.empty")}</p>
       </Show>
       <For each={groups()}>
-        {(group) => <GroupCard group={group} myProfileId={me().profile.id} />}
+        {(group) => (
+          <GroupCard
+            group={group}
+            myProfileId={me().profile.id}
+            nextOccasion={nextOccasions().get(group.id)}
+            today={day}
+          />
+        )}
       </For>
       <form class="card" onSubmit={onCreate}>
         <label>

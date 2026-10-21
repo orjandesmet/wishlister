@@ -16,6 +16,16 @@ export async function getOccasions(groupId: GroupId): Promise<Occasion[]> {
   ) as Occasion[];
 }
 
+/**
+ * Occasions from `from` on (today counts), soonest first, across every group
+ * you're in. One request for the whole home page.
+ */
+export async function getUpcomingOccasions(from: IsoDate): Promise<Occasion[]> {
+  return must(
+    await supabase.from("occasions").select(fields).gte("date", from).order("date"),
+  ) as Occasion[];
+}
+
 /** Managers only. */
 export async function addOccasion(groupId: GroupId, input: OccasionInput) {
   must(

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import type { Member } from "../lib/api/groups.ts";
-import type { AccountId, GroupId, ProfileId } from "../lib/ids.ts";
+import type { AccountId, GroupId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { GroupCard } from "./GroupCard.tsx";
 
 const makeMember = (id: string, name: string, role: Member["role"], child = false): Member => ({
@@ -18,6 +18,7 @@ const meta = {
   component: GroupCard,
   args: {
     myProfileId: "me" as ProfileId,
+    today: "2026-10-21",
     group: {
       id: "group-1" as GroupId,
       name: "Family",
@@ -69,6 +70,29 @@ export const WithGuardian: Story = {
         makeMember("me", "Orjan", "guardian"),
         makeMember("lucas", "Lucas", "member", true),
       ],
+    },
+  },
+};
+
+/** The group's next occasion shows under its name. */
+export const WithNextOccasion: Story = {
+  args: {
+    nextOccasion: {
+      id: "occasion-1" as OccasionId,
+      group_id: "group-1" as GroupId,
+      name: "Christmas 2026",
+      date: "2026-12-25",
+    },
+  },
+};
+
+export const OccasionToday: Story = {
+  args: {
+    nextOccasion: {
+      id: "occasion-2" as OccasionId,
+      group_id: "group-1" as GroupId,
+      name: "Birthday Anna",
+      date: "2026-10-21",
     },
   },
 };
