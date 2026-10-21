@@ -1,3 +1,7 @@
+[dev]
+targetPort = 5173
+port = 8888
+
 [build]
 command = "pnpm run build"
 publish = "dist"

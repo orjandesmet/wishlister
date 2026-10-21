@@ -9,7 +9,8 @@
     "preview": "vp preview",
     "prepare": "vp config",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "netlify-dev": "pnpx --package=netlify-cli netlify -- dev"
   },
   "dependencies": {
     "@solid-primitives/i18n": "^2.2.1",
