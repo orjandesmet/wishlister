@@ -51,3 +51,28 @@ export function addDays(date: IsoDate, days: number): IsoDate {
   const moved = new Date(Date.UTC(year, month - 1, day + days));
   return moved.toISOString().slice(0, 10);
 }
+
+/** Whole days from `from` to `to`: 0 on the day itself, negative once it's past. */
+export function daysBetween(from: IsoDate, to: IsoDate) {
+  const toUtc = (date: IsoDate) => {
+    const [year, month, day] = date.split("-").map(Number);
+    return Date.UTC(year, month - 1, day);
+  };
+  return Math.round((toUtc(to) - toUtc(from)) / 86_400_000);
+}
+
+/**
+ * Each group's next occasion from `on` (today counts). Groups without one are
+ * left out. Same-day occasions pick the first by name.
+ */
+export function nextOccasionPerGroup<T extends DatedOccasion & { group_id: string }>(
+  occasions: T[],
+  on: IsoDate,
+  compare: (a: string, b: string) => number,
+): Map<T["group_id"], T> {
+  const next = new Map<T["group_id"], T>();
+  for (const occasion of splitOccasions(occasions, on, compare).upcoming) {
+    if (!next.has(occasion.group_id)) next.set(occasion.group_id, occasion);
+  }
+  return next;
+}

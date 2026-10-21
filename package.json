@@ -10,7 +10,11 @@
     "prepare": "vp config",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "netlify-dev": "pnpx --package=netlify-cli netlify -- dev"
+    "netlify-dev": "pnpx --package=netlify-cli netlify -- dev",
+    "db:start": "pnpx supabase@2.121.0 start",
+    "db:stop": "pnpx supabase@2.121.0 stop",
+    "db:reset": "pnpx supabase@2.121.0 db reset",
+    "db:status": "pnpx supabase@2.121.0 status"
   },
   "dependencies": {
     "@solid-primitives/i18n": "^2.2.1",

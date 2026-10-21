@@ -27,6 +27,10 @@ export const en = {
   language: {
     label: "Language",
   },
+  currency: {
+    label: "Show prices in",
+    hint: "Prices in another currency also show roughly what they are in this one.",
+  },
   nav: {
     groups: "Groups",
     myList: "My list",
@@ -75,6 +79,11 @@ export const en = {
     details: "Details",
     guardian: "guardian",
     child: "child",
+    nextOccasion: (p: { name: string; date: string; when: string }) =>
+      `🎁 ${p.name} · ${p.date} (${p.when})`,
+    today: "today",
+    tomorrow: "tomorrow",
+    inDays: (p: { days: number }) => `in ${p.days} days`,
   },
   group: {
     back: "‹ Groups",
@@ -165,6 +174,7 @@ export const en = {
     forWhichOccasion: "Which occasion is it for?",
     noOccasion: "Not for an occasion",
     notWanted: "🚫 Please don't buy",
+    convertedPrice: (p: { price: string }) => `≈ ${p.price}`,
   },
   unfollow: {
     title: "Stop following",
@@ -219,6 +229,9 @@ export const en = {
     noGroups: "This list isn't in any groups yet.",
     noGroupsOption: "No groups (only me)",
     notWanted: "Please don't buy this: something I don't want",
+    price: "Price (optional)",
+    currency: "Currency",
+    invalidPrice: "Enter a price like 12.50, or leave it empty.",
   },
   // Suggested under the category field, even before anyone has used a category.
   categories: {

@@ -1,6 +1,8 @@
+import { createSignal } from "solid-js";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { fn } from "storybook/test";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
+import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { ItemCard } from "./ItemCard.tsx";
 
 const meta = {
@@ -24,6 +26,8 @@ const meta = {
       visible_in_all_groups: true,
       not_wanted: false,
       item_groups: [],
+      price: 49.99,
+      price_currency: "EUR",
     },
     purchase: "available",
     canEdit: false,
@@ -42,6 +46,28 @@ type Story = StoryObj<typeof meta>;
 
 /** Someone else's list, nobody bought it yet. */
 export const Available: Story = {};
+
+/**
+ * Tap "I bought this" to see the 💸 fly (only from €50, never with reduced motion),
+ * and Undo to try again.
+ */
+export const BuyAnimation: Story = {
+  args: { item: { ...meta.args.item, price: 59.99 } },
+  render: (args) => {
+    const [purchase, setPurchase] = createSignal(args.purchase);
+    return (
+      <ItemCard
+        {...args}
+        purchase={purchase()}
+        onBuy={() => {
+          setPurchase("mine");
+          burstMoneyForTap(args.item.id, args.item.price, args.item.price_currency);
+        }}
+        onUndo={() => setPurchase("available")}
+      />
+    );
+  },
+};
 
 export const BoughtByYou: Story = { args: { purchase: "mine" } };
 
@@ -96,7 +122,21 @@ export const NotShared: Story = {
 };
 
 export const NameOnly: Story = {
-  args: { item: { ...meta.args.item, name: "Warm socks", url: null, category: null } },
+  args: {
+    item: {
+      ...meta.args.item,
+      name: "Warm socks",
+      url: null,
+      category: null,
+      price: null,
+      price_currency: null,
+    },
+  },
+};
+
+/** A price in another currency also shows roughly what it is in yours (EUR by default). */
+export const ForeignPrice: Story = {
+  args: { item: { ...meta.args.item, price: 59.99, price_currency: "USD" } },
 };
 
 export const LongNameAndUrl: Story = {

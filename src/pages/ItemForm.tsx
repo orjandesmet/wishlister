@@ -4,7 +4,8 @@ import { CategoryChips } from "../components/CategoryChips.tsx";
 import { addItem, getCategories, getItem, updateItem } from "../lib/api/items.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
-import { t } from "../lib/i18n.ts";
+import { currencies, displayCurrency, parsePriceInput } from "../lib/currency.ts";
+import { locale, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
@@ -21,6 +22,11 @@ export default function ItemForm() {
   const [url, setUrl] = createSignal("");
   const [category, setCategory] = createSignal("");
   const [notWanted, setNotWanted] = createSignal(false);
+  const [price, setPrice] = createSignal("");
+  const [currency, setCurrency] = createSignal(displayCurrency());
+  // A saved price can be in a currency outside the usual list; keep it choosable.
+  const currencyOptions = () =>
+    currencies.includes(currency()) ? currencies : [currency(), ...currencies];
   /** "some" with nothing ticked saves the same as "none". */
   const [visibility, setVisibility] = createSignal<"all" | "some" | "none">("all");
   const [groupIds, setGroupIds] = createSignal<GroupId[]>([]);
@@ -43,6 +49,13 @@ export default function ItemForm() {
       setUrl(loaded.url ?? "");
       setCategory(loaded.category ?? "");
       setNotWanted(loaded.not_wanted);
+      if (loaded.price !== null && loaded.price_currency) {
+        // Typed back the way the language writes it ("12,50" in Dutch).
+        setPrice(
+          loaded.price.toLocaleString(locale(), { maximumFractionDigits: 2, useGrouping: false }),
+        );
+        setCurrency(loaded.price_currency);
+      }
       const ids = loaded.item_groups.map((g) => g.group_id);
       setVisibility(loaded.visible_in_all_groups ? "all" : ids.length > 0 ? "some" : "none");
       setGroupIds(ids);
@@ -54,8 +67,13 @@ export default function ItemForm() {
 
   async function onSubmit(event: SubmitEvent) {
     event.preventDefault();
-    setBusy(true);
     setError(undefined);
+    const amount = parsePriceInput(price());
+    if (Number.isNaN(amount)) {
+      setError(t("itemForm.invalidPrice"));
+      return;
+    }
+    setBusy(true);
     const input = {
       name: name(),
       url: url(),
@@ -63,6 +81,7 @@ export default function ItemForm() {
       visible_in_all_groups: visibility() === "all",
       not_wanted: notWanted(),
       groupIds: visibility() === "some" ? groupIds() : [],
+      price: amount === null ? null : { amount, currency: currency() },
     };
     try {
       if (params.itemId) await updateItem(params.itemId, input);
@@ -112,6 +131,30 @@ export default function ItemForm() {
           />
           {t("itemForm.notWanted")}
         </label>
+        <div class="row price-fields">
+          <label>
+            {t("itemForm.price")}
+            <input
+              inputmode="decimal"
+              autocomplete="off"
+              value={price()}
+              onInput={(e) => setPrice(e.currentTarget.value)}
+            />
+          </label>
+          <label>
+            {t("itemForm.currency")}
+            {/* Per-option selected: a select's value isn't re-applied when its options change. */}
+            <select value={currency()} onChange={(e) => setCurrency(e.currentTarget.value)}>
+              <For each={currencyOptions()}>
+                {(code) => (
+                  <option value={code} selected={code === currency()}>
+                    {code}
+                  </option>
+                )}
+              </For>
+            </select>
+          </label>
+        </div>
         <fieldset>
           <legend>{t("itemForm.visibility")}</legend>
           <label class="check">

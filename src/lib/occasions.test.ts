@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
-import { addDays, formatOccasionDate, splitOccasions, today } from "./occasions.ts";
+import {
+  addDays,
+  daysBetween,
+  formatOccasionDate,
+  nextOccasionPerGroup,
+  splitOccasions,
+  today,
+} from "./occasions.ts";
 
 const compare = (a: string, b: string) => a.localeCompare(b, "en");
 const occasions = [
@@ -66,5 +73,49 @@ describe("addDays", () => {
 
   it("goes back with a negative number", () => {
     expect(addDays("2026-03-01", -1)).toBe("2026-02-28");
+  });
+});
+
+describe("daysBetween", () => {
+  it("counts whole days, across months, years and clock changes", () => {
+    expect(daysBetween("2026-10-21", "2026-10-21")).toBe(0);
+    expect(daysBetween("2026-10-21", "2026-12-25")).toBe(65);
+    expect(daysBetween("2026-12-31", "2027-01-01")).toBe(1);
+    expect(daysBetween("2026-03-28", "2026-03-30")).toBe(2);
+  });
+
+  it("is negative once the date has passed", () => {
+    expect(daysBetween("2026-10-21", "2026-10-20")).toBe(-1);
+  });
+});
+
+describe("nextOccasionPerGroup", () => {
+  const grouped = [
+    { group_id: "family", name: "Christmas 2026", date: "2026-12-25" },
+    { group_id: "family", name: "Christmas 2025", date: "2025-12-25" },
+    { group_id: "family", name: "Sinterklaas 2026", date: "2026-12-06" },
+    { group_id: "friends", name: "Secret Santa", date: "2026-12-20" },
+    { group_id: "friends", name: "Birthday Bert", date: "2026-10-21" },
+    { group_id: "club", name: "Summer party", date: "2026-07-01" },
+  ];
+
+  it("picks each group's soonest upcoming occasion, counting today", () => {
+    const next = nextOccasionPerGroup(grouped, "2026-10-21", compare);
+    expect(next.get("family")?.name).toBe("Sinterklaas 2026");
+    expect(next.get("friends")?.name).toBe("Birthday Bert");
+  });
+
+  it("leaves out groups whose occasions have all passed", () => {
+    expect(nextOccasionPerGroup(grouped, "2026-10-21", compare).has("club")).toBe(false);
+  });
+
+  it("breaks a same-day tie by name", () => {
+    const sameDay = [
+      { group_id: "family", name: "Christmas", date: "2026-12-25" },
+      { group_id: "family", name: "Boxing day", date: "2026-12-25" },
+    ];
+    expect(nextOccasionPerGroup(sameDay, "2026-10-21", compare).get("family")?.name).toBe(
+      "Boxing day",
+    );
   });
 });

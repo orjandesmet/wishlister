@@ -21,6 +21,10 @@ export const nl: Dictionary = {
   language: {
     label: "Taal",
   },
+  currency: {
+    label: "Toon prijzen in",
+    hint: "Bij prijzen in een andere munt zie je ook ongeveer hoeveel dat in deze munt is.",
+  },
   nav: {
     groups: "Groepen",
     myList: "Mijn lijstje",
@@ -70,6 +74,10 @@ export const nl: Dictionary = {
     details: "Details",
     guardian: "voogd",
     child: "kind",
+    nextOccasion: (p) => `🎁 ${p.name} · ${p.date} (${p.when})`,
+    today: "vandaag",
+    tomorrow: "morgen",
+    inDays: (p) => `over ${p.days} dagen`,
   },
   group: {
     back: "‹ Groepen",
@@ -157,6 +165,7 @@ export const nl: Dictionary = {
     forWhichOccasion: "Voor welke gelegenheid is het?",
     noOccasion: "Niet voor een gelegenheid",
     notWanted: "🚫 Liever niet",
+    convertedPrice: (p) => `≈ ${p.price}`,
   },
   unfollow: {
     title: "Niet meer volgen",
@@ -211,6 +220,9 @@ export const nl: Dictionary = {
     noGroups: "Dit lijstje zit nog in geen enkele groep.",
     noGroupsOption: "Geen groepen (alleen ik)",
     notWanted: "Liever niet: iets wat ik niet wil krijgen",
+    price: "Prijs (optioneel)",
+    currency: "Munt",
+    invalidPrice: "Geef een prijs zoals 12,50, of laat het leeg.",
   },
   categories: {
     books: "Boeken",

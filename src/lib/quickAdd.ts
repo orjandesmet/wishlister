@@ -17,7 +17,7 @@ type QuickItemData = {
   /** No name was typed, only a link: the page's title becomes the name. */
   nameFromPage: boolean;
   /**
-   * The linked page's title and picture, looked up as soon as the link is added so
+   * The linked page's title, picture and price, looked up as soon as the link is added so
    * it's usually there by the time the batch saves. Kept across retries.
    */
   page: Promise<PageInfo> | null;
@@ -33,6 +33,7 @@ async function toQuickItem({ name, data }: PendingItem<QuickItemData>) {
     url: data.url,
     notWanted: data.notWanted,
     imageUrl: page?.image ?? null,
+    price: page?.price ?? null,
   };
 }
 
