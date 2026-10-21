@@ -46,8 +46,12 @@ type Story = StoryObj<typeof meta>;
 /** Someone else's list, nobody bought it yet. */
 export const Available: Story = {};
 
-/** Tap "I bought this" to see the 💸 fly (not with reduced motion), and Undo to try again. */
+/**
+ * Tap "I bought this" to see the 💸 fly (only from €50, never with reduced motion),
+ * and Undo to try again.
+ */
 export const BuyAnimation: Story = {
+  args: { item: { ...meta.args.item, price: 59.99 } },
   render: (args) => {
     const [purchase, setPurchase] = createSignal(args.purchase);
     return (
@@ -56,7 +60,7 @@ export const BuyAnimation: Story = {
         purchase={purchase()}
         onBuy={() => {
           setPurchase("mine");
-          burstMoneyForTap(args.item.id);
+          burstMoneyForTap(args.item.id, args.item.price, args.item.price_currency);
         }}
         onUndo={() => setPurchase("available")}
       />

@@ -182,7 +182,7 @@ export default function WishList() {
     run(async () => {
       setChoosing(undefined);
       await markBought(item.id, occasionId);
-      burstMoneyForTap(item.id);
+      burstMoneyForTap(item.id, item.price, item.price_currency);
       // Buying follows the list, so its end date may have moved too.
       await Promise.all([refetchPurchases(), refetchFollow()]);
     });

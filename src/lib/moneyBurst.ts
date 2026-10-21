@@ -1,3 +1,4 @@
+import { convertAmount, exchangeRates, type Rates } from "./currency.ts";
 import type { ItemId } from "./ids.ts";
 
 /** One flying 💸 or 🪙: where it ends up, relative to where it starts, and how it moves. */
@@ -78,9 +79,31 @@ export function rememberBuyTap(itemId: ItemId, button: Element) {
   lastTap = { itemId, rect: button.getBoundingClientRect() };
 }
 
-/** Call once the purchase is saved: bursts from the remembered tap, if it was on this item. */
-export function burstMoneyForTap(itemId: ItemId) {
+/** Bursting on every purchase gets old fast, so only gifts of this much or more get one. */
+const minimumEuros = 50;
+
+/**
+ * Whether a purchase is big enough to celebrate: €50 or more, after converting other
+ * currencies. No price, or one that can't be converted yet, stays quiet.
+ */
+export function isBigPurchase(
+  price: number | null,
+  currency: string | null,
+  rates: Rates | null,
+): boolean {
+  if (price === null || currency === null) return false;
+  const euros = convertAmount(price, currency, "EUR", rates);
+  return euros !== null && euros >= minimumEuros;
+}
+
+/**
+ * Call once the purchase is saved: bursts from the remembered tap, if it was on this
+ * item and the item costs €50 or more.
+ */
+export function burstMoneyForTap(itemId: ItemId, price: number | null, currency: string | null) {
   const tap = lastTap;
   lastTap = undefined;
-  if (tap?.itemId === itemId) burstMoney(tap.rect);
+  if (tap?.itemId === itemId && isBigPurchase(price, currency, exchangeRates())) {
+    burstMoney(tap.rect);
+  }
 }
