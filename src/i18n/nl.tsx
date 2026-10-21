@@ -153,7 +153,30 @@ export const nl: Dictionary = {
     undo: "Ongedaan maken",
     someoneBought: "Iemand heeft dit gekocht",
     iBought: "Ik heb dit gekocht",
+    youBoughtFor: (p) => `Jij kocht dit voor ${p.occasion}`,
+    forWhichOccasion: "Voor welke gelegenheid is het?",
+    noOccasion: "Niet voor een gelegenheid",
   },
+  unfollow: {
+    title: "Niet meer volgen",
+    done: (p) =>
+      `Je volgt het lijstje van ${p.name} niet meer. Je kan het opnieuw volgen vanop het lijstje zelf.`,
+    notFound: "Je volgde dit lijstje al niet meer, of het volgen was afgelopen.",
+    failed: (p) => `Dat lukte niet: ${p.message}`,
+    toApp: "Wishlister openen",
+  },
+  follow: {
+    pitch: (p) =>
+      `Volg het lijstje van ${p.name} en krijg een e-mail op dagen dat er iets bijkomt, verdwijnt of gekocht wordt.`,
+    follow: "Volgen",
+    until: "Tot",
+    untilOccasion: (p) => `Dat is ${p.occasion}.`,
+    following: (p) =>
+      `Je volgt dit lijstje tot ${p.date}. Je krijgt een e-mail op dagen dat er iets verandert.`,
+    changeDate: "Datum aanpassen",
+    stop: "Niet meer volgen",
+  },
+
   listOrder: {
     label: "Sorteren op",
     added: "Datum toegevoegd",

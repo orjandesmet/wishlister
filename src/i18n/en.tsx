@@ -161,7 +161,30 @@ export const en = {
     undo: "Undo",
     someoneBought: "Someone bought this",
     iBought: "I bought this",
+    youBoughtFor: (p: { occasion: string }) => `You bought this for ${p.occasion}`,
+    forWhichOccasion: "Which occasion is it for?",
+    noOccasion: "Not for an occasion",
   },
+  unfollow: {
+    title: "Stop following",
+    done: (p: { name: string }) =>
+      `You no longer follow ${p.name}'s list. You can follow it again from the list itself.`,
+    notFound: "You already stopped following this list, or it ended.",
+    failed: (p: { message: string }) => `That didn't work: ${p.message}`,
+    toApp: "Open Wishlister",
+  },
+  follow: {
+    pitch: (p: { name: string }) =>
+      `Follow ${p.name}'s list to get an email on days something is added, removed or bought.`,
+    follow: "Follow",
+    until: "Until",
+    untilOccasion: (p: { occasion: string }) => `That's ${p.occasion}.`,
+    following: (p: { date: string }) =>
+      `You're following this list until ${p.date}. You get an email on days something changes.`,
+    changeDate: "Change date",
+    stop: "Stop following",
+  },
+
   listOrder: {
     label: "Sort by",
     added: "Date added",

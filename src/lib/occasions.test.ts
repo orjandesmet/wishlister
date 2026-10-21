@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { formatOccasionDate, splitOccasions, today } from "./occasions.ts";
+import { addDays, formatOccasionDate, splitOccasions, today } from "./occasions.ts";
 
 const compare = (a: string, b: string) => a.localeCompare(b, "en");
 const occasions = [
@@ -50,5 +50,21 @@ describe("formatOccasionDate", () => {
     expect(formatOccasionDate("2026-12-25", "en-GB")).toMatch(/^Fri,? 25 Dec 2026$/);
     expect(formatOccasionDate("2026-12-25", "nl")).toMatch(/^vr\.?,? 25 dec\.? 2026$/);
     expect(formatOccasionDate("2027-01-01", "en-GB")).toMatch(/^Fri,? 1 Jan 2027$/);
+  });
+});
+
+describe("addDays", () => {
+  it("moves across months and years", () => {
+    expect(addDays("2026-10-21", 30)).toBe("2026-11-20");
+    expect(addDays("2026-12-25", 10)).toBe("2027-01-04");
+  });
+
+  it("knows leap years", () => {
+    expect(addDays("2028-02-28", 1)).toBe("2028-02-29");
+    expect(addDays("2027-02-28", 1)).toBe("2027-03-01");
+  });
+
+  it("goes back with a negative number", () => {
+    expect(addDays("2026-03-01", -1)).toBe("2026-02-28");
   });
 });
