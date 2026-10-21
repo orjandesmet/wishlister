@@ -1,3 +1,4 @@
+import { createSignal } from "solid-js";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { fn } from "storybook/test";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
@@ -41,6 +42,21 @@ type Story = StoryObj<typeof meta>;
 
 /** Someone else's list, nobody bought it yet. */
 export const Available: Story = {};
+
+/** Tap "I bought this" to see the 💸 fly (not with reduced motion), and Undo to try again. */
+export const BuyAnimation: Story = {
+  render: (args) => {
+    const [purchase, setPurchase] = createSignal(args.purchase);
+    return (
+      <ItemCard
+        {...args}
+        purchase={purchase()}
+        onBuy={() => setPurchase("mine")}
+        onUndo={() => setPurchase("available")}
+      />
+    );
+  },
+};
 
 export const BoughtByYou: Story = { args: { purchase: "mine" } };
 

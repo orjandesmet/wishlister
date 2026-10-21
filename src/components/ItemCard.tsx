@@ -1,9 +1,10 @@
 import { A } from "@solidjs/router";
-import { For, Match, Show, Switch } from "solid-js";
+import { createEffect, For, Match, Show, Switch } from "solid-js";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
 import { formatList, locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
+import { burstMoney } from "../lib/moneyBurst.ts";
 import { formatOccasionDate } from "../lib/occasions.ts";
 
 /**
@@ -42,6 +43,20 @@ export type ItemCardProps = {
 export function ItemCard(props: ItemCardProps) {
   // Limited to groups, but none picked: nobody but the list's editors sees it.
   const isPrivate = () => !props.item.visible_in_all_groups && props.groupNames.length === 0;
+  // Celebrate once the purchase is saved, from wherever "I bought this" (or the occasion
+  // you picked) was. The button is gone by then, so keep its position from the tap.
+  let buyButton: DOMRect | undefined;
+  const rememberButton = (event: MouseEvent) =>
+    (buyButton = (event.currentTarget as HTMLElement).getBoundingClientRect());
+  // Only a change from "available" to "mine" celebrates: cards that load as already
+  // bought stay quiet, and Undo goes the other way.
+  let before = props.purchase;
+  createEffect(() => {
+    const now = props.purchase;
+    if (before === "available" && now === "mine" && buyButton) burstMoney(buyButton);
+    if (now !== before) buyButton = undefined;
+    before = now;
+  });
   return (
     <li class="card item" classList={{ private: isPrivate(), selected: props.selected }}>
       <Show when={props.canEdit && isPrivate()}>
@@ -109,14 +124,24 @@ export function ItemCard(props: ItemCardProps) {
                   <button
                     type="button"
                     class="secondary"
-                    onClick={() => props.onPickOccasion?.(occasion.id)}
+                    onClick={(event) => {
+                      rememberButton(event);
+                      props.onPickOccasion?.(occasion.id);
+                    }}
                   >
                     {occasion.name} · {formatOccasionDate(occasion.date, locale())}
                   </button>
                 )}
               </For>
               <div class="row">
-                <button type="button" class="link" onClick={() => props.onPickOccasion?.(null)}>
+                <button
+                  type="button"
+                  class="link"
+                  onClick={(event) => {
+                    rememberButton(event);
+                    props.onPickOccasion?.(null);
+                  }}
+                >
                   {t("item.noOccasion")}
                 </button>
                 <button type="button" class="link" onClick={() => props.onCancelPick?.()}>
@@ -127,7 +152,13 @@ export function ItemCard(props: ItemCardProps) {
           )}
         </Match>
         <Match when={props.purchase === "available"}>
-          <button type="button" onClick={() => props.onBuy()}>
+          <button
+            type="button"
+            onClick={(event) => {
+              rememberButton(event);
+              props.onBuy();
+            }}
+          >
             {t("item.iBought")}
           </button>
         </Match>
