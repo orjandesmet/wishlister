@@ -1,5 +1,5 @@
-import { A, Navigate, Route, Router, useLocation } from "@solidjs/router";
-import { Show, type ParentComponent } from "solid-js";
+import { A, Navigate, Route, Router, useLocation, useParams } from "@solidjs/router";
+import { Show, type Component, type ParentComponent } from "solid-js";
 import { InstallBanner } from "./components/InstallBanner.tsx";
 import { AuthProvider, useAuth } from "./lib/auth.tsx";
 import { syncLocaleWithAccount } from "./lib/accountLocale.ts";
@@ -52,6 +52,21 @@ const SignedIn: ParentComponent = (props) => {
   );
 };
 
+/**
+ * Builds a page afresh when its route param changes. The router reuses the page otherwise, and its
+ * resources would keep showing the previous list or group until the new one has loaded.
+ */
+function freshPer(param: string, Page: Component): Component {
+  return () => {
+    const params = useParams();
+    return (
+      <Show when={params[param]} keyed>
+        <Page />
+      </Show>
+    );
+  };
+}
+
 /** Follows the language saved on the account once someone signs in. */
 function LocaleSync() {
   syncLocaleWithAccount(useAuth().session);
@@ -85,11 +100,11 @@ function App() {
       <Route component={SignedIn}>
         <Route path="/" component={Home} />
         <Route path="/mine" component={MyLists} />
-        <Route path="/groups/:groupId" component={GroupSettings} />
-        <Route path="/lists/:profileId" component={WishList} />
-        <Route path="/lists/:profileId/items/new" component={ItemForm} />
-        <Route path="/items/:itemId/edit" component={ItemForm} />
-        <Route path="/join/:code" component={Join} />
+        <Route path="/groups/:groupId" component={freshPer("groupId", GroupSettings)} />
+        <Route path="/lists/:profileId" component={freshPer("profileId", WishList)} />
+        <Route path="/lists/:profileId/items/new" component={freshPer("profileId", ItemForm)} />
+        <Route path="/items/:itemId/edit" component={freshPer("itemId", ItemForm)} />
+        <Route path="/join/:code" component={freshPer("code", Join)} />
       </Route>
       <Route path="*" component={() => <Navigate href="/" />} />
     </Router>

@@ -223,6 +223,7 @@ export const nl: Dictionary = {
     price: "Prijs (optioneel)",
     currency: "Munt",
     invalidPrice: "Geef een prijs zoals 12,50, of laat het leeg.",
+    loadFailed: (p) => `Dit item kon niet geopend worden: ${p.message}`,
   },
   categories: {
     books: "Boeken",

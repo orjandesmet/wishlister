@@ -26,6 +26,9 @@ export default function Join() {
   return (
     <>
       <h1>{t("join.title")}</h1>
+      <Show when={preview.loading}>
+        <p class="muted">{t("common.loading")}</p>
+      </Show>
       <Show when={preview.error}>
         <p class="error">{t("join.openFailed", { message: preview.error.message })}</p>
       </Show>

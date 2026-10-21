@@ -232,6 +232,7 @@ export const en = {
     price: "Price (optional)",
     currency: "Currency",
     invalidPrice: "Enter a price like 12.50, or leave it empty.",
+    loadFailed: (p: { message: string }) => `Couldn't open this item: ${p.message}`,
   },
   // Suggested under the category field, even before anyone has used a category.
   categories: {
