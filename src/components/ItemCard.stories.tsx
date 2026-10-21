@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { fn } from "storybook/test";
-import type { ItemId, ProfileId } from "../lib/ids.ts";
+import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { ItemCard } from "./ItemCard.tsx";
 
 const meta = {
@@ -43,6 +43,32 @@ type Story = StoryObj<typeof meta>;
 export const Available: Story = {};
 
 export const BoughtByYou: Story = { args: { purchase: "mine" } };
+
+export const BoughtByYouForAnOccasion: Story = {
+  args: { purchase: "mine", boughtFor: "Christmas 2026" },
+};
+
+/** After "I bought this", when the item can be for more than one occasion. */
+export const ChoosingAnOccasion: Story = {
+  args: {
+    occasionChoices: [
+      {
+        id: "occasion-1" as OccasionId,
+        group_id: "group-1" as GroupId,
+        name: "Sinterklaas 2026",
+        date: "2026-12-06",
+      },
+      {
+        id: "occasion-2" as OccasionId,
+        group_id: "group-1" as GroupId,
+        name: "Christmas 2026",
+        date: "2026-12-25",
+      },
+    ],
+    onPickOccasion: fn(),
+    onCancelPick: fn(),
+  },
+};
 
 export const BoughtBySomeoneElse: Story = { args: { purchase: "someone" } };
 

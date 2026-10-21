@@ -1,7 +1,10 @@
 import { A } from "@solidjs/router";
-import { Match, Show, Switch } from "solid-js";
+import { For, Match, Show, Switch } from "solid-js";
 import type { Item } from "../lib/api/items.ts";
-import { formatList, t } from "../lib/i18n.ts";
+import type { Occasion } from "../lib/api/occasions.ts";
+import { formatList, locale, t } from "../lib/i18n.ts";
+import type { OccasionId } from "../lib/ids.ts";
+import { formatOccasionDate } from "../lib/occasions.ts";
 
 /**
  * Whether you can mark the item as bought. "hidden" shows nothing: your own list,
@@ -16,7 +19,17 @@ export type ItemCardProps = {
   canEdit: boolean;
   /** Names of the groups the item is limited to, shown to editors. */
   groupNames: string[];
+  /** The occasion you bought it for, shown with "You bought this". */
+  boughtFor?: string;
   onBuy: () => void;
+  /**
+   * Set after "I bought this" when there are several occasions to buy it for: the
+   * card asks which one, instead of showing the button.
+   */
+  occasionChoices?: Occasion[];
+  /** null: not for an occasion. */
+  onPickOccasion?: (occasionId: OccasionId | null) => void;
+  onCancelPick?: () => void;
   onUndo: () => void;
   onRemove: () => void;
   /** Picking items for a bulk action: the card becomes a checkbox and hides its buttons. */
@@ -74,7 +87,11 @@ export function ItemCard(props: ItemCardProps) {
         <Match when={props.selecting}>{null}</Match>
         <Match when={props.purchase === "mine"}>
           <div class="row">
-            <span class="bought">{t("item.youBought")}</span>
+            <span class="bought">
+              {props.boughtFor
+                ? t("item.youBoughtFor", { occasion: props.boughtFor })
+                : t("item.youBought")}
+            </span>
             <button type="button" class="secondary small" onClick={() => props.onUndo()}>
               {t("item.undo")}
             </button>
@@ -82,6 +99,32 @@ export function ItemCard(props: ItemCardProps) {
         </Match>
         <Match when={props.purchase === "someone"}>
           <span class="bought">{t("item.someoneBought")}</span>
+        </Match>
+        <Match when={props.purchase === "available" && props.occasionChoices}>
+          {(choices) => (
+            <div class="stack small-gap buy-for">
+              <span class="field-label">{t("item.forWhichOccasion")}</span>
+              <For each={choices()}>
+                {(occasion) => (
+                  <button
+                    type="button"
+                    class="secondary"
+                    onClick={() => props.onPickOccasion?.(occasion.id)}
+                  >
+                    {occasion.name} · {formatOccasionDate(occasion.date, locale())}
+                  </button>
+                )}
+              </For>
+              <div class="row">
+                <button type="button" class="link" onClick={() => props.onPickOccasion?.(null)}>
+                  {t("item.noOccasion")}
+                </button>
+                <button type="button" class="link" onClick={() => props.onCancelPick?.()}>
+                  {t("common.cancel")}
+                </button>
+              </div>
+            </div>
+          )}
         </Match>
         <Match when={props.purchase === "available"}>
           <button type="button" onClick={() => props.onBuy()}>

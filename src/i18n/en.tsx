@@ -161,7 +161,22 @@ export const en = {
     undo: "Undo",
     someoneBought: "Someone bought this",
     iBought: "I bought this",
+    youBoughtFor: (p: { occasion: string }) => `You bought this for ${p.occasion}`,
+    forWhichOccasion: "Which occasion is it for?",
+    noOccasion: "Not for an occasion",
   },
+  follow: {
+    pitch: (p: { name: string }) =>
+      `Follow ${p.name}'s list to get an email on days something is added, removed or bought.`,
+    follow: "Follow",
+    until: "Until",
+    untilOccasion: (p: { occasion: string }) => `That's ${p.occasion}.`,
+    following: (p: { date: string }) =>
+      `You're following this list until ${p.date}. You get an email on days something changes.`,
+    changeDate: "Change date",
+    stop: "Stop following",
+  },
+
   listOrder: {
     label: "Sort by",
     added: "Date added",

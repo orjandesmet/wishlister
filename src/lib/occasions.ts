@@ -44,3 +44,10 @@ export function formatOccasionDate(date: IsoDate, locale: string) {
     timeZone: "UTC",
   }).format(new Date(Date.UTC(year, month - 1, day, 12)));
 }
+
+/** The date `days` days after `date` (or before, when negative). */
+export function addDays(date: IsoDate, days: number): IsoDate {
+  const [year, month, day] = date.split("-").map(Number);
+  const moved = new Date(Date.UTC(year, month - 1, day + days));
+  return moved.toISOString().slice(0, 10);
+}
