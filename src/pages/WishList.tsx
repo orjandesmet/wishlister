@@ -25,6 +25,7 @@ import {
   markBought,
   undoBought,
 } from "../lib/api/purchases.ts";
+import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { compareNames, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
@@ -181,6 +182,7 @@ export default function WishList() {
     run(async () => {
       setChoosing(undefined);
       await markBought(item.id, occasionId);
+      burstMoneyForTap(item.id, item.price, item.price_currency);
       // Buying follows the list, so its end date may have moved too.
       await Promise.all([refetchPurchases(), refetchFollow()]);
     });

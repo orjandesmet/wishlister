@@ -5,6 +5,7 @@ import type { Occasion } from "../lib/api/occasions.ts";
 import { convertAmount, displayCurrency, exchangeRates, formatPrice } from "../lib/currency.ts";
 import { formatList, locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
+import { rememberBuyTap } from "../lib/moneyBurst.ts";
 import { formatOccasionDate } from "../lib/occasions.ts";
 
 /**
@@ -63,6 +64,9 @@ function PriceTag(props: { amount: number; currency: string }) {
 export function ItemCard(props: ItemCardProps) {
   // Limited to groups, but none picked: nobody but the list's editors sees it.
   const isPrivate = () => !props.item.visible_in_all_groups && props.groupNames.length === 0;
+  // The page starts the 💸 once the purchase is saved; remember where the tap was.
+  const rememberButton = (event: MouseEvent) =>
+    rememberBuyTap(props.item.id, event.currentTarget as Element);
   return (
     <li class="card item" classList={{ private: isPrivate(), selected: props.selected }}>
       <Show when={props.canEdit && isPrivate()}>
@@ -133,14 +137,24 @@ export function ItemCard(props: ItemCardProps) {
                   <button
                     type="button"
                     class="secondary"
-                    onClick={() => props.onPickOccasion?.(occasion.id)}
+                    onClick={(event) => {
+                      rememberButton(event);
+                      props.onPickOccasion?.(occasion.id);
+                    }}
                   >
                     {occasion.name} · {formatOccasionDate(occasion.date, locale())}
                   </button>
                 )}
               </For>
               <div class="row">
-                <button type="button" class="link" onClick={() => props.onPickOccasion?.(null)}>
+                <button
+                  type="button"
+                  class="link"
+                  onClick={(event) => {
+                    rememberButton(event);
+                    props.onPickOccasion?.(null);
+                  }}
+                >
                   {t("item.noOccasion")}
                 </button>
                 <button type="button" class="link" onClick={() => props.onCancelPick?.()}>
@@ -151,7 +165,13 @@ export function ItemCard(props: ItemCardProps) {
           )}
         </Match>
         <Match when={props.purchase === "available"}>
-          <button type="button" onClick={() => props.onBuy()}>
+          <button
+            type="button"
+            onClick={(event) => {
+              rememberButton(event);
+              props.onBuy();
+            }}
+          >
             {t("item.iBought")}
           </button>
         </Match>

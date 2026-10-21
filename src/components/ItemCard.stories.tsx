@@ -1,6 +1,8 @@
+import { createSignal } from "solid-js";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { fn } from "storybook/test";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
+import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { ItemCard } from "./ItemCard.tsx";
 
 const meta = {
@@ -43,6 +45,28 @@ type Story = StoryObj<typeof meta>;
 
 /** Someone else's list, nobody bought it yet. */
 export const Available: Story = {};
+
+/**
+ * Tap "I bought this" to see the 💸 fly (only from €50, never with reduced motion),
+ * and Undo to try again.
+ */
+export const BuyAnimation: Story = {
+  args: { item: { ...meta.args.item, price: 59.99 } },
+  render: (args) => {
+    const [purchase, setPurchase] = createSignal(args.purchase);
+    return (
+      <ItemCard
+        {...args}
+        purchase={purchase()}
+        onBuy={() => {
+          setPurchase("mine");
+          burstMoneyForTap(args.item.id, args.item.price, args.item.price_currency);
+        }}
+        onUndo={() => setPurchase("available")}
+      />
+    );
+  },
+};
 
 export const BoughtByYou: Story = { args: { purchase: "mine" } };
 
