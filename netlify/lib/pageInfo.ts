@@ -120,10 +120,12 @@ export async function lookUpPage(
 }
 
 /**
- * Asks Microlink (https://microlink.io) for the page's title and picture (it
- * doesn't give prices, so price is always null). Without
- * an API key it uses the free endpoint (50 links a day); with MICROLINK_API_KEY
- * it uses the Pro endpoint. Never throws.
+ * Asks Microlink (https://microlink.io) for the page's title and picture, plus
+ * the page's HTML as its browser saw it (a custom "data" rule), which is read the
+ * same way as a page we fetch ourselves: Microlink's own metadata has no price.
+ * What's found in the HTML wins; Microlink's title and picture fill the gaps.
+ * Without an API key it uses the free endpoint (50 links a day); with
+ * MICROLINK_API_KEY it uses the Pro endpoint. Never throws.
  */
 export async function fetchMicrolink(
   url: string,
@@ -132,6 +134,8 @@ export async function fetchMicrolink(
 ): Promise<PageInfo> {
   const endpoint = new URL(apiKey ? "https://pro.microlink.io/" : "https://api.microlink.io/");
   endpoint.searchParams.set("url", url);
+  endpoint.searchParams.set("data.html.selector", "html");
+  endpoint.searchParams.set("data.html.attr", "html");
   try {
     const response = await fetchImpl(endpoint, {
       headers: apiKey ? { "x-api-key": apiKey } : {},
@@ -140,17 +144,21 @@ export async function fetchMicrolink(
     const body = (await response.json().catch(() => null)) as {
       status?: string;
       message?: string;
-      data?: { title?: unknown; image?: { url?: unknown } | null };
+      data?: { title?: unknown; image?: { url?: unknown } | null; html?: unknown };
     } | null;
     if (!response.ok || body?.status !== "success") {
       return failed(url, `microlink: ${response.status} ${body?.message ?? ""}`.trim(), url);
     }
+    const page =
+      typeof body.data?.html === "string"
+        ? parsePageInfo(body.data.html, url)
+        : { title: null, image: null, price: null };
     const title = typeof body.data?.title === "string" ? cleanText(body.data.title) : "";
     const image = body.data?.image?.url;
     return {
-      title: title ? truncate(title, MAX_TITLE) : null,
-      image: typeof image === "string" ? absoluteHttpUrl(image, url) : null,
-      price: null,
+      title: page.title ?? (title ? truncate(title, MAX_TITLE) : null),
+      image: page.image ?? (typeof image === "string" ? absoluteHttpUrl(image, url) : null),
+      price: page.price,
     };
   } catch (error) {
     return failed(url, `microlink: ${String(error)}`, url);

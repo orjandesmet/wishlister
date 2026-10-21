@@ -231,6 +231,28 @@ describe("Microlink fallback", () => {
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 
+  it("reads the price from the HTML Microlink returns", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async () =>
+      Response.json({
+        status: "success",
+        data: {
+          title: "Microlink's title",
+          image: { url: "https://cdn.example/car.jpg" },
+          html: `<head><meta property="og:title" content="F1 car"></head><body>
+            <script type="application/ld+json">{"@type":"Product","name":"F1 car",
+              "offers":{"@type":"Offer","price":"229.99","priceCurrency":"EUR"}}</script></body>`,
+        },
+      }),
+    );
+    expect(await fetchMicrolink("https://www.lego.com/x", undefined, fetch)).toEqual({
+      title: "F1 car",
+      image: "https://cdn.example/car.jpg",
+      price: { amount: 229.99, currency: "EUR" },
+    });
+    const [endpoint] = fetch.mock.calls[0] as [URL];
+    expect(endpoint.searchParams.get("data.html.attr")).toBe("html");
+  });
+
   it("uses the Pro endpoint with an API key", async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () => microlinkOk.clone());
     await fetchMicrolink("https://x.example", "key_1", fetch);
