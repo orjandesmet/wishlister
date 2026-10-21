@@ -17,6 +17,8 @@ export type DigestRow = {
   unfollow_token: string;
   change: Change;
   item_name: string;
+  /** A "please don't buy" entry. Missing before migration 20261021180000. */
+  not_wanted?: boolean;
 };
 
 type Texts = {
@@ -24,6 +26,8 @@ type Texts = {
   subjectMany: (count: number) => string;
   heading: (name: string) => string;
   change: Record<Change, string>;
+  /** After the item's name, for "please don't buy" entries. */
+  notWanted: string;
   open: string;
   unfollow: string;
   footer: string;
@@ -35,6 +39,7 @@ const texts: Record<"en" | "nl", Texts> = {
     subjectMany: (count) => `What changed on ${count} wishlists you follow`,
     heading: (name) => `${name}'s wishlist`,
     change: { added: "Added", removed: "Removed", bought: "Someone bought" },
+    notWanted: "(please don't buy)",
     open: "Open the list",
     unfollow: "Stop following",
     footer:
@@ -45,6 +50,7 @@ const texts: Record<"en" | "nl", Texts> = {
     subjectMany: (count) => `Wat er veranderde op ${count} lijstjes die je volgt`,
     heading: (name) => `Het lijstje van ${name}`,
     change: { added: "Toegevoegd", removed: "Verwijderd", bought: "Iemand kocht" },
+    notWanted: "(liever niet)",
     open: "Lijstje openen",
     unfollow: "Niet meer volgen",
     footer:
@@ -56,7 +62,7 @@ type ListChanges = {
   id: string;
   name: string;
   unfollowToken: string;
-  changes: { change: Change; item: string }[];
+  changes: { change: Change; item: string; notWanted: boolean }[];
 };
 
 /**
@@ -81,7 +87,7 @@ export function buildDigestEmails(rows: DigestRow[], siteUrl: string): Email[] {
       };
       follower.lists.push(list);
     }
-    list.changes.push({ change: row.change, item: row.item_name });
+    list.changes.push({ change: row.change, item: row.item_name, notWanted: !!row.not_wanted });
   }
 
   const site = siteUrl.replace(/\/$/, "");
@@ -96,7 +102,11 @@ export function buildDigestEmails(rows: DigestRow[], siteUrl: string): Email[] {
         (list) =>
           `<h2>${escapeHtml(t.heading(list.name))}</h2>` +
           `<ul>${list.changes
-            .map((c) => `<li>${t.change[c.change]}: <strong>${escapeHtml(c.item)}</strong></li>`)
+            .map(
+              (c) =>
+                `<li>${t.change[c.change]}: <strong>${escapeHtml(c.item)}</strong>` +
+                `${c.notWanted ? ` ${t.notWanted}` : ""}</li>`,
+            )
             .join("")}</ul>` +
           `<p><a href="${listUrl(list)}">${t.open}</a> · <a href="${unfollowUrl(list)}">${t.unfollow}</a></p>`,
       ),
@@ -107,7 +117,9 @@ export function buildDigestEmails(rows: DigestRow[], siteUrl: string): Email[] {
       ...lists.map((list) =>
         [
           t.heading(list.name),
-          ...list.changes.map((c) => `- ${t.change[c.change]}: ${c.item}`),
+          ...list.changes.map(
+            (c) => `- ${t.change[c.change]}: ${c.item}${c.notWanted ? ` ${t.notWanted}` : ""}`,
+          ),
           `${t.open}: ${listUrl(list)}`,
           `${t.unfollow}: ${unfollowUrl(list)}`,
         ].join("\n"),

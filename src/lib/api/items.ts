@@ -10,6 +10,8 @@ export type Item = {
   url: string | null;
   category: string | null;
   visible_in_all_groups: boolean;
+  /** A "please don't buy" entry instead of a wish. Nobody can buy it. */
+  not_wanted: boolean;
   item_groups: { group_id: GroupId }[];
   /** Both set or both null. */
   price: number | null;
@@ -20,12 +22,13 @@ export type ItemInput = {
   url: string | null;
   category: string | null;
   visible_in_all_groups: boolean;
+  not_wanted: boolean;
   groupIds: GroupId[];
   price: Price | null;
 };
 
 const ITEM_COLUMNS =
-  "id, profile_id, name, url, category, visible_in_all_groups, item_groups(group_id), price, price_currency";
+  "id, profile_id, name, url, category, visible_in_all_groups, not_wanted, item_groups(group_id), price, price_currency";
 
 export async function getItems(profileId: ProfileId): Promise<Item[]> {
   return must(
@@ -66,6 +69,7 @@ function itemColumns(input: ItemInput) {
     url: input.url?.trim() || null,
     category: input.category?.trim() || null,
     visible_in_all_groups: input.visible_in_all_groups,
+    not_wanted: input.not_wanted,
     price: input.price?.amount ?? null,
     price_currency: input.price?.currency ?? null,
   };
@@ -99,6 +103,8 @@ export type QuickItem = {
   name: string;
   groups: GroupSelection;
   url?: string | null;
+  /** Typed with a leading "!": a "please don't buy" entry. */
+  notWanted?: boolean;
   /** The linked page's picture, stored for later (not shown yet). */
   imageUrl?: string | null;
   /** The price found on the linked page. */
@@ -122,6 +128,7 @@ export async function addQuickItems(profileId: ProfileId, items: QuickItem[]): P
         ...(item.imageUrl ? { image_url: item.imageUrl } : {}),
         ...(item.price ? { price: item.price.amount, price_currency: item.price.currency } : {}),
         visible_in_all_groups: item.groups === "all",
+        not_wanted: item.notWanted ?? false,
       })),
       { onConflict: "id", ignoreDuplicates: true },
     ),

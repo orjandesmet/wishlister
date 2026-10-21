@@ -60,7 +60,10 @@ function PriceTag(props: { amount: number; currency: string }) {
   );
 }
 
-/** One wish on a list. Only shows things; the page decides what the buttons do. */
+/**
+ * One wish, or "please don't buy" entry, on a list. Only shows things; the page
+ * decides what the buttons do.
+ */
 export function ItemCard(props: ItemCardProps) {
   // Limited to groups, but none picked: nobody but the list's editors sees it.
   const isPrivate = () => !props.item.visible_in_all_groups && props.groupNames.length === 0;
@@ -68,7 +71,17 @@ export function ItemCard(props: ItemCardProps) {
   const rememberButton = (event: MouseEvent) =>
     rememberBuyTap(props.item.id, event.currentTarget as Element);
   return (
-    <li class="card item" classList={{ private: isPrivate(), selected: props.selected }}>
+    <li
+      class="card item"
+      classList={{
+        private: isPrivate(),
+        "not-wanted": props.item.not_wanted,
+        selected: props.selected,
+      }}
+    >
+      <Show when={props.item.not_wanted}>
+        <span class="badge-not-wanted">{t("item.notWanted")}</span>
+      </Show>
       <Show when={props.canEdit && isPrivate()}>
         <span class="badge-private">{t("item.private")}</span>
       </Show>

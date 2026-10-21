@@ -49,6 +49,20 @@ describe("buildDigestEmails", () => {
     expect(email.text).toContain("- Toegevoegd: LEGO bonsai");
   });
 
+  it("marks please-don't-buy entries", () => {
+    const [email] = buildDigestEmails(
+      [row({ item_name: "Mugs", not_wanted: true }), row({ locale: "en" })],
+      "https://wishlister.example",
+    );
+    expect(email.text).toContain("- Added: Mugs (please don't buy)\n- Added: LEGO bonsai\n");
+    expect(email.html).toContain("<strong>Mugs</strong> (please don't buy)");
+    const [nl] = buildDigestEmails(
+      [row({ locale: "nl", change: "removed", item_name: "Mokken", not_wanted: true })],
+      "https://wishlister.example",
+    );
+    expect(nl.text).toContain("- Verwijderd: Mokken (liever niet)");
+  });
+
   it("escapes names in the HTML", () => {
     const [email] = buildDigestEmails(
       [row({ list_name: "<Anna>", item_name: "Tom & Jerry" })],

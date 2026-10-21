@@ -3,6 +3,7 @@ import { addQuickItems, type GroupSelection, type Item } from "./api/items.ts";
 import { getPageInfo, type PageInfo } from "./api/pageInfo.ts";
 import type { ItemId, ProfileId } from "./ids.ts";
 import { linkLabel, splitLink } from "./links.ts";
+import { splitNotWanted } from "./notWanted.ts";
 import { QuickAddQueue, type PendingItem, type QuickAddState } from "./quickAddQueue.ts";
 
 /** What quick add keeps with each typed name until it's saved. */
@@ -11,6 +12,8 @@ type QuickItemData = {
   groups: GroupSelection;
   /** A link that was pasted with (or instead of) the name. */
   url: string | null;
+  /** Typed with a leading "!": a "please don't buy" entry. */
+  notWanted: boolean;
   /** No name was typed, only a link: the page's title becomes the name. */
   nameFromPage: boolean;
   /**
@@ -28,6 +31,7 @@ async function toQuickItem({ name, data }: PendingItem<QuickItemData>) {
     name: (data.nameFromPage && page?.title) || name,
     groups: data.groups,
     url: data.url,
+    notWanted: data.notWanted,
     imageUrl: page?.image ?? null,
     price: page?.price ?? null,
   };
@@ -76,12 +80,16 @@ export function useQuickAdd(profileId: ProfileId, onSaved: (items: Item[]) => vo
     state: state as Accessor<QuickAddState<QuickItemData>>,
     // The id is made now, so every retry of this item saves the same row.
     add: (text: string, groups: GroupSelection) => {
+      const { notWanted, text: rest } = splitNotWanted(text);
       // A pasted link becomes the item's link. Until the page's title is found, an
       // item with only a link shows a short version of it as its name.
-      const { url, name } = splitLink(text);
+      const { url, name } = splitLink(rest);
+      // Only a "!": nothing to add.
+      if (!name && !url) return;
       queue.add(name || (url ? linkLabel(url) : ""), {
         id: crypto.randomUUID() as ItemId,
         groups,
+        notWanted,
         url,
         nameFromPage: !name && url !== null,
         page: url ? getPageInfo(url) : null,

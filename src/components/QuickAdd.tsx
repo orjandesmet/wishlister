@@ -106,6 +106,7 @@ export function QuickAdd(props: QuickAddProps) {
             autocomplete="off"
           />
         </label>
+        <p class="muted small">{t("quickAdd.notWantedHint")}</p>
       </form>
     </section>
   );

@@ -21,6 +21,7 @@ export default function ItemForm() {
   const [name, setName] = createSignal("");
   const [url, setUrl] = createSignal("");
   const [category, setCategory] = createSignal("");
+  const [notWanted, setNotWanted] = createSignal(false);
   const [price, setPrice] = createSignal("");
   const [currency, setCurrency] = createSignal(displayCurrency());
   // A saved price can be in a currency outside the usual list; keep it choosable.
@@ -47,6 +48,7 @@ export default function ItemForm() {
       setName(loaded.name);
       setUrl(loaded.url ?? "");
       setCategory(loaded.category ?? "");
+      setNotWanted(loaded.not_wanted);
       if (loaded.price !== null && loaded.price_currency) {
         // Typed back the way the language writes it ("12,50" in Dutch).
         setPrice(
@@ -77,6 +79,7 @@ export default function ItemForm() {
       url: url(),
       category: category(),
       visible_in_all_groups: visibility() === "all",
+      not_wanted: notWanted(),
       groupIds: visibility() === "some" ? groupIds() : [],
       price: amount === null ? null : { amount, currency: currency() },
     };
@@ -120,6 +123,14 @@ export default function ItemForm() {
           </datalist>
         </label>
         <CategoryChips categories={chips()} onPick={setCategory} />
+        <label class="check">
+          <input
+            type="checkbox"
+            checked={notWanted()}
+            onChange={(e) => setNotWanted(e.currentTarget.checked)}
+          />
+          {t("itemForm.notWanted")}
+        </label>
         <div class="row price-fields">
           <label>
             {t("itemForm.price")}

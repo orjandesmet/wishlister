@@ -164,6 +164,7 @@ export const nl: Dictionary = {
     youBoughtFor: (p) => `Jij kocht dit voor ${p.occasion}`,
     forWhichOccasion: "Voor welke gelegenheid is het?",
     noOccasion: "Niet voor een gelegenheid",
+    notWanted: "🚫 Liever niet",
     convertedPrice: (p) => `≈ ${p.price}`,
   },
   unfollow: {
@@ -194,6 +195,7 @@ export const nl: Dictionary = {
     category: "Categorie",
     available: "Nog niet gekocht eerst",
     uncategorised: "Geen categorie",
+    notWanted: "Liever niet",
   },
   quickAdd: {
     label: "Snel toevoegen",
@@ -204,6 +206,7 @@ export const nl: Dictionary = {
     saving: "Opslaan…",
     notSaved: "Nog niet opgeslagen",
     retrying: "Opslaan mislukt. We proberen het opnieuw…",
+    notWantedHint: "Begin met ! voor iets wat je niet wilt, zoals !mokken.",
   },
   itemForm: {
     addTitle: "Item toevoegen",
@@ -216,6 +219,7 @@ export const nl: Dictionary = {
     selectedGroups: "Alleen gekozen groepen",
     noGroups: "Dit lijstje zit nog in geen enkele groep.",
     noGroupsOption: "Geen groepen (alleen ik)",
+    notWanted: "Liever niet: iets wat ik niet wil krijgen",
     price: "Prijs (optioneel)",
     currency: "Munt",
     invalidPrice: "Geef een prijs zoals 12,50, of laat het leeg.",
