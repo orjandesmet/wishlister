@@ -75,6 +75,11 @@ export const en = {
     details: "Details",
     guardian: "guardian",
     child: "child",
+    nextOccasion: (p: { name: string; date: string; when: string }) =>
+      `🎁 ${p.name} · ${p.date} (${p.when})`,
+    today: "today",
+    tomorrow: "tomorrow",
+    inDays: (p: { days: number }) => `in ${p.days} days`,
   },
   group: {
     back: "‹ Groups",

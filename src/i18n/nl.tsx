@@ -70,6 +70,10 @@ export const nl: Dictionary = {
     details: "Details",
     guardian: "voogd",
     child: "kind",
+    nextOccasion: (p) => `🎁 ${p.name} · ${p.date} (${p.when})`,
+    today: "vandaag",
+    tomorrow: "morgen",
+    inDays: (p) => `over ${p.days} dagen`,
   },
   group: {
     back: "‹ Groepen",
