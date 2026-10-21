@@ -136,6 +136,9 @@ export async function fetchMicrolink(
   endpoint.searchParams.set("url", url);
   endpoint.searchParams.set("data.html.selector", "html");
   endpoint.searchParams.set("data.html.attr", "html");
+  // Shows in Netlify's function log, to check the key reaches the function.
+  const via = `${endpoint.host}, ${apiKey ? "with MICROLINK_API_KEY" : "no MICROLINK_API_KEY"}`;
+  console.log(`page-info: asking Microlink for ${url} (${via})`);
   try {
     const response = await fetchImpl(endpoint, {
       headers: apiKey ? { "x-api-key": apiKey } : {},
@@ -147,7 +150,11 @@ export async function fetchMicrolink(
       data?: { title?: unknown; image?: { url?: unknown } | null; html?: unknown };
     } | null;
     if (!response.ok || body?.status !== "success") {
-      return failed(url, `microlink: ${response.status} ${body?.message ?? ""}`.trim(), url);
+      return failed(
+        url,
+        `microlink (${via}): ${response.status} ${body?.message ?? ""}`.trim(),
+        url,
+      );
     }
     const page =
       typeof body.data?.html === "string"
@@ -161,7 +168,7 @@ export async function fetchMicrolink(
       price: page.price,
     };
   } catch (error) {
-    return failed(url, `microlink: ${String(error)}`, url);
+    return failed(url, `microlink (${via}): ${String(error)}`, url);
   }
 }
 
