@@ -2,6 +2,7 @@ import { createSignal } from "solid-js";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { fn } from "storybook/test";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
+import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { ItemCard } from "./ItemCard.tsx";
 
 const meta = {
@@ -51,7 +52,10 @@ export const BuyAnimation: Story = {
       <ItemCard
         {...args}
         purchase={purchase()}
-        onBuy={() => setPurchase("mine")}
+        onBuy={() => {
+          setPurchase("mine");
+          burstMoneyForTap(args.item.id);
+        }}
         onUndo={() => setPurchase("available")}
       />
     );

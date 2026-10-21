@@ -1,3 +1,5 @@
+import type { ItemId } from "./ids.ts";
+
 /** One flying 💸 or 🪙: where it ends up, relative to where it starts, and how it moves. */
 export type Particle = {
   emoji: string;
@@ -63,4 +65,22 @@ export function burstMoney(from: DOMRect) {
   }
   document.body.append(burst);
   setTimeout(() => burst.remove(), lifetimeMs);
+}
+
+/** Where "I bought this" was last tapped, until that purchase is saved. */
+let lastTap: { itemId: ItemId; rect: DOMRect } | undefined;
+
+/**
+ * Call when a buy button is tapped. Saving the purchase refetches the list, which can
+ * rebuild the card, so the tap is kept here rather than in the card.
+ */
+export function rememberBuyTap(itemId: ItemId, button: Element) {
+  lastTap = { itemId, rect: button.getBoundingClientRect() };
+}
+
+/** Call once the purchase is saved: bursts from the remembered tap, if it was on this item. */
+export function burstMoneyForTap(itemId: ItemId) {
+  const tap = lastTap;
+  lastTap = undefined;
+  if (tap?.itemId === itemId) burstMoney(tap.rect);
 }
