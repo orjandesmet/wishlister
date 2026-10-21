@@ -1,10 +1,13 @@
-// Reads a shop or article page and finds its name and picture, for quick add:
-// paste a link and the item gets the page's title instead of the bare URL.
+// Reads a shop or article page and finds its name, picture and price, for quick
+// add: paste a link and the item gets the page's title instead of the bare URL.
 //
 // Netlify functions import it as "../lib/pageInfo.ts". Plain functions with an
 // injectable fetch, so they can be tested without the network.
 
-export type PageInfo = { title: string | null; image: string | null };
+/** An amount in a currency, as an ISO 4217 code ("EUR"). */
+export type Price = { amount: number; currency: string };
+
+export type PageInfo = { title: string | null; image: string | null; price: Price | null };
 
 /** Stop reading the page after this much: some shops put megabytes of inline CSS in the <head>. */
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -46,22 +49,54 @@ export function isFetchableUrl(raw: string): boolean {
   return true;
 }
 
-/** Finds the title and picture in a page's HTML, preferring Open Graph tags. */
+/** Finds the title, picture and price in a page's HTML, preferring Open Graph tags. */
 export function parsePageInfo(html: string, pageUrl: string): PageInfo {
   const meta = new Map<string, string>();
   for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
     const attrs = parseAttributes(tag);
-    const key = (attrs.property ?? attrs.name)?.toLowerCase();
+    const key = (attrs.property ?? attrs.name ?? attrs.itemprop)?.toLowerCase();
     if (key && attrs.content !== undefined && !meta.has(key)) meta.set(key, attrs.content);
   }
   const titleTag = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
-  const title = [meta.get("og:title"), meta.get("twitter:title"), productName(html), titleTag]
+  const product = findProductData(html);
+  const title = [meta.get("og:title"), meta.get("twitter:title"), product?.name, titleTag]
     .map((value) => (value === undefined ? "" : cleanText(value)))
     .find((value) => value.length > 0);
   const image = [meta.get("og:image:secure_url"), meta.get("og:image"), meta.get("twitter:image")]
     .map((value) => (value ? absoluteHttpUrl(decodeEntities(value.trim()), pageUrl) : null))
     .find((value) => value !== null);
-  return { title: title ? truncate(title, MAX_TITLE) : null, image: image ?? null };
+  // Shops' own meta tags first (Facebook's product tags), then schema.org data:
+  // JSON-LD, or microdata on <meta itemprop="price"> tags.
+  const price =
+    toPrice(meta.get("product:price:amount"), meta.get("product:price:currency")) ??
+    toPrice(meta.get("og:price:amount"), meta.get("og:price:currency")) ??
+    product?.price ??
+    toPrice(meta.get("price"), meta.get("pricecurrency"));
+  return { title: title ? truncate(title, MAX_TITLE) : null, image: image ?? null, price };
+}
+
+/**
+ * Reads a price the way shops write it: 19.99, "19,99", "1.299,00", "€ 1,299.00".
+ * Gives null for anything that isn't a positive amount in a known-looking currency.
+ */
+export function toPrice(amount: unknown, currency: unknown): Price | null {
+  if (typeof currency !== "string" || !/^[a-z]{3}$/i.test(currency.trim())) return null;
+  const value = parseAmount(amount);
+  return value === null ? null : { amount: value, currency: currency.trim().toUpperCase() };
+}
+
+function parseAmount(raw: unknown): number | null {
+  if (typeof raw === "number") return Number.isFinite(raw) && raw > 0 ? raw : null;
+  if (typeof raw !== "string") return null;
+  let text = raw.replace(/[^\d.,]/g, "");
+  // The last separator is the decimal one when 1 or 2 digits follow it; any
+  // other separators group thousands.
+  const decimal = text.match(/[.,](\d{1,2})$/);
+  const whole = decimal ? text.slice(0, -decimal[0].length) : text;
+  text = whole.replace(/[.,]/g, "") + (decimal ? `.${decimal[1]}` : "");
+  if (!/^\d+(\.\d+)?$/.test(text)) return null;
+  const value = Number(text);
+  return value > 0 ? value : null;
 }
 
 /**
@@ -77,11 +112,16 @@ export async function lookUpPage(
   const direct = await fetchPageInfo(url, fetchImpl);
   if (direct.title) return direct;
   const microlink = await fetchMicrolink(url, microlinkKey, fetchImpl);
-  return { title: microlink.title, image: direct.image ?? microlink.image };
+  return {
+    title: microlink.title,
+    image: direct.image ?? microlink.image,
+    price: direct.price ?? microlink.price,
+  };
 }
 
 /**
- * Asks Microlink (https://microlink.io) for the page's title and picture. Without
+ * Asks Microlink (https://microlink.io) for the page's title and picture (it
+ * doesn't give prices, so price is always null). Without
  * an API key it uses the free endpoint (50 links a day); with MICROLINK_API_KEY
  * it uses the Pro endpoint. Never throws.
  */
@@ -110,6 +150,7 @@ export async function fetchMicrolink(
     return {
       title: title ? truncate(title, MAX_TITLE) : null,
       image: typeof image === "string" ? absoluteHttpUrl(image, url) : null,
+      price: null,
     };
   } catch (error) {
     return failed(url, `microlink: ${String(error)}`, url);
@@ -118,7 +159,7 @@ export async function fetchMicrolink(
 
 /**
  * Fetches the page (following redirects only to public addresses) and reads its
- * title and picture. Never throws: a page that can't be read gives nulls.
+ * title, picture and price. Never throws: a page that can't be read gives nulls.
  */
 export async function fetchPageInfo(
   rawUrl: string,
@@ -179,17 +220,24 @@ function cookieHeader(cookies: Map<string, string>): Record<string, string> {
 /** Logs why a page gave nothing (shows in Netlify's function log) and gives nulls. */
 function failed(rawUrl: string, reason: string, finalUrl: string): PageInfo {
   console.log(`page-info: nothing found for ${rawUrl} (${reason}; last url ${finalUrl})`);
-  return { title: null, image: null };
+  return { title: null, image: null, price: null };
 }
 
-/** The "name" of a schema.org Product in the page's JSON-LD, if there is one. */
-function productName(html: string): string | undefined {
+type ProductData = { name: string | undefined; price: Price | null };
+
+/** The name and price of the first schema.org Product in the page's JSON-LD, if any. */
+function findProductData(html: string): ProductData | undefined {
   for (const match of html.matchAll(
     /<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
   )) {
     try {
-      const found = findProduct(JSON.parse(match[1]));
-      if (found) return found;
+      const product = findProduct(JSON.parse(match[1]));
+      if (product) {
+        return {
+          name: typeof product.name === "string" ? product.name : undefined,
+          price: offerPrice(product.offers),
+        };
+      }
     } catch {
       // Broken JSON-LD: try the next one.
     }
@@ -197,7 +245,31 @@ function productName(html: string): string | undefined {
   return undefined;
 }
 
-function findProduct(node: unknown): string | undefined {
+/** The price of a Product's offers: an Offer, an AggregateOffer (its lowest price) or a list. */
+function offerPrice(offers: unknown): Price | null {
+  if (Array.isArray(offers)) {
+    for (const offer of offers) {
+      const price = offerPrice(offer);
+      if (price) return price;
+    }
+    return null;
+  }
+  if (!offers || typeof offers !== "object") return null;
+  const offer = offers as Record<string, unknown>;
+  const spec = (
+    Array.isArray(offer.priceSpecification) ? offer.priceSpecification[0] : offer.priceSpecification
+  ) as Record<string, unknown> | undefined;
+  return (
+    toPrice(offer.price, offer.priceCurrency) ??
+    toPrice(offer.lowPrice, offer.priceCurrency) ??
+    (spec && typeof spec === "object"
+      ? toPrice(spec.price, spec.priceCurrency ?? offer.priceCurrency)
+      : null) ??
+    offerPrice(offer.offers)
+  );
+}
+
+function findProduct(node: unknown): Record<string, unknown> | undefined {
   if (Array.isArray(node)) {
     for (const child of node) {
       const found = findProduct(child);
@@ -209,7 +281,7 @@ function findProduct(node: unknown): string | undefined {
   const record = node as Record<string, unknown>;
   const type = record["@type"];
   const isProduct = type === "Product" || (Array.isArray(type) && type.includes("Product"));
-  if (isProduct && typeof record.name === "string") return record.name;
+  if (isProduct && (typeof record.name === "string" || record.offers)) return record;
   return findProduct(record["@graph"]);
 }
 
