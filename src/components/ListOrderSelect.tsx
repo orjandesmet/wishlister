@@ -1,6 +1,7 @@
 import { For } from "solid-js";
 import { t } from "../lib/i18n.ts";
 import { listOrders, type ListOrder } from "../lib/listOrder.ts";
+import { Select } from "./Select.tsx";
 
 export type ListOrderSelectProps = {
   value: ListOrder;
@@ -15,14 +16,14 @@ export function ListOrderSelect(props: ListOrderSelectProps) {
   return (
     <label class="list-order">
       {t("listOrder.label")}
-      <select
+      <Select
         value={props.value}
         onChange={(e) => props.onChange(e.currentTarget.value as ListOrder)}
       >
         <For each={options()}>
           {(order) => <option value={order}>{t(`listOrder.${order}`)}</option>}
         </For>
-      </select>
+      </Select>
     </label>
   );
 }

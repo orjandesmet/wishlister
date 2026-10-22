@@ -32,6 +32,7 @@ import type { GroupId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
 import { isReady } from "../lib/resource.ts";
 import { today } from "../lib/occasions.ts";
+import { Select } from "../components/Select.tsx";
 
 export default function GroupSettings() {
   const params = useParams<{ groupId: GroupId }>();
@@ -86,6 +87,7 @@ export default function GroupSettings() {
 
   const onRename = (event: SubmitEvent) => {
     event.preventDefault();
+    document.getElementById("rename-popover")?.hidePopover();
     void run(async () => {
       await renameGroup(params.groupId, groupName() ?? group()!.name);
       await refetchGroup();
@@ -278,7 +280,27 @@ export default function GroupSettings() {
       <A class="link" href="/">
         {t("group.back")}
       </A>
-      <h1>{group()?.name ?? t("group.fallbackTitle")}</h1>
+      <div class="row">
+        <h1>{group()?.name ?? t("group.fallbackTitle")}</h1>
+        <Show when={isReady(group) && isManager()}>
+          <button type="button" class="secondary rename-button" popovertarget="rename-popover">
+            {t("group.rename")}
+          </button>
+          <div id="rename-popover" class="popover rename-popover" popover>
+            <form onSubmit={onRename}>
+              <label>
+                {t("group.groupName")}
+                <input
+                  required
+                  value={groupName() ?? group()?.name ?? ""}
+                  onInput={(e) => setGroupName(e.currentTarget.value)}
+                />
+              </label>
+              <button type="submit">{t("group.rename")}</button>
+            </form>
+          </div>
+        </Show>
+      </div>
       <Show when={group.error}>
         <p class="error">{t("group.unavailable")}</p>
       </Show>
@@ -308,14 +330,14 @@ export default function GroupSettings() {
                   <Switch fallback={<span class="chip">{t(`roles.${member.role}`)}</span>}>
                     <Match when={isManager() && member.profile_id !== me().profile.id}>
                       <span class="row">
-                        <select
+                        <Select
                           value={member.role}
                           onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
                         >
                           <option value="member">{t("roles.member")}</option>
                           <option value="guardian">{t("roles.guardian")}</option>
                           <option value="manager">{t("roles.manager")}</option>
-                        </select>
+                        </Select>
                         <button type="button" class="link danger" onClick={() => onRemove(member)}>
                           {t("common.remove")}
                         </button>
@@ -325,13 +347,13 @@ export default function GroupSettings() {
                     <Match
                       when={member.profile_id === me().profile.id && member.role !== "manager"}
                     >
-                      <select
+                      <Select
                         value={member.role}
                         onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
                       >
                         <option value="member">{t("roles.member")}</option>
                         <option value="guardian">{t("roles.guardian")}</option>
-                      </select>
+                      </Select>
                     </Match>
                   </Switch>
                 </li>
@@ -430,12 +452,12 @@ export default function GroupSettings() {
             </For>
           </ul>
           <Show when={myOtherChildren().length > 0}>
-            <select onChange={(e) => onAddMyChild(e.currentTarget.value as ProfileId)}>
+            <Select onChange={(e) => onAddMyChild(e.currentTarget.value as ProfileId)}>
               <option value="">{t("group.addMyChild")}</option>
               <For each={myOtherChildren()}>
                 {(child) => <option value={child.id}>{child.display_name}</option>}
               </For>
-            </select>
+            </Select>
           </Show>
           <Show when={isManager()}>
             <form onSubmit={onAddChild}>
@@ -478,20 +500,6 @@ export default function GroupSettings() {
           />
         </Show>
 
-        <Show when={isManager()}>
-          <form class="card" onSubmit={onRename}>
-            <label>
-              {t("group.groupName")}
-              <input
-                required
-                value={groupName() ?? group()?.name ?? ""}
-                onInput={(e) => setGroupName(e.currentTarget.value)}
-              />
-            </label>
-            <button type="submit">{t("group.rename")}</button>
-          </form>
-        </Show>
-
         <Show when={myMembership()}>
           {(mine) => (
             <div class="stack">
@@ -506,7 +514,7 @@ export default function GroupSettings() {
                 <div class="card">
                   <label>
                     {t("group.chooseSuccessor", { group: group()?.name ?? "" })}
-                    <select
+                    <Select
                       value={successor() ?? ""}
                       onChange={(e) => setSuccessor(e.currentTarget.value as ProfileId)}
                     >
@@ -518,7 +526,7 @@ export default function GroupSettings() {
                           <option value={adult.profile_id}>{adult.profiles.display_name}</option>
                         )}
                       </For>
-                    </select>
+                    </Select>
                   </label>
                   <button
                     type="button"

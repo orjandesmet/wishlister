@@ -1,6 +1,7 @@
 import { For } from "solid-js";
 import { currencies } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
+import { Select } from "./Select.tsx";
 
 export type CurrencySelectProps = {
   value: string;
@@ -14,7 +15,7 @@ export function CurrencySelect(props: CurrencySelectProps) {
   return (
     <label>
       {t("currency.label")}
-      <select value={props.value} onChange={(e) => props.onChange(e.currentTarget.value)}>
+      <Select value={props.value} onChange={(e) => props.onChange(e.currentTarget.value)}>
         <For each={currencies}>
           {(code) => (
             <option value={code} selected={code === props.value}>
@@ -22,7 +23,7 @@ export function CurrencySelect(props: CurrencySelectProps) {
             </option>
           )}
         </For>
-      </select>
+      </Select>
       <span class="muted small">{t("currency.hint")}</span>
     </label>
   );

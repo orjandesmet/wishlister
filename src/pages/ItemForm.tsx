@@ -8,6 +8,7 @@ import { currencies, displayCurrency, parsePriceInput } from "../lib/currency.ts
 import { locale, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
 import { isReady } from "../lib/resource.ts";
+import { Select } from "../components/Select.tsx";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {
@@ -157,7 +158,7 @@ export default function ItemForm() {
             <label>
               {t("itemForm.currency")}
               {/* Per-option selected: a select's value isn't re-applied when its options change. */}
-              <select value={currency()} onChange={(e) => setCurrency(e.currentTarget.value)}>
+              <Select value={currency()} onChange={(e) => setCurrency(e.currentTarget.value)}>
                 <For each={currencyOptions()}>
                   {(code) => (
                     <option value={code} selected={code === currency()}>
@@ -165,7 +166,7 @@ export default function ItemForm() {
                     </option>
                   )}
                 </For>
-              </select>
+              </Select>
             </label>
           </div>
           <fieldset>

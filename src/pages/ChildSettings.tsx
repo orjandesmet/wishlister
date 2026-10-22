@@ -7,6 +7,7 @@ import { t } from "../lib/i18n.ts";
 import type { ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
 import { isReady } from "../lib/resource.ts";
+import { Select } from "../components/Select.tsx";
 
 /** A child's parents, and deleting the child's profile. */
 export default function ChildSettings() {
@@ -131,10 +132,10 @@ export default function ChildSettings() {
             </For>
           </ul>
           <Show when={iAmParent() && candidates().length > 0}>
-            <select onChange={(e) => onAddParent(e.currentTarget.value as ProfileId)}>
+            <Select onChange={(e) => onAddParent(e.currentTarget.value as ProfileId)}>
               <option value="">{t("group.addParent")}</option>
               <For each={candidates()}>{(a) => <option value={a.id}>{a.display_name}</option>}</For>
-            </select>
+            </Select>
           </Show>
         </section>
         <Show when={iAmParent()}>

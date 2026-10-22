@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { For } from "solid-js";
+import { Select } from "../components/Select.tsx";
 
 /**
  * The building blocks from src/index.css on one page. Change a token or a class
@@ -116,10 +117,10 @@ export const FormFields: Story = {
       </fieldset>
       <label>
         Select
-        <select>
+        <Select>
           <option>Member</option>
           <option>Manager</option>
-        </select>
+        </Select>
       </label>
       <button type="submit">Save</button>
     </form>

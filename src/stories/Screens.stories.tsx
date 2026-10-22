@@ -24,6 +24,7 @@ import type { Occasion } from "../lib/api/occasions.ts";
 import { suggestCategories } from "../lib/categories.ts";
 import { t } from "../lib/i18n.ts";
 import type { AccountId, GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
+import { Select } from "../components/Select.tsx";
 
 /**
  * Whole screens put together from the components, with sample data, to judge the design as the
@@ -524,10 +525,10 @@ function ItemFormMock(props: { editing?: boolean }) {
         </label>
         <label>
           {t("itemForm.currency")}
-          <select>
+          <Select>
             <option>EUR</option>
             <option>USD</option>
-          </select>
+          </Select>
         </label>
       </div>
       <fieldset>
@@ -596,10 +597,10 @@ function GroupSettingsMock(props: { manager: boolean }) {
             {props.manager ? (
               <span class="chip">{t("roles.manager")}</span>
             ) : (
-              <select>
+              <Select>
                 <option>{t("roles.member")}</option>
                 <option>{t("roles.guardian")}</option>
-              </select>
+              </Select>
             )}
           </li>
           <li class="list-row">
@@ -609,9 +610,9 @@ function GroupSettingsMock(props: { manager: boolean }) {
             </span>
             {props.manager ? (
               <span class="row">
-                <select>
+                <Select>
                   <option>{t("roles.manager")}</option>
-                </select>
+                </Select>
                 <button type="button" class="link danger">
                   {t("common.remove")}
                 </button>
@@ -627,9 +628,9 @@ function GroupSettingsMock(props: { manager: boolean }) {
             </span>
             {props.manager ? (
               <span class="row">
-                <select>
+                <Select>
                   <option>{t("roles.member")}</option>
-                </select>
+                </Select>
                 <button type="button" class="link danger">
                   {t("common.remove")}
                 </button>
@@ -768,12 +769,12 @@ export const GroupLeaveHandOver: Story = {
       <div class="card">
         <label>
           {t("group.chooseSuccessor", { group: "Family" })}
-          <select>
+          <Select>
             <option value="" disabled selected>
               {t("group.chooseMember")}
             </option>
             <option>Anna</option>
-          </select>
+          </Select>
         </label>
         <button type="button" disabled>
           {t("group.handOverAndLeave")}
