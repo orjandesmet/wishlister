@@ -32,7 +32,7 @@ import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { arrangeItems, readListOrder, saveListOrder, type ListOrder } from "../lib/listOrder.ts";
 import { addDays, today, type IsoDate } from "../lib/occasions.ts";
 import { useMe } from "../lib/me.tsx";
-import { isLoaded } from "../lib/resource.ts";
+import { isReady } from "../lib/resource.ts";
 import { useQuickAdd } from "../lib/quickAdd.ts";
 
 /** How long you follow a list when no shared occasion is coming up. */
@@ -89,7 +89,7 @@ export default function WishList() {
   // Known from the address alone, so your own list never renders as someone else's while loading.
   const isOwnList = () => params.profileId === me().profile.id;
   // Who may edit and what to show depend on both, so nothing below the title renders before them.
-  const ready = () => isLoaded(profile) && isLoaded(items);
+  const ready = () => isReady(profile) && isReady(items);
 
   // Following someone else's list. Only loaded once we know it isn't your own.
   const otherList = () => (profile() && !isOwnList() ? params.profileId : undefined);

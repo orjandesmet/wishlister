@@ -7,7 +7,7 @@ import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { currencies, displayCurrency, parsePriceInput } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
-import { isLoaded } from "../lib/resource.ts";
+import { isReady } from "../lib/resource.ts";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {
@@ -102,7 +102,7 @@ export default function ItemForm() {
       </Show>
       {/* When editing, wait for the item so the form never shows blank or default values first. */}
       <Show
-        when={!params.itemId || isLoaded(item)}
+        when={!params.itemId || isReady(item)}
         fallback={
           <Show when={!item.error}>
             <p class="muted">{t("common.loading")}</p>
@@ -194,7 +194,7 @@ export default function ItemForm() {
                   each={profile()?.groups}
                   fallback={
                     <p class="muted small">
-                      {isLoaded(profile) ? t("itemForm.noGroups") : t("common.loading")}
+                      {isReady(profile) ? t("itemForm.noGroups") : t("common.loading")}
                     </p>
                   }
                 >

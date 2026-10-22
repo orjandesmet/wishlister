@@ -5,7 +5,7 @@ import { createGroup, getMyGroups } from "../lib/api/groups.ts";
 import { getUpcomingOccasions } from "../lib/api/occasions.ts";
 import { compareNames, t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
-import { isLoaded } from "../lib/resource.ts";
+import { isReady } from "../lib/resource.ts";
 import { nextOccasionPerGroup, today } from "../lib/occasions.ts";
 
 export default function Home() {
@@ -38,7 +38,7 @@ export default function Home() {
       <Show when={groups.error}>
         <p class="error">{t("home.loadFailed", { message: groups.error.message })}</p>
       </Show>
-      <Show when={!isLoaded(groups) && !groups.error}>
+      <Show when={!isReady(groups) && !groups.error}>
         <p class="muted">{t("common.loading")}</p>
       </Show>
       <Show when={groups()?.length === 0}>

@@ -36,7 +36,7 @@ import { ParentSelect } from "../components/ParentSelect.tsx";
 import { compareNames, formatList, t } from "../lib/i18n.ts";
 import type { GroupId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
-import { isLoaded } from "../lib/resource.ts";
+import { isReady } from "../lib/resource.ts";
 import { today } from "../lib/occasions.ts";
 
 export default function GroupSettings() {
@@ -324,12 +324,12 @@ export default function GroupSettings() {
       <Show when={error()}>
         <p class="error">{error()}</p>
       </Show>
-      <Show when={!isLoaded(group) && !group.error}>
+      <Show when={!isReady(group) && !group.error}>
         <p class="muted">{t("common.loading")}</p>
       </Show>
 
       {/* Roles decide most of what shows here, so nothing renders before the group has loaded. */}
-      <Show when={isLoaded(group)}>
+      <Show when={isReady(group)}>
         <section class="card">
           <h2>{t("group.members")}</h2>
           <ul class="list">
@@ -470,7 +470,7 @@ export default function GroupSettings() {
                       {t("group.parents")}{" "}
                       <For
                         each={childParents()}
-                        fallback={isLoaded(parents) ? t("group.noParents") : ""}
+                        fallback={isReady(parents) ? t("group.noParents") : ""}
                       >
                         {(parentId, i) => (
                           <>
@@ -548,7 +548,7 @@ export default function GroupSettings() {
           </Show>
         </section>
 
-        <Show when={isLoaded(occasions)}>
+        <Show when={isReady(occasions)}>
           <Occasions
             occasions={occasions() ?? []}
             today={today()}

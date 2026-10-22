@@ -9,7 +9,7 @@ import {
 import { getManagedProfiles, getMyProfile, type Profile } from "./api/profiles.ts";
 import { useAuth } from "./auth.tsx";
 import { t } from "./i18n.ts";
-import { isLoaded } from "./resource.ts";
+import { isReady } from "./resource.ts";
 import type { AccountId } from "./ids.ts";
 
 type Me = {
@@ -33,7 +33,7 @@ export const MeProvider: ParentComponent = (props) => {
   );
 
   // Wait for the children too, or "My list" turns into "My lists" (and similar) once they arrive.
-  const ready = () => (isLoaded(managed) || managed.error ? profile() : undefined);
+  const ready = () => (isReady(managed) || managed.error ? profile() : undefined);
 
   return (
     <Show
