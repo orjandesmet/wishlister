@@ -1,4 +1,6 @@
+import { EditLabel } from "./EditLabel.tsx";
 import { A } from "@solidjs/router";
+import { RemoveLabel } from "./RemoveLabel.tsx";
 import { For, Match, Show, Switch } from "solid-js";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
@@ -197,10 +199,10 @@ export function ItemCard(props: ItemCardProps) {
       <Show when={props.canEdit && !props.selecting}>
         <div class="row">
           <A class="link" href={`/items/${props.item.id}/edit`}>
-            {t("common.edit")}
+            <EditLabel label={t("common.edit")} />
           </A>
           <button type="button" class="link danger" onClick={() => props.onRemove()}>
-            {t("common.remove")}
+            <RemoveLabel />
           </button>
         </div>
       </Show>

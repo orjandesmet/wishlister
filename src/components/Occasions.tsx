@@ -1,4 +1,6 @@
+import { EditLabel } from "./EditLabel.tsx";
 import { createSignal, For, Show } from "solid-js";
+import { RemoveLabel } from "./RemoveLabel.tsx";
 import type { Occasion, OccasionInput } from "../lib/api/occasions.ts";
 import { compareNames, locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
@@ -43,10 +45,10 @@ export function Occasions(props: OccasionsProps) {
           <Show when={props.canEdit}>
             <span class="row">
               <button type="button" class="link" onClick={() => setEditing(occasion.id)}>
-                {t("common.edit")}
+                <EditLabel label={t("common.edit")} />
               </button>
               <button type="button" class="link danger" onClick={() => props.onDelete(occasion)}>
-                {t("common.delete")}
+                <RemoveLabel label={t("common.delete")} />
               </button>
             </span>
           </Show>

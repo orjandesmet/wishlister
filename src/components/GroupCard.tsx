@@ -1,3 +1,4 @@
+import { EditLabel } from "./EditLabel.tsx";
 import { A } from "@solidjs/router";
 import { For, Show } from "solid-js";
 import type { Group } from "../lib/api/groups.ts";
@@ -42,7 +43,9 @@ export function GroupCard(props: GroupCardProps) {
       <div class="row">
         <h2>{props.group.name}</h2>
         <A class="link" href={`/groups/${props.group.id}`}>
-          {isManager() ? t("groupCard.manage") : t("groupCard.details")}
+          <Show when={isManager()} fallback={t("groupCard.details")}>
+            <EditLabel label={t("groupCard.manage")} />
+          </Show>
         </A>
       </div>
       <Show when={props.nextOccasion}>

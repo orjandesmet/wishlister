@@ -1,4 +1,5 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
+import { RemoveLabel } from "../components/RemoveLabel.tsx";
 import { createResource, createSignal, For, Show } from "solid-js";
 import { addParent, deleteChild, removeParent } from "../lib/api/children.ts";
 import { getAdultProfiles, getProfileDetails, renameProfile } from "../lib/api/profiles.ts";
@@ -124,7 +125,7 @@ export default function ChildSettings() {
                       class="link danger"
                       onClick={() => onRemoveParent(parentId)}
                     >
-                      {t("common.remove")}
+                      <RemoveLabel />
                     </button>
                   </Show>
                 </li>

@@ -307,6 +307,21 @@ a {
   color: var(--text-strong);
 }
 
+/* A member's role controls drop below the name when they don't both fit, never over it. */
+.member-row {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding-block: 8px;
+}
+
+.member-row > .person {
+  flex: 1 1 140px;
+}
+
+.member-row > :not(.person) {
+  margin-left: auto;
+}
+
 .list > li + li:not(.card) {
   border-top: 1px solid var(--border);
 }
@@ -600,6 +615,58 @@ label.list-order {
   margin-left: auto;
   font-weight: 400;
   color: var(--text);
+}
+
+.edit-icon,
+.remove-icon,
+.select-button-icon {
+  display: none;
+  width: 20px;
+  height: 20px;
+}
+
+.list-order-icon {
+  display: none;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+/* Small screens: the icon replaces the label (which stays available to screen readers). */
+@media (max-width: 599px) {
+  .list-order-icon,
+  .edit-icon,
+  .remove-icon,
+  .select-button-icon {
+    display: block;
+  }
+  button.select-button {
+    padding: 0 12px;
+  }
+  .link .edit-icon,
+  button.link .remove-icon {
+    width: 20px;
+    height: 20px;
+  }
+  /* Long options ("Nog niet gekocht eerst") must not stretch the select past the row. */
+  label.list-order {
+    min-width: 0;
+  }
+  label.list-order .select {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .list-order-text,
+  .edit-text,
+  .remove-text,
+  .select-button-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 /* Parents: a chevron beside the title opens a menu of their own and their children's lists. */

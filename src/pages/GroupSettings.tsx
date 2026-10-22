@@ -1,4 +1,6 @@
+import { EditLabel } from "../components/EditLabel.tsx";
 import { A, useNavigate, useParams } from "@solidjs/router";
+import { RemoveLabel } from "../components/RemoveLabel.tsx";
 import { createMemo, createResource, createSignal, For, Match, Show, Switch } from "solid-js";
 import { addChild, addChildToGroup, getParents } from "../lib/api/children.ts";
 import {
@@ -321,7 +323,7 @@ export default function GroupSettings() {
           <ul class="list">
             <For each={adults()}>
               {(member) => (
-                <li class="list-row">
+                <li class="list-row member-row">
                   <span class="person">
                     <Avatar id={member.profile_id} name={member.profiles.display_name} />
                     {member.profiles.display_name}
@@ -339,7 +341,7 @@ export default function GroupSettings() {
                           <option value="manager">{t("roles.manager")}</option>
                         </Select>
                         <button type="button" class="link danger" onClick={() => onRemove(member)}>
-                          {t("common.remove")}
+                          <RemoveLabel />
                         </button>
                       </span>
                     </Match>
@@ -436,12 +438,12 @@ export default function GroupSettings() {
                       <span class="row">
                         <Show when={iAmParent()}>
                           <A class="link" href={`/children/${child.profile_id}`}>
-                            {t("child.editProfile")}
+                            <EditLabel label={t("child.editProfile")} />
                           </A>
                         </Show>
                         <Show when={isManager() || iAmParent()}>
                           <button type="button" class="link danger" onClick={() => onRemove(child)}>
-                            {t("common.remove")}
+                            <RemoveLabel />
                           </button>
                         </Show>
                       </span>

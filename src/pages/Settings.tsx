@@ -1,3 +1,4 @@
+import { EditLabel } from "../components/EditLabel.tsx";
 import { A } from "@solidjs/router";
 import { createSignal, For, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
@@ -78,7 +79,7 @@ export default function Settings() {
                     {child.display_name}
                   </span>
                   <A class="link" href={`/children/${child.id}`}>
-                    {t("child.editProfile")}
+                    <EditLabel label={t("child.editProfile")} />
                   </A>
                 </li>
               )}

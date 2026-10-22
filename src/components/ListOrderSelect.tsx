@@ -15,7 +15,23 @@ export function ListOrderSelect(props: ListOrderSelectProps) {
   const options = () => listOrders.filter((o) => o !== "available" || props.showBought);
   return (
     <label class="list-order">
-      {t("listOrder.label")}
+      <span class="list-order-text">{t("listOrder.label")}</span>
+      {/* Lucide "arrow-up-down" (ISC licence): stands in for the label on small screens. */}
+      <svg
+        class="list-order-icon"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.75"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m21 16-4 4-4-4" />
+        <path d="M17 20V4" />
+        <path d="m3 8 4-4 4 4" />
+        <path d="M7 4v16" />
+      </svg>
       <Select
         value={props.value}
         onChange={(e) => props.onChange(e.currentTarget.value as ListOrder)}

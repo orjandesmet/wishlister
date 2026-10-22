@@ -277,8 +277,29 @@ export default function WishList() {
         <Show when={(items()?.length ?? 0) > 1}>
           <div class="row">
             <Show when={canEdit() && !selecting()}>
-              <button type="button" class="secondary small" onClick={() => setSelecting(true)}>
-                {t("bulk.select")}
+              <button
+                type="button"
+                class="secondary small select-button"
+                onClick={() => setSelecting(true)}
+              >
+                <span class="select-button-text">{t("bulk.select")}</span>
+                {/* Lucide "list-checks" (ISC licence): stands in for the label on small screens. */}
+                <svg
+                  class="select-button-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.75"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="m3 17 2 2 4-4" />
+                  <path d="m3 7 2 2 4-4" />
+                  <path d="M13 6h8" />
+                  <path d="M13 12h8" />
+                  <path d="M13 18h8" />
+                </svg>
               </button>
             </Show>
             <ListOrderSelect value={order()} showBought={showBought()} onChange={chooseOrder} />
