@@ -288,7 +288,7 @@ export default function GroupSettings() {
           <button type="button" class="secondary rename-button" popovertarget="rename-popover">
             {t("group.rename")}
           </button>
-          <div id="rename-popover" class="popover rename-popover" popover>
+          <div id="rename-popover" class="popover sheet-popover rename-popover" popover>
             <form onSubmit={onRename}>
               <label>
                 {t("group.groupName")}
@@ -411,15 +411,24 @@ export default function GroupSettings() {
               </label>
               <button type="submit">{t("group.invite")}</button>
             </form>
-            <h3>{t("group.inviteLink")}</h3>
-            <p class="muted small">{t("group.inviteLinkHelp")}</p>
-            <div class="row">
-              <button type="button" onClick={onShareLink}>
-                {t("group.shareLink")}
-              </button>
-              <button type="button" class="secondary" onClick={onResetLink}>
-                {t("group.newLink")}
-              </button>
+            <button
+              type="button"
+              class="secondary invite-link-button"
+              popovertarget="invite-link-popover"
+            >
+              {t("group.inviteLink")}
+            </button>
+            <div id="invite-link-popover" class="popover sheet-popover invite-popover" popover>
+              <h3>{t("group.inviteLink")}</h3>
+              <p class="muted small">{t("group.inviteLinkHelp")}</p>
+              <div class="row button-row">
+                <button type="button" onClick={onShareLink}>
+                  {t("group.shareLink")}
+                </button>
+                <button type="button" class="secondary" onClick={onResetLink}>
+                  {t("group.newLink")}
+                </button>
+              </div>
             </div>
           </Show>
         </section>

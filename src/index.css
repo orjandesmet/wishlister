@@ -279,6 +279,16 @@ a {
   gap: 12px;
 }
 
+/* Buttons keep their text on one line; when they don't fit side by side, the last one drops below. */
+.row.button-row {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.row.button-row > button {
+  white-space: nowrap;
+}
+
 .stack {
   display: flex;
   flex-direction: column;
@@ -951,11 +961,20 @@ a.person:hover {
   .rename-popover {
     position-anchor: --rename-group;
   }
+
+  .invite-link-button {
+    anchor-name: --invite-link;
+  }
+
+  .invite-popover {
+    position-anchor: --invite-link;
+    position-area: bottom span-right;
+  }
 }
 
-/* Small screens: rename opens as a sheet docked to the bottom edge, above the keyboard. */
+/* Small screens: rename and invite link open as a sheet docked to the bottom edge, above the keyboard. */
 @media (max-width: 899px) {
-  .rename-popover {
+  .sheet-popover {
     position-area: none;
     inset: auto 0 0 0;
     width: 100%;
@@ -967,7 +986,7 @@ a.person:hover {
     overflow-y: auto;
   }
 
-  .rename-popover::backdrop {
+  .sheet-popover::backdrop {
     background: rgba(0, 0, 0, 0.4);
   }
 }
