@@ -38,7 +38,7 @@ export default function MyLists() {
             <li>
               <A class="list-row" href={`/lists/${me().profile.id}`}>
                 <span>{t("account.myWishlist")}</span>
-                <span class="muted">›</span>
+                <span class="muted chevron">›</span>
               </A>
             </li>
             <For each={me().managed()}>
@@ -46,7 +46,7 @@ export default function MyLists() {
                 <li>
                   <A class="list-row" href={`/lists/${child.id}`}>
                     <span>{t("account.childWishlist", { name: child.display_name })}</span>
-                    <span class="muted">›</span>
+                    <span class="muted chevron">›</span>
                   </A>
                 </li>
               )}

@@ -1,5 +1,6 @@
-import { A, Navigate, Route, Router, useLocation, useParams } from "@solidjs/router";
+import { Navigate, Route, Router, useLocation, useParams } from "@solidjs/router";
 import { Show, type Component, type ParentComponent } from "solid-js";
+import { TabBar } from "./components/TabBar.tsx";
 import { InstallBanner } from "./components/InstallBanner.tsx";
 import { AuthProvider, useAuth } from "./lib/auth.tsx";
 import { syncLocaleWithAccount } from "./lib/accountLocale.ts";
@@ -15,23 +16,10 @@ import MyLists from "./pages/MyLists.tsx";
 import Unfollow from "./pages/Unfollow.tsx";
 import WishList from "./pages/WishList.tsx";
 
-/** Bottom navigation. Without children to look after, "My list" opens your own list directly. */
+/** Without children to look after, "My list" opens your own list directly. */
 function Tabs() {
   const me = useMe();
-  const hasChildren = () => (me().managed()?.length ?? 0) > 0;
-  return (
-    <nav class="tabs">
-      <A href="/" end>
-        {t("nav.groups")}
-      </A>
-      <Show
-        when={hasChildren()}
-        fallback={<A href={`/lists/${me().profile.id}`}>{t("nav.myList")}</A>}
-      >
-        <A href="/mine">{t("nav.myLists")}</A>
-      </Show>
-    </nav>
-  );
+  return <TabBar myProfileId={me().profile.id} hasChildren={(me().managed()?.length ?? 0) > 0} />;
 }
 
 /** Layout route for signed-in pages: guards them and adds the bottom navigation. */

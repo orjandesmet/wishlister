@@ -20,7 +20,7 @@ export function InstallBanner(props: InstallBannerProps) {
           aria-label={t("install.dismiss")}
           onClick={() => props.onDismiss()}
         >
-          ✕
+          ×
         </button>
       </div>
       <Switch>

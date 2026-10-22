@@ -80,7 +80,7 @@ export const en = {
     guardian: "guardian",
     child: "child",
     nextOccasion: (p: { name: string; date: string; when: string }) =>
-      `🎁 ${p.name} · ${p.date} (${p.when})`,
+      `${p.name} · ${p.date} (${p.when})`,
     today: "today",
     tomorrow: "tomorrow",
     inDays: (p: { days: number }) => `in ${p.days} days`,
@@ -165,7 +165,7 @@ export const en = {
   },
   item: {
     onlyVisibleIn: (p: { groups: string }) => `Only visible in ${p.groups}`,
-    private: "🔒 Not shared with any group",
+    private: "Not shared with any group",
     youBought: "You bought this",
     undo: "Undo",
     someoneBought: "Someone bought this",
@@ -173,7 +173,7 @@ export const en = {
     youBoughtFor: (p: { occasion: string }) => `You bought this for ${p.occasion}`,
     forWhichOccasion: "Which occasion is it for?",
     noOccasion: "Not for an occasion",
-    notWanted: "🚫 Please don't buy",
+    notWanted: "Please don't buy",
     convertedPrice: (p: { price: string }) => `≈ ${p.price}`,
   },
   unfollow: {

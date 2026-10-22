@@ -74,7 +74,7 @@ export const nl: Dictionary = {
     details: "Details",
     guardian: "voogd",
     child: "kind",
-    nextOccasion: (p) => `🎁 ${p.name} · ${p.date} (${p.when})`,
+    nextOccasion: (p) => `${p.name} · ${p.date} (${p.when})`,
     today: "vandaag",
     tomorrow: "morgen",
     inDays: (p) => `over ${p.days} dagen`,
@@ -156,7 +156,7 @@ export const nl: Dictionary = {
   },
   item: {
     onlyVisibleIn: (p) => `Alleen zichtbaar in ${p.groups}`,
-    private: "🔒 Met geen enkele groep gedeeld",
+    private: "Met geen enkele groep gedeeld",
     youBought: "Jij hebt dit gekocht",
     undo: "Ongedaan maken",
     someoneBought: "Iemand heeft dit gekocht",
@@ -164,7 +164,7 @@ export const nl: Dictionary = {
     youBoughtFor: (p) => `Jij kocht dit voor ${p.occasion}`,
     forWhichOccasion: "Voor welke gelegenheid is het?",
     noOccasion: "Niet voor een gelegenheid",
-    notWanted: "🚫 Liever niet",
+    notWanted: "Liever niet",
     convertedPrice: (p) => `≈ ${p.price}`,
   },
   unfollow: {

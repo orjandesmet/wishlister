@@ -1,45 +1,39 @@
 /*
- * Theme tokens. Colours are deliberately neutral for now: change the
- * --accent values (and anything else) here to restyle the whole app.
+ * Theme tokens: "achromatic ledger". The chrome is ink on a stone ground and carries no colour;
+ * the one hue (--data) marks the figure a screen is about: how soon the next occasion is, and
+ * what you have already bought. Change the tokens here to restyle the whole app.
  */
 :root {
-  --bg: #f7f7f8;
-  --surface: #ffffff;
-  --text: #4b5563;
-  --text-strong: #111827;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --accent: #374151;
-  --accent-contrast: #ffffff;
-  --danger: #b91c1c;
+  /* light-dark() picks the first value on a light system and the second on a dark one. */
+  --bg: light-dark(#f4f3f1, #0b0b0b);
+  --surface: light-dark(#ffffff, #141414);
+  --raised: light-dark(#ebe9e6, #1f1f1f);
+  --text: light-dark(#0a0a0a, #e6e6e6);
+  --text-strong: light-dark(#0a0a0a, #f5f5f5);
+  --muted: light-dark(#6b6b6b, #9a9a9a);
+  --border: light-dark(#e4e2de, #262626);
+  --control: light-dark(#cfcdc8, #3a3a3a);
+  --accent: light-dark(#141414, #f2f2f2);
+  --accent-contrast: light-dark(#ffffff, #0b0b0b);
+  --data: light-dark(#1d5fbf, #6ea2ee);
+  --danger: light-dark(#c4242a, #f2777a);
+  --pill-negative-bg: light-dark(#ffedea, #3a1618);
+  --pill-negative-ink: light-dark(#831c1e, #f7b4b6);
 
-  --radius: 12px;
-  --gap: 16px;
+  --radius: 8px;
+  --radius-control: 6px;
+  --gap: 12px;
+  --pad: 16px;
   --tap: 48px;
-  --shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08);
+  --sidebar: 240px;
 
-  --sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --sans: "Geist", Inter, system-ui, "Segoe UI", Roboto, sans-serif;
 
-  font: 16px/1.5 var(--sans);
+  font: 400 14px/1.5 var(--sans);
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #111214;
-    --surface: #1b1c1f;
-    --text: #c7c9cf;
-    --text-strong: #f3f4f6;
-    --muted: #9ca3af;
-    --border: #2c2e33;
-    --accent: #e5e7eb;
-    --accent-contrast: #111214;
-    --danger: #f87171;
-    --shadow: none;
-  }
 }
 
 *,
@@ -56,7 +50,7 @@ body {
   max-width: 560px;
   min-height: 100svh;
   margin: 0 auto;
-  padding: var(--gap);
+  padding: var(--pad);
   display: flex;
   flex-direction: column;
   gap: var(--gap);
@@ -86,14 +80,18 @@ body {
   min-height: var(--tap);
   display: grid;
   place-items: center;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--muted);
   text-decoration: none;
 }
 
 .tabs a.active {
   color: var(--text-strong);
-  box-shadow: inset 0 3px 0 var(--accent);
+  box-shadow: inset 0 2px 0 var(--accent);
+}
+
+.tabs .brand {
+  display: none;
 }
 
 h1,
@@ -105,7 +103,10 @@ h3 {
 }
 
 h1 {
-  font-size: 1.75rem;
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
 }
 
 p {
@@ -116,8 +117,7 @@ p {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: var(--gap);
+  padding: var(--pad);
   display: flex;
   flex-direction: column;
   gap: var(--gap);
@@ -145,19 +145,25 @@ form {
 label {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-weight: 600;
+  gap: 8px;
+  font-weight: 500;
   color: var(--text-strong);
 }
 
 input {
   min-height: var(--tap);
   padding: 0 12px;
+  /* 16px keeps iOS from zooming into the field. */
   font: inherit;
+  font-size: 16px;
   color: var(--text-strong);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
+}
+
+input::placeholder {
+  color: var(--muted);
 }
 
 input:focus-visible,
@@ -170,12 +176,23 @@ button {
   min-height: var(--tap);
   padding: 0 16px;
   font: inherit;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--accent-contrast);
   background: var(--accent);
   border: 1px solid var(--accent);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
   cursor: pointer;
+  transition: opacity 120ms ease;
+}
+
+button:hover:not(:disabled),
+a.button:hover {
+  opacity: 0.88;
+}
+
+button:active:not(:disabled),
+a.button:active {
+  opacity: 0.76;
 }
 
 button:disabled {
@@ -185,22 +202,26 @@ button:disabled {
 
 button.secondary {
   color: var(--text-strong);
-  background: transparent;
-  border-color: var(--border);
+  background: var(--raised);
+  border-color: var(--raised);
 }
 
 .code-input {
   font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
   letter-spacing: 0.4em;
   text-align: center;
 }
 
 h2 {
-  font-size: 1.2rem;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
 h3 {
-  font-size: 1rem;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 a {
@@ -246,6 +267,16 @@ a {
   border-top: 1px solid var(--border);
 }
 
+.chevron {
+  font-size: 18px;
+  line-height: 1;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
+}
+
 .child {
   padding-bottom: 12px;
 }
@@ -256,7 +287,7 @@ a {
 
 .item.pending {
   border-style: dashed;
-  box-shadow: none;
+  border-color: var(--control);
 }
 
 .item-name {
@@ -267,11 +298,11 @@ a {
 .chip {
   flex-shrink: 0;
   padding: 2px 10px;
-  font-size: 0.8rem;
+  font-size: 12px;
+  line-height: 20px;
   color: var(--text);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  background: var(--raised);
+  border-radius: var(--radius-control);
 }
 
 .chips {
@@ -287,7 +318,7 @@ button.chip-button[aria-pressed="true"] {
 }
 
 .field-label {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-strong);
 }
 
@@ -299,35 +330,35 @@ button.chip-button[aria-pressed="true"] {
 .item.private {
   background: var(--bg);
   border-style: dashed;
-  box-shadow: none;
+  border-color: var(--control);
 }
 
 /* A "please don't buy" entry: set apart from the wishes, never bought. */
 .item.not-wanted {
   border-color: var(--danger);
   border-style: dashed;
-  box-shadow: none;
 }
 
 .badge-not-wanted {
   align-self: flex-start;
-  padding: 2px 10px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--danger);
-  border: 1px solid var(--danger);
-  border-radius: 999px;
+  padding: 0 8px;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--pill-negative-ink);
+  background: var(--pill-negative-bg);
+  border-radius: var(--radius-control);
 }
 
 .badge-private {
   align-self: flex-start;
-  padding: 2px 10px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  padding: 0 8px;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 500;
   color: var(--text-strong);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 999px;
+  background: var(--raised);
+  border-radius: var(--radius-control);
 }
 
 button.chip-button {
@@ -335,14 +366,14 @@ button.chip-button {
   padding: 0 12px;
   font-weight: 500;
   color: var(--text-strong);
-  background: var(--bg);
-  border-color: var(--border);
-  border-radius: 999px;
+  background: var(--surface);
+  border-color: var(--control);
+  border-radius: var(--radius-control);
 }
 
 .link {
   color: var(--text-strong);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 button.link {
@@ -368,7 +399,7 @@ button.small {
 }
 
 .small {
-  font-size: 0.875rem;
+  font-size: 12px;
 }
 
 .truncate {
@@ -385,20 +416,34 @@ button.small {
   flex: 1;
 }
 
+/* Money is the one thing set bold. */
 .price {
-  font-weight: 600;
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
 }
 
+.price .muted {
+  font-weight: 400;
+}
+
+/* The hue marks what is bought, so a glance down a list shows what is still open. */
 .bought {
-  font-weight: 600;
-  color: var(--text-strong);
+  font-weight: 500;
+  color: var(--data);
+}
+
+/* How soon the next occasion is: the figure a group card is about. */
+.next-occasion {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--data);
 }
 
 .notice {
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--surface);
 }
 
@@ -407,11 +452,11 @@ a.button {
   display: grid;
   place-items: center;
   padding: 0 16px;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
   color: var(--accent-contrast);
   background: var(--accent);
-  border-radius: 8px;
+  border-radius: var(--radius-control);
 }
 
 /* Floating "Add item" button above the tab bar. */
@@ -419,14 +464,15 @@ a.button {
   position: fixed;
   right: var(--gap);
   bottom: calc(var(--tap) + var(--gap) + env(safe-area-inset-bottom));
-  box-shadow: var(--shadow);
+  /* The one control that floats over the list, so it is the one thing with a shadow. */
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
 }
 
 fieldset {
   margin: 0;
   padding: 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -434,7 +480,7 @@ fieldset {
 
 legend {
   padding: 0 4px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-strong);
 }
 
@@ -461,10 +507,11 @@ select {
   min-height: 40px;
   padding: 0 8px;
   font: inherit;
+  font-size: 16px;
   color: var(--text-strong);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--control);
+  border-radius: var(--radius-control);
 }
 
 .install-banner {
@@ -513,7 +560,8 @@ label.check.select-row .item-name {
   bottom: calc(var(--tap) + var(--gap) + env(safe-area-inset-bottom));
   z-index: 1;
   gap: 12px;
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.12);
+  /* Floats over the list as it scrolls underneath. */
+  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .bulk-buttons {
@@ -582,5 +630,91 @@ label.check.select-row .item-name {
 @media (prefers-reduced-motion: reduce) {
   .money-burst {
     display: none;
+  }
+
+  button {
+    transition: none;
+  }
+}
+
+/*
+ * Wide screens: the bottom tabs become a labelled sidebar on the page ground, and the content
+ * keeps a 720px column in the canvas beside it. Grid: 240px sidebar + 1 canvas; the canvas is
+ * centred, so its two margins are equal.
+ */
+@media (min-width: 900px) {
+  #root:has(> .tabs) {
+    max-width: none;
+    padding: 36px 32px 48px calc(var(--sidebar) + 32px);
+  }
+
+  #root:has(> .tabs) > :not(.tabs) {
+    width: 100%;
+    max-width: 720px;
+    margin-inline: auto;
+  }
+
+  .page {
+    padding-bottom: 0;
+  }
+
+  .tabs {
+    inset: 0 auto 0 0;
+    width: var(--sidebar);
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 2px;
+    padding: 20px 12px;
+    background: var(--bg);
+    border-top: none;
+  }
+
+  .tabs .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 20px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-strong);
+  }
+
+  .tabs .brand img {
+    width: 24px;
+    height: 24px;
+  }
+
+  .tabs a {
+    flex: none;
+    max-width: none;
+    min-height: 32px;
+    padding: 0 8px;
+    place-items: center start;
+    border-radius: var(--radius-control);
+    font-weight: 400;
+  }
+
+  .tabs a:hover {
+    color: var(--text-strong);
+  }
+
+  .tabs a.active {
+    color: var(--text-strong);
+    background: var(--raised);
+    box-shadow: none;
+  }
+
+  .fab {
+    position: sticky;
+    align-self: flex-end;
+    right: auto;
+    bottom: var(--gap);
+    /* Sits in the column here and floats over nothing. */
+    box-shadow: none;
+  }
+
+  .bulk-actions {
+    bottom: var(--gap);
   }
 }

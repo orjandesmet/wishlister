@@ -44,7 +44,7 @@ export function GroupCard(props: GroupCardProps) {
       </div>
       <Show when={props.nextOccasion}>
         {(occasion) => (
-          <p class="muted small">
+          <p class="next-occasion small">
             {t("groupCard.nextOccasion", {
               name: occasion().name,
               date: formatOccasionDate(occasion().date, locale()),
