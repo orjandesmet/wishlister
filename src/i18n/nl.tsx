@@ -28,7 +28,7 @@ export const nl: Dictionary = {
   nav: {
     groups: "Groepen",
     myList: "Mijn lijstje",
-    myLists: "Mijn lijstjes",
+    settings: "Instellingen",
   },
   me: {
     loadFailed: (p) => `Je profiel kon niet geladen worden: ${p.message}`,
@@ -255,9 +255,11 @@ export const nl: Dictionary = {
     joining: "Bezig…",
   },
   account: {
-    myLists: "Mijn lijstjes",
-    title: "Account",
-    myWishlist: "Mijn verlanglijstje",
+    title: "Instellingen",
+    children: "Kinderen",
+    childrenHelp:
+      "De verlanglijstjes van de kinderen voor wie je zorgt. Open er een om hun wensen toe te voegen.",
+    deleteProfile: "Profiel wissen",
     childWishlist: (p) => `Verlanglijstje van ${p.name}`,
     yourName: "Je naam, zoals anderen hem zien",
     saveName: "Naam opslaan",
@@ -284,9 +286,9 @@ export const nl: Dictionary = {
   },
   wishlist: {
     fallbackTitle: "Verlanglijstje",
+    switchList: "Andere lijstjes",
     mine: "Mijn verlanglijstje",
     theirs: (p) => `Verlanglijstje van ${p.name}`,
-    accountLink: "Je naam, taal en afmelden",
     unavailable: "Dit lijstje is niet beschikbaar. Misschien is het niet met jou gedeeld.",
     emptyOwn: "Nog niets op dit lijstje.",
     empty: "Dit lijstje is nog leeg.",

@@ -1,12 +1,12 @@
-import { A, useNavigate, useParams } from "@solidjs/router";
+import { A, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
+import { ListMenu } from "../components/ListMenu.tsx";
 import { FollowList } from "../components/FollowList.tsx";
 import { ItemCard, type PurchaseState } from "../components/ItemCard.tsx";
 import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
 import { QuickAdd } from "../components/QuickAdd.tsx";
-import { deleteChild } from "../lib/api/children.ts";
 import { followList, getFollowUntil, unfollowList } from "../lib/api/follows.ts";
 import {
   deleteItem,
@@ -42,7 +42,17 @@ const DEFAULT_FOLLOW_DAYS = 30;
 export default function WishList() {
   const params = useParams<{ profileId: ProfileId }>();
   const me = useMe();
-  const navigate = useNavigate();
+  // Parents jump between their own list and their children's from a menu beside the title.
+  const switchOptions = () => [
+    { id: me().profile.id, name: t("nav.myList"), person: me().profile.display_name },
+    ...(me().managed() ?? []).map((child) => ({
+      id: child.id,
+      name: t("account.childWishlist", { name: child.display_name }),
+      person: child.display_name,
+    })),
+  ];
+  const showSwitcher = () =>
+    switchOptions().length > 1 && switchOptions().some((o) => o.id === params.profileId);
 
   const [profile] = createResource(() => params.profileId, getProfileDetails);
   const [items, { refetch: refetchItems, mutate: setItems }] = createResource(
@@ -175,14 +185,6 @@ export default function WishList() {
       setSelected(new Set<ItemId>());
     });
   };
-  const onDeleteChild = () =>
-    run(async () => {
-      const name = profile()!.display_name;
-      if (!confirm(t("child.confirmDelete", { name }))) return;
-      await deleteChild(params.profileId);
-      me().refetchManaged();
-      navigate("/mine", { replace: true });
-    });
   // "I bought this" asks which occasion it's for, unless there's only one (or none).
   const [choosing, setChoosing] = createSignal<{ itemId: ItemId; occasions: Occasion[] }>();
   const buy = (item: Item, occasionId: OccasionId | null) =>
@@ -236,6 +238,9 @@ export default function WishList() {
               </Show>
             </Show>
           </h1>
+          <Show when={showSwitcher()}>
+            <ListMenu value={params.profileId} options={switchOptions()} />
+          </Show>
         </div>
         {/* "+" on phones, "Add item" on wide screens: the same link, so the screen has one add action. */}
         <Show when={ready() && canEdit() && !selecting()}>
@@ -244,11 +249,6 @@ export default function WishList() {
           </A>
         </Show>
       </div>
-      <Show when={isOwnList() && !me().managed()?.length}>
-        <A class="link" href="/mine">
-          {t("wishlist.accountLink")}
-        </A>
-      </Show>
       <Show when={profile.error || items.error}>
         <p class="error">{t("wishlist.unavailable")}</p>
       </Show>
@@ -327,11 +327,6 @@ export default function WishList() {
             onAdd={(name, groups) => quickAdd().add(name, groups)}
             onCancel={() => quickAdd().cancel()}
           />
-        </Show>
-        <Show when={canEdit() && !isOwnList() && !selecting()}>
-          <button type="button" class="secondary danger" onClick={onDeleteChild}>
-            {t("wishlist.deleteProfile", { name: profile()?.display_name ?? "" })}
-          </button>
         </Show>
       </Show>
     </>

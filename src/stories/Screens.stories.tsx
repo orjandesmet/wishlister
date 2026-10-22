@@ -11,6 +11,7 @@ import { GroupCard } from "../components/GroupCard.tsx";
 import { InstallBanner } from "../components/InstallBanner.tsx";
 import { ItemCard } from "../components/ItemCard.tsx";
 import { NewGroupForm } from "../components/NewGroupForm.tsx";
+import { ListMenu } from "../components/ListMenu.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
 import { Occasions } from "../components/Occasions.tsx";
@@ -45,7 +46,7 @@ const Screen = (props: { children: JSX.Element; tabs?: boolean; banner?: JSX.Ele
   <div id="root">
     {props.banner}
     <main class="page">{props.children}</main>
-    {props.tabs === false ? null : <TabBar myProfileId={me} hasChildren={false} />}
+    {props.tabs === false ? null : <TabBar myProfileId={me} />}
   </div>
 );
 
@@ -206,9 +207,6 @@ export const OwnList: Story = {
           <span>Add item</span>
         </A>
       </div>
-      <A class="link" href="/mine">
-        Account
-      </A>
       <div class="row">
         <button type="button" class="secondary small">
           Select
@@ -233,23 +231,23 @@ export const OwnList: Story = {
   ),
 };
 
-export const Account: Story = {
+export const Settings: Story = {
   render: () => (
     <Screen>
-      <h1>Account</h1>
+      <h1>{t("account.title")}</h1>
       <form class="card" onSubmit={(e) => e.preventDefault()}>
         <label>
-          Your name
+          {t("account.yourName")}
           <input value="Orjan" />
         </label>
-        <button type="submit">Save name</button>
+        <button type="submit">{t("account.saveName")}</button>
       </form>
       <section class="card">
         <LanguageSelect value="en" onChange={fn()} />
         <CurrencySelect value="EUR" onChange={fn()} />
       </section>
       <button type="button" class="secondary">
-        Sign out
+        {t("account.signOut")}
       </button>
     </Screen>
   ),
@@ -797,26 +795,11 @@ export const GroupLeaveHandOver: Story = {
   ),
 };
 
-export const AccountWithChildren: Story = {
+/** A parent also manages their children here: open a list, or delete the child. */
+export const SettingsWithChildren: Story = {
   render: () => (
     <Screen>
-      <h1>{t("account.myLists")}</h1>
-      <section class="card">
-        <ul class="list">
-          <li>
-            <A class="list-row" href="/lists/me">
-              <span>{t("account.myWishlist")}</span>
-              <span class="muted chevron">›</span>
-            </A>
-          </li>
-          <li>
-            <A class="list-row" href="/lists/lucas">
-              <span>{t("account.childWishlist", { name: "Lucas" })}</span>
-              <span class="muted chevron">›</span>
-            </A>
-          </li>
-        </ul>
-      </section>
+      <h1>{t("account.title")}</h1>
       <form class="card" onSubmit={(e) => e.preventDefault()}>
         <label>
           {t("account.yourName")}
@@ -828,6 +811,23 @@ export const AccountWithChildren: Story = {
       <section class="card">
         <LanguageSelect value="en" onChange={fn()} />
         <CurrencySelect value="EUR" onChange={fn()} />
+      </section>
+      <section class="card">
+        <h2>{t("account.children")}</h2>
+        <p class="muted small">{t("account.childrenHelp")}</p>
+        <ul class="list">
+          {["Lucas", "Mila"].map((name) => (
+            <li class="list-row">
+              <A class="person" href={`/lists/${name}`}>
+                <Avatar id={name.toLowerCase()} name={name} />
+                {t("account.childWishlist", { name })}
+              </A>
+              <button type="button" class="link danger">
+                {t("account.deleteProfile")}
+              </button>
+            </li>
+          ))}
+        </ul>
       </section>
       <button type="button" class="secondary">
         {t("account.signOut")}
@@ -928,6 +928,48 @@ export const NewGroupPage: Story = {
     <Screen>
       <h1>{t("home.newGroup")}</h1>
       <NewGroupForm class="card" onCreate={fn(async () => {})} />
+    </Screen>
+  ),
+};
+
+/** A parent's own list: a dropdown jumps to a child's list. */
+export const OwnListAsParent: Story = {
+  render: () => (
+    <Screen>
+      <div class="row">
+        <div class="person title">
+          <Avatar id="me" name="Orjan" size="lg" />
+          <h1>{t("wishlist.mine")}</h1>
+          <ListMenu
+            value={me}
+            options={[
+              { id: me, name: t("nav.myList"), person: "Orjan" },
+              {
+                id: "lucas" as ProfileId,
+                name: t("account.childWishlist", { name: "Lucas" }),
+                person: "Lucas",
+              },
+              {
+                id: "mila" as ProfileId,
+                name: t("account.childWishlist", { name: "Mila" }),
+                person: "Mila",
+              },
+            ]}
+          />
+        </div>
+        <A class="add-action" href="/lists/me/items/new">
+          <span>{t("wishlist.addItem")}</span>
+        </A>
+      </div>
+      <div class="row">
+        <button type="button" class="secondary small">
+          Select
+        </button>
+        <ListOrderSelect value="added" showBought={false} onChange={fn()} />
+      </div>
+      <ul class="list cards">
+        {card(item(5, "Trail running shoes", 129.95, "Sport"), "hidden", { canEdit: true })}
+      </ul>
     </Screen>
   ),
 };

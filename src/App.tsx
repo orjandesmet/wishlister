@@ -13,14 +13,13 @@ import Join from "./pages/Join.tsx";
 import ItemForm from "./pages/ItemForm.tsx";
 import Login from "./pages/Login.tsx";
 import NewGroup from "./pages/NewGroup.tsx";
-import MyLists from "./pages/MyLists.tsx";
+import Settings from "./pages/Settings.tsx";
 import Unfollow from "./pages/Unfollow.tsx";
 import WishList from "./pages/WishList.tsx";
 
-/** Without children to look after, "My list" opens your own list directly. */
 function Tabs() {
   const me = useMe();
-  return <TabBar myProfileId={me().profile.id} hasChildren={(me().managed()?.length ?? 0) > 0} />;
+  return <TabBar myProfileId={me().profile.id} />;
 }
 
 /** Layout route for signed-in pages: guards them and adds the bottom navigation. */
@@ -88,7 +87,9 @@ function App() {
       <Route path="/unfollow/:token" component={Unfollow} />
       <Route component={SignedIn}>
         <Route path="/" component={Home} />
-        <Route path="/mine" component={MyLists} />
+        <Route path="/settings" component={Settings} />
+        {/* The old account page. */}
+        <Route path="/mine" component={() => <Navigate href="/settings" />} />
         <Route path="/groups/new" component={NewGroup} />
         <Route path="/groups/:groupId" component={freshPer("groupId", GroupSettings)} />
         <Route path="/lists/:profileId" component={freshPer("profileId", WishList)} />

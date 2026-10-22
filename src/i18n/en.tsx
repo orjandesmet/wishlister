@@ -34,7 +34,7 @@ export const en = {
   nav: {
     groups: "Groups",
     myList: "My list",
-    myLists: "My lists",
+    settings: "Settings",
   },
   me: {
     loadFailed: (p: { message: string }) => `Couldn't load your profile: ${p.message}`,
@@ -265,9 +265,10 @@ export const en = {
     joining: "Joining…",
   },
   account: {
-    myLists: "My lists",
-    title: "Account",
-    myWishlist: "My wishlist",
+    title: "Settings",
+    children: "Children",
+    childrenHelp: "The wish lists of the children you look after. Open one to add their wishes.",
+    deleteProfile: "Delete profile",
     childWishlist: (p: { name: string }) => `${p.name}'s wishlist`,
     yourName: "Your name, as others see it",
     saveName: "Save name",
@@ -292,9 +293,9 @@ export const en = {
   },
   wishlist: {
     fallbackTitle: "Wishlist",
+    switchList: "Other lists",
     mine: "My wishlist",
     theirs: (p: { name: string }) => `${p.name}'s wishlist`,
-    accountLink: "Your name, language and sign out",
     unavailable: "This list isn't available. It may not be shared with you.",
     emptyOwn: "Nothing on this list yet.",
     empty: "This list is still empty.",
