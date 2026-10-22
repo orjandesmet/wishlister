@@ -112,10 +112,14 @@ body {
 .tabs a {
   flex: 1;
   max-width: 220px;
-  min-height: 44px;
-  display: grid;
-  place-items: center;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   border-radius: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--muted);
   text-decoration: none;
@@ -128,6 +132,12 @@ body {
 
 .tabs .brand {
   display: none;
+}
+
+.tab-icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
 }
 
 h1,
@@ -1162,8 +1172,11 @@ a.person:hover {
     max-width: none;
     min-height: 40px;
     padding: 0 12px;
-    place-items: center start;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
     border-radius: 12px;
+    font-size: 16px;
   }
 
   .tabs a:hover {

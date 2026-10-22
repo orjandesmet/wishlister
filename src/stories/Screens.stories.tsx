@@ -973,3 +973,9 @@ export const OwnListAsParent: Story = {
     </Screen>
   ),
 };
+
+/** The smallest phones: the tab bar still fits all three tabs. */
+export const HomeSmallestPhone: Story = {
+  ...Home,
+  globals: { viewport: { value: "mobile1", isRotated: false } },
+};
