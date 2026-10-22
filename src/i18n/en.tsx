@@ -71,6 +71,7 @@ export const en = {
     loadFailed: (p: { message: string }) => `Couldn't load your groups: ${p.message}`,
     empty: "You're not in a group yet. Create one below, or ask someone for an invite link.",
     newGroup: "New group",
+    addGroup: "Add group",
     newGroupPlaceholder: "e.g. Family",
     create: "Create group",
   },

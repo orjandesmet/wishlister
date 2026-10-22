@@ -10,6 +10,7 @@ import { FollowList } from "../components/FollowList.tsx";
 import { GroupCard } from "../components/GroupCard.tsx";
 import { InstallBanner } from "../components/InstallBanner.tsx";
 import { ItemCard } from "../components/ItemCard.tsx";
+import { NewGroupForm } from "../components/NewGroupForm.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
 import { Occasions } from "../components/Occasions.tsx";
@@ -110,23 +111,37 @@ const card = (
   />
 );
 
-const newGroupForm = (
-  <form class="card inline-form" onSubmit={(e) => e.preventDefault()}>
-    <label>
-      New group
-      <input placeholder="e.g. Colleagues" />
-    </label>
-    <button type="submit">Create</button>
-  </form>
+const newGroupForm = <NewGroupForm class="card inline-form" onCreate={fn(async () => {})} />;
+
+/** The groups page header once there is a group: "+" on phones, a button with a popover on wide screens. */
+const AddGroupHeader = (props: { open?: boolean }) => (
+  <div class="row">
+    <h1>{t("home.title")}</h1>
+    <A class="add-link" href="/groups/new" aria-label={t("home.addGroup")}>
+      +
+    </A>
+    <button type="button" class="add-popover-button" popovertarget="new-group-popover">
+      {t("home.addGroup")}
+    </button>
+    <div
+      id="new-group-popover"
+      class="popover"
+      popover
+      ref={(el) => {
+        if (props.open) queueMicrotask(() => el.showPopover());
+      }}
+    >
+      <NewGroupForm onCreate={fn(async () => {})} />
+    </div>
+  </div>
 );
 
 export const Home: Story = {
   render: () => (
     <Screen>
-      <h1>{t("home.title")}</h1>
+      <AddGroupHeader />
       <GroupCard group={family} myProfileId={me} nextOccasion={annasBirthday} today={today} />
       <GroupCard group={bookClub} myProfileId={me} today={today} />
-      {newGroupForm}
     </Screen>
   ),
 };
@@ -423,7 +438,7 @@ export const ListSelecting: Story = {
 export const HomeWithInstallBanner: Story = {
   render: () => (
     <Screen banner={<InstallBanner mode="prompt" onInstall={fn()} onDismiss={fn()} />}>
-      <h1>{t("home.title")}</h1>
+      <AddGroupHeader />
       <GroupCard group={family} myProfileId={me} nextOccasion={annasBirthday} today={today} />
     </Screen>
   ),
@@ -432,7 +447,7 @@ export const HomeWithInstallBanner: Story = {
 export const HomeOccasionToday: Story = {
   render: () => (
     <Screen>
-      <h1>{t("home.title")}</h1>
+      <AddGroupHeader />
       <GroupCard
         group={family}
         myProfileId={me}
@@ -888,6 +903,27 @@ export const UnfollowDone: Story = {
       <A class="link" href="/">
         {t("unfollow.toApp")}
       </A>
+    </Screen>
+  ),
+};
+
+/** Wide screens: the popover open under "Add group". Pick a desktop viewport to see it. */
+export const HomeAddGroupPopover: Story = {
+  render: () => (
+    <Screen>
+      <AddGroupHeader open />
+      <GroupCard group={family} myProfileId={me} nextOccasion={annasBirthday} today={today} />
+      <GroupCard group={bookClub} myProfileId={me} today={today} />
+    </Screen>
+  ),
+};
+
+/** Phones: "+" opens this page. */
+export const NewGroupPage: Story = {
+  render: () => (
+    <Screen>
+      <h1>{t("home.newGroup")}</h1>
+      <NewGroupForm class="card" onCreate={fn(async () => {})} />
     </Screen>
   ),
 };

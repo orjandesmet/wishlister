@@ -66,6 +66,7 @@ export const nl: Dictionary = {
     empty:
       "Je zit nog niet in een groep. Maak er hieronder een aan, of vraag iemand om een uitnodigingslink.",
     newGroup: "Nieuwe groep",
+    addGroup: "Groep toevoegen",
     newGroupPlaceholder: "bv. Familie",
     create: "Groep aanmaken",
   },

@@ -12,6 +12,7 @@ import Home from "./pages/Home.tsx";
 import Join from "./pages/Join.tsx";
 import ItemForm from "./pages/ItemForm.tsx";
 import Login from "./pages/Login.tsx";
+import NewGroup from "./pages/NewGroup.tsx";
 import MyLists from "./pages/MyLists.tsx";
 import Unfollow from "./pages/Unfollow.tsx";
 import WishList from "./pages/WishList.tsx";
@@ -88,6 +89,7 @@ function App() {
       <Route component={SignedIn}>
         <Route path="/" component={Home} />
         <Route path="/mine" component={MyLists} />
+        <Route path="/groups/new" component={NewGroup} />
         <Route path="/groups/:groupId" component={freshPer("groupId", GroupSettings)} />
         <Route path="/lists/:profileId" component={freshPer("profileId", WishList)} />
         <Route path="/lists/:profileId/items/new" component={freshPer("profileId", ItemForm)} />

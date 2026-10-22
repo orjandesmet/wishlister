@@ -715,6 +715,54 @@ label.check.select-row .item-name {
   color: var(--text-strong);
 }
 
+/* Adding a group: a round "+" opening a page on phones, a labelled button opening a popover on wide screens. */
+.add-link {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1;
+  text-decoration: none;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+.add-popover-button {
+  display: none;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+}
+
+.popover {
+  width: min(360px, calc(100vw - 32px));
+  margin: 0;
+  padding: 20px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* It floats over the page, so it carries a shadow. */
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+}
+
+/* Sits under its button, right edges level, where anchor positioning exists; centred otherwise. */
+@supports (position-area: bottom) {
+  .add-popover-button {
+    anchor-name: --add-group;
+  }
+
+  .popover {
+    position-anchor: --add-group;
+    position-area: bottom span-left;
+    margin-top: 8px;
+  }
+}
+
 /* The login screen's mark. */
 .login-mark {
   width: 72px;
@@ -845,6 +893,19 @@ label.check.select-row .item-name {
     --tilt: -6deg;
   }
 
+  .popover:popover-open {
+    transition:
+      opacity 160ms ease,
+      transform 220ms var(--ease-pop);
+  }
+
+  @starting-style {
+    .popover:popover-open {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.97);
+    }
+  }
+
   /* Press, hover and focus feedback on every control. */
   input,
   .tabs a {
@@ -939,6 +1000,22 @@ label.check.select-row .item-name {
   /* A lone last card takes the full row instead of leaving 5 columns empty. */
   .page:has(.group-card) > .group-card:last-of-type:nth-of-type(odd) {
     grid-column: 1 / -1;
+  }
+
+  .add-link {
+    display: none;
+  }
+
+  .add-popover-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .add-popover-button::before {
+    content: "+";
+    font-size: 20px;
+    line-height: 1;
   }
 
   .inline-form {
