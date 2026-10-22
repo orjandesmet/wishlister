@@ -4,9 +4,8 @@ import { Avatar } from "../components/Avatar.tsx";
 import { CurrencySelect } from "../components/CurrencySelect.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
-import { deleteChild } from "../lib/api/children.ts";
-import type { Profile } from "../lib/api/profiles.ts";
 import { renameProfile } from "../lib/api/profiles.ts";
+import { createChild } from "../lib/api/children.ts";
 import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
@@ -32,11 +31,14 @@ export default function Settings() {
     }
   }
 
-  async function onDeleteChild(child: Profile) {
+  const [childName, setChildName] = createSignal("");
+
+  async function onAddChild(event: SubmitEvent) {
+    event.preventDefault();
     setError(undefined);
-    if (!confirm(t("child.confirmDelete", { name: child.display_name }))) return;
     try {
-      await deleteChild(child.id);
+      await createChild(childName());
+      setChildName("");
       me().refetchManaged();
     } catch (e) {
       setError((e as Error).message);
@@ -63,32 +65,39 @@ export default function Settings() {
         />
         <CurrencySelect value={displayCurrency()} onChange={setDisplayCurrency} />
       </section>
-      <Show when={me().managed()?.length}>
-        <section class="card">
-          <h2>{t("account.children")}</h2>
-          <p class="muted small">{t("account.childrenHelp")}</p>
+      <section class="card">
+        <h2>{t("account.children")}</h2>
+        <p class="muted small">{t("account.childrenHelp")}</p>
+        <Show when={me().managed()?.length}>
           <ul class="list">
             <For each={me().managed()}>
               {(child) => (
                 <li class="list-row">
-                  <A class="person" href={`/lists/${child.id}`}>
+                  <span class="person">
                     <Avatar id={child.id} name={child.display_name} />
-                    {t("account.childWishlist", { name: child.display_name })}
+                    {child.display_name}
+                  </span>
+                  <A class="link" href={`/children/${child.id}`}>
+                    {t("child.editProfile")}
                   </A>
-                  <button
-                    type="button"
-                    class="link danger"
-                    aria-label={t("wishlist.deleteProfile", { name: child.display_name })}
-                    onClick={() => void onDeleteChild(child)}
-                  >
-                    {t("account.deleteProfile")}
-                  </button>
                 </li>
               )}
             </For>
           </ul>
-        </section>
-      </Show>
+        </Show>
+        <form onSubmit={onAddChild}>
+          <label>
+            {t("group.addNewChild")}
+            <input
+              required
+              placeholder={t("group.childName")}
+              value={childName()}
+              onInput={(e) => setChildName(e.currentTarget.value)}
+            />
+          </label>
+          <button type="submit">{t("group.addChild")}</button>
+        </form>
+      </section>
       <Show when={error()}>
         <p class="error" role="alert">
           {error()}

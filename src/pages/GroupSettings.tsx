@@ -1,13 +1,6 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Match, Show, Switch } from "solid-js";
-import {
-  addChild,
-  addChildToGroup,
-  addParent,
-  deleteChild,
-  getParents,
-  removeParent,
-} from "../lib/api/children.ts";
+import { addChild, addChildToGroup, getParents } from "../lib/api/children.ts";
 import {
   cancelInvite,
   deleteGroup,
@@ -247,36 +240,6 @@ export default function GroupSettings() {
       else await Promise.all([refetchGroup(), refetchParents()]);
     });
 
-  const onRemoveParent = (child: Member, parentProfileId: ProfileId) =>
-    run(async () => {
-      const childName = child.profiles.display_name;
-      if (
-        !confirm(
-          t("group.confirmRemoveParent", { parent: nameOf(parentProfileId), child: childName }),
-        )
-      )
-        return;
-      await removeParent(child.profile_id, parentProfileId);
-      await refetchParents();
-      me().refetchManaged();
-    });
-
-  const onDeleteChild = (child: Member) =>
-    run(async () => {
-      const childName = child.profiles.display_name;
-      if (!confirm(t("child.confirmDelete", { name: childName }))) return;
-      await deleteChild(child.profile_id);
-      await refetchGroup();
-      me().refetchManaged();
-    });
-
-  const onAddParent = (child: Member, parentProfileId: ProfileId) =>
-    run(async () => {
-      if (!parentProfileId) return;
-      await addParent(child.profile_id, parentProfileId);
-      await refetchParents();
-    });
-
   const onDeleteGroup = () =>
     run(async () => {
       if (!confirm(t("group.confirmDeleteGroup", { group: group()!.name }))) return;
@@ -443,70 +406,24 @@ export default function GroupSettings() {
           <ul class="list">
             <For each={children()} fallback={<li class="muted">{t("group.noChildren")}</li>}>
               {(child) => {
-                const childParents = () => parents()?.get(child.profile_id) ?? [];
-                const iAmParent = () => childParents().includes(me().profile.id);
-                const otherAdults = () =>
-                  adults().filter((a) => !childParents().includes(a.profile_id));
+                const iAmParent = () => parents()?.get(child.profile_id)?.includes(me().profile.id);
                 return (
                   <li class="child">
                     <div class="list-row">
-                      <A href={`/lists/${child.profile_id}`}>{child.profiles.display_name}</A>
+                      <span>{child.profiles.display_name}</span>
                       <span class="row">
+                        <Show when={iAmParent()}>
+                          <A class="link" href={`/children/${child.profile_id}`}>
+                            {t("child.editProfile")}
+                          </A>
+                        </Show>
                         <Show when={isManager() || iAmParent()}>
                           <button type="button" class="link danger" onClick={() => onRemove(child)}>
                             {t("common.remove")}
                           </button>
                         </Show>
-                        <Show when={iAmParent()}>
-                          <button
-                            type="button"
-                            class="link danger"
-                            onClick={() => onDeleteChild(child)}
-                          >
-                            {t("common.delete")}
-                          </button>
-                        </Show>
                       </span>
                     </div>
-                    <p class="muted small">
-                      {t("group.parents")}{" "}
-                      <For
-                        each={childParents()}
-                        fallback={isReady(parents) ? t("group.noParents") : ""}
-                      >
-                        {(parentId, i) => (
-                          <>
-                            {i() > 0 ? ", " : ""}
-                            {nameOf(parentId)}
-                            <Show when={iAmParent() && childParents().length > 1}>
-                              {" "}
-                              <button
-                                type="button"
-                                class="link danger"
-                                aria-label={t("group.removeParentLabel", {
-                                  name: nameOf(parentId),
-                                })}
-                                onClick={() => onRemoveParent(child, parentId)}
-                              >
-                                ×
-                              </button>
-                            </Show>
-                          </>
-                        )}
-                      </For>
-                    </p>
-                    <Show when={iAmParent() && otherAdults().length > 0}>
-                      <select
-                        onChange={(e) => onAddParent(child, e.currentTarget.value as ProfileId)}
-                      >
-                        <option value="">{t("group.addParent")}</option>
-                        <For each={otherAdults()}>
-                          {(adult) => (
-                            <option value={adult.profile_id}>{adult.profiles.display_name}</option>
-                          )}
-                        </For>
-                      </select>
-                    </Show>
                   </li>
                 );
               }}

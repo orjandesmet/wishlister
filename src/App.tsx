@@ -7,6 +7,7 @@ import { syncLocaleWithAccount } from "./lib/accountLocale.ts";
 import { t } from "./lib/i18n.ts";
 import { dismiss, install, installOffer } from "./lib/install.ts";
 import { MeProvider, useMe } from "./lib/me.tsx";
+import ChildSettings from "./pages/ChildSettings.tsx";
 import GroupSettings from "./pages/GroupSettings.tsx";
 import Home from "./pages/Home.tsx";
 import Join from "./pages/Join.tsx";
@@ -92,6 +93,7 @@ function App() {
         <Route path="/mine" component={() => <Navigate href="/settings" />} />
         <Route path="/groups/new" component={NewGroup} />
         <Route path="/groups/:groupId" component={freshPer("groupId", GroupSettings)} />
+        <Route path="/children/:profileId" component={freshPer("profileId", ChildSettings)} />
         <Route path="/lists/:profileId" component={freshPer("profileId", WishList)} />
         <Route path="/lists/:profileId/items/new" component={freshPer("profileId", ItemForm)} />
         <Route path="/items/:itemId/edit" component={freshPer("itemId", ItemForm)} />

@@ -17,6 +17,11 @@ export async function addChild(
   ) as ProfileId;
 }
 
+/** A parent adds a new child from their own settings, before the child is in any group. */
+export async function createChild(name: string): Promise<ProfileId> {
+  return must(await supabase.rpc("create_child_profile", { child_name: name.trim() })) as ProfileId;
+}
+
 /** A parent adds their existing child to another group they're in. */
 export async function addChildToGroup(groupId: GroupId, childProfileId: ProfileId) {
   must(

@@ -154,6 +154,12 @@ export const nl: Dictionary = {
     confirmDelete: (p: { name: string }) => `${p.name} wissen voor de hele groep?`,
   },
   child: {
+    editProfile: "Profiel bewerken",
+    name: "Naam",
+    fallbackTitle: "Kind",
+    unavailable: "Dit kind is niet beschikbaar.",
+    parents: "Ouders",
+    deleteProfile: "Profiel wissen",
     confirmDelete: (p) =>
       `Het profiel en verlanglijstje van ${p.name} voor iedereen wissen? Dit kan niet ongedaan gemaakt worden.`,
   },

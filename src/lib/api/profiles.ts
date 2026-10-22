@@ -69,3 +69,14 @@ export async function renameProfile(profileId: ProfileId, displayName: string) {
       .select("id"),
   );
 }
+
+/** People with an account that I can see: whoever shares a group with me. */
+export async function getAdultProfiles(): Promise<Profile[]> {
+  const rows = must(
+    await supabase
+      .from("profiles")
+      .select("id, display_name, account_id")
+      .not("account_id", "is", null),
+  ) as Profile[];
+  return rows.sort((a, b) => a.display_name.localeCompare(b.display_name));
+}

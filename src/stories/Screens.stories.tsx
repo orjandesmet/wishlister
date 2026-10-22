@@ -680,25 +680,16 @@ function GroupSettingsMock(props: { manager: boolean }) {
         <ul class="list">
           <li class="child">
             <div class="list-row">
-              <A href="/lists/lucas">Lucas</A>
+              <span>Lucas</span>
               <span class="row">
+                <A class="link" href="/children/lucas">
+                  {t("child.editProfile")}
+                </A>
                 <button type="button" class="link danger">
                   {t("common.remove")}
                 </button>
-                <button type="button" class="link danger">
-                  {t("common.delete")}
-                </button>
               </span>
             </div>
-            <p class="muted small">
-              {t("group.parents")} Orjan, Anna{" "}
-              <button type="button" class="link danger">
-                ×
-              </button>
-            </p>
-            <select>
-              <option>{t("group.addParent")}</option>
-            </select>
           </li>
         </ul>
         {props.manager ? (
@@ -818,16 +809,23 @@ export const SettingsWithChildren: Story = {
         <ul class="list">
           {["Lucas", "Mila"].map((name) => (
             <li class="list-row">
-              <A class="person" href={`/lists/${name}`}>
+              <span class="person">
                 <Avatar id={name.toLowerCase()} name={name} />
-                {t("account.childWishlist", { name })}
+                {name}
+              </span>
+              <A class="link" href={`/children/${name}`}>
+                {t("child.editProfile")}
               </A>
-              <button type="button" class="link danger">
-                {t("account.deleteProfile")}
-              </button>
             </li>
           ))}
         </ul>
+        <form onSubmit={(e) => e.preventDefault()}>
+          <label>
+            {t("group.addNewChild")}
+            <input required placeholder={t("group.childName")} />
+          </label>
+          <button type="submit">{t("group.addChild")}</button>
+        </form>
       </section>
       <button type="button" class="secondary">
         {t("account.signOut")}

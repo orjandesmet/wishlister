@@ -163,6 +163,12 @@ export const en = {
     confirmDelete: (p: { name: string }) => `Delete ${p.name} for the whole group?`,
   },
   child: {
+    editProfile: "Edit profile",
+    name: "Name",
+    fallbackTitle: "Child",
+    unavailable: "This child is unavailable.",
+    parents: "Parents",
+    deleteProfile: "Delete profile",
     confirmDelete: (p: { name: string }) =>
       `Delete ${p.name}'s profile and wishlist for everyone? This can't be undone.`,
   },
