@@ -2,24 +2,25 @@ import { A } from "@solidjs/router";
 import type { JSX } from "solid-js";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { fn } from "storybook/test";
+import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
 import { CategoryChips } from "../components/CategoryChips.tsx";
 import { CurrencySelect } from "../components/CurrencySelect.tsx";
 import { FollowList } from "../components/FollowList.tsx";
 import { GroupCard } from "../components/GroupCard.tsx";
-import { ItemCard } from "../components/ItemCard.tsx";
 import { InstallBanner } from "../components/InstallBanner.tsx";
+import { ItemCard } from "../components/ItemCard.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
 import { Occasions } from "../components/Occasions.tsx";
 import { ParentSelect } from "../components/ParentSelect.tsx";
 import { QuickAdd } from "../components/QuickAdd.tsx";
 import { TabBar } from "../components/TabBar.tsx";
+import type { Member } from "../lib/api/groups.ts";
+import type { Item } from "../lib/api/items.ts";
+import type { Occasion } from "../lib/api/occasions.ts";
 import { suggestCategories } from "../lib/categories.ts";
 import { t } from "../lib/i18n.ts";
-import type { Item } from "../lib/api/items.ts";
-import type { Member } from "../lib/api/groups.ts";
-import type { Occasion } from "../lib/api/occasions.ts";
 import type { AccountId, GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 
 /**
@@ -89,7 +90,7 @@ const item = (n: number, name: string, price: number | null, category: string | 
   not_wanted: false,
   item_groups: [],
   price,
-  price_currency: price === null ? null : "EUR",
+  price_currency: price === null ? null : n % 3 === 0 ? "EUR" : n % 3 === 1 ? "USD" : "GBP",
 });
 
 const card = (
@@ -110,7 +111,7 @@ const card = (
 );
 
 const newGroupForm = (
-  <form class="card" onSubmit={(e) => e.preventDefault()}>
+  <form class="card inline-form" onSubmit={(e) => e.preventDefault()}>
     <label>
       New group
       <input placeholder="e.g. Colleagues" />
@@ -145,7 +146,10 @@ export const OtherList: Story = {
   render: () => (
     <Screen>
       <div class="row">
-        <h1>Anna's list</h1>
+        <div class="person title">
+          <Avatar id="anna" name="Anna" size="lg" />
+          <h1>Anna's list</h1>
+        </div>
       </div>
       <FollowList
         name="Anna"
@@ -238,6 +242,7 @@ export const Login: Story = {
   render: () => (
     <div id="root">
       <main class="card center" style={{ width: "100%" }}>
+        <img class="login-mark" src="/favicon.svg" alt="" />
         <h1>Wishlister</h1>
         <p class="muted">Share wishlists with family and friends.</p>
         <form onSubmit={(e) => e.preventDefault()}>
@@ -567,7 +572,10 @@ function GroupSettingsMock(props: { manager: boolean }) {
         <h2>{t("group.members")}</h2>
         <ul class="list">
           <li class="list-row">
-            <span>Orjan{t("common.you")}</span>
+            <span class="person">
+              <Avatar id="me" name="Orjan" />
+              Orjan{t("common.you")}
+            </span>
             {props.manager ? (
               <span class="chip">{t("roles.manager")}</span>
             ) : (
@@ -578,7 +586,10 @@ function GroupSettingsMock(props: { manager: boolean }) {
             )}
           </li>
           <li class="list-row">
-            <span>Anna</span>
+            <span class="person">
+              <Avatar id="anna" name="Anna" />
+              Anna
+            </span>
             {props.manager ? (
               <span class="row">
                 <select>
@@ -593,7 +604,10 @@ function GroupSettingsMock(props: { manager: boolean }) {
             )}
           </li>
           <li class="list-row">
-            <span>Bert</span>
+            <span class="person">
+              <Avatar id="bert" name="Bert" />
+              Bert
+            </span>
             {props.manager ? (
               <span class="row">
                 <select>

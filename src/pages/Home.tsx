@@ -54,7 +54,7 @@ export default function Home() {
           />
         )}
       </For>
-      <form class="card" onSubmit={onCreate}>
+      <form class="card inline-form" onSubmit={onCreate}>
         <label>
           {t("home.newGroup")}
           <input

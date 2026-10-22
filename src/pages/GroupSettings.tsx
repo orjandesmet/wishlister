@@ -31,6 +31,7 @@ import {
   type Occasion,
   type OccasionInput,
 } from "../lib/api/occasions.ts";
+import { Avatar } from "../components/Avatar.tsx";
 import { Occasions } from "../components/Occasions.tsx";
 import { ParentSelect } from "../components/ParentSelect.tsx";
 import { compareNames, formatList, t } from "../lib/i18n.ts";
@@ -336,7 +337,8 @@ export default function GroupSettings() {
             <For each={adults()}>
               {(member) => (
                 <li class="list-row">
-                  <span>
+                  <span class="person">
+                    <Avatar id={member.profile_id} name={member.profiles.display_name} />
                     {member.profiles.display_name}
                     {member.profile_id === me().profile.id ? t("common.you") : ""}
                   </span>

@@ -1,5 +1,6 @@
 import { A, useNavigate, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
+import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
 import { FollowList } from "../components/FollowList.tsx";
 import { ItemCard, type PurchaseState } from "../components/ItemCard.tsx";
@@ -224,13 +225,18 @@ export default function WishList() {
   return (
     <>
       <div class="row">
-        <h1>
-          <Show when={!isOwnList()} fallback={t("wishlist.mine")}>
-            <Show when={profile()} fallback={t("wishlist.fallbackTitle")}>
-              {(p) => t("wishlist.theirs", { name: p().display_name })}
-            </Show>
+        <div class="person title">
+          <Show when={profile()}>
+            {(p) => <Avatar id={params.profileId} name={p().display_name} size="lg" />}
           </Show>
-        </h1>
+          <h1>
+            <Show when={!isOwnList()} fallback={t("wishlist.mine")}>
+              <Show when={profile()} fallback={t("wishlist.fallbackTitle")}>
+                {(p) => t("wishlist.theirs", { name: p().display_name })}
+              </Show>
+            </Show>
+          </h1>
+        </div>
         <Show when={ready() && canEdit() && !selecting() && (items()?.length ?? 0) > 1}>
           <button type="button" class="secondary small" onClick={() => setSelecting(true)}>
             {t("bulk.select")}

@@ -5,6 +5,7 @@ import type { Occasion } from "../lib/api/occasions.ts";
 import { convertAmount, displayCurrency, exchangeRates, formatPrice } from "../lib/currency.ts";
 import { formatList, locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
+import { hueFor } from "../lib/hues.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
 import { formatOccasionDate } from "../lib/occasions.ts";
 
@@ -91,7 +92,9 @@ export function ItemCard(props: ItemCardProps) {
           <div class="row">
             <strong class="item-name">{props.item.name}</strong>
             <Show when={props.item.category}>
-              <span class="chip">{props.item.category}</span>
+              <span class="chip tinted" style={{ "--h": hueFor(props.item.category!) }}>
+                {props.item.category}
+              </span>
             </Show>
           </div>
         }
@@ -105,7 +108,9 @@ export function ItemCard(props: ItemCardProps) {
           />
           <strong class="item-name">{props.item.name}</strong>
           <Show when={props.item.category}>
-            <span class="chip">{props.item.category}</span>
+            <span class="chip tinted" style={{ "--h": hueFor(props.item.category!) }}>
+              {props.item.category}
+            </span>
           </Show>
         </label>
       </Show>
@@ -139,7 +144,7 @@ export function ItemCard(props: ItemCardProps) {
           </div>
         </Match>
         <Match when={props.purchase === "someone"}>
-          <span class="bought">{t("item.someoneBought")}</span>
+          <span class="bought someone">{t("item.someoneBought")}</span>
         </Match>
         <Match when={props.purchase === "available" && props.occasionChoices}>
           {(choices) => (

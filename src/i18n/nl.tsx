@@ -78,6 +78,8 @@ export const nl: Dictionary = {
     today: "vandaag",
     tomorrow: "morgen",
     inDays: (p) => `over ${p.days} dagen`,
+    occasionLine: (p) => `${p.name} · ${p.date}`,
+    daysUnit: "dagen",
   },
   group: {
     back: "‹ Groepen",

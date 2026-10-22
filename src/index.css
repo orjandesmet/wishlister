@@ -1,39 +1,73 @@
 /*
- * Theme tokens: "achromatic ledger". The chrome is ink on a stone ground and carries no colour;
- * the one hue (--data) marks the figure a screen is about: how soon the next occasion is, and
- * what you have already bought. Change the tokens here to restyle the whole app.
+ * Theme tokens: "pastel consumer". Cards are white on a cool ground under one large radius; people
+ * and categories each get a pale hue (see lib/hues.ts) with the dark of the same hue as ink; the
+ * one accent colour is the main action and the figures a screen is about. Change the tokens here
+ * to restyle the whole app.
  */
 :root {
   /* light-dark() picks the first value on a light system and the second on a dark one. */
-  --bg: light-dark(#f4f3f1, #0b0b0b);
-  --surface: light-dark(#ffffff, #141414);
-  --raised: light-dark(#ebe9e6, #1f1f1f);
-  --text: light-dark(#0a0a0a, #e6e6e6);
-  --text-strong: light-dark(#0a0a0a, #f5f5f5);
-  --muted: light-dark(#6b6b6b, #9a9a9a);
-  --border: light-dark(#e4e2de, #262626);
-  --control: light-dark(#cfcdc8, #3a3a3a);
-  --accent: light-dark(#141414, #f2f2f2);
-  --accent-contrast: light-dark(#ffffff, #0b0b0b);
-  --data: light-dark(#1d5fbf, #6ea2ee);
-  --danger: light-dark(#c4242a, #f2777a);
+  --bg: light-dark(#f3f5f7, #0d0e10);
+  --surface: light-dark(#ffffff, #17181b);
+  --raised: light-dark(#eef1f4, #212328);
+  --text: light-dark(#1b1d1f, #e8e9eb);
+  --text-strong: light-dark(#0f1113, #f6f6f7);
+  --muted: light-dark(#5c6064, #9a9ea4);
+  --border: light-dark(#e6e8ea, #2a2c30);
+  --control: light-dark(#d6d9dd, #3b3e44);
+  --accent: light-dark(#1d5fd6, #6ea2ee);
+  --accent-contrast: light-dark(#ffffff, #0b1220);
+  --accent-soft: light-dark(#dcf1ff, #1b2b45);
+  --accent-ink: light-dark(#0a3a80, #bcd7ff);
+  --positive-bg: light-dark(#dcfae5, #14301d);
+  --positive-ink: light-dark(#04250e, #a8e8bb);
+  --danger: light-dark(#c41c29, #f2777a);
   --pill-negative-bg: light-dark(#ffedea, #3a1618);
   --pill-negative-ink: light-dark(#831c1e, #f7b4b6);
 
-  --radius: 8px;
-  --radius-control: 6px;
-  --gap: 12px;
-  --pad: 16px;
+  --radius: 20px;
+  --radius-control: 10px;
+  --radius-small: 8px;
+  --gap: 20px;
+  --pad: 20px;
+  --card-pad: 24px;
   --tap: 48px;
   --sidebar: 240px;
 
-  --sans: "Geist", Inter, system-ui, "Segoe UI", Roboto, sans-serif;
+  /* Springy ease for things that pop, a calmer one for things that slide in. */
+  --ease-pop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 
-  font: 400 14px/1.5 var(--sans);
+  --sans: "Manrope", Inter, system-ui, "Segoe UI", Roboto, sans-serif;
+
+  font: 400 16px/1.5 var(--sans);
   color-scheme: light dark;
   color: var(--text);
   background: var(--bg);
   -webkit-font-smoothing: antialiased;
+}
+
+/* Phones: tighter page margins, gaps and card padding. */
+@media (max-width: 599px) {
+  :root {
+    --pad: 14px;
+    --gap: 14px;
+    --card-pad: 16px;
+  }
+
+  .list.cards {
+    gap: 12px;
+  }
+
+  .tabs {
+    padding-inline: 8px;
+  }
+}
+
+/* A pale tile in the hue set by --h, with the dark of that hue as its ink. */
+.tinted,
+.chip.tinted {
+  background: light-dark(hsl(var(--h) 85% 91%), hsl(var(--h) 30% 21%));
+  color: light-dark(hsl(var(--h) 75% 20%), hsl(var(--h) 85% 85%));
 }
 
 *,
@@ -69,25 +103,27 @@ body {
   inset: auto 0 0 0;
   display: flex;
   justify-content: center;
+  gap: 8px;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
   background: var(--surface);
   border-top: 1px solid var(--border);
-  padding-bottom: env(safe-area-inset-bottom);
 }
 
 .tabs a {
   flex: 1;
-  max-width: 280px;
-  min-height: var(--tap);
+  max-width: 220px;
+  min-height: 44px;
   display: grid;
   place-items: center;
-  font-weight: 500;
+  border-radius: 14px;
+  font-weight: 600;
   color: var(--muted);
   text-decoration: none;
 }
 
 .tabs a.active {
-  color: var(--text-strong);
-  box-shadow: inset 0 2px 0 var(--accent);
+  color: var(--accent-ink);
+  background: var(--accent-soft);
 }
 
 .tabs .brand {
@@ -103,10 +139,20 @@ h3 {
 }
 
 h1 {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.25;
+  letter-spacing: -0.025em;
+}
+
+h2 {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+h3 {
+  font-size: 16px;
+  font-weight: 600;
 }
 
 p {
@@ -117,7 +163,7 @@ p {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: var(--pad);
+  padding: var(--card-pad);
   display: flex;
   flex-direction: column;
   gap: var(--gap);
@@ -139,7 +185,7 @@ p {
 form {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 label {
@@ -152,10 +198,8 @@ label {
 
 input {
   min-height: var(--tap);
-  padding: 0 12px;
-  /* 16px keeps iOS from zooming into the field. */
+  padding: 0 14px;
   font: inherit;
-  font-size: 16px;
   color: var(--text-strong);
   background: var(--surface);
   border: 1px solid var(--control);
@@ -166,44 +210,43 @@ input::placeholder {
   color: var(--muted);
 }
 
+input:focus-visible {
+  border-color: var(--accent);
+}
+
 input:focus-visible,
-button:focus-visible {
+button:focus-visible,
+select:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent);
+}
+
 button {
   min-height: var(--tap);
-  padding: 0 16px;
+  padding: 0 20px;
   font: inherit;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--accent-contrast);
   background: var(--accent);
   border: 1px solid var(--accent);
   border-radius: var(--radius-control);
   cursor: pointer;
-  transition: opacity 120ms ease;
-}
-
-button:hover:not(:disabled),
-a.button:hover {
-  opacity: 0.88;
-}
-
-button:active:not(:disabled),
-a.button:active {
-  opacity: 0.76;
 }
 
 button:disabled {
-  opacity: 0.6;
+  opacity: 0.55;
   cursor: default;
 }
 
 button.secondary {
-  color: var(--text-strong);
-  background: var(--raised);
-  border-color: var(--raised);
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
 }
 
 .code-input {
@@ -211,17 +254,6 @@ button.secondary {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.4em;
   text-align: center;
-}
-
-h2 {
-  font-size: 16px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-h3 {
-  font-size: 14px;
-  font-weight: 600;
 }
 
 a {
@@ -250,11 +282,11 @@ a {
 }
 
 .list.cards {
-  gap: 12px;
+  gap: 16px;
 }
 
 .list-row {
-  min-height: var(--tap);
+  min-height: 56px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -268,13 +300,8 @@ a {
 }
 
 .chevron {
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1;
-}
-
-input[type="checkbox"],
-input[type="radio"] {
-  accent-color: var(--accent);
 }
 
 .child {
@@ -282,7 +309,7 @@ input[type="radio"] {
 }
 
 .item {
-  gap: 8px;
+  gap: 12px;
 }
 
 .item.pending {
@@ -292,17 +319,19 @@ input[type="radio"] {
 
 .item-name {
   color: var(--text-strong);
+  font-weight: 600;
   overflow-wrap: anywhere;
 }
 
 .chip {
   flex-shrink: 0;
-  padding: 2px 10px;
-  font-size: 12px;
-  line-height: 20px;
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 24px;
+  font-weight: 500;
   color: var(--text);
   background: var(--raised);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-small);
 }
 
 .chips {
@@ -341,29 +370,29 @@ button.chip-button[aria-pressed="true"] {
 
 .badge-not-wanted {
   align-self: flex-start;
-  padding: 0 8px;
-  font-size: 12px;
-  line-height: 20px;
-  font-weight: 500;
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 24px;
+  font-weight: 600;
   color: var(--pill-negative-ink);
   background: var(--pill-negative-bg);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-small);
 }
 
 .badge-private {
   align-self: flex-start;
-  padding: 0 8px;
-  font-size: 12px;
-  line-height: 20px;
+  padding: 0 10px;
+  font-size: 13px;
+  line-height: 24px;
   font-weight: 500;
   color: var(--text-strong);
   background: var(--raised);
-  border-radius: var(--radius-control);
+  border-radius: var(--radius-small);
 }
 
 button.chip-button {
-  min-height: 36px;
-  padding: 0 12px;
+  min-height: 40px;
+  padding: 0 14px;
   font-weight: 500;
   color: var(--text-strong);
   background: var(--surface);
@@ -373,7 +402,7 @@ button.chip-button {
 
 .link {
   color: var(--text-strong);
-  font-weight: 500;
+  font-weight: 600;
 }
 
 button.link {
@@ -390,16 +419,20 @@ button.link.danger {
   color: var(--danger);
 }
 
+/* Destructive actions are pale red, so they never read as an ordinary secondary button. */
 button.secondary.danger {
+  color: var(--pill-negative-ink);
+  background: var(--pill-negative-bg);
   border-color: var(--danger);
 }
 
 button.small {
-  min-height: 36px;
+  min-height: 40px;
+  padding: 0 16px;
 }
 
 .small {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .truncate {
@@ -416,32 +449,38 @@ button.small {
   flex: 1;
 }
 
-/* Money is the one thing set bold. */
+/* Figures keep their digits in line. */
 .price {
-  font-weight: 700;
+  font-weight: 600;
+  font-size: 18px;
   font-variant-numeric: tabular-nums;
   color: var(--text-strong);
 }
 
 .price .muted {
+  font-size: 14px;
   font-weight: 400;
 }
 
-/* The hue marks what is bought, so a glance down a list shows what is still open. */
+/* What is bought shows as a green pill; what someone else bought is a quiet grey one. */
 .bought {
-  font-weight: 500;
-  color: var(--data);
+  align-self: flex-start;
+  padding: 4px 12px;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--positive-ink);
+  background: var(--positive-bg);
+  border-radius: var(--radius-small);
 }
 
-/* How soon the next occasion is: the figure a group card is about. */
-.next-occasion {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--data);
+.bought.someone {
+  color: var(--text);
+  background: var(--raised);
 }
 
 .notice {
-  padding: 12px;
+  padding: 16px 20px;
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface);
@@ -451,8 +490,8 @@ a.button {
   min-height: var(--tap);
   display: grid;
   place-items: center;
-  padding: 0 16px;
-  font-weight: 500;
+  padding: 0 20px;
+  font-weight: 600;
   text-decoration: none;
   color: var(--accent-contrast);
   background: var(--accent);
@@ -462,17 +501,25 @@ a.button {
 /* Floating "Add item" button above the tab bar. */
 .fab {
   position: fixed;
-  right: var(--gap);
-  bottom: calc(var(--tap) + var(--gap) + env(safe-area-inset-bottom));
+  right: var(--pad);
+  bottom: calc(var(--tap) + var(--gap) + 16px + env(safe-area-inset-bottom));
+  border-radius: 16px;
   /* The one control that floats over the list, so it is the one thing with a shadow. */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+}
+
+.fab::before {
+  content: "+";
+  margin-right: 8px;
+  font-size: 20px;
+  line-height: 1;
 }
 
 fieldset {
   margin: 0;
-  padding: 12px;
+  padding: 16px;
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius-control);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -485,29 +532,28 @@ legend {
 }
 
 label.check {
-  min-height: 40px;
+  min-height: 44px;
   flex-direction: row;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   font-weight: 400;
   color: var(--text);
 }
 
 label.check input {
   min-height: auto;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 .indent {
-  padding-left: 30px;
+  padding-left: 34px;
 }
 
 select {
-  min-height: 40px;
-  padding: 0 8px;
+  min-height: 44px;
+  padding: 0 10px;
   font: inherit;
-  font-size: 16px;
   color: var(--text-strong);
   background: var(--surface);
   border: 1px solid var(--control);
@@ -557,11 +603,11 @@ label.check.select-row .item-name {
 /* Sticks above the tab bar while the list scrolls underneath. */
 .bulk-actions {
   position: sticky;
-  bottom: calc(var(--tap) + var(--gap) + env(safe-area-inset-bottom));
+  bottom: calc(var(--tap) + var(--gap) + 16px + env(safe-area-inset-bottom));
   z-index: 1;
   gap: 12px;
   /* Floats over the list as it scrolls underneath. */
-  box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.08);
 }
 
 .bulk-buttons {
@@ -588,6 +634,93 @@ label.check.select-row .item-name {
 
 .occasion {
   padding: 8px 0;
+}
+
+/* A person: their initial on a tile in their own hue, then their name. */
+.person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.person.title {
+  gap: 14px;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.avatar.lg {
+  width: 52px;
+  height: 52px;
+  border-radius: 18px;
+  font-size: 24px;
+}
+
+/* The days to the group's next occasion: the figure a group card is about. Tilted, not level. */
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.countdown-tile {
+  --tilt: -4deg;
+  flex-shrink: 0;
+  min-width: 76px;
+  min-height: 76px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px 20px 20px 8px;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  font-size: 14px;
+  line-height: 1.1;
+  transform: rotate(var(--tilt));
+}
+
+.countdown-tile strong {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdown-tile.soon {
+  --tilt: 3deg;
+  color: var(--positive-ink);
+  background: var(--positive-bg);
+}
+
+.countdown-tile.soon strong {
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+.next-occasion {
+  font-weight: 500;
+  color: var(--text-strong);
+}
+
+/* The login screen's mark. */
+.login-mark {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto;
+  transform: rotate(-6deg);
 }
 
 /* 💸 flying out of "I bought this" (src/lib/moneyBurst.ts). Never drawn with reduced motion. */
@@ -627,25 +760,148 @@ label.check.select-row .item-name {
   }
 }
 
+/*
+ * Motion. Everything here is feedback or an arrival, built from transform and opacity, and only
+ * runs when the system has not asked for reduced motion. Without it the page is the same, still.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+  }
+
+  @keyframes pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+
+  @keyframes land {
+    0% {
+      opacity: 0;
+      transform: rotate(-16deg) scale(0.6);
+    }
+    60% {
+      opacity: 1;
+      transform: rotate(calc(var(--tilt) + 5deg)) scale(1.06);
+    }
+    100% {
+      transform: rotate(var(--tilt)) scale(1);
+    }
+  }
+
+  @keyframes beat {
+    50% {
+      transform: rotate(var(--tilt)) scale(1.07);
+    }
+  }
+
+  /* Parts of a page arrive one after the other. */
+  .page > * {
+    animation: rise 460ms var(--ease-out) backwards;
+  }
+  .page > :nth-child(2) {
+    animation-delay: 70ms;
+  }
+  .page > :nth-child(3) {
+    animation-delay: 140ms;
+  }
+  .page > :nth-child(4) {
+    animation-delay: 210ms;
+  }
+  .page > :nth-child(5) {
+    animation-delay: 280ms;
+  }
+  .page > :nth-child(n + 6) {
+    animation-delay: 340ms;
+  }
+
+  .countdown-tile {
+    animation: land 700ms var(--ease-pop) 250ms backwards;
+  }
+
+  /* A group with an occasion today or tomorrow keeps a slow heartbeat. */
+  .countdown-tile.soon {
+    animation:
+      land 700ms var(--ease-pop) 250ms backwards,
+      beat 2.4s ease-in-out 1.2s infinite;
+  }
+
+  .avatar,
+  .bought,
+  .login-mark {
+    animation: pop 420ms var(--ease-pop) backwards;
+  }
+
+  .login-mark {
+    animation-name: land;
+    --tilt: -6deg;
+  }
+
+  /* Press, hover and focus feedback on every control. */
+  input,
+  .tabs a {
+    transition:
+      border-color 140ms ease,
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  button,
+  a.button,
+  .list-row,
+  .avatar {
+    transition:
+      transform 180ms var(--ease-pop),
+      opacity 140ms ease,
+      background-color 140ms ease;
+  }
+
+  button:hover:not(:disabled),
+  a.button:hover {
+    transform: translateY(-1px);
+  }
+
+  button:active:not(:disabled),
+  a.button:active {
+    transform: scale(0.96);
+  }
+
+  button.link:hover:not(:disabled) {
+    transform: none;
+  }
+
+  a.list-row:hover .avatar {
+    transform: rotate(-8deg) scale(1.1);
+  }
+
+  a.list-row:active {
+    transform: scale(0.985);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .money-burst {
     display: none;
-  }
-
-  button {
-    transition: none;
   }
 }
 
 /*
  * Wide screens: the bottom tabs become a labelled sidebar on the page ground, and the content
- * keeps a 720px column in the canvas beside it. Grid: 240px sidebar + 1 canvas; the canvas is
- * centred, so its two margins are equal.
+ * keeps a 720px column in the canvas beside it (960px for the groups page, which lays its cards
+ * out on 12 columns: 7 + 5, then 7 + 5). The canvas is centred, so its two margins are equal.
  */
 @media (min-width: 900px) {
   #root:has(> .tabs) {
     max-width: none;
-    padding: 36px 32px 48px calc(var(--sidebar) + 32px);
+    padding: 40px 32px 48px calc(var(--sidebar) + 32px);
   }
 
   #root:has(> .tabs) > :not(.tabs) {
@@ -654,8 +910,44 @@ label.check.select-row .item-name {
     margin-inline: auto;
   }
 
+  #root:has(> .tabs) > .page:has(.group-card) {
+    max-width: 960px;
+  }
+
   .page {
     padding-bottom: 0;
+  }
+
+  .page:has(.group-card) {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    align-items: start;
+  }
+
+  .page:has(.group-card) > * {
+    grid-column: 1 / -1;
+  }
+
+  .page:has(.group-card) > .group-card:nth-of-type(odd) {
+    grid-column: span 7;
+  }
+
+  .page:has(.group-card) > .group-card:nth-of-type(even) {
+    grid-column: span 5;
+  }
+
+  /* A lone last card takes the full row instead of leaving 5 columns empty. */
+  .page:has(.group-card) > .group-card:last-of-type:nth-of-type(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .inline-form {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .inline-form > label {
+    flex: 1;
   }
 
   .tabs {
@@ -663,8 +955,8 @@ label.check.select-row .item-name {
     width: var(--sidebar);
     flex-direction: column;
     justify-content: flex-start;
-    gap: 2px;
-    padding: 20px 12px;
+    gap: 4px;
+    padding: 24px 12px;
     background: var(--bg);
     border-top: none;
   }
@@ -673,36 +965,30 @@ label.check.select-row .item-name {
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 0 8px 20px;
-    font-size: 16px;
+    padding: 0 12px 24px;
+    font-size: 18px;
     font-weight: 600;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.02em;
     color: var(--text-strong);
   }
 
   .tabs .brand img {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
+    transform: rotate(-6deg);
   }
 
   .tabs a {
     flex: none;
     max-width: none;
-    min-height: 32px;
-    padding: 0 8px;
+    min-height: 40px;
+    padding: 0 12px;
     place-items: center start;
-    border-radius: var(--radius-control);
-    font-weight: 400;
+    border-radius: 12px;
   }
 
   .tabs a:hover {
     color: var(--text-strong);
-  }
-
-  .tabs a.active {
-    color: var(--text-strong);
-    background: var(--raised);
-    box-shadow: none;
   }
 
   .fab {
@@ -710,8 +996,7 @@ label.check.select-row .item-name {
     align-self: flex-end;
     right: auto;
     bottom: var(--gap);
-    /* Sits in the column here and floats over nothing. */
-    box-shadow: none;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
   }
 
   .bulk-actions {
