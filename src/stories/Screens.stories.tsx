@@ -202,14 +202,19 @@ export const OwnList: Story = {
     <Screen>
       <div class="row">
         <h1>My list</h1>
-        <button type="button" class="secondary small">
-          Select
-        </button>
+        <A class="add-action" href="/lists/me/items/new">
+          <span>Add item</span>
+        </A>
       </div>
       <A class="link" href="/mine">
         Account
       </A>
-      <ListOrderSelect value="added" showBought={false} onChange={fn()} />
+      <div class="row">
+        <button type="button" class="secondary small">
+          Select
+        </button>
+        <ListOrderSelect value="added" showBought={false} onChange={fn()} />
+      </div>
       <ul class="list cards">
         {card(item(5, "Trail running shoes", 129.95, "Sport"), "hidden", { canEdit: true })}
         {card(item(6, "Sourdough starter kit", null, null), "hidden", { canEdit: true })}
@@ -224,9 +229,6 @@ export const OwnList: Story = {
         onAdd={fn()}
         onCancel={fn()}
       />
-      <A class="button fab" href="/lists/me/items/new">
-        Add item
-      </A>
     </Screen>
   ),
 };
@@ -295,12 +297,14 @@ const groupGroups = [
 export const ListEmptyOwn: Story = {
   render: () => (
     <Screen>
-      <h1>{t("wishlist.mine")}</h1>
+      <div class="row">
+        <h1>{t("wishlist.mine")}</h1>
+        <A class="add-action" href="/lists/me/items/new">
+          <span>{t("wishlist.addItem")}</span>
+        </A>
+      </div>
       <p class="muted">{t("wishlist.emptyOwn")}</p>
       <QuickAdd pending={[]} retrying={false} groups={groupGroups} onAdd={fn()} onCancel={fn()} />
-      <A class="button fab" href="/lists/me/items/new">
-        {t("wishlist.addItem")}
-      </A>
     </Screen>
   ),
 };

@@ -292,7 +292,7 @@ export const nl: Dictionary = {
     empty: "Dit lijstje is nog leeg.",
     confirmRemoveItem: (p) => `"${p.item}" van het lijstje verwijderen?`,
     deleteProfile: (p) => `Profiel van ${p.name} wissen`,
-    addItem: "+ Item toevoegen",
+    addItem: "Item toevoegen",
     aGroup: "een groep",
   },
 };

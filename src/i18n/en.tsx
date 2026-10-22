@@ -300,7 +300,7 @@ export const en = {
     empty: "This list is still empty.",
     confirmRemoveItem: (p: { item: string }) => `Remove "${p.item}" from the list?`,
     deleteProfile: (p: { name: string }) => `Delete ${p.name}'s profile`,
-    addItem: "+ Add item",
+    addItem: "Add item",
     aGroup: "a group",
   },
 };

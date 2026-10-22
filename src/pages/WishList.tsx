@@ -237,10 +237,11 @@ export default function WishList() {
             </Show>
           </h1>
         </div>
-        <Show when={ready() && canEdit() && !selecting() && (items()?.length ?? 0) > 1}>
-          <button type="button" class="secondary small" onClick={() => setSelecting(true)}>
-            {t("bulk.select")}
-          </button>
+        {/* "+" on phones, "Add item" on wide screens: the same link, so the screen has one add action. */}
+        <Show when={ready() && canEdit() && !selecting()}>
+          <A class="add-action" href={`/lists/${params.profileId}/items/new`}>
+            <span>{t("wishlist.addItem")}</span>
+          </A>
         </Show>
       </div>
       <Show when={isOwnList() && !me().managed()?.length}>
@@ -274,7 +275,14 @@ export default function WishList() {
           />
         </Show>
         <Show when={(items()?.length ?? 0) > 1}>
-          <ListOrderSelect value={order()} showBought={showBought()} onChange={chooseOrder} />
+          <div class="row">
+            <Show when={canEdit() && !selecting()}>
+              <button type="button" class="secondary small" onClick={() => setSelecting(true)}>
+                {t("bulk.select")}
+              </button>
+            </Show>
+            <ListOrderSelect value={order()} showBought={showBought()} onChange={chooseOrder} />
+          </div>
         </Show>
         <For each={sections()}>
           {(section) => (
@@ -324,11 +332,6 @@ export default function WishList() {
           <button type="button" class="secondary danger" onClick={onDeleteChild}>
             {t("wishlist.deleteProfile", { name: profile()?.display_name ?? "" })}
           </button>
-        </Show>
-        <Show when={canEdit() && !selecting()}>
-          <A class="button fab" href={`/lists/${params.profileId}/items/new`}>
-            {t("wishlist.addItem")}
-          </A>
         </Show>
       </Show>
     </>

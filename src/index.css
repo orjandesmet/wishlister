@@ -498,23 +498,6 @@ a.button {
   border-radius: var(--radius-control);
 }
 
-/* Floating "Add item" button above the tab bar. */
-.fab {
-  position: fixed;
-  right: var(--pad);
-  bottom: calc(var(--tap) + var(--gap) + 16px + env(safe-area-inset-bottom));
-  border-radius: 16px;
-  /* The one control that floats over the list, so it is the one thing with a shadow. */
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
-}
-
-.fab::before {
-  content: "+";
-  margin-right: 8px;
-  font-size: 20px;
-  line-height: 1;
-}
-
 fieldset {
   margin: 0;
   padding: 16px;
@@ -580,6 +563,7 @@ label.list-order {
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
+  margin-left: auto;
   font-weight: 400;
   color: var(--text);
 }
@@ -716,7 +700,8 @@ label.check.select-row .item-name {
 }
 
 /* Adding a group: a round "+" opening a page on phones, a labelled button opening a popover on wide screens. */
-.add-link {
+.add-link,
+.add-action {
   flex-shrink: 0;
   width: 44px;
   height: 44px;
@@ -729,6 +714,20 @@ label.check.select-row .item-name {
   text-decoration: none;
   color: var(--accent-ink);
   background: var(--accent-soft);
+}
+
+/* An add action that is a plain link: "+" on phones, its label on wide screens. */
+.add-action::before {
+  content: "+";
+}
+
+.add-action span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .add-popover-button {
@@ -1006,6 +1005,29 @@ label.check.select-row .item-name {
     display: none;
   }
 
+  .add-action {
+    width: auto;
+    height: var(--tap);
+    padding: 0 20px;
+    gap: 8px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-control);
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .add-action::before {
+    font-size: 20px;
+  }
+
+  .add-action span {
+    position: static;
+    width: auto;
+    height: auto;
+    clip-path: none;
+  }
+
   .add-popover-button {
     display: inline-flex;
     align-items: center;
@@ -1066,14 +1088,6 @@ label.check.select-row .item-name {
 
   .tabs a:hover {
     color: var(--text-strong);
-  }
-
-  .fab {
-    position: sticky;
-    align-self: flex-end;
-    right: auto;
-    bottom: var(--gap);
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
   }
 
   .bulk-actions {
