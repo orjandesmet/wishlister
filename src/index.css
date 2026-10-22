@@ -138,6 +138,8 @@ body {
   flex-shrink: 0;
   width: 20px;
   height: 20px;
+  /* Parts that move may leave the 24px box for a moment. */
+  overflow: visible;
 }
 
 h1,
@@ -992,6 +994,66 @@ a.person:hover {
     .menu:popover-open {
       opacity: 0;
       transform: translateY(-8px) scale(0.97);
+    }
+  }
+
+  /*
+   * Tab icons: when a tab becomes the current one, its icon plays one short move and stops.
+   * The people nod, the gift's lid pops open, the gear spins half a turn (it is
+   * drawn with six teeth, so 180 degrees lands on the same picture).
+   */
+  .gift-lid,
+  .gear {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .tabs a.active .head-left {
+    animation: nod-left 700ms ease-in-out;
+  }
+
+  .tabs a.active .head-right {
+    animation: nod-right 700ms ease-in-out;
+  }
+
+  .tabs a.active .gift-lid {
+    transform-origin: left bottom;
+    animation: unwrap 800ms var(--ease-pop);
+  }
+
+  .tabs a.active .gear {
+    animation: turn 1100ms var(--ease-out);
+  }
+
+  /* Groups: both heads dip and spring back, the right one a beat after the left. */
+  @keyframes nod-left {
+    25% {
+      transform: translateY(1.6px);
+    }
+  }
+
+  @keyframes nod-right {
+    12% {
+      transform: translateY(0);
+    }
+    37% {
+      transform: translateY(1.6px);
+    }
+  }
+
+  @keyframes unwrap {
+    35%,
+    60% {
+      transform: translateY(-2px) rotate(-10deg);
+    }
+  }
+
+  @keyframes turn {
+    from {
+      transform: rotate(0);
+    }
+    to {
+      transform: rotate(180deg);
     }
   }
 
