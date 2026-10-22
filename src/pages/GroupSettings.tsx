@@ -36,6 +36,7 @@ import { ParentSelect } from "../components/ParentSelect.tsx";
 import { compareNames, formatList, t } from "../lib/i18n.ts";
 import type { GroupId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
+import { isReady } from "../lib/resource.ts";
 import { today } from "../lib/occasions.ts";
 
 export default function GroupSettings() {
@@ -323,288 +324,303 @@ export default function GroupSettings() {
       <Show when={error()}>
         <p class="error">{error()}</p>
       </Show>
+      <Show when={!isReady(group) && !group.error}>
+        <p class="muted">{t("common.loading")}</p>
+      </Show>
 
-      <section class="card">
-        <h2>{t("group.members")}</h2>
-        <ul class="list">
-          <For each={adults()}>
-            {(member) => (
-              <li class="list-row">
-                <span>
-                  {member.profiles.display_name}
-                  {member.profile_id === me().profile.id ? t("common.you") : ""}
-                </span>
-                <Switch fallback={<span class="chip">{t(`roles.${member.role}`)}</span>}>
-                  <Match when={isManager() && member.profile_id !== me().profile.id}>
-                    <span class="row">
+      {/* Roles decide most of what shows here, so nothing renders before the group has loaded. */}
+      <Show when={isReady(group)}>
+        <section class="card">
+          <h2>{t("group.members")}</h2>
+          <ul class="list">
+            <For each={adults()}>
+              {(member) => (
+                <li class="list-row">
+                  <span>
+                    {member.profiles.display_name}
+                    {member.profile_id === me().profile.id ? t("common.you") : ""}
+                  </span>
+                  <Switch fallback={<span class="chip">{t(`roles.${member.role}`)}</span>}>
+                    <Match when={isManager() && member.profile_id !== me().profile.id}>
+                      <span class="row">
+                        <select
+                          value={member.role}
+                          onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
+                        >
+                          <option value="member">{t("roles.member")}</option>
+                          <option value="guardian">{t("roles.guardian")}</option>
+                          <option value="manager">{t("roles.manager")}</option>
+                        </select>
+                        <button type="button" class="link danger" onClick={() => onRemove(member)}>
+                          {t("common.remove")}
+                        </button>
+                      </span>
+                    </Match>
+                    {/* Members choose for themselves whether their own list shows in this group. */}
+                    <Match
+                      when={member.profile_id === me().profile.id && member.role !== "manager"}
+                    >
                       <select
                         value={member.role}
                         onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
                       >
                         <option value="member">{t("roles.member")}</option>
                         <option value="guardian">{t("roles.guardian")}</option>
-                        <option value="manager">{t("roles.manager")}</option>
                       </select>
-                      <button type="button" class="link danger" onClick={() => onRemove(member)}>
-                        {t("common.remove")}
-                      </button>
-                    </span>
-                  </Match>
-                  {/* Members choose for themselves whether their own list shows in this group. */}
-                  <Match when={member.profile_id === me().profile.id && member.role !== "manager"}>
-                    <select
-                      value={member.role}
-                      onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
-                    >
-                      <option value="member">{t("roles.member")}</option>
-                      <option value="guardian">{t("roles.guardian")}</option>
-                    </select>
-                  </Match>
-                </Switch>
-              </li>
-            )}
-          </For>
-        </ul>
-        <Show when={adults().some((m) => m.role === "guardian") || !isManager()}>
-          <p class="muted small">{t("group.guardianHelp")}</p>
-        </Show>
-        <Show when={isManager() && (invites()?.length ?? 0) > 0}>
-          <h3>{t("group.pendingInvites")}</h3>
-          <ul class="list">
-            <For each={invites()}>
-              {(email) => (
-                <li class="list-row">
-                  <span class="muted truncate">{email}</span>
-                  <span class="row">
-                    <button
-                      type="button"
-                      class="link"
-                      onClick={() => run(() => emailInvite(email))}
-                    >
-                      {t("group.emailInvite")}
-                    </button>
-                    <button
-                      type="button"
-                      class="link danger"
-                      onClick={() =>
-                        run(async () => {
-                          await cancelInvite(params.groupId, email);
-                          await refetchInvites();
-                        })
-                      }
-                    >
-                      {t("common.cancel")}
-                    </button>
-                  </span>
+                    </Match>
+                  </Switch>
                 </li>
               )}
             </For>
           </ul>
+          <Show when={adults().some((m) => m.role === "guardian") || !isManager()}>
+            <p class="muted small">{t("group.guardianHelp")}</p>
+          </Show>
+          <Show when={isManager() && (invites()?.length ?? 0) > 0}>
+            <h3>{t("group.pendingInvites")}</h3>
+            <ul class="list">
+              <For each={invites()}>
+                {(email) => (
+                  <li class="list-row">
+                    <span class="muted truncate">{email}</span>
+                    <span class="row">
+                      <button
+                        type="button"
+                        class="link"
+                        onClick={() => run(() => emailInvite(email))}
+                      >
+                        {t("group.emailInvite")}
+                      </button>
+                      <button
+                        type="button"
+                        class="link danger"
+                        onClick={() =>
+                          run(async () => {
+                            await cancelInvite(params.groupId, email);
+                            await refetchInvites();
+                          })
+                        }
+                      >
+                        {t("common.cancel")}
+                      </button>
+                    </span>
+                  </li>
+                )}
+              </For>
+            </ul>
+          </Show>
+          <Show when={isManager()}>
+            <form onSubmit={onInvite}>
+              <label>
+                {t("group.inviteByEmail")}
+                <input
+                  type="email"
+                  required
+                  value={inviteEmail()}
+                  onInput={(e) => setInviteEmail(e.currentTarget.value)}
+                />
+              </label>
+              <button type="submit">{t("group.invite")}</button>
+            </form>
+            <h3>{t("group.inviteLink")}</h3>
+            <p class="muted small">{t("group.inviteLinkHelp")}</p>
+            <div class="row">
+              <button type="button" onClick={onShareLink}>
+                {t("group.shareLink")}
+              </button>
+              <button type="button" class="secondary" onClick={onResetLink}>
+                {t("group.newLink")}
+              </button>
+            </div>
+          </Show>
+        </section>
+
+        <section class="card">
+          <h2>{t("group.children")}</h2>
+          <p class="muted small">{t("group.childrenHelp")}</p>
+          <ul class="list">
+            <For each={children()} fallback={<li class="muted">{t("group.noChildren")}</li>}>
+              {(child) => {
+                const childParents = () => parents()?.get(child.profile_id) ?? [];
+                const iAmParent = () => childParents().includes(me().profile.id);
+                const otherAdults = () =>
+                  adults().filter((a) => !childParents().includes(a.profile_id));
+                return (
+                  <li class="child">
+                    <div class="list-row">
+                      <A href={`/lists/${child.profile_id}`}>{child.profiles.display_name}</A>
+                      <span class="row">
+                        <Show when={isManager() || iAmParent()}>
+                          <button type="button" class="link danger" onClick={() => onRemove(child)}>
+                            {t("common.remove")}
+                          </button>
+                        </Show>
+                        <Show when={iAmParent()}>
+                          <button
+                            type="button"
+                            class="link danger"
+                            onClick={() => onDeleteChild(child)}
+                          >
+                            {t("common.delete")}
+                          </button>
+                        </Show>
+                      </span>
+                    </div>
+                    <p class="muted small">
+                      {t("group.parents")}{" "}
+                      <For
+                        each={childParents()}
+                        fallback={isReady(parents) ? t("group.noParents") : ""}
+                      >
+                        {(parentId, i) => (
+                          <>
+                            {i() > 0 ? ", " : ""}
+                            {nameOf(parentId)}
+                            <Show when={iAmParent() && childParents().length > 1}>
+                              {" "}
+                              <button
+                                type="button"
+                                class="link danger"
+                                aria-label={t("group.removeParentLabel", {
+                                  name: nameOf(parentId),
+                                })}
+                                onClick={() => onRemoveParent(child, parentId)}
+                              >
+                                ×
+                              </button>
+                            </Show>
+                          </>
+                        )}
+                      </For>
+                    </p>
+                    <Show when={iAmParent() && otherAdults().length > 0}>
+                      <select
+                        onChange={(e) => onAddParent(child, e.currentTarget.value as ProfileId)}
+                      >
+                        <option value="">{t("group.addParent")}</option>
+                        <For each={otherAdults()}>
+                          {(adult) => (
+                            <option value={adult.profile_id}>{adult.profiles.display_name}</option>
+                          )}
+                        </For>
+                      </select>
+                    </Show>
+                  </li>
+                );
+              }}
+            </For>
+          </ul>
+          <Show when={myOtherChildren().length > 0}>
+            <select onChange={(e) => onAddMyChild(e.currentTarget.value as ProfileId)}>
+              <option value="">{t("group.addMyChild")}</option>
+              <For each={myOtherChildren()}>
+                {(child) => <option value={child.id}>{child.display_name}</option>}
+              </For>
+            </select>
+          </Show>
+          <Show when={isManager()}>
+            <form onSubmit={onAddChild}>
+              <label>
+                {t("group.addNewChild")}
+                <input
+                  required
+                  placeholder={t("group.childName")}
+                  value={childName()}
+                  onInput={(e) => setChildName(e.currentTarget.value)}
+                />
+              </label>
+              <label>
+                {t("group.parent")}
+                <ParentSelect
+                  name="parent"
+                  options={adults().map((adult) => ({
+                    id: adult.profile_id,
+                    name:
+                      adult.profiles.display_name +
+                      (adult.profile_id === me().profile.id ? t("common.you") : ""),
+                  }))}
+                  value={childParent() ?? me().profile.id}
+                  onChange={setChildParent}
+                />
+              </label>
+              <button type="submit">{t("group.addChild")}</button>
+            </form>
+          </Show>
+        </section>
+
+        <Show when={isReady(occasions)}>
+          <Occasions
+            occasions={occasions() ?? []}
+            today={today()}
+            canEdit={isManager()}
+            onAdd={onAddOccasion}
+            onUpdate={onUpdateOccasion}
+            onDelete={onDeleteOccasion}
+          />
         </Show>
+
         <Show when={isManager()}>
-          <form onSubmit={onInvite}>
+          <form class="card" onSubmit={onRename}>
             <label>
-              {t("group.inviteByEmail")}
+              {t("group.groupName")}
               <input
-                type="email"
                 required
-                value={inviteEmail()}
-                onInput={(e) => setInviteEmail(e.currentTarget.value)}
+                value={groupName() ?? group()?.name ?? ""}
+                onInput={(e) => setGroupName(e.currentTarget.value)}
               />
             </label>
-            <button type="submit">{t("group.invite")}</button>
+            <button type="submit">{t("group.rename")}</button>
           </form>
-          <h3>{t("group.inviteLink")}</h3>
-          <p class="muted small">{t("group.inviteLinkHelp")}</p>
-          <div class="row">
-            <button type="button" onClick={onShareLink}>
-              {t("group.shareLink")}
-            </button>
-            <button type="button" class="secondary" onClick={onResetLink}>
-              {t("group.newLink")}
-            </button>
-          </div>
         </Show>
-      </section>
 
-      <section class="card">
-        <h2>{t("group.children")}</h2>
-        <p class="muted small">{t("group.childrenHelp")}</p>
-        <ul class="list">
-          <For each={children()} fallback={<li class="muted">{t("group.noChildren")}</li>}>
-            {(child) => {
-              const childParents = () => parents()?.get(child.profile_id) ?? [];
-              const iAmParent = () => childParents().includes(me().profile.id);
-              const otherAdults = () =>
-                adults().filter((a) => !childParents().includes(a.profile_id));
-              return (
-                <li class="child">
-                  <div class="list-row">
-                    <A href={`/lists/${child.profile_id}`}>{child.profiles.display_name}</A>
-                    <span class="row">
-                      <Show when={isManager() || iAmParent()}>
-                        <button type="button" class="link danger" onClick={() => onRemove(child)}>
-                          {t("common.remove")}
-                        </button>
-                      </Show>
-                      <Show when={iAmParent()}>
-                        <button
-                          type="button"
-                          class="link danger"
-                          onClick={() => onDeleteChild(child)}
-                        >
-                          {t("common.delete")}
-                        </button>
-                      </Show>
-                    </span>
-                  </div>
-                  <p class="muted small">
-                    {t("group.parents")}{" "}
-                    <For each={childParents()} fallback={t("group.noParents")}>
-                      {(parentId, i) => (
-                        <>
-                          {i() > 0 ? ", " : ""}
-                          {nameOf(parentId)}
-                          <Show when={iAmParent() && childParents().length > 1}>
-                            {" "}
-                            <button
-                              type="button"
-                              class="link danger"
-                              aria-label={t("group.removeParentLabel", { name: nameOf(parentId) })}
-                              onClick={() => onRemoveParent(child, parentId)}
-                            >
-                              ×
-                            </button>
-                          </Show>
-                        </>
-                      )}
-                    </For>
-                  </p>
-                  <Show when={iAmParent() && otherAdults().length > 0}>
+        <Show when={myMembership()}>
+          {(mine) => (
+            <div class="stack">
+              <Show
+                when={handingOver()}
+                fallback={
+                  <button type="button" class="secondary" onClick={() => onLeave(mine())}>
+                    {t("group.leave")}
+                  </button>
+                }
+              >
+                <div class="card">
+                  <label>
+                    {t("group.chooseSuccessor", { group: group()?.name ?? "" })}
                     <select
-                      onChange={(e) => onAddParent(child, e.currentTarget.value as ProfileId)}
+                      value={successor() ?? ""}
+                      onChange={(e) => setSuccessor(e.currentTarget.value as ProfileId)}
                     >
-                      <option value="">{t("group.addParent")}</option>
-                      <For each={otherAdults()}>
+                      <option value="" disabled>
+                        {t("group.chooseMember")}
+                      </option>
+                      <For each={otherAdultsInGroup()}>
                         {(adult) => (
                           <option value={adult.profile_id}>{adult.profiles.display_name}</option>
                         )}
                       </For>
                     </select>
-                  </Show>
-                </li>
-              );
-            }}
-          </For>
-        </ul>
-        <Show when={myOtherChildren().length > 0}>
-          <select onChange={(e) => onAddMyChild(e.currentTarget.value as ProfileId)}>
-            <option value="">{t("group.addMyChild")}</option>
-            <For each={myOtherChildren()}>
-              {(child) => <option value={child.id}>{child.display_name}</option>}
-            </For>
-          </select>
-        </Show>
-        <Show when={isManager()}>
-          <form onSubmit={onAddChild}>
-            <label>
-              {t("group.addNewChild")}
-              <input
-                required
-                placeholder={t("group.childName")}
-                value={childName()}
-                onInput={(e) => setChildName(e.currentTarget.value)}
-              />
-            </label>
-            <label>
-              {t("group.parent")}
-              <ParentSelect
-                name="parent"
-                options={adults().map((adult) => ({
-                  id: adult.profile_id,
-                  name:
-                    adult.profiles.display_name +
-                    (adult.profile_id === me().profile.id ? t("common.you") : ""),
-                }))}
-                value={childParent() ?? me().profile.id}
-                onChange={setChildParent}
-              />
-            </label>
-            <button type="submit">{t("group.addChild")}</button>
-          </form>
-        </Show>
-      </section>
-
-      <Occasions
-        occasions={occasions() ?? []}
-        today={today()}
-        canEdit={isManager()}
-        onAdd={onAddOccasion}
-        onUpdate={onUpdateOccasion}
-        onDelete={onDeleteOccasion}
-      />
-
-      <Show when={isManager()}>
-        <form class="card" onSubmit={onRename}>
-          <label>
-            {t("group.groupName")}
-            <input
-              required
-              value={groupName() ?? group()?.name ?? ""}
-              onInput={(e) => setGroupName(e.currentTarget.value)}
-            />
-          </label>
-          <button type="submit">{t("group.rename")}</button>
-        </form>
-      </Show>
-
-      <Show when={myMembership()}>
-        {(mine) => (
-          <div class="stack">
-            <Show
-              when={handingOver()}
-              fallback={
-                <button type="button" class="secondary" onClick={() => onLeave(mine())}>
-                  {t("group.leave")}
-                </button>
-              }
-            >
-              <div class="card">
-                <label>
-                  {t("group.chooseSuccessor", { group: group()?.name ?? "" })}
-                  <select
-                    value={successor() ?? ""}
-                    onChange={(e) => setSuccessor(e.currentTarget.value as ProfileId)}
+                  </label>
+                  <button
+                    type="button"
+                    disabled={!successor()}
+                    onClick={() => onHandOverAndLeave(mine())}
                   >
-                    <option value="" disabled>
-                      {t("group.chooseMember")}
-                    </option>
-                    <For each={otherAdultsInGroup()}>
-                      {(adult) => (
-                        <option value={adult.profile_id}>{adult.profiles.display_name}</option>
-                      )}
-                    </For>
-                  </select>
-                </label>
-                <button
-                  type="button"
-                  disabled={!successor()}
-                  onClick={() => onHandOverAndLeave(mine())}
-                >
-                  {t("group.handOverAndLeave")}
+                    {t("group.handOverAndLeave")}
+                  </button>
+                  <button type="button" class="secondary" onClick={() => setHandingOver(false)}>
+                    {t("group.stay")}
+                  </button>
+                </div>
+              </Show>
+              <Show when={isManager()}>
+                <button type="button" class="secondary danger" onClick={onDeleteGroup}>
+                  {t("group.deleteGroup")}
                 </button>
-                <button type="button" class="secondary" onClick={() => setHandingOver(false)}>
-                  {t("group.stay")}
-                </button>
-              </div>
-            </Show>
-            <Show when={isManager()}>
-              <button type="button" class="secondary danger" onClick={onDeleteGroup}>
-                {t("group.deleteGroup")}
-              </button>
-            </Show>
-          </div>
-        )}
+              </Show>
+            </div>
+          )}
+        </Show>
       </Show>
     </>
   );

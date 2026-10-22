@@ -7,6 +7,7 @@ import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { currencies, displayCurrency, parsePriceInput } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
+import { isReady } from "../lib/resource.ts";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {
@@ -96,124 +97,141 @@ export default function ItemForm() {
   return (
     <>
       <h1>{params.itemId ? t("itemForm.editTitle") : t("itemForm.addTitle")}</h1>
-      <form class="card" onSubmit={onSubmit}>
-        <label>
-          {t("itemForm.name")}
-          <input required value={name()} onInput={(e) => setName(e.currentTarget.value)} />
-        </label>
-        <label>
-          {t("itemForm.link")}
-          <input
-            type="url"
-            inputmode="url"
-            placeholder="https://"
-            value={url()}
-            onInput={(e) => setUrl(e.currentTarget.value)}
-          />
-        </label>
-        <label>
-          {t("itemForm.category")}
-          <input
-            list="category-suggestions"
-            value={category()}
-            onInput={(e) => setCategory(e.currentTarget.value)}
-          />
-          <datalist id="category-suggestions">
-            <For each={allSuggestions()}>{(c) => <option value={c} />}</For>
-          </datalist>
-        </label>
-        <CategoryChips categories={chips()} onPick={setCategory} />
-        <label class="check">
-          <input
-            type="checkbox"
-            checked={notWanted()}
-            onChange={(e) => setNotWanted(e.currentTarget.checked)}
-          />
-          {t("itemForm.notWanted")}
-        </label>
-        <div class="row price-fields">
-          <label>
-            {t("itemForm.price")}
-            <input
-              inputmode="decimal"
-              autocomplete="off"
-              value={price()}
-              onInput={(e) => setPrice(e.currentTarget.value)}
-            />
-          </label>
-          <label>
-            {t("itemForm.currency")}
-            {/* Per-option selected: a select's value isn't re-applied when its options change. */}
-            <select value={currency()} onChange={(e) => setCurrency(e.currentTarget.value)}>
-              <For each={currencyOptions()}>
-                {(code) => (
-                  <option value={code} selected={code === currency()}>
-                    {code}
-                  </option>
-                )}
-              </For>
-            </select>
-          </label>
-        </div>
-        <fieldset>
-          <legend>{t("itemForm.visibility")}</legend>
-          <label class="check">
-            <input
-              type="radio"
-              name="visibility"
-              checked={visibility() === "all"}
-              onChange={() => setVisibility("all")}
-            />
-            {t("itemForm.allGroups")}
-          </label>
-          <label class="check">
-            <input
-              type="radio"
-              name="visibility"
-              checked={visibility() === "some"}
-              onChange={() => setVisibility("some")}
-            />
-            {t("itemForm.selectedGroups")}
-          </label>
-          <Show when={visibility() === "some"}>
-            <div class="indent">
-              <For
-                each={profile()?.groups}
-                fallback={<p class="muted small">{t("itemForm.noGroups")}</p>}
-              >
-                {(group) => (
-                  <label class="check">
-                    <input
-                      type="checkbox"
-                      checked={groupIds().includes(group.id)}
-                      onChange={(e) => toggleGroup(group.id, e.currentTarget.checked)}
-                    />
-                    {group.name}
-                  </label>
-                )}
-              </For>
-            </div>
+      <Show when={item.error}>
+        <p class="error">{t("itemForm.loadFailed", { message: item.error.message })}</p>
+      </Show>
+      {/* When editing, wait for the item so the form never shows blank or default values first. */}
+      <Show
+        when={!params.itemId || isReady(item)}
+        fallback={
+          <Show when={!item.error}>
+            <p class="muted">{t("common.loading")}</p>
           </Show>
+        }
+      >
+        <form class="card" onSubmit={onSubmit}>
+          <label>
+            {t("itemForm.name")}
+            <input required value={name()} onInput={(e) => setName(e.currentTarget.value)} />
+          </label>
+          <label>
+            {t("itemForm.link")}
+            <input
+              type="url"
+              inputmode="url"
+              placeholder="https://"
+              value={url()}
+              onInput={(e) => setUrl(e.currentTarget.value)}
+            />
+          </label>
+          <label>
+            {t("itemForm.category")}
+            <input
+              list="category-suggestions"
+              value={category()}
+              onInput={(e) => setCategory(e.currentTarget.value)}
+            />
+            <datalist id="category-suggestions">
+              <For each={allSuggestions()}>{(c) => <option value={c} />}</For>
+            </datalist>
+          </label>
+          <CategoryChips categories={chips()} onPick={setCategory} />
           <label class="check">
             <input
-              type="radio"
-              name="visibility"
-              checked={visibility() === "none"}
-              onChange={() => setVisibility("none")}
+              type="checkbox"
+              checked={notWanted()}
+              onChange={(e) => setNotWanted(e.currentTarget.checked)}
             />
-            {t("itemForm.noGroupsOption")}
+            {t("itemForm.notWanted")}
           </label>
-        </fieldset>
-        <button type="submit" disabled={busy()}>
-          {busy() ? t("common.saving") : t("common.save")}
-        </button>
-        <button type="button" class="secondary" onClick={() => history.back()}>
-          {t("common.cancel")}
-        </button>
-        <Show when={error()}>
-          <p class="error">{error()}</p>
-        </Show>
-      </form>
+          <div class="row price-fields">
+            <label>
+              {t("itemForm.price")}
+              <input
+                inputmode="decimal"
+                autocomplete="off"
+                value={price()}
+                onInput={(e) => setPrice(e.currentTarget.value)}
+              />
+            </label>
+            <label>
+              {t("itemForm.currency")}
+              {/* Per-option selected: a select's value isn't re-applied when its options change. */}
+              <select value={currency()} onChange={(e) => setCurrency(e.currentTarget.value)}>
+                <For each={currencyOptions()}>
+                  {(code) => (
+                    <option value={code} selected={code === currency()}>
+                      {code}
+                    </option>
+                  )}
+                </For>
+              </select>
+            </label>
+          </div>
+          <fieldset>
+            <legend>{t("itemForm.visibility")}</legend>
+            <label class="check">
+              <input
+                type="radio"
+                name="visibility"
+                checked={visibility() === "all"}
+                onChange={() => setVisibility("all")}
+              />
+              {t("itemForm.allGroups")}
+            </label>
+            <label class="check">
+              <input
+                type="radio"
+                name="visibility"
+                checked={visibility() === "some"}
+                onChange={() => setVisibility("some")}
+              />
+              {t("itemForm.selectedGroups")}
+            </label>
+            <Show when={visibility() === "some"}>
+              <div class="indent">
+                <For
+                  each={profile()?.groups}
+                  fallback={
+                    <p class="muted small">
+                      {isReady(profile) ? t("itemForm.noGroups") : t("common.loading")}
+                    </p>
+                  }
+                >
+                  {(group) => (
+                    <label class="check">
+                      <input
+                        type="checkbox"
+                        checked={groupIds().includes(group.id)}
+                        onChange={(e) => toggleGroup(group.id, e.currentTarget.checked)}
+                      />
+                      {group.name}
+                    </label>
+                  )}
+                </For>
+              </div>
+            </Show>
+            <label class="check">
+              <input
+                type="radio"
+                name="visibility"
+                checked={visibility() === "none"}
+                onChange={() => setVisibility("none")}
+              />
+              {t("itemForm.noGroupsOption")}
+            </label>
+          </fieldset>
+          <button type="submit" disabled={busy()}>
+            {busy() ? t("common.saving") : t("common.save")}
+          </button>
+          <button type="button" class="secondary" onClick={() => history.back()}>
+            {t("common.cancel")}
+          </button>
+          <Show when={error()}>
+            <p class="error">{error()}</p>
+          </Show>
+        </form>
+      </Show>
     </>
   );
 }

@@ -32,6 +32,7 @@ import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { arrangeItems, readListOrder, saveListOrder, type ListOrder } from "../lib/listOrder.ts";
 import { addDays, today, type IsoDate } from "../lib/occasions.ts";
 import { useMe } from "../lib/me.tsx";
+import { isReady } from "../lib/resource.ts";
 import { useQuickAdd } from "../lib/quickAdd.ts";
 
 /** How long you follow a list when no shared occasion is coming up. */
@@ -85,7 +86,10 @@ export default function WishList() {
     setSelected(new Set<ItemId>());
   };
 
-  const isOwnList = () => profile()?.id === me().profile.id;
+  // Known from the address alone, so your own list never renders as someone else's while loading.
+  const isOwnList = () => params.profileId === me().profile.id;
+  // Who may edit and what to show depend on both, so nothing below the title renders before them.
+  const ready = () => isReady(profile) && isReady(items);
 
   // Following someone else's list. Only loaded once we know it isn't your own.
   const otherList = () => (profile() && !isOwnList() ? params.profileId : undefined);
@@ -221,13 +225,13 @@ export default function WishList() {
     <>
       <div class="row">
         <h1>
-          <Show when={profile()} fallback={t("wishlist.fallbackTitle")}>
-            {(p) =>
-              isOwnList() ? t("wishlist.mine") : t("wishlist.theirs", { name: p().display_name })
-            }
+          <Show when={!isOwnList()} fallback={t("wishlist.mine")}>
+            <Show when={profile()} fallback={t("wishlist.fallbackTitle")}>
+              {(p) => t("wishlist.theirs", { name: p().display_name })}
+            </Show>
           </Show>
         </h1>
-        <Show when={canEdit() && !selecting() && (items()?.length ?? 0) > 1}>
+        <Show when={ready() && canEdit() && !selecting() && (items()?.length ?? 0) > 1}>
           <button type="button" class="secondary small" onClick={() => setSelecting(true)}>
             {t("bulk.select")}
           </button>
@@ -241,80 +245,85 @@ export default function WishList() {
       <Show when={profile.error || items.error}>
         <p class="error">{t("wishlist.unavailable")}</p>
       </Show>
-      <Show when={error()}>
-        <p class="error">{error()}</p>
+      <Show when={!ready() && !profile.error && !items.error}>
+        <p class="muted">{t("common.loading")}</p>
       </Show>
-      <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
-        <p class="muted">{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>
-      </Show>
-      <Show when={otherList() && followUntil.latest !== undefined && !nextOccasion.loading}>
-        <FollowList
-          name={profile()?.display_name ?? ""}
-          until={followUntil.latest ?? null}
-          suggestedUntil={nextOccasion()?.date ?? addDays(today(), DEFAULT_FOLLOW_DAYS)}
-          suggestedOccasion={nextOccasion()?.name}
-          today={today()}
-          busy={followBusy()}
-          onFollow={onFollow}
-          onUnfollow={onUnfollow}
-        />
-      </Show>
-      <Show when={(items()?.length ?? 0) > 1}>
-        <ListOrderSelect value={order()} showBought={showBought()} onChange={chooseOrder} />
-      </Show>
-      <For each={sections()}>
-        {(section) => (
+      <Show when={ready()}>
+        <Show when={error()}>
+          <p class="error">{error()}</p>
+        </Show>
+        <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
+          <p class="muted">{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>
+        </Show>
+        <Show when={otherList() && followUntil.latest !== undefined && !nextOccasion.loading}>
+          <FollowList
+            name={profile()?.display_name ?? ""}
+            until={followUntil.latest ?? null}
+            suggestedUntil={nextOccasion()?.date ?? addDays(today(), DEFAULT_FOLLOW_DAYS)}
+            suggestedOccasion={nextOccasion()?.name}
+            today={today()}
+            busy={followBusy()}
+            onFollow={onFollow}
+            onUnfollow={onUnfollow}
+          />
+        </Show>
+        <Show when={(items()?.length ?? 0) > 1}>
+          <ListOrderSelect value={order()} showBought={showBought()} onChange={chooseOrder} />
+        </Show>
+        <For each={sections()}>
+          {(section) => (
+            <section class="stack">
+              <Show when={isGrouped()}>
+                <h2>{section.category ?? t("listOrder.uncategorised")}</h2>
+              </Show>
+              <ul class="list cards">
+                <For each={section.items}>{card}</For>
+              </ul>
+            </section>
+          )}
+        </For>
+        <Show when={notWanted().length > 0}>
           <section class="stack">
-            <Show when={isGrouped()}>
-              <h2>{section.category ?? t("listOrder.uncategorised")}</h2>
-            </Show>
+            <h2>{t("listOrder.notWanted")}</h2>
             <ul class="list cards">
-              <For each={section.items}>{card}</For>
+              <For each={notWanted()}>{card}</For>
             </ul>
           </section>
-        )}
-      </For>
-      <Show when={notWanted().length > 0}>
-        <section class="stack">
-          <h2>{t("listOrder.notWanted")}</h2>
-          <ul class="list cards">
-            <For each={notWanted()}>{card}</For>
-          </ul>
-        </section>
-      </Show>
-      <Show when={selecting()}>
-        <BulkActions
-          selected={selectedIds().length}
-          total={items()?.length ?? 0}
-          groups={profile()?.groups ?? []}
-          suggestCategories={suggest}
-          busy={bulkBusy()}
-          onSelectAll={() => setSelected(new Set((items() ?? []).map((item) => item.id)))}
-          onSelectNone={() => setSelected(new Set<ItemId>())}
-          onSetCategory={onBulkCategory}
-          onSetGroups={onBulkGroups}
-          onDelete={onBulkDelete}
-          onDone={stopSelecting}
-        />
-      </Show>
-      <Show when={canEdit() && !selecting()}>
-        <QuickAdd
-          pending={quickAdd().state().pending}
-          groups={profile()?.groups ?? []}
-          retrying={quickAdd().state().retrying}
-          onAdd={(name, groups) => quickAdd().add(name, groups)}
-          onCancel={() => quickAdd().cancel()}
-        />
-      </Show>
-      <Show when={canEdit() && !isOwnList() && !selecting()}>
-        <button type="button" class="secondary danger" onClick={onDeleteChild}>
-          {t("wishlist.deleteProfile", { name: profile()?.display_name ?? "" })}
-        </button>
-      </Show>
-      <Show when={canEdit() && !selecting()}>
-        <A class="button fab" href={`/lists/${params.profileId}/items/new`}>
-          {t("wishlist.addItem")}
-        </A>
+        </Show>
+        <Show when={selecting()}>
+          <BulkActions
+            selected={selectedIds().length}
+            total={items()?.length ?? 0}
+            groups={profile()?.groups ?? []}
+            suggestCategories={suggest}
+            busy={bulkBusy()}
+            onSelectAll={() => setSelected(new Set((items() ?? []).map((item) => item.id)))}
+            onSelectNone={() => setSelected(new Set<ItemId>())}
+            onSetCategory={onBulkCategory}
+            onSetGroups={onBulkGroups}
+            onDelete={onBulkDelete}
+            onDone={stopSelecting}
+          />
+        </Show>
+        <Show when={canEdit() && !selecting()}>
+          <QuickAdd
+            pending={quickAdd().state().pending}
+            groups={profile()?.groups ?? []}
+            retrying={quickAdd().state().retrying}
+            onAdd={(name, groups) => quickAdd().add(name, groups)}
+            onCancel={() => quickAdd().cancel()}
+          />
+        </Show>
+        <Show when={canEdit() && !isOwnList() && !selecting()}>
+          <button type="button" class="secondary danger" onClick={onDeleteChild}>
+            {t("wishlist.deleteProfile", { name: profile()?.display_name ?? "" })}
+          </button>
+        </Show>
+        <Show when={canEdit() && !selecting()}>
+          <A class="button fab" href={`/lists/${params.profileId}/items/new`}>
+            {t("wishlist.addItem")}
+          </A>
+        </Show>
       </Show>
     </>
   );
