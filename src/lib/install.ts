@@ -47,7 +47,8 @@ export async function install() {
   dismiss();
 }
 
-function isStandalone() {
+/** True when the app runs from the home screen (installed), not in a browser tab. */
+export function isStandalone() {
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true

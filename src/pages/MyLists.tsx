@@ -3,10 +3,10 @@ import { createSignal, For, Show } from "solid-js";
 import { CurrencySelect } from "../components/CurrencySelect.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { renameProfile } from "../lib/api/profiles.ts";
+import { signOutHere } from "../lib/auth.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
 import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
-import { supabase } from "../lib/supabase.ts";
 import { useMe } from "../lib/me.tsx";
 
 export default function MyLists() {
@@ -74,7 +74,7 @@ export default function MyLists() {
         />
         <CurrencySelect value={displayCurrency()} onChange={setDisplayCurrency} />
       </section>
-      <button type="button" class="secondary" onClick={() => void supabase.auth.signOut()}>
+      <button type="button" class="secondary" onClick={() => void signOutHere()}>
         {t("account.signOut")}
       </button>
     </>
