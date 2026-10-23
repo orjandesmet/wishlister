@@ -144,6 +144,28 @@ describe("fetchPageInfo", () => {
   const html = (body: string, status = 200) =>
     new Response(body, { status, headers: { "content-type": "text/html; charset=utf-8" } });
 
+  it("reads on past the head for a price in the body", async () => {
+    // Like bol.com: Open Graph tags in the head, JSON-LD product data in the body.
+    const chunks = [
+      `<html><head><meta property="og:title" content="LEGO BMW M3"></head>`,
+      `<body><script type="application/ld+json">{"@type":"Product","name":"LEGO BMW M3",
+        "offers":{"@type":"Offer","price":179.99,"priceCurrency":"EUR"}}</script></body></html>`,
+    ];
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const chunk of chunks) controller.enqueue(new TextEncoder().encode(chunk));
+        controller.close();
+      },
+    });
+    const fetch = async () =>
+      new Response(body, { headers: { "content-type": "text/html; charset=utf-8" } });
+    expect(await fetchPageInfo("https://www.bol.com/nl/nl/p/x/1/", fetch)).toEqual({
+      title: "LEGO BMW M3",
+      image: null,
+      price: { amount: 179.99, currency: "EUR" },
+    });
+  });
+
   it("follows redirects and reads the final page", async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
       url === "https://short.example/x"
