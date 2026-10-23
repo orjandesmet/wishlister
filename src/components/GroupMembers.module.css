@@ -1,0 +1,30 @@
+/* A member's role controls drop below the name when they don't both fit, never over it. */
+.memberRow {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  padding-block: 8px;
+}
+
+.memberRow > .person {
+  flex: 1 1 140px;
+}
+
+.memberRow > :not(.person) {
+  margin-left: auto;
+}
+
+/* Buttons keep their text on one line; when they don't fit side by side, the last one drops below. */
+.buttonRow {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.buttonRow > button {
+  white-space: nowrap;
+}
+
+@supports (position-area: bottom) {
+  .inviteLinkButton {
+    anchor-name: --invite-link;
+  }
+}

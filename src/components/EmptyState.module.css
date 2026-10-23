@@ -1,0 +1,14 @@
+/* A message with its one action, centred in the space the page has left. */
+:global(.page):has(> .emptyState) {
+  flex: 1;
+}
+
+.emptyState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
+  text-align: center;
+}

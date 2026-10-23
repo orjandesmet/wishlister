@@ -1,0 +1,39 @@
+/* The list owner's avatar and name, with the list menu and the follow bell beside them. */
+.title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+/* A long name wraps instead of pushing the bell and menu over the "+" beside the title. */
+.title h1 {
+  min-width: 0;
+  font-size: 22px;
+  overflow-wrap: anywhere;
+}
+
+/* The button under an empty list's message, which replaces the floating one. */
+.emptyQuickAdd {
+  display: flex;
+  justify-content: center;
+}
+
+@media (max-width: 599px) {
+  .selectButton {
+    padding: 0 12px;
+  }
+}
+
+@media (min-width: 900px) {
+  .title h1 {
+    font-size: 28px;
+  }
+}
+
+/* Very wide screens: quick add stays open beside the list, so no button here either. */
+@media (min-width: 1200px) {
+  .emptyQuickAdd {
+    display: none;
+  }
+}

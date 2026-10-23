@@ -13,6 +13,7 @@ import { t } from "../lib/i18n.ts";
 import type { GroupId } from "../lib/ids.ts";
 import { today } from "../lib/occasions.ts";
 import { isReady } from "../lib/resource.ts";
+import u from "../utilities.module.css";
 
 export default function GroupSettings() {
   const params = useParams<{ groupId: GroupId }>();
@@ -24,26 +25,26 @@ export default function GroupSettings() {
 
   return (
     <>
-      <A class="link" href="/">
+      <A class={u.link} href="/">
         {t("group.back")}
       </A>
-      <div class="row">
+      <div class={u.row}>
         <h1>{group()?.name ?? t("group.fallbackTitle")}</h1>
         <Show when={isReady(group) && data.isManager()}>
           <RenameGroup data={data} runner={runner} />
         </Show>
       </div>
       <Show when={group.error}>
-        <p class="error">{t("group.unavailable")}</p>
+        <p class={u.error}>{t("group.unavailable")}</p>
       </Show>
       <Show when={runner.notice()}>
-        <p class="notice">{runner.notice()}</p>
+        <p class={u.notice}>{runner.notice()}</p>
       </Show>
       <Show when={runner.error()}>
-        <p class="error">{runner.error()}</p>
+        <p class={u.error}>{runner.error()}</p>
       </Show>
       <Show when={!isReady(group) && !group.error}>
-        <p class="muted">{t("common.loading")}</p>
+        <p class={u.muted}>{t("common.loading")}</p>
       </Show>
 
       {/* Roles decide most of what shows here, so nothing renders before the group has loaded. */}

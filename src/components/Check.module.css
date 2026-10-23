@@ -1,0 +1,19 @@
+@layer base, components, utilities;
+
+/* A checkbox or radio with its text beside it, the whole line tappable. */
+@layer components {
+  .check {
+    min-height: 44px;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    font-weight: 400;
+    color: var(--text);
+  }
+
+  .check input {
+    min-height: auto;
+    width: 22px;
+    height: 22px;
+  }
+}

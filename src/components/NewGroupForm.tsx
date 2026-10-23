@@ -1,11 +1,16 @@
 import { createSignal, Show } from "solid-js";
 import { t } from "../lib/i18n.ts";
+import u from "../utilities.module.css";
+import { Card } from "./Card.tsx";
+import styles from "./NewGroupForm.module.css";
 
 export type NewGroupFormProps = {
   /** Creates the group; a rejection is shown under the button. */
   onCreate: (name: string) => Promise<void>;
-  /** Extra classes for the form, such as "card" when it stands on its own. */
-  class?: string;
+  /** A card when it stands on its own on a page, bare inside a popover. */
+  card?: boolean;
+  /** Wide screens: the field and the button on one line. */
+  inline?: boolean;
 };
 
 /** A name and a button: creates a group and opens it. */
@@ -26,8 +31,8 @@ export function NewGroupForm(props: NewGroupFormProps) {
     setBusy(false);
   }
 
-  return (
-    <form class={props.class} onSubmit={onSubmit}>
+  const fields = (
+    <>
       <label>
         {t("home.newGroup")}
         <input
@@ -41,10 +46,18 @@ export function NewGroupForm(props: NewGroupFormProps) {
         {t("home.create")}
       </button>
       <Show when={error()}>
-        <p class="error" role="alert">
+        <p class={u.error} role="alert">
           {error()}
         </p>
       </Show>
-    </form>
+    </>
+  );
+
+  return (
+    <Show when={props.card} fallback={<form onSubmit={onSubmit}>{fields}</form>}>
+      <Card as="form" class={props.inline ? styles.inline : undefined} onSubmit={onSubmit}>
+        {fields}
+      </Card>
+    </Show>
   );
 }

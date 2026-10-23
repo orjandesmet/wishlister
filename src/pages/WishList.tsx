@@ -30,6 +30,10 @@ import { addDays, today } from "../lib/occasions.ts";
 import { useMe } from "../lib/me.tsx";
 import { isReady } from "../lib/resource.ts";
 import { useQuickAdd } from "../lib/quickAdd.ts";
+import u from "../utilities.module.css";
+import { Button } from "../components/Button.tsx";
+import { EmptyState } from "../components/EmptyState.tsx";
+import styles from "./WishList.module.css";
 
 /** How long you follow a list when no shared occasion is coming up. */
 const DEFAULT_FOLLOW_DAYS = 30;
@@ -154,8 +158,8 @@ export default function WishList() {
 
   return (
     <>
-      <div class="row">
-        <div class="person title">
+      <div class={u.row}>
+        <div class={styles.title}>
           <Show when={profile()}>
             {(p) => <Avatar id={params.profileId} name={p().display_name} size="lg" />}
           </Show>
@@ -189,33 +193,38 @@ export default function WishList() {
         </div>
       </div>
       <Show when={profile.error || items.error}>
-        <p class="error">{t("wishlist.unavailable")}</p>
+        <p class={u.error}>{t("wishlist.unavailable")}</p>
       </Show>
       <Show when={!ready() && !profile.error && !items.error}>
-        <p class="muted">{t("common.loading")}</p>
+        <p class={u.muted}>{t("common.loading")}</p>
       </Show>
       <Show when={ready()}>
         <Show when={error()}>
-          <p class="error">{error()}</p>
+          <p class={u.error}>{error()}</p>
         </Show>
         <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
-          <div class="empty-state">
-            <p class="muted">{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>
+          <EmptyState>
+            <p class={u.muted}>{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>
             <Show when={canEdit() && !select.selecting()}>
-              <div class="empty-quick-add">
+              <div class={styles.emptyQuickAdd}>
                 <QuickAddButton inline />
               </div>
             </Show>
-          </div>
+          </EmptyState>
         </Show>
         <Show when={(items()?.length ?? 0) > 1}>
-          <div class="row">
+          <div class={u.row}>
             <Show when={canEdit() && !select.selecting()}>
-              <button type="button" class="secondary small select-button" onClick={select.start}>
-                <span class="select-button-text">{t("bulk.select")}</span>
+              <Button
+                variant="secondary"
+                size="small"
+                class={styles.selectButton}
+                onClick={select.start}
+              >
+                <span class={u.labelText}>{t("bulk.select")}</span>
                 {/* Lucide "list-checks" (ISC licence): stands in for the label on small screens. */}
                 <svg
-                  class="select-button-icon"
+                  class={u.labelIcon}
                   viewBox="0 0 24 24"
                   fill="none"
                   stroke="currentColor"
@@ -230,7 +239,7 @@ export default function WishList() {
                   <path d="M13 12h8" />
                   <path d="M13 18h8" />
                 </svg>
-              </button>
+              </Button>
             </Show>
             <ListOrderSelect
               value={listSections.order()}
@@ -241,20 +250,20 @@ export default function WishList() {
         </Show>
         <For each={sections()}>
           {(section) => (
-            <section class="stack">
+            <section class={u.stack}>
               <Show when={isGrouped()}>
                 <h2>{section.category ?? t("listOrder.uncategorised")}</h2>
               </Show>
-              <ul class="list cards">
+              <ul class={`${u.list} ${u.cards}`}>
                 <For each={section.items}>{card}</For>
               </ul>
             </section>
           )}
         </For>
         <Show when={notWanted().length > 0}>
-          <section class="stack">
+          <section class={u.stack}>
             <h2>{t("listOrder.notWanted")}</h2>
-            <ul class="list cards">
+            <ul class={`${u.list} ${u.cards}`}>
               <For each={notWanted()}>{card}</For>
             </ul>
           </section>

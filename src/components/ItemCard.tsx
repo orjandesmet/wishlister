@@ -10,6 +10,12 @@ import type { OccasionId } from "../lib/ids.ts";
 import { hueFor } from "../lib/hues.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
 import { formatOccasionDate } from "../lib/occasions.ts";
+import u from "../utilities.module.css";
+import { Button } from "./Button.tsx";
+import { Card } from "./Card.tsx";
+import { Check } from "./Check.tsx";
+import { Chip } from "./Chip.tsx";
+import styles from "./ItemCard.module.css";
 
 /**
  * Whether you can mark the item as bought. "hidden" shows nothing: your own list,
@@ -54,11 +60,11 @@ function PriceTag(props: { amount: number; currency: string }) {
     return amount === null ? null : formatPrice(amount, displayCurrency(), locale());
   };
   return (
-    <p class="price">
-      <span class="price-amount">{formatPrice(props.amount, props.currency, locale())}</span>
+    <p class={styles.price}>
+      <span class={styles.priceAmount}>{formatPrice(props.amount, props.currency, locale())}</span>
       <Show when={converted()}>
         {(price) => (
-          <span class="price-converted">{t("item.convertedPrice", { price: price() })}</span>
+          <span class={styles.priceConverted}>{t("item.convertedPrice", { price: price() })}</span>
         )}
       </Show>
     </p>
@@ -98,16 +104,17 @@ export function ItemCard(props: ItemCardProps) {
   const rememberButton = (event: MouseEvent) =>
     rememberBuyTap(props.item.id, event.currentTarget as Element);
   return (
-    <li
-      class="card item"
+    <Card
+      as="li"
+      class={styles.item}
       classList={{
-        private: isPrivate(),
-        "not-wanted": props.item.not_wanted,
-        selected: props.selected,
+        [styles.private]: isPrivate(),
+        [styles.notWanted]: props.item.not_wanted,
+        [styles.selected]: props.selected,
       }}
     >
       <Show when={props.item.not_wanted}>
-        <p class="item-warning not-wanted-note">
+        <p class={`${styles.warning} ${styles.notWantedNote}`}>
           {/* Lucide "ban" (ISC licence). */}
           <svg
             viewBox="0 0 24 24"
@@ -124,29 +131,29 @@ export function ItemCard(props: ItemCardProps) {
           {t("item.notWanted")}
         </p>
       </Show>
-      <div class="item-head">
+      <div class={styles.head}>
         <Show
           when={props.selecting}
-          fallback={<strong class="item-name">{props.item.name}</strong>}
+          fallback={<strong class={styles.name}>{props.item.name}</strong>}
         >
           {/* The whole row is the label, so tapping anywhere on it ticks the box. */}
-          <label class="check select-row">
+          <Check class={styles.selectRow}>
             <input
               type="checkbox"
               checked={props.selected ?? false}
               onChange={() => props.onToggleSelect?.()}
             />
-            <strong class="item-name">{props.item.name}</strong>
-          </label>
+            <strong class={styles.name}>{props.item.name}</strong>
+          </Check>
         </Show>
         <Show when={props.canEdit && !props.selecting}>
-          <div class="item-manage">
-            <A class="link" href={`/items/${props.item.id}/edit`}>
+          <div class={styles.manage}>
+            <A class={u.link} href={`/items/${props.item.id}/edit`}>
               <EditLabel label={t("common.edit")} />
             </A>
-            <button type="button" class="link danger" onClick={() => props.onRemove()}>
+            <Button variant="link" danger onClick={() => props.onRemove()}>
               <RemoveLabel />
-            </button>
+            </Button>
           </div>
         </Show>
       </div>
@@ -154,16 +161,19 @@ export function ItemCard(props: ItemCardProps) {
         {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
       </Show>
       <Show when={props.item.category || showUrl()}>
-        <div class="item-meta">
+        <div class={styles.meta}>
           <Show when={props.item.category}>
-            <span class="chip tinted" style={{ "--h": hueFor(props.item.category!) }}>
-              {props.item.category}
-            </span>
+            <Chip hue={hueFor(props.item.category!)}>{props.item.category}</Chip>
           </Show>
           <Show when={showUrl()}>
             {(url) => (
-              <a class="link item-link" href={url()} target="_blank" rel="noopener noreferrer">
-                <span class="truncate">{shopName(url())}</span>
+              <a
+                class={`${u.link} ${styles.shopLink}`}
+                href={url()}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <span class={u.truncate}>{shopName(url())}</span>
                 {/* Lucide "external-link" (ISC licence). */}
                 <svg
                   viewBox="0 0 24 24"
@@ -184,12 +194,12 @@ export function ItemCard(props: ItemCardProps) {
         </div>
       </Show>
       <Show when={props.canEdit && !props.item.visible_in_all_groups && !isPrivate()}>
-        <p class="muted small">
+        <p class={`${u.muted} ${u.small}`}>
           {t("item.onlyVisibleIn", { groups: <BoldList items={props.groupNames} /> })}
         </p>
       </Show>
       <Show when={props.canEdit && isPrivate()}>
-        <p class="item-warning small">
+        <p class={`${styles.warning} ${u.small}`}>
           {/* Lucide "triangle-alert" (ISC licence). */}
           <svg
             viewBox="0 0 24 24"
@@ -210,52 +220,50 @@ export function ItemCard(props: ItemCardProps) {
       <Switch>
         <Match when={props.selecting}>{null}</Match>
         <Match when={props.purchase === "mine"}>
-          <div class="row">
-            <span class="bought">
+          <div class={u.row}>
+            <span class={styles.bought}>
               {props.boughtFor
                 ? t("item.youBoughtFor", { occasion: props.boughtFor })
                 : t("item.youBought")}
             </span>
-            <button type="button" class="secondary small" onClick={() => props.onUndo()}>
+            <Button variant="secondary" size="small" onClick={() => props.onUndo()}>
               {t("item.undo")}
-            </button>
+            </Button>
           </div>
         </Match>
         <Match when={props.purchase === "someone"}>
-          <span class="bought someone">{t("item.someoneBought")}</span>
+          <span class={`${styles.bought} ${styles.someone}`}>{t("item.someoneBought")}</span>
         </Match>
         <Match when={props.purchase === "available" && props.occasionChoices}>
           {(choices) => (
-            <div class="stack small-gap buy-for">
-              <span class="field-label">{t("item.forWhichOccasion")}</span>
+            <div class={`${u.stack} ${u.smallGap}`}>
+              <span class={u.fieldLabel}>{t("item.forWhichOccasion")}</span>
               <For each={choices()}>
                 {(occasion) => (
-                  <button
-                    type="button"
-                    class="secondary"
+                  <Button
+                    variant="secondary"
                     onClick={(event) => {
                       rememberButton(event);
                       props.onPickOccasion?.(occasion.id);
                     }}
                   >
                     {occasion.name} · {formatOccasionDate(occasion.date, locale())}
-                  </button>
+                  </Button>
                 )}
               </For>
-              <div class="row">
-                <button
-                  type="button"
-                  class="link"
+              <div class={u.row}>
+                <Button
+                  variant="link"
                   onClick={(event) => {
                     rememberButton(event);
                     props.onPickOccasion?.(null);
                   }}
                 >
                   {t("item.noOccasion")}
-                </button>
-                <button type="button" class="link" onClick={() => props.onCancelPick?.()}>
+                </Button>
+                <Button variant="link" onClick={() => props.onCancelPick?.()}>
                   {t("common.cancel")}
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -272,6 +280,16 @@ export function ItemCard(props: ItemCardProps) {
           </button>
         </Match>
       </Switch>
-    </li>
+    </Card>
+  );
+}
+
+/** An item typed in quick add that isn't saved yet: its name and how saving goes. */
+export function PendingItemCard(props: { name: string; status: string }) {
+  return (
+    <Card as="li" class={`${styles.item} ${styles.pending}`}>
+      <strong class={styles.name}>{props.name}</strong>
+      <span class={`${u.muted} ${u.small}`}>{props.status}</span>
+    </Card>
   );
 }

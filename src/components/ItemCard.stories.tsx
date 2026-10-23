@@ -4,6 +4,7 @@ import { fn } from "storybook/test";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { ItemCard } from "./ItemCard.tsx";
+import u from "../utilities.module.css";
 
 const meta = {
   title: "Wishlist/ItemCard",
@@ -11,7 +12,7 @@ const meta = {
   // A card is an <li>, so each story puts it in the same list the page uses.
   decorators: [
     (Story) => (
-      <ul class="list cards">
+      <ul class={`${u.list} ${u.cards}`}>
         <Story />
       </ul>
     ),

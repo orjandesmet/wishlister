@@ -1,13 +1,14 @@
 import { t } from "../lib/i18n.ts";
+import u from "../utilities.module.css";
 
 /** "Remove" (or another label for the same action) as text, or a trash can on small screens (the text stays available to screen readers). */
 export function RemoveLabel(props: { label?: string }) {
   return (
     <>
-      <span class="remove-text">{props.label ?? t("common.remove")}</span>
+      <span class={u.labelText}>{props.label ?? t("common.remove")}</span>
       {/* Lucide "trash-2" (ISC licence). */}
       <svg
-        class="remove-icon"
+        class={u.labelIcon}
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

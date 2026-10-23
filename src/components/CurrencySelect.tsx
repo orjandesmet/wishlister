@@ -1,6 +1,7 @@
 import { For } from "solid-js";
 import { currencies } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
+import u from "../utilities.module.css";
 import { Select } from "./Select.tsx";
 
 export type CurrencySelectProps = {
@@ -24,7 +25,7 @@ export function CurrencySelect(props: CurrencySelectProps) {
           )}
         </For>
       </Select>
-      <span class="muted small">{t("currency.hint")}</span>
+      <span class={`${u.muted} ${u.small}`}>{t("currency.hint")}</span>
     </label>
   );
 }

@@ -1,8 +1,8 @@
-import { A } from "@solidjs/router";
 import { For } from "solid-js";
 import { t } from "../lib/i18n.ts";
 import type { ProfileId } from "../lib/ids.ts";
-import { Avatar } from "./Avatar.tsx";
+import { Person } from "./Person.tsx";
+import styles from "./ListMenu.module.css";
 
 export type ListMenuProps = {
   /** Whose list is open. */
@@ -17,24 +17,25 @@ export function ListMenu(props: ListMenuProps) {
     <>
       <button
         type="button"
-        class="menu-button"
+        class={styles.menuButton}
         popovertarget="list-menu"
         aria-label={t("wishlist.switchList")}
         title={t("wishlist.switchList")}
       />
-      <nav id="list-menu" class="menu" popover aria-label={t("wishlist.switchList")}>
+      <nav id="list-menu" class={styles.menu} popover aria-label={t("wishlist.switchList")}>
         <For each={props.options}>
           {(option) => (
-            <A
-              class="person"
+            <Person
+              id={option.id}
+              name={option.person}
+              class={styles.option}
               href={`/lists/${option.id}`}
               aria-current={option.id === props.value ? "page" : undefined}
               // Choosing the open list navigates nowhere, so close the menu by hand.
               onClick={(e) => e.currentTarget.closest<HTMLElement>("[popover]")?.hidePopover()}
             >
-              <Avatar id={option.id} name={option.person} />
               {option.name}
-            </A>
+            </Person>
           )}
         </For>
       </nav>

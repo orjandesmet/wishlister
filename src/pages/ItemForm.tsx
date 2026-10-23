@@ -12,6 +12,11 @@ import { splitLink } from "../lib/links.ts";
 import { splitNotWanted } from "../lib/notWanted.ts";
 import { isReady } from "../lib/resource.ts";
 import { Select } from "../components/Select.tsx";
+import u from "../utilities.module.css";
+import { Button } from "../components/Button.tsx";
+import { Card } from "../components/Card.tsx";
+import { Check } from "../components/Check.tsx";
+import styles from "./ItemForm.module.css";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {
@@ -132,18 +137,18 @@ export default function ItemForm() {
     <>
       <h1>{params.itemId ? t("itemForm.editTitle") : t("itemForm.addTitle")}</h1>
       <Show when={item.error}>
-        <p class="error">{t("itemForm.loadFailed", { message: item.error.message })}</p>
+        <p class={u.error}>{t("itemForm.loadFailed", { message: item.error.message })}</p>
       </Show>
       {/* When editing, wait for the item so the form never shows blank or default values first. */}
       <Show
         when={!params.itemId || isReady(item)}
         fallback={
           <Show when={!item.error}>
-            <p class="muted">{t("common.loading")}</p>
+            <p class={u.muted}>{t("common.loading")}</p>
           </Show>
         }
       >
-        <form class="card" onSubmit={onSubmit}>
+        <Card as="form" onSubmit={onSubmit}>
           <label>
             {t("itemForm.name")}
             <input
@@ -175,15 +180,15 @@ export default function ItemForm() {
             </datalist>
           </label>
           <CategoryChips categories={chips()} onPick={setCategory} />
-          <label class="check">
+          <Check>
             <input
               type="checkbox"
               checked={notWanted()}
               onChange={(e) => setNotWanted(e.currentTarget.checked)}
             />
             {t("itemForm.notWanted")}
-          </label>
-          <div class="row price-fields">
+          </Check>
+          <div class={`${u.row} ${styles.priceFields}`}>
             <label>
               {t("itemForm.price")}
               <input
@@ -209,7 +214,7 @@ export default function ItemForm() {
           </div>
           <fieldset>
             <legend>{t("itemForm.visibility")}</legend>
-            <label class="check">
+            <Check>
               <input
                 type="radio"
                 name="visibility"
@@ -217,8 +222,8 @@ export default function ItemForm() {
                 onChange={() => setVisibility("all")}
               />
               {t("itemForm.allGroups")}
-            </label>
-            <label class="check">
+            </Check>
+            <Check>
               <input
                 type="radio"
                 name="visibility"
@@ -226,31 +231,31 @@ export default function ItemForm() {
                 onChange={() => setVisibility("some")}
               />
               {t("itemForm.selectedGroups")}
-            </label>
+            </Check>
             <Show when={visibility() === "some"}>
-              <div class="indent">
+              <div class={u.indent}>
                 <For
                   each={profile()?.groups}
                   fallback={
-                    <p class="muted small">
+                    <p class={`${u.muted} ${u.small}`}>
                       {isReady(profile) ? t("itemForm.noGroups") : t("common.loading")}
                     </p>
                   }
                 >
                   {(group) => (
-                    <label class="check">
+                    <Check>
                       <input
                         type="checkbox"
                         checked={groupIds().includes(group.id)}
                         onChange={(e) => toggleGroup(group.id, e.currentTarget.checked)}
                       />
                       {group.name}
-                    </label>
+                    </Check>
                   )}
                 </For>
               </div>
             </Show>
-            <label class="check">
+            <Check>
               <input
                 type="radio"
                 name="visibility"
@@ -258,28 +263,28 @@ export default function ItemForm() {
                 onChange={() => setVisibility("none")}
               />
               {t("itemForm.noGroupsOption")}
-            </label>
+            </Check>
           </fieldset>
           <button type="submit" disabled={busy()}>
             {busy() ? t("common.saving") : t("common.save")}
           </button>
           <Show when={!params.itemId}>
-            <button type="submit" class="secondary" data-another disabled={busy()}>
+            <Button variant="secondary" type="submit" data-another disabled={busy()}>
               {t("itemForm.saveAndAnother")}
-            </button>
+            </Button>
           </Show>
-          <button type="button" class="secondary" onClick={() => history.back()}>
+          <Button variant="secondary" onClick={() => history.back()}>
             {t("common.cancel")}
-          </button>
+          </Button>
           <Show when={error()}>
-            <p class="error">{error()}</p>
+            <p class={u.error}>{error()}</p>
           </Show>
           <Show when={savedName()}>
-            <p class="muted" role="status">
+            <p class={u.muted} role="status">
               {t("itemForm.savedAnother", { name: savedName()! })}
             </p>
           </Show>
-        </form>
+        </Card>
       </Show>
     </>
   );

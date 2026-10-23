@@ -1,0 +1,14 @@
+.occasion {
+  padding: 8px 0;
+}
+
+.occasion .dates {
+  gap: 2px;
+}
+
+.past summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}

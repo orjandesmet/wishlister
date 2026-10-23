@@ -2,9 +2,15 @@ import { createSignal, For, Show } from "solid-js";
 import { locale, t } from "../lib/i18n.ts";
 import type { FollowedList } from "../lib/api/follows.ts";
 import { formatOccasionDate, type IsoDate } from "../lib/occasions.ts";
+import u from "../utilities.module.css";
 import { BellIcon } from "./BellIcon.tsx";
+import { Button } from "./Button.tsx";
+import { Card } from "./Card.tsx";
 import { EditLabel } from "./EditLabel.tsx";
+import { FollowDateForm } from "./FollowList.tsx";
+import { Popover } from "./Popover.tsx";
 import { RemoveLabel } from "./RemoveLabel.tsx";
+import styles from "./NotificationSettings.module.css";
 
 export type NotificationSettingsProps = {
   follows: FollowedList[];
@@ -25,90 +31,68 @@ export function NotificationSettings(props: NotificationSettingsProps) {
     setEditing(follow);
   };
   const closePopover = () => document.getElementById("notification-popover")?.hidePopover();
-  const onSubmit = (event: SubmitEvent) => {
-    event.preventDefault();
-    props.onChangeDate(editing()!.listId, date());
-    closePopover();
-  };
 
   return (
-    <section class="card notifications">
-      <h2 class="icon-heading">
+    <Card>
+      <h2 class={styles.heading}>
         <BellIcon />
         {t("notifications.title")}
       </h2>
-      <p class="muted small">{t("notifications.help")}</p>
-      <Show when={props.follows.length} fallback={<p class="muted">{t("notifications.none")}</p>}>
-        <ul class="list">
+      <p class={`${u.muted} ${u.small}`}>{t("notifications.help")}</p>
+      <Show when={props.follows.length} fallback={<p class={u.muted}>{t("notifications.none")}</p>}>
+        <ul class={u.list}>
           <For each={props.follows}>
             {(follow) => (
-              <li class="list-row">
+              <li class={u.listRow}>
                 <span>
                   {follow.name}
                   <br />
-                  <span class="muted small">
+                  <span class={`${u.muted} ${u.small}`}>
                     {t("follow.untilDate", { date: formatOccasionDate(follow.until, locale()) })}
                   </span>
                 </span>
-                <span class="row-actions">
-                  <button
-                    type="button"
-                    class="link"
+                <span class={styles.rowActions}>
+                  <Button
+                    variant="link"
                     disabled={props.busy}
                     popovertarget="notification-popover"
                     onClick={() => startEditing(follow)}
                   >
                     <EditLabel label={t("follow.changeDate")} />
-                  </button>
-                  <button
-                    type="button"
-                    class="link danger"
+                  </Button>
+                  <Button
+                    variant="link"
+                    danger
                     disabled={props.busy}
                     onClick={() => props.onUnfollow(follow.listId)}
                   >
                     <RemoveLabel label={t("follow.stop")} />
-                  </button>
+                  </Button>
                 </span>
               </li>
             )}
           </For>
         </ul>
-        <button
-          type="button"
-          class="link danger"
-          disabled={props.busy}
-          onClick={props.onUnfollowAll}
-        >
+        <Button variant="link" danger disabled={props.busy} onClick={props.onUnfollowAll}>
           {t("notifications.unsubscribeAll")}
-        </button>
+        </Button>
       </Show>
-      <div
-        id="notification-popover"
-        class="popover sheet-popover follow-popover notification-popover"
-        popover
-      >
-        <form class="follow-body" onSubmit={onSubmit}>
-          <h2>{t("follow.changeDate")}</h2>
-          <label>
-            {editing()?.name}
-            <input
-              type="date"
-              required
-              min={props.today}
-              value={date()}
-              onInput={(e) => setDate(e.currentTarget.value)}
-            />
-          </label>
-          <div class="follow-actions">
-            <button type="submit" disabled={props.busy}>
-              {t("common.save")}
-            </button>
-            <button type="button" class="secondary" onClick={closePopover}>
-              {t("common.cancel")}
-            </button>
-          </div>
-        </form>
-      </div>
-    </section>
+      <Popover id="notification-popover" anchor="--notifications" area="bottom span-right" sheet>
+        <FollowDateForm
+          title={t("follow.changeDate")}
+          label={editing()?.name ?? ""}
+          value={date()}
+          min={props.today}
+          submitLabel={t("common.save")}
+          busy={props.busy}
+          onInput={setDate}
+          onSubmit={() => {
+            props.onChangeDate(editing()!.listId, date());
+            closePopover();
+          }}
+          onCancel={closePopover}
+        />
+      </Popover>
+    </Card>
   );
 }

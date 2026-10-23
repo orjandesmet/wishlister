@@ -7,10 +7,14 @@ import type { GroupData } from "../lib/createGroupData.ts";
 import { t } from "../lib/i18n.ts";
 import type { ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
+import u from "../utilities.module.css";
+import { Button } from "./Button.tsx";
+import { Card } from "./Card.tsx";
 import { EditLabel } from "./EditLabel.tsx";
 import { ParentSelect } from "./ParentSelect.tsx";
 import { RemoveLabel } from "./RemoveLabel.tsx";
 import { Select } from "./Select.tsx";
+import styles from "./GroupChildren.module.css";
 
 /** The group's children, with ways to add your own or create a new one. */
 export function GroupChildren(props: {
@@ -54,32 +58,28 @@ export function GroupChildren(props: {
     });
 
   return (
-    <section class="card">
+    <Card>
       <h2>{t("group.children")}</h2>
-      <p class="muted small">{t("group.childrenHelp")}</p>
-      <ul class="list">
-        <For each={data.children()} fallback={<li class="muted">{t("group.noChildren")}</li>}>
+      <p class={`${u.muted} ${u.small}`}>{t("group.childrenHelp")}</p>
+      <ul class={u.list}>
+        <For each={data.children()} fallback={<li class={u.muted}>{t("group.noChildren")}</li>}>
           {(child) => {
             const iAmParent = () =>
               data.parents()?.get(child.profile_id)?.includes(me().profile.id);
             return (
-              <li class="child">
-                <div class="list-row">
+              <li class={styles.child}>
+                <div class={u.listRow}>
                   <span>{child.profiles.display_name}</span>
-                  <span class="row">
+                  <span class={u.row}>
                     <Show when={iAmParent()}>
-                      <A class="link" href={`/children/${child.profile_id}`}>
+                      <A class={u.link} href={`/children/${child.profile_id}`}>
                         <EditLabel label={t("child.editProfile")} />
                       </A>
                     </Show>
                     <Show when={data.isManager() || iAmParent()}>
-                      <button
-                        type="button"
-                        class="link danger"
-                        onClick={() => props.onRemove(child)}
-                      >
+                      <Button variant="link" danger onClick={() => props.onRemove(child)}>
                         <RemoveLabel />
-                      </button>
+                      </Button>
                     </Show>
                   </span>
                 </div>
@@ -124,6 +124,6 @@ export function GroupChildren(props: {
           <button type="submit">{t("group.addChild")}</button>
         </form>
       </Show>
-    </section>
+    </Card>
   );
 }

@@ -50,13 +50,33 @@ looks without signing in or touching Supabase. It needs no `.env.local`.
 - `src/components/*.stories.tsx`: one file per component, one export per state
   (bought, own list, long name…). Change the args in the Controls panel to try more.
 - `src/stories/Styles.stories.tsx`: colours, type, buttons and form fields from
-  `src/index.css` on one page. Edit a token there and every story updates live.
+  `src/index.css` and the shared components on one page. Edit a token there and every story
+  updates live.
 
 To make a piece of a page available in Storybook, move it into `src/components/`
 as a component that only takes props (no Supabase calls), like `ItemCard`, and
 add a `.stories.tsx` file next to it. Use named exports for components
 (`export function ItemCard`): the Solid docs generator breaks on anonymous
 default exports.
+
+## Styles
+
+Every component and page keeps its styles in a CSS module next to it (`ItemCard.module.css`,
+imported as `styles`). Before adding a class, check what already exists:
+
+- `src/index.css`: theme tokens and base element styles (a plain `<button>` is the main action).
+- Shared components: `Button` (`variant`, `danger`, `size`) and `LinkButton`, `Card` (`as`),
+  `Popover` (`anchor`, `area`, `sheet`), `Person`, `Avatar`, `Chip`/`Chips`/`ChipButton`,
+  `Check`, `Select` and `EmptyState`.
+- `src/utilities.module.css` (imported as `u`): text (`muted`, `small`, `error`, `link`,
+  `truncate`, `center`) and layout (`row`, `stack`, `list`, `cards`, `listRow`, `indent`),
+  plus `labelText`/`labelIcon` for a label that turns into an icon on phones.
+
+Cascade layers keep the order predictable whatever the import order: base styles lose to the
+shared components, which lose to the utilities, and a component's own module beats all of them.
+So a component can restyle a `Card` or `Button` it uses by passing it a class. `.page` stays a
+global class: components reach for it with `:global(.page):has(...)` to change the page they are
+on (the groups grid, quick add's column).
 
 ## Languages
 
@@ -76,27 +96,28 @@ register it in `src/lib/i18n.ts`, and add a branch for it to the email templates
 
 ## Project layout
 
-| Path                      | What it is                                                            |
-| ------------------------- | --------------------------------------------------------------------- |
-| `src/lib/supabase.ts`     | The Supabase client                                                   |
-| `src/lib/auth.tsx`        | `AuthProvider` and `useAuth()`: the signed-in session as a signal     |
-| `src/pages/`              | One component per screen                                              |
-| `src/components/`         | Presentational components and their Storybook stories                 |
-| `.storybook/`             | Storybook config                                                      |
-| `src/index.css`           | Theme tokens (colours, spacing) and base styles                       |
-| `src/i18n/`               | UI text in English and Dutch, and language detection                  |
-| `supabase/templates/`     | Sign-in and invite email bodies, to paste into Supabase               |
-| `supabase/migrations/`    | Database schema and row-level security policies                       |
-| `supabase/seed.sql`       | Made-up accounts, groups and items for the local Supabase             |
-| `supabase/config.toml`    | Settings for the local Supabase (`vp run db:start`)                   |
-| `netlify/functions/`      | `keepalive`: daily ping so the free Supabase project never pauses     |
-|                           | `send-invite`: emails people invited to a group who have no account   |
-|                           | `page-info`: title and picture of a link pasted into quick add        |
-|                           | `send-digests`: evening email to followers of lists that changed      |
-| `netlify/lib/mail.ts`     | `sendEmail()`: app emails (not sign-in emails) through Resend         |
-| `netlify/lib/digest.ts`   | Builds the daily "what changed on lists you follow" emails            |
-| `netlify/lib/pageInfo.ts` | Reads a page's `og:` tags, with Microlink as fallback                 |
-| `public/pwa-icon.svg`     | Source of the home-screen icons (`pwa-*.png`, `apple-touch-icon.png`) |
+| Path                       | What it is                                                            |
+| -------------------------- | --------------------------------------------------------------------- |
+| `src/lib/supabase.ts`      | The Supabase client                                                   |
+| `src/lib/auth.tsx`         | `AuthProvider` and `useAuth()`: the signed-in session as a signal     |
+| `src/pages/`               | One component per screen                                              |
+| `src/components/`          | Presentational components and their Storybook stories                 |
+| `.storybook/`              | Storybook config                                                      |
+| `src/index.css`            | Theme tokens (colours, spacing) and base styles                       |
+| `src/utilities.module.css` | Shared text and layout classes (see Styles)                           |
+| `src/i18n/`                | UI text in English and Dutch, and language detection                  |
+| `supabase/templates/`      | Sign-in and invite email bodies, to paste into Supabase               |
+| `supabase/migrations/`     | Database schema and row-level security policies                       |
+| `supabase/seed.sql`        | Made-up accounts, groups and items for the local Supabase             |
+| `supabase/config.toml`     | Settings for the local Supabase (`vp run db:start`)                   |
+| `netlify/functions/`       | `keepalive`: daily ping so the free Supabase project never pauses     |
+|                            | `send-invite`: emails people invited to a group who have no account   |
+|                            | `page-info`: title and picture of a link pasted into quick add        |
+|                            | `send-digests`: evening email to followers of lists that changed      |
+| `netlify/lib/mail.ts`      | `sendEmail()`: app emails (not sign-in emails) through Resend         |
+| `netlify/lib/digest.ts`    | Builds the daily "what changed on lists you follow" emails            |
+| `netlify/lib/pageInfo.ts`  | Reads a page's `og:` tags, with Microlink as fallback                 |
+| `public/pwa-icon.svg`      | Source of the home-screen icons (`pwa-*.png`, `apple-touch-icon.png`) |
 
 ## Installing on a phone
 

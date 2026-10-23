@@ -1,11 +1,13 @@
+import u from "../utilities.module.css";
+
 /** An "edit" or "manage" label as text, or a pencil on small screens (the text stays available to screen readers). */
 export function EditLabel(props: { label: string; icon?: "pencil" | "chevron" }) {
   return (
     <>
-      <span class="edit-text">{props.label}</span>
+      <span class={u.labelText}>{props.label}</span>
       {/* Lucide "pencil" and "chevron-right" (ISC licence). */}
       <svg
-        class="edit-icon"
+        class={u.labelIcon}
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"

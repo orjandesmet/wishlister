@@ -17,6 +17,7 @@ import NewGroup from "./pages/NewGroup.tsx";
 import Settings from "./pages/Settings.tsx";
 import Unfollow from "./pages/Unfollow.tsx";
 import WishList from "./pages/WishList.tsx";
+import u from "./utilities.module.css";
 
 function Tabs() {
   const me = useMe();
@@ -30,7 +31,10 @@ const SignedIn: ParentComponent = (props) => {
   // Remember where they were going (an invite link, say) to come back after signing in.
   const login = () => `/login?next=${encodeURIComponent(location.pathname)}`;
   return (
-    <Show when={!loading()} fallback={<p class="center muted">{t("common.loading")}</p>}>
+    <Show
+      when={!loading()}
+      fallback={<p class={`${u.center} ${u.muted}`}>{t("common.loading")}</p>}
+    >
       <Show when={session()} fallback={<Navigate href={login()} />}>
         <MeProvider>
           <main class="page">{props.children}</main>
