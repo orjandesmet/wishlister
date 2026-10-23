@@ -15,6 +15,12 @@ const MAX_REDIRECTS = 8;
 const TIMEOUT_MS = 4000;
 /** Both together stay under the 9.5s the app waits (and Netlify's 10s limit). */
 const MICROLINK_TIMEOUT_MS = 3500;
+/**
+ * Shops that block both us and Microlink (bol.com: "Your access to bol has been
+ * temporarily blocked"), so looking them up only spends Microlink requests.
+ * Matches the domain and its subdomains. bol.com data needs its API (#72).
+ */
+const BLOCKING_SITES = ["bol.com"];
 /** Longer titles are cut, so a name still fits on a card. */
 const MAX_TITLE = 150;
 
@@ -51,18 +57,22 @@ export function isFetchableUrl(raw: string): boolean {
 
 /** Finds the title, picture and price in a page's HTML, preferring Open Graph tags. */
 export function parsePageInfo(html: string, pageUrl: string): PageInfo {
-  const meta = new Map<string, string>();
-  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
-    const attrs = parseAttributes(tag);
-    const key = (attrs.property ?? attrs.name ?? attrs.itemprop)?.toLowerCase();
-    if (key && attrs.content !== undefined && !meta.has(key)) meta.set(key, attrs.content);
-  }
-  const titleTag = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
+  // The name and picture only come from the <head>: a page's body is full of
+  // other titles (an SVG logo's <title>bol</title>…). The price can be anywhere.
+  const headEnd = html.search(/<\/head>/i);
+  const head = headEnd === -1 ? html : html.slice(0, headEnd);
+  const headMeta = metaTags(head);
+  const meta = metaTags(html);
+  const titleTag = head.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
   const product = findProductData(html);
-  const title = [meta.get("og:title"), meta.get("twitter:title"), product?.name, titleTag]
+  const title = [headMeta.get("og:title"), headMeta.get("twitter:title"), product?.name, titleTag]
     .map((value) => (value === undefined ? "" : cleanText(value)))
     .find((value) => value.length > 0);
-  const image = [meta.get("og:image:secure_url"), meta.get("og:image"), meta.get("twitter:image")]
+  const image = [
+    headMeta.get("og:image:secure_url"),
+    headMeta.get("og:image"),
+    headMeta.get("twitter:image"),
+  ]
     .map((value) => (value ? absoluteHttpUrl(decodeEntities(value.trim()), pageUrl) : null))
     .find((value) => value !== null);
   // Shops' own meta tags first (Facebook's product tags), then schema.org data:
@@ -73,6 +83,17 @@ export function parsePageInfo(html: string, pageUrl: string): PageInfo {
     product?.price ??
     toPrice(meta.get("price"), meta.get("pricecurrency"));
   return { title: title ? truncate(title, MAX_TITLE) : null, image: image ?? null, price };
+}
+
+/** The page's <meta> tags by property, name or itemprop (lowercase); the first one wins. */
+function metaTags(html: string): Map<string, string> {
+  const meta = new Map<string, string>();
+  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
+    const attrs = parseAttributes(tag);
+    const key = (attrs.property ?? attrs.name ?? attrs.itemprop)?.toLowerCase();
+    if (key && attrs.content !== undefined && !meta.has(key)) meta.set(key, attrs.content);
+  }
+  return meta;
 }
 
 /**
@@ -102,21 +123,61 @@ function parseAmount(raw: unknown): number | null {
 /**
  * Reads the page ourselves first. Big shops behind bot protection (lego.com…)
  * refuse that, so then Microlink, which opens the page in a real browser, is
- * asked instead. Never throws.
+ * asked instead. A page titled only with the shop's name is a block page, not
+ * the product (bol.com answers both with one titled "bol"), so it counts as
+ * nothing found and the app keeps the name it made from the link. Never throws.
  */
 export async function lookUpPage(
   url: string,
   microlinkKey: string | undefined,
   fetchImpl: typeof fetch = fetch,
 ): Promise<PageInfo> {
-  const direct = await fetchPageInfo(url, fetchImpl);
+  if (isBlockingSite(url)) {
+    console.log(`page-info: skipping ${url}, the site blocks lookups`);
+    return { title: null, image: null, price: null };
+  }
+  const direct = withoutBlockPage(await fetchPageInfo(url, fetchImpl), url);
   if (direct.title) return direct;
-  const microlink = await fetchMicrolink(url, microlinkKey, fetchImpl);
+  const microlink = withoutBlockPage(await fetchMicrolink(url, microlinkKey, fetchImpl), url);
   return {
     title: microlink.title,
     image: direct.image ?? microlink.image,
     price: direct.price ?? microlink.price,
   };
+}
+
+/** Whether the link is on a site in BLOCKING_SITES. */
+export function isBlockingSite(url: string): boolean {
+  let host: string;
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return BLOCKING_SITES.some((site) => host === site || host.endsWith(`.${site}`));
+}
+
+/**
+ * Whether a title is just the site's name: "bol" or "bol.com" for www.bol.com.
+ * That's what shops' block and error pages are called.
+ */
+export function isSiteName(title: string, url: string): boolean {
+  let host: string;
+  try {
+    host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return false;
+  }
+  const name = title.toLowerCase().replace(/\s+/g, "");
+  const site = host.split(".").at(-2);
+  return name === host || (site !== undefined && name === site);
+}
+
+/** Drops the title and picture of a block page (see isSiteName), keeping any price. */
+function withoutBlockPage(info: PageInfo, url: string): PageInfo {
+  if (!info.title || !isSiteName(info.title, url)) return info;
+  console.log(`page-info: only the site's name ("${info.title}") for ${url}, probably blocked`);
+  return { title: null, image: null, price: info.price };
 }
 
 /**
@@ -216,8 +277,9 @@ export async function fetchPageInfo(
         await response.body?.cancel();
         return failed(rawUrl, `status ${response.status}, ${type || "no content type"}`, url);
       }
-      const info = parsePageInfo(await readStart(response, type), url);
+      const info = parsePageInfo(await readStart(response, type, url), url);
       if (!info.title) failed(rawUrl, "no title found in the page", url);
+      else if (!info.price) console.log(`page-info: no price found for ${rawUrl}`);
       return info;
     }
     return failed(rawUrl, "too many redirects", url);
@@ -320,8 +382,12 @@ function findProduct(node: unknown): Record<string, unknown> | undefined {
   return findProduct(record["@graph"]);
 }
 
-/** Reads at most MAX_BYTES of the body, decoded with the page's charset. */
-async function readStart(response: Response, contentType: string): Promise<string> {
+/**
+ * Reads at most MAX_BYTES of the body, decoded with the page's charset. Stops at
+ * </head> when the head already has a price; otherwise reads on, because many
+ * shops (bol.com…) put their JSON-LD product data in the body.
+ */
+async function readStart(response: Response, contentType: string, url: string): Promise<string> {
   const charset = contentType.match(/charset=["']?([\w-]+)/i)?.[1] ?? "utf-8";
   let decoder: TextDecoder;
   try {
@@ -333,13 +399,16 @@ async function readStart(response: Response, contentType: string): Promise<strin
   const reader = response.body.getReader();
   let text = "";
   let bytes = 0;
+  let headChecked = false;
   while (bytes < MAX_BYTES) {
     const { done, value } = await reader.read();
     if (done) break;
     bytes += value.byteLength;
     text += decoder.decode(value, { stream: true });
-    // The head is all we need.
-    if (/<\/head>/i.test(text)) break;
+    if (!headChecked && /<\/head>/i.test(text)) {
+      headChecked = true;
+      if (parsePageInfo(text, url).price) break;
+    }
   }
   await reader.cancel();
   return text;

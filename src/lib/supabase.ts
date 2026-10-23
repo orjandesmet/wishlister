@@ -9,4 +9,13 @@ if (!url || !key) {
   );
 }
 
-export const supabase = createClient(url, key);
+export const supabase = createClient(url, key, {
+  auth: {
+    // These are the defaults, spelled out because staying signed in depends on them: the
+    // session is saved in localStorage, and the access token (1 hour) is renewed with the
+    // refresh token before it runs out, also when the app comes back from the background.
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+  },
+});

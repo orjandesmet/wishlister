@@ -2,7 +2,9 @@ import { describe, expect, it, vi } from "vite-plus/test";
 import {
   fetchMicrolink,
   fetchPageInfo,
+  isBlockingSite,
   isFetchableUrl,
+  isSiteName,
   lookUpPage,
   parsePageInfo,
   toPrice,
@@ -114,12 +116,32 @@ describe("parsePageInfo", () => {
     });
   });
 
+  it("takes the name from the head, not from titles in the body", () => {
+    const html = `<html><head><title>LEGO BMW M3 | bol</title></head>
+      <body><svg><title>bol</title></svg><meta property="og:title" content="Other"></body></html>`;
+    expect(parsePageInfo(html, "https://www.bol.com/x").title).toBe("LEGO BMW M3 | bol");
+    // Without a title in the head, a body <title> doesn't count either.
+    expect(
+      parsePageInfo("<head></head><body><svg><title>bol</title></svg></body>", "https://x.example")
+        .title,
+    ).toBeNull();
+  });
+
   it("gives nulls when the page has neither", () => {
     expect(parsePageInfo("<p>hi</p>", "https://x.example")).toEqual({
       title: null,
       image: null,
       price: null,
     });
+  });
+});
+
+describe("isSiteName", () => {
+  it("spots titles that are only the site's name", () => {
+    expect(isSiteName("bol", "https://www.bol.com/be/nl/p/x/1/")).toBe(true);
+    expect(isSiteName("Bol.com", "https://www.bol.com/x")).toBe(true);
+    expect(isSiteName("LEGO", "https://www.lego.com/nl-be/product/x")).toBe(true);
+    expect(isSiteName("Xiaomi stofzuiger | bol", "https://www.bol.com/x")).toBe(false);
   });
 });
 
@@ -143,6 +165,28 @@ describe("toPrice", () => {
 describe("fetchPageInfo", () => {
   const html = (body: string, status = 200) =>
     new Response(body, { status, headers: { "content-type": "text/html; charset=utf-8" } });
+
+  it("reads on past the head for a price in the body", async () => {
+    // Like bol.com: Open Graph tags in the head, JSON-LD product data in the body.
+    const chunks = [
+      `<html><head><meta property="og:title" content="LEGO BMW M3"></head>`,
+      `<body><script type="application/ld+json">{"@type":"Product","name":"LEGO BMW M3",
+        "offers":{"@type":"Offer","price":179.99,"priceCurrency":"EUR"}}</script></body></html>`,
+    ];
+    const body = new ReadableStream<Uint8Array>({
+      start(controller) {
+        for (const chunk of chunks) controller.enqueue(new TextEncoder().encode(chunk));
+        controller.close();
+      },
+    });
+    const fetch = async () =>
+      new Response(body, { headers: { "content-type": "text/html; charset=utf-8" } });
+    expect(await fetchPageInfo("https://www.bol.com/nl/nl/p/x/1/", fetch)).toEqual({
+      title: "LEGO BMW M3",
+      image: null,
+      price: { amount: 179.99, currency: "EUR" },
+    });
+  });
 
   it("follows redirects and reads the final page", async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
@@ -221,6 +265,40 @@ describe("Microlink fallback", () => {
     const [endpoint] = fetch.mock.calls[1] as [URL];
     expect(endpoint.origin).toBe("https://api.microlink.io");
     expect(endpoint.searchParams.get("url")).toBe("https://www.lego.com/nl-nl/product/x-77244");
+  });
+
+  it("doesn't look up sites that block lookups", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>();
+    expect(await lookUpPage("https://www.bol.com/be/nl/p/x/930/", "key_1", fetch)).toEqual({
+      title: null,
+      image: null,
+      price: null,
+    });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(isBlockingSite("https://bol.com/x")).toBe(true);
+    expect(isBlockingSite("https://www.symbol.com/x")).toBe(false);
+  });
+
+  it("treats a page titled with only the shop's name as nothing found", async () => {
+    // Shops' block pages are often titled like this, e.g. bol.com's "bol".
+    const block = () =>
+      new Response("<head><title>Blokker</title></head>", {
+        headers: { "content-type": "text/html" },
+      });
+    const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
+      new URL(url instanceof Request ? url.url : url).hostname.endsWith("microlink.io")
+        ? Response.json({
+            status: "success",
+            data: { title: "blokker.nl", html: "<title>blokker.nl</title>" },
+          })
+        : block(),
+    );
+    expect(await lookUpPage("https://www.blokker.nl/p/stofzuiger/930/", undefined, fetch)).toEqual({
+      title: null,
+      image: null,
+      price: null,
+    });
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it("doesn't ask Microlink when the page itself has a title", async () => {

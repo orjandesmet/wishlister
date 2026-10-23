@@ -14,7 +14,7 @@ import { today } from "../lib/occasions.ts";
 import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
-import { supabase } from "../lib/supabase.ts";
+import { signOutHere } from "../lib/auth.tsx";
 
 /** Your name, language and currency, the children you look after, and signing out. */
 export default function Settings() {
@@ -133,7 +133,7 @@ export default function Settings() {
           {error()}
         </p>
       </Show>
-      <button type="button" class="secondary danger" onClick={() => void supabase.auth.signOut()}>
+      <button type="button" class="secondary danger" onClick={() => void signOutHere()}>
         {t("account.signOut")}
       </button>
     </>
