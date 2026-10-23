@@ -28,7 +28,7 @@ export const nl: Dictionary = {
   nav: {
     groups: "Groepen",
     myList: "Mijn lijstje",
-    myLists: "Mijn lijstjes",
+    settings: "Instellingen",
   },
   me: {
     loadFailed: (p) => `Je profiel kon niet geladen worden: ${p.message}`,
@@ -66,6 +66,7 @@ export const nl: Dictionary = {
     empty:
       "Je zit nog niet in een groep. Maak er hieronder een aan, of vraag iemand om een uitnodigingslink.",
     newGroup: "Nieuwe groep",
+    addGroup: "Groep toevoegen",
     newGroupPlaceholder: "bv. Familie",
     create: "Groep aanmaken",
   },
@@ -74,10 +75,12 @@ export const nl: Dictionary = {
     details: "Details",
     guardian: "voogd",
     child: "kind",
-    nextOccasion: (p) => `🎁 ${p.name} · ${p.date} (${p.when})`,
+    nextOccasion: (p) => `${p.name} · ${p.date} (${p.when})`,
     today: "vandaag",
     tomorrow: "morgen",
     inDays: (p) => `over ${p.days} dagen`,
+    occasionLine: (p) => `${p.name} · ${p.date}`,
+    daysUnit: "dagen",
   },
   group: {
     back: "‹ Groepen",
@@ -151,12 +154,18 @@ export const nl: Dictionary = {
     confirmDelete: (p: { name: string }) => `${p.name} wissen voor de hele groep?`,
   },
   child: {
+    editProfile: "Profiel bewerken",
+    name: "Naam",
+    fallbackTitle: "Kind",
+    unavailable: "Dit kind is niet beschikbaar.",
+    parents: "Ouders",
+    deleteProfile: "Profiel wissen",
     confirmDelete: (p) =>
       `Het profiel en verlanglijstje van ${p.name} voor iedereen wissen? Dit kan niet ongedaan gemaakt worden.`,
   },
   item: {
-    onlyVisibleIn: (p) => `Alleen zichtbaar in ${p.groups}`,
-    private: "🔒 Met geen enkele groep gedeeld",
+    onlyVisibleIn: (p) => <>Alleen zichtbaar in {p.groups}</>,
+    private: "Met geen enkele groep gedeeld",
     youBought: "Jij hebt dit gekocht",
     undo: "Ongedaan maken",
     someoneBought: "Iemand heeft dit gekocht",
@@ -164,7 +173,7 @@ export const nl: Dictionary = {
     youBoughtFor: (p) => `Jij kocht dit voor ${p.occasion}`,
     forWhichOccasion: "Voor welke gelegenheid is het?",
     noOccasion: "Niet voor een gelegenheid",
-    notWanted: "🚫 Liever niet",
+    notWanted: "Liever niet",
     convertedPrice: (p) => `≈ ${p.price}`,
   },
   unfollow: {
@@ -183,8 +192,13 @@ export const nl: Dictionary = {
     untilOccasion: (p) => `Dat is ${p.occasion}.`,
     following: (p) =>
       `Je volgt dit lijstje tot ${p.date}. Je krijgt een e-mail op dagen dat er iets verandert.`,
+    title: (p) => `Volg het lijstje van ${p.name}`,
+    followingTitle: "Je volgt dit lijstje",
+    untilDate: (p) => `Tot ${p.date}`,
+    emailNote: "Je krijgt een e-mail op dagen dat er iets bijkomt, verdwijnt of gekocht wordt.",
     changeDate: "Datum aanpassen",
     stop: "Niet meer volgen",
+    autoFollowed: "Je volgt dit lijstje nu",
   },
 
   listOrder: {
@@ -206,10 +220,17 @@ export const nl: Dictionary = {
     saving: "Opslaan…",
     notSaved: "Nog niet opgeslagen",
     retrying: "Opslaan mislukt. We proberen het opnieuw…",
-    notWantedHint: "Begin met ! voor iets wat je niet wilt, zoals !mokken.",
+    moreOptions: "Meer opties…",
+    notWantedHint: () => (
+      <>
+        Begin met <strong>!</strong> voor iets wat je niet wilt, zoals <strong>!kousen</strong>.
+      </>
+    ),
   },
   itemForm: {
     addTitle: "Item toevoegen",
+    saveAndAnother: "Opslaan en nog een toevoegen",
+    savedAnother: (p) => `“${p.name}” opgeslagen. Voeg de volgende toe.`,
     editTitle: "Item bewerken",
     name: "Naam",
     link: "Link (optioneel)",
@@ -252,14 +273,23 @@ export const nl: Dictionary = {
     joining: "Bezig…",
   },
   account: {
-    myLists: "Mijn lijstjes",
-    title: "Account",
-    myWishlist: "Mijn verlanglijstje",
-    childWishlist: (p) => `Verlanglijstje van ${p.name}`,
+    title: "Instellingen",
+    children: "Kinderen",
+    childrenHelp:
+      "De verlanglijstjes van de kinderen voor wie je zorgt. Open er een om hun wensen toe te voegen.",
+    deleteProfile: "Profiel wissen",
+    childWishlist: (p) => `Lijstje van ${p.name}`,
     yourName: "Je naam, zoals anderen hem zien",
     saveName: "Naam opslaan",
     saved: "Opgeslagen.",
     signOut: "Afmelden",
+  },
+  notifications: {
+    title: "Meldingen",
+    help: "De lijstjes waarvan je een e-mail krijgt als er iets verandert.",
+    none: "Je volgt geen lijstjes.",
+    unsubscribeAll: "Alles stopzetten",
+    confirmUnsubscribeAll: "Alle lijstjes niet meer volgen? Je krijgt dan geen e-mails meer.",
   },
   bulk: {
     title: "Meerdere items bewerken",
@@ -281,15 +311,15 @@ export const nl: Dictionary = {
   },
   wishlist: {
     fallbackTitle: "Verlanglijstje",
+    switchList: "Andere lijstjes",
     mine: "Mijn verlanglijstje",
-    theirs: (p) => `Verlanglijstje van ${p.name}`,
-    accountLink: "Je naam, taal en afmelden",
+    theirs: (p) => `Lijstje van ${p.name}`,
     unavailable: "Dit lijstje is niet beschikbaar. Misschien is het niet met jou gedeeld.",
     emptyOwn: "Nog niets op dit lijstje.",
     empty: "Dit lijstje is nog leeg.",
     confirmRemoveItem: (p) => `"${p.item}" van het lijstje verwijderen?`,
     deleteProfile: (p) => `Profiel van ${p.name} wissen`,
-    addItem: "+ Item toevoegen",
+    addItem: "Item toevoegen",
     aGroup: "een groep",
   },
 };

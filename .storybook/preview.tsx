@@ -10,6 +10,19 @@ export default {
   parameters: { layout: "padded" },
   // A globe in the toolbar switches every story's language.
   globalTypes: {
+    // Forces the light or dark tokens instead of following the system.
+    theme: {
+      description: "Colour scheme",
+      toolbar: {
+        icon: "mirror",
+        items: [
+          { value: "auto", title: "System" },
+          { value: "light", title: "Light" },
+          { value: "dark", title: "Dark" },
+        ],
+        dynamicTitle: true,
+      },
+    },
     locale: {
       description: "Language",
       toolbar: {
@@ -23,10 +36,16 @@ export default {
     },
   },
   // Phone-sized canvas by default: the app is mobile first.
-  initialGlobals: { viewport: { value: "mobile2", isRotated: false }, locale: "en" },
+  initialGlobals: { viewport: { value: "mobile2", isRotated: false }, locale: "en", theme: "auto" },
   decorators: [
     // Components use <A> links, which need a router around them.
     (Story) => <MemoryRouter root={() => <Story />} />,
+    (Story, context) => {
+      const theme: unknown = context.globals.theme;
+      document.documentElement.style.colorScheme =
+        theme === "light" || theme === "dark" ? theme : "light dark";
+      return <Story />;
+    },
     (Story, context) => {
       const locale: unknown = context.globals.locale;
       if (isLocale(locale)) setLocale(locale);

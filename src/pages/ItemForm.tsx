@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "@solidjs/router";
+import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import { createEffect, createMemo, createResource, createSignal, For, on, Show } from "solid-js";
 import { CategoryChips } from "../components/CategoryChips.tsx";
 import { addItem, getCategories, getItem, updateItem } from "../lib/api/items.ts";
@@ -7,12 +7,17 @@ import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { currencies, displayCurrency, parsePriceInput } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
+import type { ItemDraft } from "../lib/itemDraft.ts";
+import { splitLink } from "../lib/links.ts";
+import { splitNotWanted } from "../lib/notWanted.ts";
 import { isReady } from "../lib/resource.ts";
+import { Select } from "../components/Select.tsx";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {
   const params = useParams<{ profileId?: ProfileId; itemId?: ItemId }>();
   const navigate = useNavigate();
+  const location = useLocation<ItemDraft>();
 
   const [item] = createResource(() => params.itemId, getItem);
   const profileId = () => params.profileId ?? item()?.profile_id;
@@ -41,6 +46,8 @@ export default function ItemForm() {
   );
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
+  const [savedName, setSavedName] = createSignal<string>();
+  const [nameInput, setNameInput] = createSignal<HTMLInputElement>();
 
   // When editing, copy the loaded item into the form once.
   createEffect(
@@ -63,12 +70,28 @@ export default function ItemForm() {
     }),
   );
 
+  // Coming from quick add: carry on with what was typed there.
+  const draft = location.state;
+  if (draft && !params.itemId) {
+    const { notWanted: unwanted, text } = splitNotWanted(draft.text ?? "");
+    const { url: link, name: typedName } = splitLink(text);
+    setName(typedName);
+    setUrl(link ?? "");
+    setNotWanted(unwanted);
+    const picked = draft.groups ?? "all";
+    const ids = picked === "all" ? [] : picked;
+    setVisibility(picked === "all" ? "all" : ids.length > 0 ? "some" : "none");
+    setGroupIds(ids);
+  }
+
   const toggleGroup = (id: GroupId, checked: boolean) =>
     setGroupIds((ids) => (checked ? [...ids, id] : ids.filter((other) => other !== id)));
 
   async function onSubmit(event: SubmitEvent) {
     event.preventDefault();
+    const another = event.submitter?.hasAttribute("data-another") ?? false;
     setError(undefined);
+    setSavedName(undefined);
     const amount = parsePriceInput(price());
     if (Number.isNaN(amount)) {
       setError(t("itemForm.invalidPrice"));
@@ -87,6 +110,17 @@ export default function ItemForm() {
     try {
       if (params.itemId) await updateItem(params.itemId, input);
       else await addItem(profileId()!, input);
+      if (another) {
+        // Starts the next item; the category, groups and currency tend to stay the same.
+        setSavedName(input.name);
+        setName("");
+        setUrl("");
+        setPrice("");
+        setNotWanted(false);
+        setBusy(false);
+        nameInput()?.focus();
+        return;
+      }
       navigate(`/lists/${profileId()}`, { replace: true });
     } catch (e) {
       setError((e as Error).message);
@@ -112,7 +146,12 @@ export default function ItemForm() {
         <form class="card" onSubmit={onSubmit}>
           <label>
             {t("itemForm.name")}
-            <input required value={name()} onInput={(e) => setName(e.currentTarget.value)} />
+            <input
+              required
+              ref={setNameInput}
+              value={name()}
+              onInput={(e) => setName(e.currentTarget.value)}
+            />
           </label>
           <label>
             {t("itemForm.link")}
@@ -157,7 +196,7 @@ export default function ItemForm() {
             <label>
               {t("itemForm.currency")}
               {/* Per-option selected: a select's value isn't re-applied when its options change. */}
-              <select value={currency()} onChange={(e) => setCurrency(e.currentTarget.value)}>
+              <Select value={currency()} onChange={(e) => setCurrency(e.currentTarget.value)}>
                 <For each={currencyOptions()}>
                   {(code) => (
                     <option value={code} selected={code === currency()}>
@@ -165,7 +204,7 @@ export default function ItemForm() {
                     </option>
                   )}
                 </For>
-              </select>
+              </Select>
             </label>
           </div>
           <fieldset>
@@ -224,11 +263,21 @@ export default function ItemForm() {
           <button type="submit" disabled={busy()}>
             {busy() ? t("common.saving") : t("common.save")}
           </button>
+          <Show when={!params.itemId}>
+            <button type="submit" class="secondary" data-another disabled={busy()}>
+              {t("itemForm.saveAndAnother")}
+            </button>
+          </Show>
           <button type="button" class="secondary" onClick={() => history.back()}>
             {t("common.cancel")}
           </button>
           <Show when={error()}>
             <p class="error">{error()}</p>
+          </Show>
+          <Show when={savedName()}>
+            <p class="muted" role="status">
+              {t("itemForm.savedAnother", { name: savedName()! })}
+            </p>
           </Show>
         </form>
       </Show>

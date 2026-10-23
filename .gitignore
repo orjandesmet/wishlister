@@ -36,3 +36,4 @@ storybook-static
 
 # Local Netlify folder
 .netlify
+.taste-skill/

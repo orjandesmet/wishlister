@@ -1,7 +1,8 @@
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, onMount, Show } from "solid-js";
 import type { GroupSelection } from "../lib/api/items.ts";
 import { t } from "../lib/i18n.ts";
 import type { GroupId } from "../lib/ids.ts";
+import type { ItemDraft } from "../lib/itemDraft.ts";
 import type { PendingItem } from "../lib/quickAddQueue.ts";
 
 export type QuickAddProps = {
@@ -15,7 +16,45 @@ export type QuickAddProps = {
   onAdd: (name: string, groups: GroupSelection) => void;
   /** Stops retrying and removes the pending items. */
   onCancel: () => void;
+  /** Goes to the full item form, taking along what was typed and the groups picked. */
+  onOpenForm: (draft: ItemDraft) => void;
+  /** Show the popover right away instead of waiting for the floating button. */
+  initiallyOpen?: boolean;
 };
+
+/**
+ * Opens the quick add popover. Floating and shy by default; `inline` keeps its text, for an
+ * empty list where it is the one thing to do.
+ */
+export function QuickAddButton(props: { inline?: boolean }) {
+  return (
+    <button
+      type="button"
+      class={props.inline ? "quick-add-inline" : "fab"}
+      aria-label={props.inline ? undefined : t("quickAdd.label")}
+      popovertarget="quick-add-popover"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M13 2 4 14h7l-1 8 7-10h-7z" />
+        <path d="M19 3v6M16 6h6" />
+      </svg>
+      <span
+        class={props.inline ? undefined : "fab-label"}
+        aria-hidden={props.inline ? undefined : true}
+      >
+        {t("quickAdd.label")}
+      </span>
+    </button>
+  );
+}
 
 /**
  * One field to add items fast: type a name, press Enter, type the next one.
@@ -43,71 +82,93 @@ export function QuickAdd(props: QuickAddProps) {
     setName("");
   }
 
+  const [popover, setPopover] = createSignal<HTMLDivElement>();
+  onMount(() => {
+    if (props.initiallyOpen) popover()?.showPopover();
+  });
+
   return (
-    <section class="stack">
-      <Show when={props.pending.length > 0}>
-        <ul class="list cards">
-          <For each={props.pending}>
-            {(item) => (
-              <li class="card item pending">
-                <strong class="item-name">{item.name}</strong>
-                <span class="muted small">
-                  {props.retrying ? t("quickAdd.notSaved") : t("quickAdd.saving")}
-                </span>
-              </li>
-            )}
-          </For>
-        </ul>
-      </Show>
-      <Show when={props.retrying}>
-        <div class="row" role="alert">
-          <p class="error small">{t("quickAdd.retrying")}</p>
-          <button type="button" class="secondary small" onClick={() => props.onCancel()}>
-            {t("common.cancel")}
-          </button>
-        </div>
-      </Show>
-      <form class="card" onSubmit={onSubmit}>
-        <div class="stack small-gap">
-          <span class="field-label">{t("quickAdd.visibleIn")}</span>
-          <div class="chips" role="group" aria-label={t("quickAdd.visibleIn")}>
-            <button
-              type="button"
-              class="chip-button"
-              aria-pressed={groups() === "all"}
-              onClick={() => setGroups(groups() === "all" ? [] : "all")}
-            >
-              {t("quickAdd.allGroups")}
+    <section class="stack quick-add">
+      <div class="stack quick-add-inner">
+        <Show when={props.pending.length > 0}>
+          <ul class="list cards">
+            <For each={props.pending}>
+              {(item) => (
+                <li class="card item pending">
+                  <strong class="item-name">{item.name}</strong>
+                  <span class="muted small">
+                    {props.retrying ? t("quickAdd.notSaved") : t("quickAdd.saving")}
+                  </span>
+                </li>
+              )}
+            </For>
+          </ul>
+        </Show>
+        <Show when={props.retrying}>
+          <div class="row" role="alert">
+            <p class="error small">{t("quickAdd.retrying")}</p>
+            <button type="button" class="secondary small" onClick={() => props.onCancel()}>
+              {t("common.cancel")}
             </button>
-            <For each={props.groups}>
-              {(group) => (
+          </div>
+        </Show>
+        <QuickAddButton />
+        <div
+          id="quick-add-popover"
+          ref={setPopover}
+          class="popover sheet-popover quick-add-popover"
+          popover
+        >
+          <form class="stack" onSubmit={onSubmit}>
+            <h2 class="card-title">{t("quickAdd.label")}</h2>
+            <input
+              autofocus
+              aria-label={t("quickAdd.label")}
+              value={name()}
+              onInput={(e) => setName(e.currentTarget.value)}
+              placeholder={t("quickAdd.placeholder")}
+              enterkeyhint="go"
+              autocomplete="off"
+            />
+            <p class="muted small">{t("quickAdd.notWantedHint")}</p>
+            <div class="stack small-gap">
+              <span class="field-label">{t("quickAdd.visibleIn")}</span>
+              <div class="chips" role="group" aria-label={t("quickAdd.visibleIn")}>
                 <button
                   type="button"
                   class="chip-button"
-                  aria-pressed={isPicked(group.id)}
-                  onClick={() => toggle(group.id)}
+                  aria-pressed={groups() === "all"}
+                  onClick={() => setGroups(groups() === "all" ? [] : "all")}
                 >
-                  {group.name}
+                  {t("quickAdd.allGroups")}
                 </button>
-              )}
-            </For>
-          </div>
-          <Show when={groups() !== "all" && groups().length === 0}>
-            <p class="muted small">{t("quickAdd.noGroupsHint")}</p>
-          </Show>
+                <For each={props.groups}>
+                  {(group) => (
+                    <button
+                      type="button"
+                      class="chip-button"
+                      aria-pressed={isPicked(group.id)}
+                      onClick={() => toggle(group.id)}
+                    >
+                      {group.name}
+                    </button>
+                  )}
+                </For>
+              </div>
+              <Show when={groups() !== "all" && groups().length === 0}>
+                <p class="muted small">{t("quickAdd.noGroupsHint")}</p>
+              </Show>
+            </div>
+            <button
+              type="button"
+              class="link quick-add-details"
+              onClick={() => props.onOpenForm({ text: name(), groups: groups() })}
+            >
+              {t("quickAdd.moreOptions")}
+            </button>
+          </form>
         </div>
-        <label>
-          {t("quickAdd.label")}
-          <input
-            value={name()}
-            onInput={(e) => setName(e.currentTarget.value)}
-            placeholder={t("quickAdd.placeholder")}
-            enterkeyhint="go"
-            autocomplete="off"
-          />
-        </label>
-        <p class="muted small">{t("quickAdd.notWantedHint")}</p>
-      </form>
+      </div>
     </section>
   );
 }

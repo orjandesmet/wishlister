@@ -1,7 +1,9 @@
+import { EditLabel } from "./EditLabel.tsx";
 import { A } from "@solidjs/router";
 import { For, Show } from "solid-js";
 import type { Group } from "../lib/api/groups.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
+import { Avatar } from "./Avatar.tsx";
 import { compareNames, locale, t } from "../lib/i18n.ts";
 import type { ProfileId } from "../lib/ids.ts";
 import { daysBetween, formatOccasionDate, type IsoDate } from "../lib/occasions.ts";
@@ -34,23 +36,52 @@ export function GroupCard(props: GroupCardProps) {
     return t("groupCard.inDays", { days });
   };
 
+  const soon = (date: IsoDate) => daysBetween(props.today, date) <= 1;
+
   return (
-    <section class="card">
+    <section class="card group-card">
       <div class="row">
         <h2>{props.group.name}</h2>
         <A class="link" href={`/groups/${props.group.id}`}>
-          {isManager() ? t("groupCard.manage") : t("groupCard.details")}
+          <Show
+            when={isManager()}
+            fallback={<EditLabel icon="chevron" label={t("groupCard.details")} />}
+          >
+            <EditLabel label={t("groupCard.manage")} />
+          </Show>
         </A>
       </div>
       <Show when={props.nextOccasion}>
         {(occasion) => (
-          <p class="muted small">
-            {t("groupCard.nextOccasion", {
+          <div
+            class="countdown"
+            role="group"
+            aria-label={t("groupCard.nextOccasion", {
               name: occasion().name,
               date: formatOccasionDate(occasion().date, locale()),
               when: when(occasion().date),
             })}
-          </p>
+          >
+            <span
+              class="countdown-tile"
+              classList={{ soon: soon(occasion().date) }}
+              aria-hidden="true"
+            >
+              <Show
+                when={daysBetween(props.today, occasion().date) > 1}
+                fallback={<strong>{when(occasion().date)}</strong>}
+              >
+                <strong>{daysBetween(props.today, occasion().date)}</strong>
+                <span>{t("groupCard.daysUnit")}</span>
+              </Show>
+            </span>
+            <p class="next-occasion" aria-hidden="true">
+              {t("groupCard.occasionLine", {
+                name: occasion().name,
+                date: formatOccasionDate(occasion().date, locale()),
+              })}
+            </p>
+          </div>
         )}
       </Show>
       <ul class="list">
@@ -62,7 +93,8 @@ export function GroupCard(props: GroupCardProps) {
                 when={member.role !== "guardian"}
                 fallback={
                   <div class="list-row">
-                    <span class="muted">
+                    <span class="person muted">
+                      <Avatar id={member.profile_id} name={member.profiles.display_name} />
                       {member.profiles.display_name}
                       {member.profile_id === props.myProfileId ? t("common.you") : ""}
                     </span>
@@ -71,7 +103,8 @@ export function GroupCard(props: GroupCardProps) {
                 }
               >
                 <A class="list-row" href={`/lists/${member.profile_id}`}>
-                  <span>
+                  <span class="person">
+                    <Avatar id={member.profile_id} name={member.profiles.display_name} />
                     {member.profiles.display_name}
                     {member.profile_id === props.myProfileId ? t("common.you") : ""}
                   </span>

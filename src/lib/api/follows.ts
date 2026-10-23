@@ -30,3 +30,26 @@ export async function unfollowList(listId: ProfileId) {
 export async function unfollowByToken(token: string): Promise<string | null> {
   return must(await supabase.rpc("unfollow_by_token", { token })) as string | null;
 }
+
+export type FollowedList = { listId: ProfileId; name: string; until: IsoDate };
+
+/** The lists I follow right now (ended follows left out), soonest end date first. */
+export async function getMyFollows(today: IsoDate): Promise<FollowedList[]> {
+  const rows = must(
+    await supabase
+      .from("list_follows")
+      .select("until, profiles!list_follows_list_id_fkey(id, display_name)")
+      .gte("until", today)
+      .order("until"),
+  ) as unknown as { until: IsoDate; profiles: { id: ProfileId; display_name: string } }[];
+  return rows.map((row) => ({
+    listId: row.profiles.id,
+    name: row.profiles.display_name,
+    until: row.until,
+  }));
+}
+
+/** Stops following every list. Row level security keeps this to my own follows. */
+export async function unfollowAll(followerId: ProfileId) {
+  must(await supabase.from("list_follows").delete().eq("follower_id", followerId));
+}

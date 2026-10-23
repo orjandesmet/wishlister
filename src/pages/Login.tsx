@@ -64,6 +64,7 @@ export default function Login() {
 
   return (
     <main class="card center" style={{ width: "100%" }}>
+      <img class="login-mark" src="/favicon.svg" alt="" />
       <h1>Wishlister</h1>
       <Switch>
         <Match when={step() === "email"}>

@@ -1,37 +1,26 @@
-import { A, Navigate, Route, Router, useLocation, useParams } from "@solidjs/router";
+import { Navigate, Route, Router, useLocation, useParams } from "@solidjs/router";
 import { Show, type Component, type ParentComponent } from "solid-js";
+import { TabBar } from "./components/TabBar.tsx";
 import { InstallBanner } from "./components/InstallBanner.tsx";
 import { AuthProvider, useAuth } from "./lib/auth.tsx";
 import { syncLocaleWithAccount } from "./lib/accountLocale.ts";
 import { t } from "./lib/i18n.ts";
 import { dismiss, install, installOffer } from "./lib/install.ts";
 import { MeProvider, useMe } from "./lib/me.tsx";
+import ChildSettings from "./pages/ChildSettings.tsx";
 import GroupSettings from "./pages/GroupSettings.tsx";
 import Home from "./pages/Home.tsx";
 import Join from "./pages/Join.tsx";
 import ItemForm from "./pages/ItemForm.tsx";
 import Login from "./pages/Login.tsx";
-import MyLists from "./pages/MyLists.tsx";
+import NewGroup from "./pages/NewGroup.tsx";
+import Settings from "./pages/Settings.tsx";
 import Unfollow from "./pages/Unfollow.tsx";
 import WishList from "./pages/WishList.tsx";
 
-/** Bottom navigation. Without children to look after, "My list" opens your own list directly. */
 function Tabs() {
   const me = useMe();
-  const hasChildren = () => (me().managed()?.length ?? 0) > 0;
-  return (
-    <nav class="tabs">
-      <A href="/" end>
-        {t("nav.groups")}
-      </A>
-      <Show
-        when={hasChildren()}
-        fallback={<A href={`/lists/${me().profile.id}`}>{t("nav.myList")}</A>}
-      >
-        <A href="/mine">{t("nav.myLists")}</A>
-      </Show>
-    </nav>
-  );
+  return <TabBar myProfileId={me().profile.id} />;
 }
 
 /** Layout route for signed-in pages: guards them and adds the bottom navigation. */
@@ -99,8 +88,12 @@ function App() {
       <Route path="/unfollow/:token" component={Unfollow} />
       <Route component={SignedIn}>
         <Route path="/" component={Home} />
-        <Route path="/mine" component={MyLists} />
+        <Route path="/settings" component={Settings} />
+        {/* The old account page. */}
+        <Route path="/mine" component={() => <Navigate href="/settings" />} />
+        <Route path="/groups/new" component={NewGroup} />
         <Route path="/groups/:groupId" component={freshPer("groupId", GroupSettings)} />
+        <Route path="/children/:profileId" component={freshPer("profileId", ChildSettings)} />
         <Route path="/lists/:profileId" component={freshPer("profileId", WishList)} />
         <Route path="/lists/:profileId/items/new" component={freshPer("profileId", ItemForm)} />
         <Route path="/items/:itemId/edit" component={freshPer("itemId", ItemForm)} />

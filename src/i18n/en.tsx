@@ -34,7 +34,7 @@ export const en = {
   nav: {
     groups: "Groups",
     myList: "My list",
-    myLists: "My lists",
+    settings: "Settings",
   },
   me: {
     loadFailed: (p: { message: string }) => `Couldn't load your profile: ${p.message}`,
@@ -71,6 +71,7 @@ export const en = {
     loadFailed: (p: { message: string }) => `Couldn't load your groups: ${p.message}`,
     empty: "You're not in a group yet. Create one below, or ask someone for an invite link.",
     newGroup: "New group",
+    addGroup: "Add group",
     newGroupPlaceholder: "e.g. Family",
     create: "Create group",
   },
@@ -80,10 +81,12 @@ export const en = {
     guardian: "guardian",
     child: "child",
     nextOccasion: (p: { name: string; date: string; when: string }) =>
-      `🎁 ${p.name} · ${p.date} (${p.when})`,
+      `${p.name} · ${p.date} (${p.when})`,
     today: "today",
     tomorrow: "tomorrow",
     inDays: (p: { days: number }) => `in ${p.days} days`,
+    occasionLine: (p: { name: string; date: string }) => `${p.name} · ${p.date}`,
+    daysUnit: "days",
   },
   group: {
     back: "‹ Groups",
@@ -160,12 +163,18 @@ export const en = {
     confirmDelete: (p: { name: string }) => `Delete ${p.name} for the whole group?`,
   },
   child: {
+    editProfile: "Edit profile",
+    name: "Name",
+    fallbackTitle: "Child",
+    unavailable: "This child is unavailable.",
+    parents: "Parents",
+    deleteProfile: "Delete profile",
     confirmDelete: (p: { name: string }) =>
       `Delete ${p.name}'s profile and wishlist for everyone? This can't be undone.`,
   },
   item: {
-    onlyVisibleIn: (p: { groups: string }) => `Only visible in ${p.groups}`,
-    private: "🔒 Not shared with any group",
+    onlyVisibleIn: (p: { groups: JSX.Element }) => <>Only visible in {p.groups}</>,
+    private: "Not shared with any group",
     youBought: "You bought this",
     undo: "Undo",
     someoneBought: "Someone bought this",
@@ -173,7 +182,7 @@ export const en = {
     youBoughtFor: (p: { occasion: string }) => `You bought this for ${p.occasion}`,
     forWhichOccasion: "Which occasion is it for?",
     noOccasion: "Not for an occasion",
-    notWanted: "🚫 Please don't buy",
+    notWanted: "Please don't buy",
     convertedPrice: (p: { price: string }) => `≈ ${p.price}`,
   },
   unfollow: {
@@ -192,8 +201,13 @@ export const en = {
     untilOccasion: (p: { occasion: string }) => `That's ${p.occasion}.`,
     following: (p: { date: string }) =>
       `You're following this list until ${p.date}. You get an email on days something changes.`,
+    title: (p: { name: string }) => `Follow ${p.name}'s list`,
+    followingTitle: "You're following this list",
+    untilDate: (p: { date: string }) => `Until ${p.date}`,
+    emailNote: "You get an email on days something is added, removed or bought.",
     changeDate: "Change date",
     stop: "Stop following",
+    autoFollowed: "You're now following this list",
   },
 
   listOrder: {
@@ -215,10 +229,17 @@ export const en = {
     saving: "Saving…",
     notSaved: "Not saved yet",
     retrying: "Couldn't save. Trying again…",
-    notWantedHint: "Start with ! for something you don't want, like !mugs.",
+    moreOptions: "More options…",
+    notWantedHint: () => (
+      <>
+        Start with <strong>!</strong> for something you don't want, like <strong>!socks</strong>.
+      </>
+    ),
   },
   itemForm: {
     addTitle: "Add item",
+    saveAndAnother: "Save, and add another",
+    savedAnother: (p: { name: string }) => `Saved “${p.name}”. Add the next one.`,
     editTitle: "Edit item",
     name: "Name",
     link: "Link (optional)",
@@ -262,14 +283,22 @@ export const en = {
     joining: "Joining…",
   },
   account: {
-    myLists: "My lists",
-    title: "Account",
-    myWishlist: "My wishlist",
+    title: "Settings",
+    children: "Children",
+    childrenHelp: "The wish lists of the children you look after. Open one to add their wishes.",
+    deleteProfile: "Delete profile",
     childWishlist: (p: { name: string }) => `${p.name}'s wishlist`,
     yourName: "Your name, as others see it",
     saveName: "Save name",
     saved: "Saved.",
     signOut: "Sign out",
+  },
+  notifications: {
+    title: "Notifications",
+    help: "The lists you get an email about when something changes.",
+    none: "You're not following any lists.",
+    unsubscribeAll: "Unsubscribe from all",
+    confirmUnsubscribeAll: "Stop following all lists? You won't get any more emails.",
   },
   bulk: {
     title: "Edit several items",
@@ -289,15 +318,15 @@ export const en = {
   },
   wishlist: {
     fallbackTitle: "Wishlist",
+    switchList: "Other lists",
     mine: "My wishlist",
     theirs: (p: { name: string }) => `${p.name}'s wishlist`,
-    accountLink: "Your name, language and sign out",
     unavailable: "This list isn't available. It may not be shared with you.",
     emptyOwn: "Nothing on this list yet.",
     empty: "This list is still empty.",
     confirmRemoveItem: (p: { item: string }) => `Remove "${p.item}" from the list?`,
     deleteProfile: (p: { name: string }) => `Delete ${p.name}'s profile`,
-    addItem: "+ Add item",
+    addItem: "Add item",
     aGroup: "a group",
   },
 };

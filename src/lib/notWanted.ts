@@ -1,6 +1,6 @@
 /**
  * Quick add makes a "please don't buy" entry when the line starts with "!", as in
- * "!mugs". Returns the rest of the line, trimmed, and whether it was there.
+ * "!socks". Returns the rest of the line, trimmed, and whether it was there.
  */
 export function splitNotWanted(text: string): { notWanted: boolean; text: string } {
   const trimmed = text.trim();
