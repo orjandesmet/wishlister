@@ -1032,6 +1032,77 @@ a.person:hover {
   flex-shrink: 0;
 }
 
+/* The follow bell beside a list's title; coloured while you follow the list. */
+.follow {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.follow-button {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  padding: 0;
+  color: var(--muted);
+  background: none;
+  border-color: transparent;
+}
+
+.follow-button svg {
+  width: 20px;
+  height: 20px;
+}
+
+.follow-button.following {
+  color: var(--accent);
+}
+
+.follow-popover {
+  padding: 28px 24px;
+}
+
+.follow-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.follow-body h2,
+.follow-body p {
+  margin: 0;
+}
+
+.follow-until {
+  align-self: flex-start;
+  padding: 6px 14px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-radius: 999px;
+}
+
+.follow-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.follow-tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 5;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-radius: var(--radius);
+  pointer-events: none;
+}
+
 .popover {
   width: min(360px, calc(100vw - 32px));
   margin: 0;
@@ -1054,6 +1125,10 @@ a.person:hover {
     anchor-name: --rename-group;
   }
 
+  .follow-button {
+    anchor-name: --follow-list;
+  }
+
   .popover {
     position-anchor: --add-group;
     position-area: bottom span-left;
@@ -1062,6 +1137,11 @@ a.person:hover {
 
   .rename-popover {
     position-anchor: --rename-group;
+  }
+
+  .follow-popover {
+    position-anchor: --follow-list;
+    position-area: bottom span-right;
   }
 
   .invite-link-button {
@@ -1143,6 +1223,30 @@ a.person:hover {
  * runs when the system has not asked for reduced motion. Without it the page is the same, still.
  */
 @media (prefers-reduced-motion: no-preference) {
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    20% {
+      transform: rotate(-18deg);
+    }
+    40% {
+      transform: rotate(14deg);
+    }
+    60% {
+      transform: rotate(-10deg);
+    }
+    80% {
+      transform: rotate(6deg);
+    }
+  }
+
+  .follow-button.wiggle svg {
+    transform-origin: 50% 10%;
+    animation: wiggle 700ms ease-in-out 2;
+  }
+
   @keyframes rise {
     from {
       opacity: 0;

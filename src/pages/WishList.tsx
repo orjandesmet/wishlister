@@ -1,5 +1,5 @@
 import { A, useParams } from "@solidjs/router";
-import { createMemo, createResource, For, Show } from "solid-js";
+import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
 import { ListMenu } from "../components/ListMenu.tsx";
@@ -33,6 +33,9 @@ import { useQuickAdd } from "../lib/quickAdd.ts";
 
 /** How long you follow a list when no shared occasion is coming up. */
 const DEFAULT_FOLLOW_DAYS = 30;
+
+/** How long the "you're now following" tooltip stays. */
+const FOLLOWED_NOTICE_MS = 3500;
 
 export default function WishList() {
   const params = useParams<{ profileId: ProfileId }>();
@@ -71,13 +74,23 @@ export default function WishList() {
   // Only loaded once we know it isn't your own list.
   const otherList = () => (profile() && !isOwnList() ? params.profileId : undefined);
   const follow = createFollow(() => params.profileId, otherList, runner);
-  const purchases = createPurchases(
-    items,
-    isOwnList,
-    () => me().profile.id,
-    runner,
-    follow.refetchFollow,
-  );
+  const isFollowing = () => {
+    const until = follow.followUntil.latest;
+    return until != null && until >= today();
+  };
+  // Buying follows the list for you; the bell wiggles and says so for a moment.
+  const [justFollowed, setJustFollowed] = createSignal(false);
+  let followedTimer: ReturnType<typeof setTimeout> | undefined;
+  onCleanup(() => clearTimeout(followedTimer));
+  const onBought = async () => {
+    const was = isFollowing();
+    await follow.refetchFollow();
+    if (was || !isFollowing()) return;
+    setJustFollowed(true);
+    clearTimeout(followedTimer);
+    followedTimer = setTimeout(() => setJustFollowed(false), FOLLOWED_NOTICE_MS);
+  };
+  const purchases = createPurchases(items, isOwnList, () => me().profile.id, runner, onBought);
   const listSections = createListSections(items, () =>
     purchases.showBought() ? (item) => purchases.purchaseOf().has(item.id) : undefined,
   );
@@ -155,6 +168,23 @@ export default function WishList() {
           <Show when={showSwitcher()}>
             <ListMenu value={params.profileId} options={switchOptions()} />
           </Show>
+          <Show
+            when={
+              otherList() && follow.followUntil.latest !== undefined && !follow.nextOccasion.loading
+            }
+          >
+            <FollowList
+              name={profile()?.display_name ?? ""}
+              until={follow.followUntil.latest ?? null}
+              suggestedUntil={follow.nextOccasion()?.date ?? addDays(today(), DEFAULT_FOLLOW_DAYS)}
+              suggestedOccasion={follow.nextOccasion()?.name}
+              today={today()}
+              busy={follow.busy()}
+              onFollow={follow.follow}
+              onUnfollow={follow.unfollow}
+              justFollowed={justFollowed()}
+            />
+          </Show>
         </div>
         {/* "+" on phones, "Add item" on wide screens: the same link, so the screen has one add action. */}
         <Show when={ready() && canEdit() && !select.selecting()}>
@@ -175,22 +205,6 @@ export default function WishList() {
         </Show>
         <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
           <p class="muted">{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>
-        </Show>
-        <Show
-          when={
-            otherList() && follow.followUntil.latest !== undefined && !follow.nextOccasion.loading
-          }
-        >
-          <FollowList
-            name={profile()?.display_name ?? ""}
-            until={follow.followUntil.latest ?? null}
-            suggestedUntil={follow.nextOccasion()?.date ?? addDays(today(), DEFAULT_FOLLOW_DAYS)}
-            suggestedOccasion={follow.nextOccasion()?.name}
-            today={today()}
-            busy={follow.busy()}
-            onFollow={follow.follow}
-            onUnfollow={follow.unfollow}
-          />
         </Show>
         <Show when={(items()?.length ?? 0) > 1}>
           <div class="row">

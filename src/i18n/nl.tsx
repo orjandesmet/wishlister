@@ -192,8 +192,13 @@ export const nl: Dictionary = {
     untilOccasion: (p) => `Dat is ${p.occasion}.`,
     following: (p) =>
       `Je volgt dit lijstje tot ${p.date}. Je krijgt een e-mail op dagen dat er iets verandert.`,
+    title: (p) => `Volg het lijstje van ${p.name}`,
+    followingTitle: "Je volgt dit lijstje",
+    untilDate: (p) => `Tot ${p.date}`,
+    emailNote: "Je krijgt een e-mail op dagen dat er iets bijkomt, verdwijnt of gekocht wordt.",
     changeDate: "Datum aanpassen",
     stop: "Niet meer volgen",
+    autoFollowed: "Je volgt dit lijstje nu",
   },
 
   listOrder: {

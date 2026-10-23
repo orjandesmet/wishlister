@@ -201,8 +201,13 @@ export const en = {
     untilOccasion: (p: { occasion: string }) => `That's ${p.occasion}.`,
     following: (p: { date: string }) =>
       `You're following this list until ${p.date}. You get an email on days something changes.`,
+    title: (p: { name: string }) => `Follow ${p.name}'s list`,
+    followingTitle: "You're following this list",
+    untilDate: (p: { date: string }) => `Until ${p.date}`,
+    emailNote: "You get an email on days something is added, removed or bought.",
     changeDate: "Change date",
     stop: "Stop following",
+    autoFollowed: "You're now following this list",
   },
 
   listOrder: {

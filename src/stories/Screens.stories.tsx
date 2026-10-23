@@ -166,18 +166,18 @@ export const OtherList: Story = {
         <div class="person title">
           <Avatar id="anna" name="Anna" size="lg" />
           <h1>Anna's list</h1>
+          <FollowList
+            name="Anna"
+            until={null}
+            suggestedUntil="2026-11-02"
+            suggestedOccasion="Anna's birthday"
+            today={today}
+            busy={false}
+            onFollow={fn()}
+            onUnfollow={fn()}
+          />
         </div>
       </div>
-      <FollowList
-        name="Anna"
-        until={null}
-        suggestedUntil="2026-11-02"
-        suggestedOccasion="Anna's birthday"
-        today={today}
-        busy={false}
-        onFollow={fn()}
-        onUnfollow={fn()}
-      />
       <ListOrderSelect value="category" showBought onChange={fn()} />
       <section class="stack">
         <h2>Kitchen</h2>
