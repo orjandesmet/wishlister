@@ -51,18 +51,22 @@ export function isFetchableUrl(raw: string): boolean {
 
 /** Finds the title, picture and price in a page's HTML, preferring Open Graph tags. */
 export function parsePageInfo(html: string, pageUrl: string): PageInfo {
-  const meta = new Map<string, string>();
-  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
-    const attrs = parseAttributes(tag);
-    const key = (attrs.property ?? attrs.name ?? attrs.itemprop)?.toLowerCase();
-    if (key && attrs.content !== undefined && !meta.has(key)) meta.set(key, attrs.content);
-  }
-  const titleTag = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
+  // The name and picture only come from the <head>: a page's body is full of
+  // other titles (an SVG logo's <title>bol</title>…). The price can be anywhere.
+  const headEnd = html.search(/<\/head>/i);
+  const head = headEnd === -1 ? html : html.slice(0, headEnd);
+  const headMeta = metaTags(head);
+  const meta = metaTags(html);
+  const titleTag = head.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
   const product = findProductData(html);
-  const title = [meta.get("og:title"), meta.get("twitter:title"), product?.name, titleTag]
+  const title = [headMeta.get("og:title"), headMeta.get("twitter:title"), product?.name, titleTag]
     .map((value) => (value === undefined ? "" : cleanText(value)))
     .find((value) => value.length > 0);
-  const image = [meta.get("og:image:secure_url"), meta.get("og:image"), meta.get("twitter:image")]
+  const image = [
+    headMeta.get("og:image:secure_url"),
+    headMeta.get("og:image"),
+    headMeta.get("twitter:image"),
+  ]
     .map((value) => (value ? absoluteHttpUrl(decodeEntities(value.trim()), pageUrl) : null))
     .find((value) => value !== null);
   // Shops' own meta tags first (Facebook's product tags), then schema.org data:
@@ -73,6 +77,17 @@ export function parsePageInfo(html: string, pageUrl: string): PageInfo {
     product?.price ??
     toPrice(meta.get("price"), meta.get("pricecurrency"));
   return { title: title ? truncate(title, MAX_TITLE) : null, image: image ?? null, price };
+}
+
+/** The page's <meta> tags by property, name or itemprop (lowercase); the first one wins. */
+function metaTags(html: string): Map<string, string> {
+  const meta = new Map<string, string>();
+  for (const tag of html.match(/<meta\b[^>]*>/gi) ?? []) {
+    const attrs = parseAttributes(tag);
+    const key = (attrs.property ?? attrs.name ?? attrs.itemprop)?.toLowerCase();
+    if (key && attrs.content !== undefined && !meta.has(key)) meta.set(key, attrs.content);
+  }
+  return meta;
 }
 
 /**

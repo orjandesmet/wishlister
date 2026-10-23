@@ -114,6 +114,17 @@ describe("parsePageInfo", () => {
     });
   });
 
+  it("takes the name from the head, not from titles in the body", () => {
+    const html = `<html><head><title>LEGO BMW M3 | bol</title></head>
+      <body><svg><title>bol</title></svg><meta property="og:title" content="Other"></body></html>`;
+    expect(parsePageInfo(html, "https://www.bol.com/x").title).toBe("LEGO BMW M3 | bol");
+    // Without a title in the head, a body <title> doesn't count either.
+    expect(
+      parsePageInfo("<head></head><body><svg><title>bol</title></svg></body>", "https://x.example")
+        .title,
+    ).toBeNull();
+  });
+
   it("gives nulls when the page has neither", () => {
     expect(parsePageInfo("<p>hi</p>", "https://x.example")).toEqual({
       title: null,
