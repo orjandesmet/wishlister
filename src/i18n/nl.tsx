@@ -229,6 +229,8 @@ export const nl: Dictionary = {
   },
   itemForm: {
     addTitle: "Item toevoegen",
+    saveAndAnother: "Opslaan en nog een toevoegen",
+    savedAnother: (p) => `“${p.name}” opgeslagen. Voeg de volgende toe.`,
     editTitle: "Item bewerken",
     name: "Naam",
     link: "Link (optioneel)",

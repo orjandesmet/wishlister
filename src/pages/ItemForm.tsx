@@ -46,6 +46,8 @@ export default function ItemForm() {
   );
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
+  const [savedName, setSavedName] = createSignal<string>();
+  const [nameInput, setNameInput] = createSignal<HTMLInputElement>();
 
   // When editing, copy the loaded item into the form once.
   createEffect(
@@ -87,7 +89,9 @@ export default function ItemForm() {
 
   async function onSubmit(event: SubmitEvent) {
     event.preventDefault();
+    const another = event.submitter?.hasAttribute("data-another") ?? false;
     setError(undefined);
+    setSavedName(undefined);
     const amount = parsePriceInput(price());
     if (Number.isNaN(amount)) {
       setError(t("itemForm.invalidPrice"));
@@ -106,6 +110,17 @@ export default function ItemForm() {
     try {
       if (params.itemId) await updateItem(params.itemId, input);
       else await addItem(profileId()!, input);
+      if (another) {
+        // Starts the next item; the category, groups and currency tend to stay the same.
+        setSavedName(input.name);
+        setName("");
+        setUrl("");
+        setPrice("");
+        setNotWanted(false);
+        setBusy(false);
+        nameInput()?.focus();
+        return;
+      }
       navigate(`/lists/${profileId()}`, { replace: true });
     } catch (e) {
       setError((e as Error).message);
@@ -131,7 +146,12 @@ export default function ItemForm() {
         <form class="card" onSubmit={onSubmit}>
           <label>
             {t("itemForm.name")}
-            <input required value={name()} onInput={(e) => setName(e.currentTarget.value)} />
+            <input
+              required
+              ref={setNameInput}
+              value={name()}
+              onInput={(e) => setName(e.currentTarget.value)}
+            />
           </label>
           <label>
             {t("itemForm.link")}
@@ -243,11 +263,21 @@ export default function ItemForm() {
           <button type="submit" disabled={busy()}>
             {busy() ? t("common.saving") : t("common.save")}
           </button>
+          <Show when={!params.itemId}>
+            <button type="submit" class="secondary" data-another disabled={busy()}>
+              {t("itemForm.saveAndAnother")}
+            </button>
+          </Show>
           <button type="button" class="secondary" onClick={() => history.back()}>
             {t("common.cancel")}
           </button>
           <Show when={error()}>
             <p class="error">{error()}</p>
+          </Show>
+          <Show when={savedName()}>
+            <p class="muted" role="status">
+              {t("itemForm.savedAnother", { name: savedName()! })}
+            </p>
           </Show>
         </form>
       </Show>

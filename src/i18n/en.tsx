@@ -238,6 +238,8 @@ export const en = {
   },
   itemForm: {
     addTitle: "Add item",
+    saveAndAnother: "Save, and add another",
+    savedAnother: (p: { name: string }) => `Saved “${p.name}”. Add the next one.`,
     editTitle: "Edit item",
     name: "Name",
     link: "Link (optional)",
