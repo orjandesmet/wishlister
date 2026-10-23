@@ -14,6 +14,7 @@ import { isReady } from "../lib/resource.ts";
 import { nextOccasionPerGroup, today } from "../lib/occasions.ts";
 import u from "../utilities.module.css";
 import styles from "./Home.module.css";
+import { usePageTitle } from "../lib/a11y.ts";
 
 export default function Home() {
   const me = useMe();
@@ -26,6 +27,8 @@ export default function Home() {
     nextOccasionPerGroup(occasions() ?? [], day, compareNames),
   );
   const hasGroups = () => (groups()?.length ?? 0) > 0;
+
+  usePageTitle(() => t("home.title"));
 
   return (
     <>
@@ -45,7 +48,9 @@ export default function Home() {
         </Show>
       </div>
       <Show when={groups.error}>
-        <p class={u.error}>{t("home.loadFailed", { message: groups.error.message })}</p>
+        <p class={u.error} role="alert">
+          {t("home.loadFailed", { message: groups.error.message })}
+        </p>
       </Show>
       <Show when={!isReady(groups) && !groups.error}>
         <p class={u.muted}>{t("common.loading")}</p>

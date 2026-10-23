@@ -105,6 +105,16 @@
     color: var(--text-strong);
   }
 
+  /* Read by screen readers, not shown: live announcements and extra context. */
+  .visuallyHidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
   /* A text label with an icon that stands in for it on small screens (the text stays for screen readers). */
   .labelIcon {
     display: none;
@@ -116,6 +126,14 @@
   @media (max-width: 599px) {
     .labelIcon {
       display: block;
+    }
+
+    /* The icon alone is 20px; its button stays at least 24px for fingers (WCAG 2.5.8). */
+    :is(a, button):has(> .labelIcon) {
+      min-width: 24px;
+      min-height: 24px;
+      display: inline-grid;
+      place-items: center;
     }
 
     .labelText {

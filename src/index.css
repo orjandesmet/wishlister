@@ -70,6 +70,14 @@
     box-sizing: border-box;
   }
 
+  /*
+   * Tabbing scrolls the focused control into view, but not behind the fixed tab bar or the quick
+   * add button above it (WCAG 2.4.11): keep that much room free at the bottom.
+   */
+  html {
+    scroll-padding-bottom: calc(160px + env(safe-area-inset-bottom));
+  }
+
   body {
     margin: 0;
   }

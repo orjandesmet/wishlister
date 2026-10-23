@@ -1,9 +1,11 @@
 import { createMemo, createResource, createSignal } from "solid-js";
 import type { PurchaseState } from "../components/ItemCard.tsx";
+import { announce } from "./a11y.ts";
 import type { Item } from "./api/items.ts";
 import type { Occasion } from "./api/occasions.ts";
 import { getPurchaseOccasions, getPurchases, markBought, undoBought } from "./api/purchases.ts";
 import type { ActionRunner } from "./createActionRunner.ts";
+import { t } from "./i18n.ts";
 import type { ItemId, OccasionId, ProfileId } from "./ids.ts";
 import { burstMoneyForTap } from "./moneyBurst.ts";
 
@@ -41,6 +43,7 @@ export function createPurchases(
       await markBought(item.id, occasionId);
       burstMoneyForTap(item.id, item.price, item.price_currency);
       await Promise.all([refetchPurchases(), onBought()]);
+      announce(t("a11y.bought", { item: item.name }));
     });
   const onBuy = (item: Item) =>
     runner.run(async () => {
@@ -51,7 +54,11 @@ export function createPurchases(
   const occasionChoices = (item: Item) =>
     choosing()?.itemId === item.id ? choosing()?.occasions : undefined;
   const onUndo = (item: Item) =>
-    runner.run(() => undoBought(item.id).then(() => void refetchPurchases()));
+    runner.run(async () => {
+      await undoBought(item.id);
+      await refetchPurchases();
+      announce(t("a11y.unbought", { item: item.name }));
+    });
 
   return {
     purchaseOf,

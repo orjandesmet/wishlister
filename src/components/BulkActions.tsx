@@ -1,4 +1,5 @@
 import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js";
+import { focusSoon } from "../lib/a11y.ts";
 import type { GroupSelection } from "../lib/api/items.ts";
 import { t } from "../lib/i18n.ts";
 import type { GroupId } from "../lib/ids.ts";
@@ -45,20 +46,37 @@ export function BulkActions(props: BulkActionsProps) {
 
   const nothing = () => props.selected === 0 || props.busy;
 
+  // Switching panels replaces the buttons, so focus moves along: into the form that opened,
+  // and back to the button that opened it (or the bar, while that button waits on a save).
+  // oxlint-disable-next-line no-unassigned-vars
+  let bar: HTMLElement | undefined;
+  const open = (next: "category" | "groups") => {
+    setPanel(next);
+    focusSoon(() => bar?.querySelector<HTMLElement>("input:not([type=radio]), input:checked"));
+  };
+  const close = () => {
+    const from = panel();
+    setPanel("actions");
+    focusSoon(() => {
+      const button = bar?.querySelector<HTMLButtonElement>(`[data-panel="${from}"]`);
+      return button && !button.disabled ? button : bar;
+    });
+  };
+
   function applyCategory(event: SubmitEvent) {
     event.preventDefault();
     props.onSetCategory(category().trim() || null);
-    setPanel("actions");
+    close();
   }
   function applyGroups(event: SubmitEvent) {
     event.preventDefault();
     const v = visibility();
     props.onSetGroups(v === "all" ? "all" : v === "some" ? groupIds() : []);
-    setPanel("actions");
+    close();
   }
 
   return (
-    <Card class={styles.bulkActions} aria-label={t("bulk.title")}>
+    <Card ref={bar} class={styles.bulkActions} aria-label={t("bulk.title")} tabIndex={-1}>
       <div class={u.row}>
         <strong aria-live="polite">{t("bulk.selected", { count: props.selected })}</strong>
         <Show
@@ -81,7 +99,8 @@ export function BulkActions(props: BulkActionsProps) {
               variant="secondary"
               size="small"
               disabled={nothing()}
-              onClick={() => setPanel("category")}
+              data-panel="category"
+              onClick={() => open("category")}
             >
               {t("bulk.setCategory")}
             </Button>
@@ -89,7 +108,8 @@ export function BulkActions(props: BulkActionsProps) {
               variant="secondary"
               size="small"
               disabled={nothing()}
-              onClick={() => setPanel("groups")}
+              data-panel="groups"
+              onClick={() => open("groups")}
             >
               {t("bulk.setGroups")}
             </Button>
@@ -119,12 +139,19 @@ export function BulkActions(props: BulkActionsProps) {
                 autocomplete="off"
               />
             </label>
-            <CategoryChips categories={chips()} onPick={setCategory} />
+            <CategoryChips
+              categories={chips()}
+              onPick={(picked) => {
+                setCategory(picked);
+                // The picked chip may drop out of the suggestions: back to the field.
+                focusSoon(() => bar?.querySelector<HTMLElement>("input"));
+              }}
+            />
             <div class={styles.buttons}>
               <Button size="small" type="submit" disabled={nothing()}>
                 {category().trim() ? t("bulk.apply") : t("bulk.clearCategory")}
               </Button>
-              <Button variant="secondary" size="small" onClick={() => setPanel("actions")}>
+              <Button variant="secondary" size="small" onClick={close}>
                 {t("common.cancel")}
               </Button>
             </div>
@@ -185,7 +212,7 @@ export function BulkActions(props: BulkActionsProps) {
               <Button size="small" type="submit" disabled={nothing()}>
                 {t("bulk.apply")}
               </Button>
-              <Button variant="secondary" size="small" onClick={() => setPanel("actions")}>
+              <Button variant="secondary" size="small" onClick={close}>
                 {t("common.cancel")}
               </Button>
             </div>

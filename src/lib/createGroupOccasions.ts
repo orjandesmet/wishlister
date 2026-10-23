@@ -7,6 +7,7 @@ import {
   type Occasion,
   type OccasionInput,
 } from "./api/occasions.ts";
+import { announce, focusHeading } from "./a11y.ts";
 import type { ActionRunner } from "./createActionRunner.ts";
 import type { GroupId, OccasionId } from "./ids.ts";
 import { t } from "./i18n.ts";
@@ -28,11 +29,20 @@ export function createGroupOccasions(groupId: () => GroupId, runner: ActionRunne
 
   return {
     occasions,
-    onAdd: (input: OccasionInput) => change(() => addOccasion(groupId(), input)),
+    onAdd: async (input: OccasionInput) => {
+      const saved = await change(() => addOccasion(groupId(), input));
+      if (saved) announce(t("a11y.added", { items: input.name }));
+      return saved;
+    },
     onUpdate: (id: OccasionId, input: OccasionInput) => change(() => updateOccasion(id, input)),
     onDelete: (occasion: Occasion) => {
       if (!confirm(t("occasions.confirmDelete", { name: occasion.name }))) return;
-      void change(() => deleteOccasion(occasion.id));
+      void change(() => deleteOccasion(occasion.id)).then((deleted) => {
+        if (!deleted) return;
+        // Its row, and the button just pressed, are gone.
+        announce(t("a11y.removed", { item: occasion.name }));
+        focusHeading();
+      });
     },
   };
 }

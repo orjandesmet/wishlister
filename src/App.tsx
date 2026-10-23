@@ -1,7 +1,8 @@
 import { Navigate, Route, Router, useLocation, useParams } from "@solidjs/router";
-import { Show, type Component, type ParentComponent } from "solid-js";
+import { createEffect, on, Show, type Component, type ParentComponent } from "solid-js";
 import { TabBar } from "./components/TabBar.tsx";
 import { InstallBanner } from "./components/InstallBanner.tsx";
+import { focusHeading } from "./lib/a11y.ts";
 import { AuthProvider, useAuth } from "./lib/auth.tsx";
 import { syncLocaleWithAccount } from "./lib/accountLocale.ts";
 import { t } from "./lib/i18n.ts";
@@ -30,6 +31,15 @@ const SignedIn: ParentComponent = (props) => {
   const location = useLocation();
   // Remember where they were going (an invite link, say) to come back after signing in.
   const login = () => `/login?next=${encodeURIComponent(location.pathname)}`;
+  // After following a link, a screen reader (and Tab) starts at the new page's heading,
+  // like after a full page load. Waits a frame, so the new page has rendered.
+  createEffect(
+    on(
+      () => location.pathname,
+      () => requestAnimationFrame(focusHeading),
+      { defer: true },
+    ),
+  );
   return (
     <Show
       when={!loading()}

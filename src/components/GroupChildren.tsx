@@ -73,12 +73,15 @@ export function GroupChildren(props: {
                   <span class={u.row}>
                     <Show when={iAmParent()}>
                       <A class={u.link} href={`/children/${child.profile_id}`}>
-                        <EditLabel label={t("child.editProfile")} />
+                        <EditLabel
+                          label={t("child.editProfile")}
+                          of={child.profiles.display_name}
+                        />
                       </A>
                     </Show>
                     <Show when={data.isManager() || iAmParent()}>
                       <Button variant="link" danger onClick={() => props.onRemove(child)}>
-                        <RemoveLabel />
+                        <RemoveLabel of={child.profiles.display_name} />
                       </Button>
                     </Show>
                   </span>
@@ -89,7 +92,10 @@ export function GroupChildren(props: {
         </For>
       </ul>
       <Show when={myOtherChildren().length > 0}>
-        <Select onChange={(e) => onAddMyChild(e.currentTarget.value as ProfileId)}>
+        <Select
+          aria-label={t("group.addMyChild")}
+          onChange={(e) => onAddMyChild(e.currentTarget.value as ProfileId)}
+        >
           <option value="">{t("group.addMyChild")}</option>
           <For each={myOtherChildren()}>
             {(child) => <option value={child.id}>{child.display_name}</option>}

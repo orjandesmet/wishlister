@@ -1,6 +1,7 @@
 import { useNavigate, useSearchParams } from "@solidjs/router";
 import { createEffect, createSignal, Match, Show, Switch } from "solid-js";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
+import { focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { useAuth } from "../lib/auth.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
 import { locale, t } from "../lib/i18n.ts";
@@ -30,6 +31,16 @@ export default function Login() {
   const [code, setCode] = createSignal("");
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
+  usePageTitle(() => t("login.signIn"));
+  // Each step swaps the form, so focus follows to its field instead of dropping to the page.
+  // oxlint-disable-next-line no-unassigned-vars
+  let emailInput: HTMLInputElement | undefined;
+  // oxlint-disable-next-line no-unassigned-vars
+  let codeInput: HTMLInputElement | undefined;
+  const goTo = (next: "email" | "code") => {
+    setStep(next);
+    focusSoon(() => (next === "email" ? emailInput : codeInput));
+  };
 
   createEffect(() => {
     if (session()) navigate(next(), { replace: true });
@@ -49,7 +60,7 @@ export default function Login() {
     });
     setBusy(false);
     if (error) setError(error.message);
-    else setStep("code");
+    else goTo("code");
   }
 
   async function verifyCode(event: SubmitEvent) {
@@ -77,6 +88,7 @@ export default function Login() {
             <label>
               {t("login.email")}
               <input
+                ref={emailInput}
                 type="email"
                 autocomplete="email"
                 required
@@ -95,6 +107,7 @@ export default function Login() {
             <label>
               {t("login.code")}
               <input
+                ref={codeInput}
                 class={styles.codeInput}
                 inputmode="numeric"
                 autocomplete="one-time-code"
@@ -106,7 +119,7 @@ export default function Login() {
             <button type="submit" disabled={busy()}>
               {busy() ? t("login.checking") : t("login.signIn")}
             </button>
-            <Button variant="secondary" onClick={() => setStep("email")}>
+            <Button variant="secondary" onClick={() => goTo("email")}>
               {t("login.otherEmail")}
             </Button>
           </form>

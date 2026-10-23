@@ -17,6 +17,7 @@ import {
   type GroupSelection,
   type Item,
 } from "../lib/api/items.ts";
+import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
@@ -24,9 +25,9 @@ import { createBulkSelect } from "../lib/createBulkSelect.ts";
 import { createFollow } from "../lib/createFollow.ts";
 import { createListSections } from "../lib/createListSections.ts";
 import { createPurchases } from "../lib/createPurchases.ts";
-import { t } from "../lib/i18n.ts";
+import { formatList, locale, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
-import { addDays, today } from "../lib/occasions.ts";
+import { addDays, formatOccasionDate, today, type IsoDate } from "../lib/occasions.ts";
 import { useMe } from "../lib/me.tsx";
 import { isReady } from "../lib/resource.ts";
 import { useQuickAdd } from "../lib/quickAdd.ts";
@@ -67,7 +68,10 @@ export default function WishList() {
   );
   // A memo, so moving to another list switches queues (and flushes the old one).
   const quickAdd = createMemo(() =>
-    useQuickAdd(params.profileId, (saved) => setItems((prev) => [...(prev ?? []), ...saved])),
+    useQuickAdd(params.profileId, (saved) => {
+      setItems((prev) => [...(prev ?? []), ...saved]);
+      announce(t("a11y.added", { items: formatList(saved.map((item) => item.name)) }));
+    }),
   );
 
   // Known from the address alone, so your own list never renders as someone else's while loading.
@@ -75,10 +79,27 @@ export default function WishList() {
   // Who may edit and what to show depend on both, so nothing below the title renders before them.
   const ready = () => isReady(profile) && isReady(items);
   const canEdit = () => isOwnList() || (profile()?.managerIds.includes(me().profile.id) ?? false);
+  const title = () => {
+    if (isOwnList()) return t("wishlist.mine");
+    const p = profile.error ? undefined : profile();
+    return p ? t("wishlist.theirs", { name: p.display_name }) : t("wishlist.fallbackTitle");
+  };
+  usePageTitle(title);
 
   // Only loaded once we know it isn't your own list.
   const otherList = () => (profile() && !isOwnList() ? params.profileId : undefined);
   const follow = createFollow(() => params.profileId, otherList, runner);
+  // The bell's label changes with it, but out of sight once its popover closes: say it.
+  const onFollow = async (until: IsoDate) => {
+    await follow.follow(until);
+    if (!runner.error()) {
+      announce(t("follow.untilDate", { date: formatOccasionDate(until, locale()) }));
+    }
+  };
+  const onUnfollow = async () => {
+    await follow.unfollow();
+    if (!runner.error()) announce(t("a11y.unfollowed"));
+  };
   const isFollowing = () => {
     const until = follow.followUntil.latest;
     return until != null && until >= today();
@@ -112,6 +133,18 @@ export default function WishList() {
     profile()?.groups.find((g) => g.id === id)?.name ?? t("wishlist.aGroup");
 
   const select = createBulkSelect(loadedItems);
+  // The Select button and the cards' buttons swap with checkboxes, so focus goes to the first
+  // checkbox, and back to Select when done.
+  // oxlint-disable-next-line no-unassigned-vars
+  let selectButton: HTMLButtonElement | undefined;
+  const startSelecting = () => {
+    select.start();
+    focusSoon(() => document.querySelector<HTMLElement>("main input[type=checkbox]"));
+  };
+  const stopSelecting = () => {
+    select.stop();
+    focusSoon(() => selectButton);
+  };
   const [bulkBusy, runBulk] = runner.busyRunner();
   // Only loaded once someone starts selecting, for the category suggestions.
   const [categories] = createResource(select.selecting, () => getCategories());
@@ -127,22 +160,33 @@ export default function WishList() {
       if (!confirm(t("wishlist.confirmRemoveItem", { item: item.name }))) return;
       await deleteItem(item.id);
       await refetchItems();
+      // Its card, and the button just pressed, are gone.
+      announce(t("a11y.removed", { item: item.name }));
+      focusHeading();
     });
-  const bulk = (action: (ids: ItemId[]) => Promise<void>) =>
-    runBulk(async () => {
+  const bulk = (action: (ids: ItemId[]) => Promise<void>, done: (count: number) => string) => {
+    const count = select.selectedIds().length;
+    return runBulk(async () => {
       await action(select.selectedIds());
       await refetchItems();
+      announce(done(count));
     });
+  };
+  const changed = (count: number) => t("a11y.changed", { count });
   const onBulkCategory = (category: string | null) =>
-    bulk((ids) => setItemsCategory(ids, category));
-  const onBulkGroups = (groups: GroupSelection) => bulk((ids) => setItemsGroups(ids, groups));
+    bulk((ids) => setItemsCategory(ids, category), changed);
+  const onBulkGroups = (groups: GroupSelection) =>
+    bulk((ids) => setItemsGroups(ids, groups), changed);
   const onBulkDelete = () => {
     const count = select.selectedIds().length;
     if (!confirm(t("bulk.confirmDelete", { count }))) return;
-    void bulk(async (ids) => {
-      await deleteItems(ids);
-      select.selectNone();
-    });
+    void bulk(
+      async (ids) => {
+        await deleteItems(ids);
+        select.selectNone();
+      },
+      (count) => t("a11y.deleted", { count }),
+    );
   };
 
   const card = (item: Item) => (
@@ -171,13 +215,7 @@ export default function WishList() {
           <Show when={profile()}>
             {(p) => <Avatar id={params.profileId} name={p().display_name} size="lg" />}
           </Show>
-          <h1>
-            <Show when={!isOwnList()} fallback={t("wishlist.mine")}>
-              <Show when={profile()} fallback={t("wishlist.fallbackTitle")}>
-                {(p) => t("wishlist.theirs", { name: p().display_name })}
-              </Show>
-            </Show>
-          </h1>
+          <h1>{title()}</h1>
           <Show when={showSwitcher()}>
             <ListMenu value={params.profileId} options={switchOptions()} />
           </Show>
@@ -193,22 +231,26 @@ export default function WishList() {
               suggestedOccasion={follow.nextOccasion()?.name}
               today={today()}
               busy={follow.busy()}
-              onFollow={follow.follow}
-              onUnfollow={follow.unfollow}
+              onFollow={onFollow}
+              onUnfollow={onUnfollow}
               justFollowed={justFollowed()}
             />
           </Show>
         </div>
       </div>
       <Show when={profile.error || items.error}>
-        <p class={u.error}>{t("wishlist.unavailable")}</p>
+        <p class={u.error} role="alert">
+          {t("wishlist.unavailable")}
+        </p>
       </Show>
       <Show when={!ready() && !profile.error && !items.error}>
         <p class={u.muted}>{t("common.loading")}</p>
       </Show>
       <Show when={ready()}>
         <Show when={error()}>
-          <p class={u.error}>{error()}</p>
+          <p class={u.error} role="alert">
+            {error()}
+          </p>
         </Show>
         <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
           <EmptyState>
@@ -224,10 +266,11 @@ export default function WishList() {
           <div class={u.row}>
             <Show when={canEdit() && !select.selecting()}>
               <Button
+                ref={selectButton}
                 variant="secondary"
                 size="small"
                 class={styles.selectButton}
-                onClick={select.start}
+                onClick={startSelecting}
               >
                 <span class={u.labelText}>{t("bulk.select")}</span>
                 {/* Lucide "list-checks" (ISC licence): stands in for the label on small screens. */}
@@ -288,7 +331,7 @@ export default function WishList() {
             onSetCategory={onBulkCategory}
             onSetGroups={onBulkGroups}
             onDelete={onBulkDelete}
-            onDone={select.stop}
+            onDone={stopSelecting}
           />
         </Show>
         <Show when={canEdit() && !select.selecting()}>

@@ -1,4 +1,5 @@
 import { useNavigate } from "@solidjs/router";
+import { announce, focusHeading } from "./a11y.ts";
 import { removeMember, type Member } from "./api/groups.ts";
 import type { ActionRunner } from "./createActionRunner.ts";
 import type { GroupData } from "./createGroupData.ts";
@@ -41,6 +42,11 @@ export function createMemberRemoval(data: GroupData, runner: ActionRunner) {
       if (!confirm(lines.join("\n\n"))) return;
       const result = await removeMember(data.groupId(), member.profile_id);
       if (leaving || result === "group_deleted") navigate("/", { replace: true });
-      else await Promise.all([data.refetchGroup(), data.refetchParents()]);
+      else {
+        await Promise.all([data.refetchGroup(), data.refetchParents()]);
+        // Their row, and the button just pressed, are gone.
+        announce(t("a11y.removed", { item: member.profiles.display_name }));
+        focusHeading();
+      }
     });
 }

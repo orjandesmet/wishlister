@@ -17,6 +17,7 @@ import { Button } from "../components/Button.tsx";
 import { Card } from "../components/Card.tsx";
 import { Check } from "../components/Check.tsx";
 import styles from "./ItemForm.module.css";
+import { focusSoon, usePageTitle } from "../lib/a11y.ts";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {
@@ -133,11 +134,15 @@ export default function ItemForm() {
     }
   }
 
+  usePageTitle(() => (params.itemId ? t("itemForm.editTitle") : t("itemForm.addTitle")));
+
   return (
     <>
       <h1>{params.itemId ? t("itemForm.editTitle") : t("itemForm.addTitle")}</h1>
       <Show when={item.error}>
-        <p class={u.error}>{t("itemForm.loadFailed", { message: item.error.message })}</p>
+        <p class={u.error} role="alert">
+          {t("itemForm.loadFailed", { message: item.error.message })}
+        </p>
       </Show>
       {/* When editing, wait for the item so the form never shows blank or default values first. */}
       <Show
@@ -179,7 +184,16 @@ export default function ItemForm() {
               <For each={allSuggestions()}>{(c) => <option value={c} />}</For>
             </datalist>
           </label>
-          <CategoryChips categories={chips()} onPick={setCategory} />
+          <CategoryChips
+            categories={chips()}
+            onPick={(picked) => {
+              setCategory(picked);
+              // The picked chip may drop out of the suggestions: back to the field.
+              focusSoon(() =>
+                document.querySelector<HTMLElement>("input[list=category-suggestions]"),
+              );
+            }}
+          />
           <Check>
             <input
               type="checkbox"
@@ -277,7 +291,9 @@ export default function ItemForm() {
             {t("common.cancel")}
           </Button>
           <Show when={error()}>
-            <p class={u.error}>{error()}</p>
+            <p class={u.error} role="alert">
+              {error()}
+            </p>
           </Show>
           <Show when={savedName()}>
             <p class={u.muted} role="status">

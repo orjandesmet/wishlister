@@ -316,6 +316,21 @@ export const en = {
     confirmDelete: (p: { count: number }) =>
       p.count === 1 ? "Remove 1 item from the list?" : `Remove ${p.count} items from the list?`,
   },
+  // Only for screen readers: names of unlabelled controls, and announcements of
+  // changes that happen out of sight.
+  a11y: {
+    mainNav: "Main",
+    roleOf: (p: { name: string }) => `Role of ${p.name}`,
+    added: (p: { items: string }) => `Added ${p.items}.`,
+    removed: (p: { item: string }) => `Removed ${p.item}.`,
+    bought: (p: { item: string }) => `Marked ${p.item} as bought.`,
+    unbought: (p: { item: string }) => `${p.item} is no longer marked as bought.`,
+    changed: (p: { count: number }) =>
+      p.count === 1 ? "1 item changed." : `${p.count} items changed.`,
+    deleted: (p: { count: number }) =>
+      p.count === 1 ? "1 item removed." : `${p.count} items removed.`,
+    unfollowed: "You stopped following this list.",
+  },
   wishlist: {
     fallbackTitle: "Wishlist",
     switchList: "Other lists",

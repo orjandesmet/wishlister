@@ -12,6 +12,7 @@ import u from "../utilities.module.css";
 import { Button } from "../components/Button.tsx";
 import { Card } from "../components/Card.tsx";
 import { Person } from "../components/Person.tsx";
+import { usePageTitle } from "../lib/a11y.ts";
 
 /** A child's parents, and deleting the child's profile. */
 export default function ChildSettings() {
@@ -79,6 +80,8 @@ export default function ChildSettings() {
       navigate("/", { replace: true });
     });
 
+  usePageTitle(() => child()?.display_name ?? t("child.fallbackTitle"));
+
   return (
     <>
       <A class={u.link} href="/">
@@ -86,10 +89,14 @@ export default function ChildSettings() {
       </A>
       <h1>{child()?.display_name ?? t("child.fallbackTitle")}</h1>
       <Show when={child.error}>
-        <p class={u.error}>{t("child.unavailable")}</p>
+        <p class={u.error} role="alert">
+          {t("child.unavailable")}
+        </p>
       </Show>
       <Show when={error()}>
-        <p class={u.error}>{error()}</p>
+        <p class={u.error} role="alert">
+          {error()}
+        </p>
       </Show>
       <Show when={!isReady(child) && !child.error}>
         <p class={u.muted}>{t("common.loading")}</p>

@@ -61,7 +61,7 @@ const GearIcon = () => (
  */
 export function TabBar(props: TabBarProps) {
   return (
-    <nav class={styles.tabs}>
+    <nav class={styles.tabs} aria-label={t("a11y.mainNav")}>
       <span class={styles.brand}>
         <img src="/favicon.svg" alt="" />
         Wishlister

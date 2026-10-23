@@ -2,6 +2,11 @@
   width: 100%;
 }
 
+/* A long email address breaks onto the next line instead of pushing the card wider. */
+.login strong {
+  overflow-wrap: anywhere;
+}
+
 /* The login screen's mark. */
 .mark {
   width: 72px;

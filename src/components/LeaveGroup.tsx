@@ -1,5 +1,6 @@
 import { useNavigate } from "@solidjs/router";
 import { createSignal, For, Show } from "solid-js";
+import { focusSoon } from "../lib/a11y.ts";
 import { deleteGroup, setMemberRole, type Member } from "../lib/api/groups.ts";
 import type { ActionRunner } from "../lib/createActionRunner.ts";
 import type { GroupData } from "../lib/createGroupData.ts";
@@ -31,9 +32,17 @@ export function LeaveGroup(props: {
   const [handingOver, setHandingOver] = createSignal(false);
   const [successor, setSuccessor] = createSignal<ProfileId>();
 
+  // Asking for a successor swaps the Leave button for a form, so focus follows, and back.
+  // oxlint-disable-next-line no-unassigned-vars
+  let box: HTMLDivElement | undefined;
   const onLeave = () => {
-    if (mustHandOver()) setHandingOver(true);
-    else void props.onRemove(props.mine);
+    if (!mustHandOver()) return void props.onRemove(props.mine);
+    setHandingOver(true);
+    focusSoon(() => box?.querySelector("select"));
+  };
+  const onStay = () => {
+    setHandingOver(false);
+    focusSoon(() => box?.querySelector("button"));
   };
 
   const onHandOverAndLeave = () =>
@@ -54,7 +63,7 @@ export function LeaveGroup(props: {
     });
 
   return (
-    <div class={u.stack}>
+    <div ref={box} class={u.stack}>
       <Show
         when={handingOver()}
         fallback={
@@ -81,7 +90,7 @@ export function LeaveGroup(props: {
           <button type="button" disabled={!successor()} onClick={onHandOverAndLeave}>
             {t("group.handOverAndLeave")}
           </button>
-          <Button variant="secondary" onClick={() => setHandingOver(false)}>
+          <Button variant="secondary" onClick={onStay}>
             {t("group.stay")}
           </Button>
         </Card>
