@@ -1,12 +1,16 @@
 import { EditLabel } from "../components/EditLabel.tsx";
 import { A } from "@solidjs/router";
-import { createSignal, For, Show } from "solid-js";
+import { createResource, createSignal, For, Show } from "solid-js";
+import { NotificationSettings } from "../components/NotificationSettings.tsx";
 import { Avatar } from "../components/Avatar.tsx";
 import { CurrencySelect } from "../components/CurrencySelect.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
 import { renameProfile } from "../lib/api/profiles.ts";
 import { createChild } from "../lib/api/children.ts";
+import { followList, getMyFollows, unfollowAll, unfollowList } from "../lib/api/follows.ts";
+import { createActionRunner } from "../lib/createActionRunner.ts";
+import { today } from "../lib/occasions.ts";
 import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
@@ -45,6 +49,15 @@ export default function Settings() {
       setError((e as Error).message);
     }
   }
+
+  const runner = createActionRunner();
+  const [busy, runBusy] = runner.busyRunner();
+  const [follows, { refetch: refetchFollows }] = createResource(() => getMyFollows(today()));
+  const changeFollows = (action: () => Promise<void>) =>
+    runBusy(async () => {
+      await action();
+      await refetchFollows();
+    });
 
   return (
     <>
@@ -99,6 +112,22 @@ export default function Settings() {
           <button type="submit">{t("group.addChild")}</button>
         </form>
       </section>
+      <NotificationSettings
+        follows={follows() ?? []}
+        today={today()}
+        busy={busy()}
+        onChangeDate={(id, until) => void changeFollows(() => followList(id, until))}
+        onUnfollow={(id) => void changeFollows(() => unfollowList(id))}
+        onUnfollowAll={() => {
+          if (!confirm(t("notifications.confirmUnsubscribeAll"))) return;
+          void changeFollows(() => unfollowAll(me().profile.id));
+        }}
+      />
+      <Show when={runner.error()}>
+        <p class="error" role="alert">
+          {runner.error()}
+        </p>
+      </Show>
       <Show when={error()}>
         <p class="error" role="alert">
           {error()}

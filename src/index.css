@@ -323,6 +323,25 @@ a {
   color: var(--text-strong);
 }
 
+.icon-heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-heading svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+}
+
+/* Edit and remove side by side, spaced like the ones on an item card. */
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px 14px;
+}
+
 /* A member's role controls drop below the name when they don't both fit, never over it. */
 .member-row {
   flex-wrap: wrap;
@@ -1148,6 +1167,15 @@ a.person:hover {
 
   .follow-popover {
     position-anchor: --follow-list;
+    position-area: bottom span-right;
+  }
+
+  .notifications .icon-heading {
+    anchor-name: --notifications;
+  }
+
+  .notification-popover {
+    position-anchor: --notifications;
     position-area: bottom span-right;
   }
 

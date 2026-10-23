@@ -293,6 +293,13 @@ export const en = {
     saved: "Saved.",
     signOut: "Sign out",
   },
+  notifications: {
+    title: "Notifications",
+    help: "The lists you get an email about when something changes.",
+    none: "You're not following any lists.",
+    unsubscribeAll: "Unsubscribe from all",
+    confirmUnsubscribeAll: "Stop following all lists? You won't get any more emails.",
+  },
   bulk: {
     title: "Edit several items",
     select: "Select",

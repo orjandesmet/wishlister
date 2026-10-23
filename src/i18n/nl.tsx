@@ -284,6 +284,13 @@ export const nl: Dictionary = {
     saved: "Opgeslagen.",
     signOut: "Afmelden",
   },
+  notifications: {
+    title: "Meldingen",
+    help: "De lijstjes waarvan je een e-mail krijgt als er iets verandert.",
+    none: "Je volgt geen lijstjes.",
+    unsubscribeAll: "Alles stopzetten",
+    confirmUnsubscribeAll: "Alle lijstjes niet meer volgen? Je krijgt dan geen e-mails meer.",
+  },
   bulk: {
     title: "Meerdere items bewerken",
     select: "Selecteren",
