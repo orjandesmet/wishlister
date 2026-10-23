@@ -216,8 +216,9 @@ export async function fetchPageInfo(
         await response.body?.cancel();
         return failed(rawUrl, `status ${response.status}, ${type || "no content type"}`, url);
       }
-      const info = parsePageInfo(await readStart(response, type), url);
+      const info = parsePageInfo(await readStart(response, type, url), url);
       if (!info.title) failed(rawUrl, "no title found in the page", url);
+      else if (!info.price) console.log(`page-info: no price found for ${rawUrl}`);
       return info;
     }
     return failed(rawUrl, "too many redirects", url);
@@ -320,8 +321,12 @@ function findProduct(node: unknown): Record<string, unknown> | undefined {
   return findProduct(record["@graph"]);
 }
 
-/** Reads at most MAX_BYTES of the body, decoded with the page's charset. */
-async function readStart(response: Response, contentType: string): Promise<string> {
+/**
+ * Reads at most MAX_BYTES of the body, decoded with the page's charset. Stops at
+ * </head> when the head already has a price; otherwise reads on, because many
+ * shops (bol.com…) put their JSON-LD product data in the body.
+ */
+async function readStart(response: Response, contentType: string, url: string): Promise<string> {
   const charset = contentType.match(/charset=["']?([\w-]+)/i)?.[1] ?? "utf-8";
   let decoder: TextDecoder;
   try {
@@ -333,13 +338,16 @@ async function readStart(response: Response, contentType: string): Promise<strin
   const reader = response.body.getReader();
   let text = "";
   let bytes = 0;
+  let headChecked = false;
   while (bytes < MAX_BYTES) {
     const { done, value } = await reader.read();
     if (done) break;
     bytes += value.byteLength;
     text += decoder.decode(value, { stream: true });
-    // The head is all we need.
-    if (/<\/head>/i.test(text)) break;
+    if (!headChecked && /<\/head>/i.test(text)) {
+      headChecked = true;
+      if (parsePageInfo(text, url).price) break;
+    }
   }
   await reader.cancel();
   return text;
