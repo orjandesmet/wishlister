@@ -1,8 +1,9 @@
 /// <reference types="node" />
-// Looks up the name, picture and price of a page someone pasted into quick add.
+// Looks up the name, picture and price of a page linked from quick add or the item form.
 //
 // POST /.netlify/functions/page-info with { url } and the user's access token as
-// "Authorization: Bearer …". Answers { title, image, price }, any of which can be null.
+// "Authorization: Bearer …". Answers { title, image, price }, any of which can be null,
+// plus isImage: true when the link is a picture itself.
 // Browsers can't read other sites' pages (CORS), so the app asks this function.
 // Shops that block it are looked up through Microlink; set MICROLINK_API_KEY in
 // Netlify to use a Microlink plan instead of the free 50 links a day.

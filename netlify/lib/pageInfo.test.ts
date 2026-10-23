@@ -188,6 +188,23 @@ describe("fetchPageInfo", () => {
     });
   });
 
+  it("takes a link to a picture as the picture", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
+      url === "https://cdn.example/i/123"
+        ? new Response(null, {
+            status: 302,
+            headers: { location: "https://cdn.example/i/123.webp" },
+          })
+        : new Response("not really an image", { headers: { "content-type": "image/webp" } }),
+    );
+    expect(await fetchPageInfo("https://cdn.example/i/123", fetch)).toEqual({
+      title: null,
+      image: "https://cdn.example/i/123.webp",
+      price: null,
+      isImage: true,
+    });
+  });
+
   it("follows redirects and reads the final page", async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
       url === "https://short.example/x"
