@@ -1657,6 +1657,21 @@ a.person:hover {
   color: var(--muted);
 }
 
+/* A message with its one action, centred in the space the page has left. */
+.page:has(> .empty-state) {
+  flex: 1;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
+  text-align: center;
+}
+
 /* The button under an empty list's message, which replaces the floating one. */
 .empty-quick-add {
   display: flex;

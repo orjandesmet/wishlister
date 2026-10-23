@@ -45,8 +45,13 @@ export default function Home() {
       <Show when={!isReady(groups) && !groups.error}>
         <p class="muted">{t("common.loading")}</p>
       </Show>
-      <Show when={groups()?.length === 0}>
-        <p class="muted">{t("home.empty")}</p>
+      <Show when={isReady(groups) && groups()?.length === 0}>
+        <div class="empty-state">
+          <p class="muted">{t("home.empty")}</p>
+          <A class="button" href="/groups/new">
+            {t("home.addGroup")}
+          </A>
+        </div>
       </Show>
       <For each={groups()}>
         {(group) => (
@@ -58,10 +63,6 @@ export default function Home() {
           />
         )}
       </For>
-      {/* Only a first group needs the form on the page itself. */}
-      <Show when={isReady(groups) && groups()?.length === 0}>
-        <NewGroupForm class="card inline-form" onCreate={onCreate} />
-      </Show>
     </>
   );
 }

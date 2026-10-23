@@ -199,12 +199,14 @@ export default function WishList() {
           <p class="error">{error()}</p>
         </Show>
         <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
-          <p class="muted">{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>
-          <Show when={canEdit() && !select.selecting()}>
-            <div class="empty-quick-add">
-              <QuickAddButton inline />
-            </div>
-          </Show>
+          <div class="empty-state">
+            <p class="muted">{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>
+            <Show when={canEdit() && !select.selecting()}>
+              <div class="empty-quick-add">
+                <QuickAddButton inline />
+              </div>
+            </Show>
+          </div>
         </Show>
         <Show when={(items()?.length ?? 0) > 1}>
           <div class="row">
