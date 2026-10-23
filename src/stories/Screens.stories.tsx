@@ -1,103 +1,171 @@
-import { A } from "@solidjs/router";
-import type { JSX } from "solid-js";
+import { createMemoryHistory, MemoryRouter } from "@solidjs/router";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
-import { fn } from "storybook/test";
-import { Avatar } from "../components/Avatar.tsx";
-import { BulkActions } from "../components/BulkActions.tsx";
-import { CategoryChips } from "../components/CategoryChips.tsx";
-import { CurrencySelect } from "../components/CurrencySelect.tsx";
-import { FollowList } from "../components/FollowList.tsx";
-import { GroupCard } from "../components/GroupCard.tsx";
-import { InstallBanner } from "../components/InstallBanner.tsx";
-import { ItemCard } from "../components/ItemCard.tsx";
-import { NewGroupForm } from "../components/NewGroupForm.tsx";
-import { ListMenu } from "../components/ListMenu.tsx";
-import { LanguageSelect } from "../components/LanguageSelect.tsx";
-import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
-import { Occasions } from "../components/Occasions.tsx";
-import { ParentSelect } from "../components/ParentSelect.tsx";
-import { QuickAdd } from "../components/QuickAdd.tsx";
-import { TabBar } from "../components/TabBar.tsx";
-import type { Member } from "../lib/api/groups.ts";
-import type { Item } from "../lib/api/items.ts";
-import type { Occasion } from "../lib/api/occasions.ts";
-import { suggestCategories } from "../lib/categories.ts";
+import { mocked, userEvent, waitFor, within } from "storybook/test";
+import { AppRoot, AppRoutes } from "../App.tsx";
+import { getParents } from "../lib/api/children.ts";
+import {
+  getFollowUntil,
+  getMyFollows,
+  unfollowByToken,
+  type FollowedList,
+} from "../lib/api/follows.ts";
+import {
+  getGroup,
+  getInvites,
+  getJoinPreview,
+  getMyGroups,
+  type Group,
+  type JoinPreview,
+  type Member,
+} from "../lib/api/groups.ts";
+import {
+  addItem,
+  addQuickItems,
+  getCategories,
+  getItem,
+  getItems,
+  type Item,
+} from "../lib/api/items.ts";
+import {
+  getNextSharedOccasion,
+  getOccasions,
+  getUpcomingOccasions,
+  type Occasion,
+} from "../lib/api/occasions.ts";
+import {
+  getAdultProfiles,
+  getManagedProfiles,
+  getMyProfile,
+  getProfileDetails,
+  type Profile,
+  type ProfileDetails,
+} from "../lib/api/profiles.ts";
+import { getPurchaseOccasions, getPurchases, type Purchase } from "../lib/api/purchases.ts";
+import { setMockOtpError, setMockSession } from "../lib/__mocks__/supabase.ts";
 import { t } from "../lib/i18n.ts";
 import type { AccountId, GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
-import { Select } from "../components/Select.tsx";
-import u from "../utilities.module.css";
-import { Button } from "../components/Button.tsx";
-import { Card } from "../components/Card.tsx";
-import { Check } from "../components/Check.tsx";
-import { Chip } from "../components/Chip.tsx";
-import { Person } from "../components/Person.tsx";
-import { Popover } from "../components/Popover.tsx";
-import childStyles from "../components/GroupChildren.module.css";
-import homeStyles from "../pages/Home.module.css";
-import itemFormStyles from "../pages/ItemForm.module.css";
-import loginStyles from "../pages/Login.module.css";
-import wishListStyles from "../pages/WishList.module.css";
+import { installOffer } from "../lib/install.ts";
+import { today } from "../lib/occasions.ts";
 
 /**
- * Whole screens put together from the components, with sample data, to judge the design as the
- * app shows it: the phone width with its bottom tabs, and (Viewport toolbar) the desktop sidebar.
- * The real pages need Supabase, so these only mirror their layout.
+ * The real app at a given address, with sample data: the phone width with its bottom tabs, and
+ * (Viewport toolbar) the desktop sidebar. Supabase is mocked (see .storybook/preview.tsx): each
+ * story fills `data` in its beforeEach, and a play function clicks through to states a page only
+ * reaches after a tap.
  */
 const meta = {
   title: "Foundations/Screens",
-  parameters: { layout: "fullscreen" },
+  parameters: { layout: "fullscreen", router: false },
+  beforeEach: () => {
+    data = sampleData();
+    setMockSession({ accountId: "account-me" });
+    setMockOtpError(null);
+    localStorage.removeItem("listOrder");
+    mocked(today).mockReturnValue(day);
+    mocked(installOffer).mockReturnValue(undefined);
+
+    mocked(getMyProfile).mockImplementation(async () => orjan);
+    mocked(getManagedProfiles).mockImplementation(async () => data.managed);
+    mocked(getAdultProfiles).mockImplementation(async () => data.adults);
+    mocked(getProfileDetails).mockImplementation((id) => details(id));
+    mocked(getMyGroups).mockImplementation(() => data.groups());
+    mocked(getGroup).mockImplementation(async (id) => data.group(id));
+    mocked(getInvites).mockImplementation(async () => data.invites);
+    mocked(getParents).mockImplementation(async () => data.parents);
+    mocked(getJoinPreview).mockImplementation(async () => data.joinPreview);
+    mocked(getUpcomingOccasions).mockImplementation(async () => data.occasions);
+    mocked(getOccasions).mockImplementation(async () => data.occasions);
+    mocked(getNextSharedOccasion).mockImplementation(async () => data.occasions[0] ?? null);
+    mocked(getItems).mockImplementation((id) => data.items(id));
+    mocked(getItem).mockImplementation(async (id) => {
+      const found = Object.values(data.lists)
+        .flat()
+        .find((i) => i.id === id);
+      if (!found) throw new Error("Not found");
+      return found;
+    });
+    mocked(getCategories).mockImplementation(async () => ["Books", "Kitchen", "Sport", "Toys"]);
+    mocked(addItem).mockImplementation(() => data.addItem());
+    mocked(addQuickItems).mockImplementation(() => data.addQuickItems());
+    mocked(getPurchases).mockImplementation(async () => data.purchases);
+    mocked(getPurchaseOccasions).mockImplementation(async () => data.occasions.slice(0, 1));
+    mocked(getFollowUntil).mockImplementation(async () => null);
+    mocked(getMyFollows).mockImplementation(async () => data.follows);
+    mocked(unfollowByToken).mockImplementation(async () => "Anna");
+  },
 } satisfies Meta;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+/** The whole app, opened at `path`. */
+const app = (path: string) => () => {
+  const history = createMemoryHistory();
+  history.set({ value: path });
+  return (
+    <div id="root">
+      <MemoryRouter history={history} root={AppRoot}>
+        <AppRoutes />
+      </MemoryRouter>
+    </div>
+  );
+};
+
+const day = "2026-10-21";
 const me = "me" as ProfileId;
-const today = "2026-10-21";
 
-/** Same frame as the app's #root: content, then the tab bar. */
-const Screen = (props: { children: JSX.Element; tabs?: boolean; banner?: JSX.Element }) => (
-  <div id="root">
-    {props.banner}
-    <main class="page">{props.children}</main>
-    {props.tabs === false ? null : <TabBar myProfileId={me} />}
-  </div>
-);
+const profile = (id: string, child = false): Profile => ({
+  id: id as ProfileId,
+  display_name: id.charAt(0).toUpperCase() + id.slice(1),
+  account_id: child ? null : (`account-${id}` as AccountId),
+});
+// Your own profile is "Orjan", the rest are named after their id.
+const orjan: Profile = { ...profile("me"), display_name: "Orjan" };
 
-const member = (id: string, name: string, role: Member["role"], child = false): Member => ({
-  profile_id: id as ProfileId,
+const member = (p: Profile, role: Member["role"]): Member => ({
+  profile_id: p.id,
   role,
-  profiles: {
-    id: id as ProfileId,
-    display_name: name,
-    account_id: child ? null : (`account-${id}` as AccountId),
-  },
+  profiles: p,
 });
 
-const family = {
+const family: Group = {
   id: "group-1" as GroupId,
   name: "Family",
   group_members: [
-    member("me", "Orjan", "member"),
-    member("anna", "Anna", "manager"),
-    member("lucas", "Lucas", "member", true),
-    member("bert", "Bert", "member"),
+    member(orjan, "member"),
+    member(profile("anna"), "manager"),
+    member(profile("lucas", true), "member"),
+    member(profile("bert"), "member"),
   ],
 };
-const bookClub = {
+const bookClub: Group = {
   id: "group-2" as GroupId,
   name: "Book club",
-  group_members: [member("me", "Orjan", "manager"), member("eva", "Eva", "member")],
+  group_members: [member(orjan, "manager"), member(profile("eva"), "member")],
 };
-const annasBirthday: Occasion = {
-  id: "o1" as OccasionId,
-  group_id: family.id,
-  name: "Anna's birthday",
-  date: "2026-11-02",
-};
+const groupsOfMine = [
+  { id: family.id, name: family.name },
+  { id: bookClub.id, name: bookClub.name },
+];
 
-const item = (n: number, name: string, price: number | null, category: string | null): Item => ({
+const occasion = (id: string, name: string, date: string): Occasion => ({
+  id: id as OccasionId,
+  group_id: family.id,
+  name,
+  date,
+});
+const annasBirthday = occasion("o1", "Anna's birthday", "2026-11-02");
+
+const item = (
+  n: number,
+  owner: string,
+  name: string,
+  price: number | null,
+  category: string | null,
+  extra: Partial<Item> = {},
+): Item => ({
   id: `item-${n}` as ItemId,
-  profile_id: "anna" as ProfileId,
+  profile_id: owner as ProfileId,
   name,
   url: null,
   category,
@@ -106,865 +174,333 @@ const item = (n: number, name: string, price: number | null, category: string | 
   item_groups: [],
   price,
   price_currency: price === null ? null : n % 3 === 0 ? "EUR" : n % 3 === 1 ? "USD" : "GBP",
+  ...extra,
 });
 
-const card = (
-  i: Item,
-  purchase: "hidden" | "available" | "mine" | "someone",
-  extra: { canEdit?: boolean; boughtFor?: string } = {},
-) => (
-  <ItemCard
-    item={i}
-    purchase={purchase}
-    canEdit={extra.canEdit ?? false}
-    groupNames={[]}
-    boughtFor={extra.boughtFor}
-    onBuy={fn()}
-    onUndo={fn()}
-    onRemove={fn()}
-  />
-);
+const never = <T,>() => new Promise<T>(() => {});
 
-const newGroupForm = <NewGroupForm card inline onCreate={fn(async () => {})} />;
+/** What the mocked API answers. Each story starts from this and changes what it needs. */
+function sampleData() {
+  return {
+    groups: async (): Promise<Group[]> => [family, bookClub],
+    group: (id: GroupId): Group => (id === bookClub.id ? bookClub : family),
+    occasions: [annasBirthday] as Occasion[],
+    invites: [] as string[],
+    parents: new Map<ProfileId, ProfileId[]>([["lucas" as ProfileId, ["anna" as ProfileId]]]),
+    joinPreview: null as JoinPreview | null,
+    managed: [] as Profile[],
+    adults: [orjan, profile("anna"), profile("bert"), profile("eva")],
+    /** Groups each list is shown in, and who manages it. */
+    details: {} as Record<string, Partial<ProfileDetails>>,
+    lists: {
+      me: [
+        item(5, "me", "Trail running shoes", 129.95, "Sport"),
+        item(6, "me", "Sourdough starter kit", null, null),
+      ],
+      anna: [
+        item(1, "anna", "Cast iron pan", 62.5, "Kitchen"),
+        item(2, "anna", "Pour-over coffee set", 38, "Kitchen"),
+        item(3, "anna", "LEGO Botanical bonsai tree", 49.99, "Toys"),
+        item(4, "anna", "Merino scarf, grey", 35, "Toys"),
+      ],
+    } as Record<string, Item[]>,
+    items: (id: ProfileId): Promise<Item[]> => Promise.resolve(data.lists[id] ?? []),
+    purchases: [
+      { item_id: "item-1" as ItemId, bought_by: "bert" as ProfileId, occasion: null },
+      {
+        item_id: "item-4" as ItemId,
+        bought_by: me,
+        occasion: { name: annasBirthday.name },
+      },
+    ] as Purchase[],
+    follows: [] as FollowedList[],
+    addItem: async (): Promise<void> => {},
+    addQuickItems: async (): Promise<Item[]> => [],
+  };
+}
 
-/** The groups page header once there is a group: "+" on phones, a button with a popover on wide screens. */
-const AddGroupHeader = (props: { open?: boolean }) => (
-  <div class={u.row}>
-    <h1>{t("home.title")}</h1>
-    <A class={homeStyles.addLink} href="/groups/new" aria-label={t("home.addGroup")}>
-      +
-    </A>
-    <button type="button" class={homeStyles.addButton} popovertarget="new-group-popover">
-      {t("home.addGroup")}
-    </button>
-    <Popover
-      id="new-group-popover"
-      anchor="--add-group"
-      ref={(el) => {
-        if (props.open) queueMicrotask(() => el.showPopover());
-      }}
-    >
-      <NewGroupForm onCreate={fn(async () => {})} />
-    </Popover>
-  </div>
-);
+let data = sampleData();
 
-export const Home: Story = {
-  render: () => (
-    <Screen>
-      <AddGroupHeader />
-      <GroupCard group={family} myProfileId={me} nextOccasion={annasBirthday} today={today} />
-      <GroupCard group={bookClub} myProfileId={me} today={today} />
-    </Screen>
-  ),
-};
+async function details(id: ProfileId): Promise<ProfileDetails> {
+  const base =
+    id === me
+      ? orjan
+      : profile(
+          id,
+          data.managed.some((c) => c.id === id),
+        );
+  return {
+    ...base,
+    managerIds: data.managed.some((c) => c.id === id) ? [me] : [],
+    groups: groupsOfMine,
+    ...data.details[id],
+  };
+}
+
+/**
+ * Opens a popover the page has rendered, as tapping its button would. `when` is the media query
+ * under which the page uses it as a popover (quick add sits in the page on very wide screens).
+ */
+const openPopover = (id: string, when = "all") =>
+  waitFor(() => {
+    const popover = document.getElementById(id);
+    if (!popover) throw new Error(`No #${id} yet`);
+    if (matchMedia(when).matches) popover.showPopover();
+  });
+const quickAddIsPopover = "(max-width: 1199px)";
+
+export const Home: Story = { render: app("/") };
 
 export const HomeEmpty: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("home.title")}</h1>
-      <p class={u.muted}>You're not in a group yet. Create one, or open an invite link.</p>
-      {newGroupForm}
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.groups = async () => [];
+  },
+  render: app("/"),
 };
 
 /** Someone else's list: what is still open, what you bought, what someone else bought. */
 export const OtherList: Story = {
-  render: () => (
-    <Screen>
-      <div class={u.row}>
-        <div class={wishListStyles.title}>
-          <Avatar id="anna" name="Anna" size="lg" />
-          <h1>Anna's list</h1>
-          <FollowList
-            name="Anna"
-            until={null}
-            suggestedUntil="2026-11-02"
-            suggestedOccasion="Anna's birthday"
-            today={today}
-            busy={false}
-            onFollow={fn()}
-            onUnfollow={fn()}
-          />
-        </div>
-      </div>
-      <ListOrderSelect value="category" showBought onChange={fn()} />
-      <section class={u.stack}>
-        <h2>Kitchen</h2>
-        <ul class={`${u.list} ${u.cards}`}>
-          {card(item(1, "Cast iron pan", 62.5, "Kitchen"), "someone")}
-          {card(item(2, "Pour-over coffee set", 38, "Kitchen"), "available")}
-        </ul>
-      </section>
-      <section class={u.stack}>
-        <h2>Toys</h2>
-        <ul class={`${u.list} ${u.cards}`}>
-          {card(item(3, "LEGO Botanical bonsai tree", 49.99, "Toys"), "available")}
-          {card(item(4, "Merino scarf, grey", 35, "Toys"), "mine", {
-            boughtFor: "Anna's birthday",
-          })}
-        </ul>
-      </section>
-    </Screen>
-  ),
+  beforeEach: () => localStorage.setItem("listOrder", "category"),
+  render: app("/lists/anna"),
 };
 
 export const OwnList: Story = {
-  render: () => (
-    <Screen>
-      <div class={u.row}>
-        <h1>My list</h1>
-      </div>
-      <div class={u.row}>
-        <Button variant="secondary" size="small">
-          Select
-        </Button>
-        <ListOrderSelect value="added" showBought={false} onChange={fn()} />
-      </div>
-      <ul class={`${u.list} ${u.cards}`}>
-        {card(item(5, "Trail running shoes", 129.95, "Sport"), "hidden", { canEdit: true })}
-        {card(item(6, "Sourdough starter kit", null, null), "hidden", { canEdit: true })}
-      </ul>
-      <QuickAdd
-        initiallyOpen
-        pending={[]}
-        retrying={false}
-        groups={[
-          { id: family.id, name: "Family" },
-          { id: bookClub.id, name: "Book club" },
-        ]}
-        onAdd={fn()}
-        onCancel={fn()}
-        onOpenForm={fn()}
-      />
-    </Screen>
-  ),
+  render: app("/lists/me"),
+  play: () => openPopover("quick-add-popover", quickAddIsPopover),
 };
 
-export const Settings: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("account.title")}</h1>
-      <Card as="form" onSubmit={(e) => e.preventDefault()}>
-        <label>
-          {t("account.yourName")}
-          <input value="Orjan" />
-        </label>
-        <button type="submit">{t("account.saveName")}</button>
-      </Card>
-      <Card>
-        <LanguageSelect value="en" onChange={fn()} />
-        <CurrencySelect value="EUR" onChange={fn()} />
-      </Card>
-      <Button variant="secondary">{t("account.signOut")}</Button>
-    </Screen>
-  ),
-};
+export const Settings: Story = { render: app("/settings") };
 
 export const Login: Story = {
-  render: () => (
-    <div id="root">
-      <Card as="main" class={`${u.center} ${loginStyles.login}`}>
-        <img class={loginStyles.mark} src="/favicon.svg" alt="" />
-        <h1>Wishlister</h1>
-        <p class={u.muted}>Share wishlists with family and friends.</p>
-        <form onSubmit={(e) => e.preventDefault()}>
-          <label>
-            Email
-            <input type="email" />
-          </label>
-          <button type="submit">Send code</button>
-        </form>
-        <LanguageSelect value="en" onChange={fn()} />
-      </Card>
-    </div>
-  ),
+  beforeEach: () => setMockSession(null),
+  render: app("/login"),
 };
-
-const occasion = (id: string, name: string, date: string): Occasion => ({
-  id: id as OccasionId,
-  group_id: family.id,
-  name,
-  date,
-});
-const occasions = [
-  annasBirthday,
-  occasion("o2", "Sinterklaas 2026", "2026-12-06"),
-  occasion("o3", "Christmas 2026", "2026-12-25"),
-  occasion("o4", "Christmas 2025", "2025-12-25"),
-];
-
-const groupGroups = [
-  { id: family.id, name: "Family" },
-  { id: bookClub.id, name: "Book club" },
-];
 
 /** Same fixtures as the other list stories, but with the states the list page can be in. */
 export const ListEmptyOwn: Story = {
-  render: () => (
-    <Screen>
-      <div class={u.row}>
-        <h1>{t("wishlist.mine")}</h1>
-      </div>
-      <p class={u.muted}>{t("wishlist.emptyOwn")}</p>
-      <QuickAdd
-        initiallyOpen
-        pending={[]}
-        retrying={false}
-        groups={groupGroups}
-        onAdd={fn()}
-        onCancel={fn()}
-        onOpenForm={fn()}
-      />
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.lists.me = [];
+  },
+  render: app("/lists/me"),
 };
 
 export const ListEmptyOther: Story = {
-  render: () => (
-    <Screen>
-      <h1>Anna's list</h1>
-      <p class={u.muted}>{t("wishlist.empty")}</p>
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.lists.anna = [];
+  },
+  render: app("/lists/anna"),
 };
 
 export const ListLoading: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("wishlist.fallbackTitle")}</h1>
-      <p class={u.muted}>{t("common.loading")}</p>
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.items = () => never();
+  },
+  render: app("/lists/anna"),
 };
 
 export const ListError: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("wishlist.fallbackTitle")}</h1>
-      <p class={u.error}>{t("wishlist.unavailable")}</p>
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.items = () => Promise.reject(new Error("Failed to fetch"));
+  },
+  render: app("/lists/anna"),
 };
 
-/** Own list with a private item, one waiting to save, one "please don't buy" and an error. */
+/** Own list with a private item, one for some groups, a "please don't buy" and one failing to save. */
 export const OwnListStates: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("wishlist.mine")}</h1>
-      <p class={u.error}>Could not save the item. Try again.</p>
-      <ul class={`${u.list} ${u.cards}`}>
-        <ItemCard
-          item={{
-            ...item(7, "Noise-cancelling headphones", 279, "Music"),
-            visible_in_all_groups: false,
-          }}
-          purchase="hidden"
-          canEdit
-          groupNames={[]}
-          onBuy={fn()}
-          onUndo={fn()}
-          onRemove={fn()}
-        />
-        <ItemCard
-          item={{ ...item(8, "Board game: Wingspan", 49, "Games"), visible_in_all_groups: false }}
-          purchase="hidden"
-          canEdit
-          groupNames={["Family"]}
-          onBuy={fn()}
-          onUndo={fn()}
-          onRemove={fn()}
-        />
-      </ul>
-      <section class={u.stack}>
-        <h2>{t("listOrder.notWanted")}</h2>
-        <ul class={`${u.list} ${u.cards}`}>
-          <ItemCard
-            item={{ ...item(9, "Mugs", null, null), not_wanted: true }}
-            purchase="hidden"
-            canEdit
-            groupNames={[]}
-            onBuy={fn()}
-            onUndo={fn()}
-            onRemove={fn()}
-          />
-        </ul>
-      </section>
-      <QuickAdd
-        initiallyOpen
-        pending={[{ name: "Sourdough starter kit", groups: "all" } as never]}
-        retrying
-        groups={groupGroups}
-        onAdd={fn()}
-        onCancel={fn()}
-        onOpenForm={fn()}
-      />
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.lists.me = [
+      item(7, "me", "Noise-cancelling headphones", 279, "Music", { visible_in_all_groups: false }),
+      item(8, "me", "Board game: Wingspan", 49, "Games", {
+        visible_in_all_groups: false,
+        item_groups: [{ group_id: family.id }],
+      }),
+      item(9, "me", "Mugs", null, null, { not_wanted: true }),
+    ];
+    data.addQuickItems = () => Promise.reject(new Error("Failed to fetch"));
+  },
+  render: app("/lists/me"),
+  play: async ({ canvasElement }) => {
+    await openPopover("quick-add-popover", quickAddIsPopover);
+    const field = await within(canvasElement).findByLabelText(t("quickAdd.label"), {
+      selector: "input",
+    });
+    await userEvent.type(field, "Sourdough starter kit{Enter}");
+  },
 };
 
 /** Picking items for a bulk action. */
 export const ListSelecting: Story = {
-  render: () => (
-    <Screen>
-      <div class={u.row}>
-        <h1>{t("wishlist.mine")}</h1>
-      </div>
-      <ul class={`${u.list} ${u.cards}`}>
-        <ItemCard
-          item={item(5, "Trail running shoes", 129.95, "Sport")}
-          purchase="hidden"
-          canEdit
-          groupNames={[]}
-          selecting
-          selected
-          onBuy={fn()}
-          onUndo={fn()}
-          onRemove={fn()}
-        />
-        <ItemCard
-          item={item(6, "Sourdough starter kit", 24, "Kitchen")}
-          purchase="hidden"
-          canEdit
-          groupNames={[]}
-          selecting
-          onBuy={fn()}
-          onUndo={fn()}
-          onRemove={fn()}
-        />
-      </ul>
-      <BulkActions
-        selected={1}
-        total={2}
-        groups={groupGroups}
-        suggestCategories={(typed: string) =>
-          suggestCategories(["Sport", "Kitchen"], ["Books", "Toys"], typed)
-        }
-        busy={false}
-        onSelectAll={fn()}
-        onSelectNone={fn()}
-        onSetCategory={fn()}
-        onSetGroups={fn()}
-        onDelete={fn()}
-        onDone={fn()}
-      />
-    </Screen>
-  ),
+  render: app("/lists/me"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: t("bulk.select") }));
+    await userEvent.click((await canvas.findAllByRole("checkbox"))[0]);
+  },
 };
 
 export const HomeWithInstallBanner: Story = {
-  render: () => (
-    <Screen banner={<InstallBanner mode="prompt" onInstall={fn()} onDismiss={fn()} />}>
-      <AddGroupHeader />
-      <GroupCard group={family} myProfileId={me} nextOccasion={annasBirthday} today={today} />
-    </Screen>
-  ),
+  beforeEach: () => {
+    mocked(installOffer).mockReturnValue("prompt");
+  },
+  render: app("/"),
 };
 
 export const HomeOccasionToday: Story = {
-  render: () => (
-    <Screen>
-      <AddGroupHeader />
-      <GroupCard
-        group={family}
-        myProfileId={me}
-        nextOccasion={{ ...annasBirthday, date: today }}
-        today={today}
-      />
-      <GroupCard
-        group={{ ...bookClub, name: "Colleagues" }}
-        myProfileId={me}
-        nextOccasion={{ ...annasBirthday, name: "Team lunch", date: "2026-10-22" }}
-        today={today}
-      />
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.groups = async () => [family, { ...bookClub, name: "Colleagues" }];
+    data.occasions = [
+      { ...annasBirthday, date: day },
+      {
+        ...annasBirthday,
+        id: "o9" as OccasionId,
+        group_id: bookClub.id,
+        name: "Team lunch",
+        date: "2026-10-22",
+      },
+    ];
+  },
+  render: app("/"),
 };
 
 export const HomeLoadFailed: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("home.title")}</h1>
-      <p class={u.error}>{t("home.loadFailed", { message: "Failed to fetch" })}</p>
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.groups = () => Promise.reject(new Error("Failed to fetch"));
+  },
+  render: app("/"),
 };
 
-export const ItemFormNew: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("wishlist.addItem")}</h1>
-      <ItemFormMock />
-    </Screen>
-  ),
-};
+export const ItemFormNew: Story = { render: app("/lists/me/items/new") };
 
 export const ItemFormEditSelectedGroups: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("common.edit")}</h1>
-      <ItemFormMock editing />
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.lists.me = [
+      item(3, "me", "LEGO Botanical bonsai tree", 49.99, "Toys", {
+        url: "https://www.lego.com/bonsai",
+        visible_in_all_groups: false,
+        item_groups: [{ group_id: family.id }],
+      }),
+    ];
+  },
+  render: app("/items/item-3/edit"),
 };
-
-function ItemFormMock(props: { editing?: boolean }) {
-  return (
-    <Card as="form" onSubmit={(e) => e.preventDefault()}>
-      <label>
-        {t("itemForm.name")}
-        <input required value={props.editing ? "LEGO Botanical bonsai tree" : ""} />
-      </label>
-      <label>
-        {t("itemForm.link")}
-        <input
-          type="url"
-          placeholder="https://"
-          value={props.editing ? "https://www.lego.com/bonsai" : ""}
-        />
-      </label>
-      <label>
-        {t("itemForm.category")}
-        <input value={props.editing ? "Toys" : ""} />
-      </label>
-      <CategoryChips categories={["Books", "Clothes", "Toys", "Games"]} onPick={fn()} />
-      <Check>
-        <input type="checkbox" />
-        {t("itemForm.notWanted")}
-      </Check>
-      <div class={`${u.row} ${itemFormStyles.priceFields}`}>
-        <label>
-          {t("itemForm.price")}
-          <input inputmode="decimal" value={props.editing ? "49.99" : ""} />
-        </label>
-        <label>
-          {t("itemForm.currency")}
-          <Select>
-            <option>EUR</option>
-            <option>USD</option>
-          </Select>
-        </label>
-      </div>
-      <fieldset>
-        <legend>{t("itemForm.visibility")}</legend>
-        <Check>
-          <input type="radio" name="visibility" checked={!props.editing} />
-          {t("itemForm.allGroups")}
-        </Check>
-        <Check>
-          <input type="radio" name="visibility" checked={props.editing} />
-          {t("itemForm.selectedGroups")}
-        </Check>
-        {props.editing ? (
-          <div class={u.indent}>
-            <Check>
-              <input type="checkbox" checked /> Family
-            </Check>
-            <Check>
-              <input type="checkbox" /> Book club
-            </Check>
-          </div>
-        ) : null}
-        <Check>
-          <input type="radio" name="visibility" />
-          {t("itemForm.noGroupsOption")}
-        </Check>
-      </fieldset>
-      <button type="submit">{t("common.save")}</button>
-      <Button variant="secondary">{t("common.cancel")}</Button>
-    </Card>
-  );
-}
 
 export const ItemFormError: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("wishlist.addItem")}</h1>
-      <Card as="form" onSubmit={(e) => e.preventDefault()}>
-        <label>
-          {t("itemForm.name")}
-          <input required value="Trail running shoes" />
-        </label>
-        <button type="submit" disabled>
-          {t("common.saving")}
-        </button>
-        <p class={u.error}>Could not save the item.</p>
-      </Card>
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.addItem = () => Promise.reject(new Error("Could not save the item."));
+  },
+  render: app("/lists/me/items/new"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.type(await canvas.findByLabelText(t("itemForm.name")), "Trail running shoes");
+    await userEvent.click(canvas.getByRole("button", { name: t("common.save") }));
+  },
 };
-
-function GroupSettingsMock(props: { manager: boolean }) {
-  return (
-    <>
-      <h1>Family</h1>
-      <Card>
-        <h2>{t("group.members")}</h2>
-        <ul class={u.list}>
-          <li class={u.listRow}>
-            <Person id="me" name="Orjan">
-              Orjan{t("common.you")}
-            </Person>
-            {props.manager ? (
-              <Chip>{t("roles.manager")}</Chip>
-            ) : (
-              <Select>
-                <option>{t("roles.member")}</option>
-                <option>{t("roles.guardian")}</option>
-              </Select>
-            )}
-          </li>
-          <li class={u.listRow}>
-            <Person id="anna" name="Anna">
-              Anna
-            </Person>
-            {props.manager ? (
-              <span class={u.row}>
-                <Select>
-                  <option>{t("roles.manager")}</option>
-                </Select>
-                <Button variant="link" danger>
-                  {t("common.remove")}
-                </Button>
-              </span>
-            ) : (
-              <Chip>{t("roles.manager")}</Chip>
-            )}
-          </li>
-          <li class={u.listRow}>
-            <Person id="bert" name="Bert">
-              Bert
-            </Person>
-            {props.manager ? (
-              <span class={u.row}>
-                <Select>
-                  <option>{t("roles.member")}</option>
-                </Select>
-                <Button variant="link" danger>
-                  {t("common.remove")}
-                </Button>
-              </span>
-            ) : (
-              <Chip>{t("roles.member")}</Chip>
-            )}
-          </li>
-        </ul>
-        <p class={`${u.muted} ${u.small}`}>{t("group.guardianHelp")}</p>
-        {props.manager ? (
-          <>
-            <h3>{t("group.pendingInvites")}</h3>
-            <ul class={u.list}>
-              <li class={u.listRow}>
-                <span class={`${u.muted} ${u.truncate}`}>carla.janssens@example.com</span>
-                <span class={u.row}>
-                  <Button variant="link">{t("group.emailInvite")}</Button>
-                  <Button variant="link" danger>
-                    {t("common.cancel")}
-                  </Button>
-                </span>
-              </li>
-            </ul>
-            <form onSubmit={(e) => e.preventDefault()}>
-              <label>
-                {t("group.inviteByEmail")}
-                <input type="email" />
-              </label>
-              <button type="submit">{t("group.invite")}</button>
-            </form>
-            <h3>{t("group.inviteLink")}</h3>
-            <p class={`${u.muted} ${u.small}`}>{t("group.inviteLinkHelp")}</p>
-            <div class={u.row}>
-              <button type="button">{t("group.shareLink")}</button>
-              <Button variant="secondary">{t("group.newLink")}</Button>
-            </div>
-          </>
-        ) : null}
-      </Card>
-      <Card>
-        <h2>{t("group.children")}</h2>
-        <p class={`${u.muted} ${u.small}`}>{t("group.childrenHelp")}</p>
-        <ul class={u.list}>
-          <li class={childStyles.child}>
-            <div class={u.listRow}>
-              <span>Lucas</span>
-              <span class={u.row}>
-                <A class={u.link} href="/children/lucas">
-                  {t("child.editProfile")}
-                </A>
-                <Button variant="link" danger>
-                  {t("common.remove")}
-                </Button>
-              </span>
-            </div>
-          </li>
-        </ul>
-        {props.manager ? (
-          <form onSubmit={(e) => e.preventDefault()}>
-            <label>
-              {t("group.addNewChild")}
-              <input required placeholder={t("group.childName")} />
-            </label>
-            <label>
-              {t("group.parent")}
-              <ParentSelect
-                name="parent"
-                options={[
-                  { id: "me" as ProfileId, name: "Orjan (you)" },
-                  { id: "anna" as ProfileId, name: "Anna" },
-                ]}
-                value={"me" as ProfileId}
-                onChange={fn()}
-              />
-            </label>
-            <button type="submit">{t("group.addChild")}</button>
-          </form>
-        ) : null}
-      </Card>
-      <Occasions
-        occasions={occasions}
-        today={today}
-        canEdit={props.manager}
-        onAdd={fn(async () => true)}
-        onUpdate={fn(async () => true)}
-        onDelete={fn()}
-      />
-      {props.manager ? (
-        <Card as="form" onSubmit={(e) => e.preventDefault()}>
-          <label>
-            {t("group.groupName")}
-            <input required value="Family" />
-          </label>
-          <button type="submit">{t("group.rename")}</button>
-        </Card>
-      ) : null}
-      <div class={u.stack}>
-        <Button variant="secondary">{t("group.leave")}</Button>
-        {props.manager ? (
-          <Button variant="secondary" danger>
-            {t("group.deleteGroup")}
-          </Button>
-        ) : null}
-      </div>
-    </>
-  );
-}
 
 export const GroupSettingsAsManager: Story = {
-  render: () => (
-    <Screen>
-      <GroupSettingsMock manager />
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.group = () => ({
+      ...family,
+      group_members: [
+        member(orjan, "manager"),
+        member(profile("anna"), "manager"),
+        member(profile("lucas", true), "member"),
+        member(profile("bert"), "member"),
+      ],
+    });
+    data.invites = ["carla.janssens@example.com"];
+    data.occasions = [
+      annasBirthday,
+      occasion("o2", "Sinterklaas 2026", "2026-12-06"),
+      occasion("o3", "Christmas 2026", "2026-12-25"),
+      occasion("o4", "Christmas 2025", "2025-12-25"),
+    ];
+  },
+  render: app("/groups/group-1"),
 };
 
-export const GroupSettingsAsMember: Story = {
-  render: () => (
-    <Screen>
-      <GroupSettingsMock manager={false} />
-    </Screen>
-  ),
-};
+export const GroupSettingsAsMember: Story = { render: app("/groups/group-1") };
 
+/** The last manager leaving: they pick who takes over first. */
 export const GroupLeaveHandOver: Story = {
-  render: () => (
-    <Screen>
-      <h1>Family</h1>
-      <Card as="div">
-        <label>
-          {t("group.chooseSuccessor", { group: "Family" })}
-          <Select>
-            <option value="" disabled selected>
-              {t("group.chooseMember")}
-            </option>
-            <option>Anna</option>
-          </Select>
-        </label>
-        <button type="button" disabled>
-          {t("group.handOverAndLeave")}
-        </button>
-        <Button variant="secondary">{t("group.stay")}</Button>
-      </Card>
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.group = () => ({
+      ...family,
+      group_members: [member(orjan, "manager"), member(profile("anna"), "member")],
+    });
+  },
+  render: app("/groups/group-1"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: t("group.leave") }));
+  },
 };
 
 /** A parent also manages their children here: open a list, or delete the child. */
 export const SettingsWithChildren: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("account.title")}</h1>
-      <Card as="form" onSubmit={(e) => e.preventDefault()}>
-        <label>
-          {t("account.yourName")}
-          <input required value="Orjan" />
-        </label>
-        <button type="submit">{t("account.saveName")}</button>
-        <p class={u.muted}>{t("account.saved")}</p>
-      </Card>
-      <Card>
-        <LanguageSelect value="en" onChange={fn()} />
-        <CurrencySelect value="EUR" onChange={fn()} />
-      </Card>
-      <Card>
-        <h2>{t("account.children")}</h2>
-        <p class={`${u.muted} ${u.small}`}>{t("account.childrenHelp")}</p>
-        <ul class={u.list}>
-          {["Lucas", "Mila"].map((name) => (
-            <li class={u.listRow}>
-              <Person id={name.toLowerCase()} name={name}>
-                {name}
-              </Person>
-              <A class={u.link} href={`/children/${name}`}>
-                {t("child.editProfile")}
-              </A>
-            </li>
-          ))}
-        </ul>
-        <form onSubmit={(e) => e.preventDefault()}>
-          <label>
-            {t("group.addNewChild")}
-            <input required placeholder={t("group.childName")} />
-          </label>
-          <button type="submit">{t("group.addChild")}</button>
-        </form>
-      </Card>
-      <Button variant="secondary">{t("account.signOut")}</Button>
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.managed = [profile("lucas", true), profile("mila", true)];
+    data.follows = [
+      { listId: "anna" as ProfileId, name: "Anna", until: annasBirthday.date },
+      { listId: "bert" as ProfileId, name: "Bert", until: "2026-12-25" },
+    ];
+  },
+  render: app("/settings"),
 };
 
+/** After sending the email: the code field, here with a code that didn't work. */
 export const LoginCode: Story = {
-  render: () => (
-    <div id="root">
-      <Card as="main" class={`${u.center} ${loginStyles.login}`}>
-        <h1>Wishlister</h1>
-        <p>{t("login.checkInbox", { email: "orjan@example.com" })}</p>
-        <form onSubmit={(e) => e.preventDefault()}>
-          <label>
-            {t("login.code")}
-            <input class={loginStyles.codeInput} inputmode="numeric" value="482915" />
-          </label>
-          <button type="submit">{t("login.signIn")}</button>
-          <Button variant="secondary">{t("login.otherEmail")}</Button>
-        </form>
-        <p class={u.error} role="alert">
-          Token has expired or is invalid
-        </p>
-        <LanguageSelect value="en" onChange={fn()} />
-      </Card>
-    </div>
-  ),
+  beforeEach: () => {
+    setMockSession(null);
+    setMockOtpError("Token has expired or is invalid");
+  },
+  render: app("/login"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.type(await canvas.findByLabelText(t("login.email")), "orjan@example.com");
+    await userEvent.click(canvas.getByRole("button", { name: t("login.send") }));
+    await userEvent.type(await canvas.findByLabelText(t("login.code")), "482915");
+    await userEvent.click(canvas.getByRole("button", { name: t("login.signIn") }));
+  },
 };
 
 export const JoinInvited: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("join.title")}</h1>
-      <Card>
-        <p>{t("join.invited", { group: "Family" })}</p>
-        <button type="button">{t("join.join", { group: "Family" })}</button>
-      </Card>
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.joinPreview = { group_id: family.id, group_name: "Family", is_member: false };
+  },
+  render: app("/join/abc123"),
 };
 
 export const JoinAlreadyMember: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("join.title")}</h1>
-      <Card>
-        <p>{t("join.alreadyIn", { group: "Family" })}</p>
-        <A class={u.link} href="/groups/group-1">
-          {t("join.open", { group: "Family" })}
-        </A>
-      </Card>
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.joinPreview = { group_id: family.id, group_name: "Family", is_member: true };
+  },
+  render: app("/join/abc123"),
 };
 
-export const JoinExpired: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("join.title")}</h1>
-      <p class={u.muted}>{t("join.expired")}</p>
-      <A class={u.link} href="/">
-        {t("join.toGroups")}
-      </A>
-    </Screen>
-  ),
-};
+export const JoinExpired: Story = { render: app("/join/abc123") };
 
+/** Opened from a digest email, signed in or not. */
 export const UnfollowDone: Story = {
-  render: () => (
-    <Screen tabs={false}>
-      <h1>{t("unfollow.title")}</h1>
-      <p>{t("unfollow.done", { name: "Anna" })}</p>
-      <A class={u.link} href="/">
-        {t("unfollow.toApp")}
-      </A>
-    </Screen>
-  ),
+  beforeEach: () => setMockSession(null),
+  render: app("/unfollow/token123"),
 };
 
 /** Wide screens: the popover open under "Add group". Pick a desktop viewport to see it. */
 export const HomeAddGroupPopover: Story = {
-  render: () => (
-    <Screen>
-      <AddGroupHeader open />
-      <GroupCard group={family} myProfileId={me} nextOccasion={annasBirthday} today={today} />
-      <GroupCard group={bookClub} myProfileId={me} today={today} />
-    </Screen>
-  ),
+  render: app("/"),
+  play: () => openPopover("new-group-popover", "(min-width: 900px)"),
 };
 
 /** Phones: "+" opens this page. */
-export const NewGroupPage: Story = {
-  render: () => (
-    <Screen>
-      <h1>{t("home.newGroup")}</h1>
-      <NewGroupForm card onCreate={fn(async () => {})} />
-    </Screen>
-  ),
-};
+export const NewGroupPage: Story = { render: app("/groups/new") };
 
 /** A parent's own list: a dropdown jumps to a child's list. */
 export const OwnListAsParent: Story = {
-  render: () => (
-    <Screen>
-      <div class={u.row}>
-        <div class={wishListStyles.title}>
-          <Avatar id="me" name="Orjan" size="lg" />
-          <h1>{t("wishlist.mine")}</h1>
-          <ListMenu
-            value={me}
-            options={[
-              { id: me, name: t("nav.myList"), person: "Orjan" },
-              {
-                id: "lucas" as ProfileId,
-                name: t("account.childWishlist", { name: "Lucas" }),
-                person: "Lucas",
-              },
-              {
-                id: "mila" as ProfileId,
-                name: t("account.childWishlist", { name: "Mila" }),
-                person: "Mila",
-              },
-            ]}
-          />
-        </div>
-      </div>
-      <div class={u.row}>
-        <Button variant="secondary" size="small">
-          Select
-        </Button>
-        <ListOrderSelect value="added" showBought={false} onChange={fn()} />
-      </div>
-      <ul class={`${u.list} ${u.cards}`}>
-        {card(item(5, "Trail running shoes", 129.95, "Sport"), "hidden", { canEdit: true })}
-      </ul>
-    </Screen>
-  ),
+  beforeEach: () => {
+    data.managed = [profile("lucas", true), profile("mila", true)];
+    data.lists.me = data.lists.me.slice(0, 1);
+  },
+  render: app("/lists/me"),
 };
 
 /** The smallest phones: the tab bar still fits all three tabs. */

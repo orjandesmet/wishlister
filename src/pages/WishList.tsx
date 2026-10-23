@@ -95,15 +95,23 @@ export default function WishList() {
     clearTimeout(followedTimer);
     followedTimer = setTimeout(() => setJustFollowed(false), FOLLOWED_NOTICE_MS);
   };
-  const purchases = createPurchases(items, isOwnList, () => me().profile.id, runner, onBought);
-  const listSections = createListSections(items, () =>
+  // Reading a failed resource throws, so the helpers see "no items" and the page shows its error.
+  const loadedItems = () => (items.error ? undefined : items());
+  const purchases = createPurchases(
+    loadedItems,
+    isOwnList,
+    () => me().profile.id,
+    runner,
+    onBought,
+  );
+  const listSections = createListSections(loadedItems, () =>
     purchases.showBought() ? (item) => purchases.purchaseOf().has(item.id) : undefined,
   );
   const { sections, notWanted, isGrouped } = listSections;
   const groupName = (id: GroupId) =>
     profile()?.groups.find((g) => g.id === id)?.name ?? t("wishlist.aGroup");
 
-  const select = createBulkSelect(items);
+  const select = createBulkSelect(loadedItems);
   const [bulkBusy, runBulk] = runner.busyRunner();
   // Only loaded once someone starts selecting, for the category suggestions.
   const [categories] = createResource(select.selecting, () => getCategories());

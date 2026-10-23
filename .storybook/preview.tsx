@@ -1,8 +1,25 @@
 import { MemoryRouter } from "@solidjs/router";
 import type { Preview } from "storybook-solidjs-vite";
+import { sb } from "storybook/test";
 import { isLocale } from "../src/i18n/locale.ts";
 import { setLocale } from "../src/lib/i18n.ts";
 import "../src/index.css";
+
+// The Screens stories render the real pages. Their data comes from these mocks instead of
+// Supabase: each story sets what the API calls return (see src/stories/Screens.stories.tsx).
+// supabase.ts is replaced by src/lib/__mocks__/supabase.ts, which answers the auth calls.
+sb.mock(import("../src/lib/supabase.ts"));
+sb.mock(import("../src/lib/api/children.ts"));
+sb.mock(import("../src/lib/api/follows.ts"));
+sb.mock(import("../src/lib/api/groups.ts"));
+sb.mock(import("../src/lib/api/items.ts"));
+sb.mock(import("../src/lib/api/occasions.ts"));
+sb.mock(import("../src/lib/api/pageInfo.ts"));
+sb.mock(import("../src/lib/api/profiles.ts"));
+sb.mock(import("../src/lib/api/purchases.ts"));
+// Real code, but a story can fix the date or show the install banner.
+sb.mock(import("../src/lib/occasions.ts"), { spy: true });
+sb.mock(import("../src/lib/install.ts"), { spy: true });
 
 export default {
   // Every component gets a Docs page with its props and all its stories.
@@ -38,8 +55,10 @@ export default {
   // Phone-sized canvas by default: the app is mobile first.
   initialGlobals: { viewport: { value: "mobile2", isRotated: false }, locale: "en", theme: "auto" },
   decorators: [
-    // Components use <A> links, which need a router around them.
-    (Story) => <MemoryRouter root={() => <Story />} />,
+    // Components use <A> links, which need a router around them. Stories that bring their
+    // own router (the Screens stories render the app's) set parameters.router to false.
+    (Story, context) =>
+      context.parameters.router === false ? <Story /> : <MemoryRouter root={() => <Story />} />,
     (Story, context) => {
       const theme: unknown = context.globals.theme;
       document.documentElement.style.colorScheme =
