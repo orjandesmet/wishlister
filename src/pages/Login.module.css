@@ -1,0 +1,39 @@
+.login {
+  width: 100%;
+}
+
+/* The login screen's mark. */
+.mark {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto;
+  transform: rotate(-6deg);
+}
+
+.codeInput {
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.4em;
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes land {
+    0% {
+      opacity: 0;
+      transform: rotate(-16deg) scale(0.6);
+    }
+    60% {
+      opacity: 1;
+      transform: rotate(calc(var(--tilt) + 5deg)) scale(1.06);
+    }
+    100% {
+      transform: rotate(var(--tilt)) scale(1);
+    }
+  }
+
+  .mark {
+    --tilt: -6deg;
+    animation: land 420ms var(--ease-pop) backwards;
+  }
+}

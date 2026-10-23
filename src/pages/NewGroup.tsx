@@ -8,7 +8,7 @@ export default function NewGroup() {
   return (
     <>
       <h1>{t("home.newGroup")}</h1>
-      <NewGroupForm class="card" onCreate={onCreate} />
+      <NewGroupForm card onCreate={onCreate} />
     </>
   );
 }

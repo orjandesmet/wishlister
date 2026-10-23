@@ -6,6 +6,9 @@ import type { GroupData } from "../lib/createGroupData.ts";
 import { t } from "../lib/i18n.ts";
 import type { ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
+import u from "../utilities.module.css";
+import { Button } from "./Button.tsx";
+import { Card } from "./Card.tsx";
 import { Select } from "./Select.tsx";
 
 /** Leaving the group (handing it over first when needed) and, for managers, deleting it. */
@@ -51,16 +54,16 @@ export function LeaveGroup(props: {
     });
 
   return (
-    <div class="stack">
+    <div class={u.stack}>
       <Show
         when={handingOver()}
         fallback={
-          <button type="button" class="secondary" onClick={onLeave}>
+          <Button variant="secondary" onClick={onLeave}>
             {t("group.leave")}
-          </button>
+          </Button>
         }
       >
-        <div class="card">
+        <Card as="div">
           <label>
             {t("group.chooseSuccessor", { group: data.group()?.name ?? "" })}
             <Select
@@ -78,15 +81,15 @@ export function LeaveGroup(props: {
           <button type="button" disabled={!successor()} onClick={onHandOverAndLeave}>
             {t("group.handOverAndLeave")}
           </button>
-          <button type="button" class="secondary" onClick={() => setHandingOver(false)}>
+          <Button variant="secondary" onClick={() => setHandingOver(false)}>
             {t("group.stay")}
-          </button>
-        </div>
+          </Button>
+        </Card>
       </Show>
       <Show when={data.isManager()}>
-        <button type="button" class="secondary danger" onClick={onDeleteGroup}>
+        <Button variant="secondary" danger onClick={onDeleteGroup}>
           {t("group.deleteGroup")}
-        </button>
+        </Button>
       </Show>
     </div>
   );

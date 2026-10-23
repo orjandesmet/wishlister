@@ -1,0 +1,24 @@
+.heading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.heading svg {
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+}
+
+/* Edit and remove side by side, spaced like the ones on an item card. */
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 8px 14px;
+}
+
+@supports (position-area: bottom) {
+  .heading {
+    anchor-name: --notifications;
+  }
+}

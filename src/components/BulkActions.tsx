@@ -2,7 +2,12 @@ import { createMemo, createSignal, For, Match, Show, Switch } from "solid-js";
 import type { GroupSelection } from "../lib/api/items.ts";
 import { t } from "../lib/i18n.ts";
 import type { GroupId } from "../lib/ids.ts";
+import u from "../utilities.module.css";
+import { Button } from "./Button.tsx";
+import { Card } from "./Card.tsx";
 import { CategoryChips } from "./CategoryChips.tsx";
+import { Check } from "./Check.tsx";
+import styles from "./BulkActions.module.css";
 
 export type BulkActionsProps = {
   /** How many items are ticked, and how many there are. */
@@ -53,58 +58,57 @@ export function BulkActions(props: BulkActionsProps) {
   }
 
   return (
-    <section class="card bulk-actions" aria-label={t("bulk.title")}>
-      <div class="row">
-        <strong class="bulk-count" aria-live="polite">
-          {t("bulk.selected", { count: props.selected })}
-        </strong>
+    <Card class={styles.bulkActions} aria-label={t("bulk.title")}>
+      <div class={u.row}>
+        <strong aria-live="polite">{t("bulk.selected", { count: props.selected })}</strong>
         <Show
           when={props.selected < props.total}
           fallback={
-            <button type="button" class="link" onClick={() => props.onSelectNone()}>
+            <Button variant="link" onClick={() => props.onSelectNone()}>
               {t("bulk.selectNone")}
-            </button>
+            </Button>
           }
         >
-          <button type="button" class="link" onClick={() => props.onSelectAll()}>
+          <Button variant="link" onClick={() => props.onSelectAll()}>
             {t("bulk.selectAll")}
-          </button>
+          </Button>
         </Show>
       </div>
       <Switch>
         <Match when={panel() === "actions"}>
-          <div class="bulk-buttons">
-            <button
-              type="button"
-              class="secondary small"
+          <div class={styles.buttons}>
+            <Button
+              variant="secondary"
+              size="small"
               disabled={nothing()}
               onClick={() => setPanel("category")}
             >
               {t("bulk.setCategory")}
-            </button>
-            <button
-              type="button"
-              class="secondary small"
+            </Button>
+            <Button
+              variant="secondary"
+              size="small"
               disabled={nothing()}
               onClick={() => setPanel("groups")}
             >
               {t("bulk.setGroups")}
-            </button>
-            <button
-              type="button"
-              class="secondary small danger"
+            </Button>
+            <Button
+              variant="secondary"
+              danger
+              size="small"
               disabled={nothing()}
               onClick={() => props.onDelete()}
             >
               {t("common.delete")}
-            </button>
-            <button type="button" class="small" onClick={() => props.onDone()}>
+            </Button>
+            <Button size="small" onClick={() => props.onDone()}>
               {t("bulk.done")}
-            </button>
+            </Button>
           </div>
         </Match>
         <Match when={panel() === "category"}>
-          <form class="stack" onSubmit={applyCategory}>
+          <form class={u.stack} onSubmit={applyCategory}>
             <label>
               {t("bulk.categoryLabel")}
               <input
@@ -116,21 +120,21 @@ export function BulkActions(props: BulkActionsProps) {
               />
             </label>
             <CategoryChips categories={chips()} onPick={setCategory} />
-            <div class="bulk-buttons">
-              <button type="submit" class="small" disabled={nothing()}>
+            <div class={styles.buttons}>
+              <Button size="small" type="submit" disabled={nothing()}>
                 {category().trim() ? t("bulk.apply") : t("bulk.clearCategory")}
-              </button>
-              <button type="button" class="secondary small" onClick={() => setPanel("actions")}>
+              </Button>
+              <Button variant="secondary" size="small" onClick={() => setPanel("actions")}>
                 {t("common.cancel")}
-              </button>
+              </Button>
             </div>
           </form>
         </Match>
         <Match when={panel() === "groups"}>
-          <form class="stack" onSubmit={applyGroups}>
+          <form class={u.stack} onSubmit={applyGroups}>
             <fieldset>
               <legend>{t("itemForm.visibility")}</legend>
-              <label class="check">
+              <Check>
                 <input
                   type="radio"
                   name="bulk-visibility"
@@ -138,8 +142,8 @@ export function BulkActions(props: BulkActionsProps) {
                   onChange={() => setVisibility("all")}
                 />
                 {t("itemForm.allGroups")}
-              </label>
-              <label class="check">
+              </Check>
+              <Check>
                 <input
                   type="radio"
                   name="bulk-visibility"
@@ -147,27 +151,27 @@ export function BulkActions(props: BulkActionsProps) {
                   onChange={() => setVisibility("some")}
                 />
                 {t("itemForm.selectedGroups")}
-              </label>
+              </Check>
               <Show when={visibility() === "some"}>
-                <div class="indent">
+                <div class={u.indent}>
                   <For
                     each={props.groups}
-                    fallback={<p class="muted small">{t("itemForm.noGroups")}</p>}
+                    fallback={<p class={`${u.muted} ${u.small}`}>{t("itemForm.noGroups")}</p>}
                   >
                     {(group) => (
-                      <label class="check">
+                      <Check>
                         <input
                           type="checkbox"
                           checked={groupIds().includes(group.id)}
                           onChange={(e) => toggleGroup(group.id, e.currentTarget.checked)}
                         />
                         {group.name}
-                      </label>
+                      </Check>
                     )}
                   </For>
                 </div>
               </Show>
-              <label class="check">
+              <Check>
                 <input
                   type="radio"
                   name="bulk-visibility"
@@ -175,19 +179,19 @@ export function BulkActions(props: BulkActionsProps) {
                   onChange={() => setVisibility("none")}
                 />
                 {t("itemForm.noGroupsOption")}
-              </label>
+              </Check>
             </fieldset>
-            <div class="bulk-buttons">
-              <button type="submit" class="small" disabled={nothing()}>
+            <div class={styles.buttons}>
+              <Button size="small" type="submit" disabled={nothing()}>
                 {t("bulk.apply")}
-              </button>
-              <button type="button" class="secondary small" onClick={() => setPanel("actions")}>
+              </Button>
+              <Button variant="secondary" size="small" onClick={() => setPanel("actions")}>
                 {t("common.cancel")}
-              </button>
+              </Button>
             </div>
           </form>
         </Match>
       </Switch>
-    </section>
+    </Card>
   );
 }

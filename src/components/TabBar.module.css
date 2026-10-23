@@ -1,0 +1,176 @@
+/* Bottom tabs on a phone. */
+.tabs {
+  position: fixed;
+  inset: auto 0 0 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.tabs a {
+  flex: 1;
+  max-width: 220px;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: 14px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+/* The router marks the current tab with "active". */
+.tabs a:global(.active) {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+}
+
+.brand {
+  display: none;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  /* Parts that move may leave the 24px box for a moment. */
+  overflow: visible;
+}
+
+/*
+ * Wide screens: the bottom tabs become a labelled sidebar on the page ground, and the content
+ * keeps a 720px column in the canvas beside it (the groups page and quick add widen it, see
+ * GroupCard.module.css and QuickAdd.module.css). The canvas is centred, so its two margins are equal.
+ */
+@media (min-width: 900px) {
+  :global(#root):has(> .tabs) {
+    max-width: none;
+    padding: 40px 32px 48px calc(var(--sidebar) + 32px);
+  }
+
+  :global(#root):has(> .tabs) > :not(.tabs) {
+    width: 100%;
+    max-width: 720px;
+    margin-inline: auto;
+  }
+
+  .tabs {
+    inset: 0 auto 0 0;
+    width: var(--sidebar);
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 24px 12px;
+    background: var(--bg);
+    border-top: none;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 12px 24px;
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: var(--text-strong);
+  }
+
+  .brand img {
+    width: 28px;
+    height: 28px;
+    transform: rotate(-6deg);
+  }
+
+  .tabs a {
+    flex: none;
+    max-width: none;
+    min-height: 40px;
+    padding: 0 12px;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 12px;
+    border-radius: 12px;
+    font-size: 16px;
+  }
+
+  .tabs a:hover {
+    color: var(--text-strong);
+  }
+}
+
+/*
+ * Tab icons: when a tab becomes the current one, its icon plays one short move and stops.
+ * The people nod, the gift's lid pops open, the gear spins half a turn (it is
+ * drawn with six teeth, so 180 degrees lands on the same picture).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .tabs a {
+    transition:
+      border-color 140ms ease,
+      background-color 160ms ease,
+      color 160ms ease;
+  }
+
+  .giftLid,
+  .gear {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .tabs a:global(.active) .headLeft {
+    animation: nod-left 700ms ease-in-out;
+  }
+
+  .tabs a:global(.active) .headRight {
+    animation: nod-right 700ms ease-in-out;
+  }
+
+  .tabs a:global(.active) .giftLid {
+    transform-origin: left bottom;
+    animation: unwrap 800ms var(--ease-pop);
+  }
+
+  .tabs a:global(.active) .gear {
+    animation: turn 1100ms var(--ease-out);
+  }
+
+  /* Groups: both heads dip and spring back, the right one a beat after the left. */
+  @keyframes nod-left {
+    25% {
+      transform: translateY(1.6px);
+    }
+  }
+
+  @keyframes nod-right {
+    12% {
+      transform: translateY(0);
+    }
+    37% {
+      transform: translateY(1.6px);
+    }
+  }
+
+  @keyframes unwrap {
+    35%,
+    60% {
+      transform: translateY(-2px) rotate(-10deg);
+    }
+  }
+
+  @keyframes turn {
+    from {
+      transform: rotate(0);
+    }
+    to {
+      transform: rotate(180deg);
+    }
+  }
+}

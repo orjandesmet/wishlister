@@ -1,0 +1,7 @@
+.priceFields {
+  align-items: flex-end;
+}
+
+.priceFields > label:first-child {
+  flex: 1;
+}

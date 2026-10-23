@@ -1,7 +1,9 @@
 import { For } from "solid-js";
 import { t } from "../lib/i18n.ts";
 import { listOrders, type ListOrder } from "../lib/listOrder.ts";
+import u from "../utilities.module.css";
 import { Select } from "./Select.tsx";
+import styles from "./ListOrderSelect.module.css";
 
 export type ListOrderSelectProps = {
   value: ListOrder;
@@ -14,11 +16,11 @@ export type ListOrderSelectProps = {
 export function ListOrderSelect(props: ListOrderSelectProps) {
   const options = () => listOrders.filter((o) => o !== "available" || props.showBought);
   return (
-    <label class="list-order">
-      <span class="list-order-text">{t("listOrder.label")}</span>
+    <label class={styles.listOrder}>
+      <span class={u.labelText}>{t("listOrder.label")}</span>
       {/* Lucide "arrow-up-down" (ISC licence): stands in for the label on small screens. */}
       <svg
-        class="list-order-icon"
+        class={u.labelIcon}
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
@@ -33,6 +35,7 @@ export function ListOrderSelect(props: ListOrderSelectProps) {
         <path d="M7 4v16" />
       </svg>
       <Select
+        class={styles.select}
         value={props.value}
         onChange={(e) => props.onChange(e.currentTarget.value as ListOrder)}
       >

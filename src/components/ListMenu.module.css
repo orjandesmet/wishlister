@@ -1,0 +1,84 @@
+/* Parents: a chevron beside the title opens a menu of their own and their children's lists. */
+.menuButton {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  min-height: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
+  anchor-name: --list-menu;
+}
+
+.menuButton::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  margin-top: -3px;
+  border-right: 2px solid currentColor;
+  border-bottom: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.menu {
+  min-width: 240px;
+  margin: 0;
+  padding: 8px;
+  flex-direction: column;
+  gap: 2px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  /* It floats over the page, so it carries a shadow. */
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+}
+
+.menu:popover-open {
+  display: flex;
+}
+
+.menu .option {
+  min-height: 48px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: var(--text-strong);
+}
+
+.menu .option:hover {
+  text-decoration: none;
+  background: var(--raised);
+}
+
+.menu .option[aria-current="page"] {
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  font-weight: 600;
+}
+
+@supports (position-area: bottom) {
+  .menu {
+    position-anchor: --list-menu;
+    position-area: bottom span-right;
+    margin-top: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .menu:popover-open {
+    transition:
+      opacity 160ms ease,
+      transform 220ms var(--ease-pop);
+  }
+
+  @starting-style {
+    .menu:popover-open {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.97);
+    }
+  }
+}

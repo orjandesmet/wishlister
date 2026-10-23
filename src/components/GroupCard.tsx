@@ -3,10 +3,14 @@ import { A } from "@solidjs/router";
 import { For, Show } from "solid-js";
 import type { Group } from "../lib/api/groups.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
-import { Avatar } from "./Avatar.tsx";
 import { compareNames, locale, t } from "../lib/i18n.ts";
 import type { ProfileId } from "../lib/ids.ts";
 import { daysBetween, formatOccasionDate, type IsoDate } from "../lib/occasions.ts";
+import u from "../utilities.module.css";
+import { Card } from "./Card.tsx";
+import { Chip } from "./Chip.tsx";
+import { Person } from "./Person.tsx";
+import styles from "./GroupCard.module.css";
 
 export type GroupCardProps = {
   group: Group;
@@ -39,10 +43,10 @@ export function GroupCard(props: GroupCardProps) {
   const soon = (date: IsoDate) => daysBetween(props.today, date) <= 1;
 
   return (
-    <section class="card group-card">
-      <div class="row">
+    <Card class={styles.groupCard}>
+      <div class={u.row}>
         <h2>{props.group.name}</h2>
-        <A class="link" href={`/groups/${props.group.id}`}>
+        <A class={u.link} href={`/groups/${props.group.id}`}>
           <Show
             when={isManager()}
             fallback={<EditLabel icon="chevron" label={t("groupCard.details")} />}
@@ -54,7 +58,7 @@ export function GroupCard(props: GroupCardProps) {
       <Show when={props.nextOccasion}>
         {(occasion) => (
           <div
-            class="countdown"
+            class={styles.countdown}
             role="group"
             aria-label={t("groupCard.nextOccasion", {
               name: occasion().name,
@@ -63,8 +67,8 @@ export function GroupCard(props: GroupCardProps) {
             })}
           >
             <span
-              class="countdown-tile"
-              classList={{ soon: soon(occasion().date) }}
+              class={styles.countdownTile}
+              classList={{ [styles.soon]: soon(occasion().date) }}
               aria-hidden="true"
             >
               <Show
@@ -75,7 +79,7 @@ export function GroupCard(props: GroupCardProps) {
                 <span>{t("groupCard.daysUnit")}</span>
               </Show>
             </span>
-            <p class="next-occasion" aria-hidden="true">
+            <p class={styles.nextOccasion} aria-hidden="true">
               {t("groupCard.occasionLine", {
                 name: occasion().name,
                 date: formatOccasionDate(occasion().date, locale()),
@@ -84,7 +88,7 @@ export function GroupCard(props: GroupCardProps) {
           </div>
         )}
       </Show>
-      <ul class="list">
+      <ul class={u.list}>
         <For each={members()}>
           {(member) => (
             <li>
@@ -92,24 +96,26 @@ export function GroupCard(props: GroupCardProps) {
               <Show
                 when={member.role !== "guardian"}
                 fallback={
-                  <div class="list-row">
-                    <span class="person muted">
-                      <Avatar id={member.profile_id} name={member.profiles.display_name} />
+                  <div class={u.listRow}>
+                    <Person
+                      id={member.profile_id}
+                      name={member.profiles.display_name}
+                      class={u.muted}
+                    >
                       {member.profiles.display_name}
                       {member.profile_id === props.myProfileId ? t("common.you") : ""}
-                    </span>
-                    <span class="chip">{t("groupCard.guardian")}</span>
+                    </Person>
+                    <Chip>{t("groupCard.guardian")}</Chip>
                   </div>
                 }
               >
-                <A class="list-row" href={`/lists/${member.profile_id}`}>
-                  <span class="person">
-                    <Avatar id={member.profile_id} name={member.profiles.display_name} />
+                <A class={u.listRow} href={`/lists/${member.profile_id}`}>
+                  <Person id={member.profile_id} name={member.profiles.display_name}>
                     {member.profiles.display_name}
                     {member.profile_id === props.myProfileId ? t("common.you") : ""}
-                  </span>
+                  </Person>
                   <Show when={!member.profiles.account_id}>
-                    <span class="chip">{t("groupCard.child")}</span>
+                    <Chip>{t("groupCard.child")}</Chip>
                   </Show>
                 </A>
               </Show>
@@ -117,6 +123,6 @@ export function GroupCard(props: GroupCardProps) {
           )}
         </For>
       </ul>
-    </section>
+    </Card>
   );
 }

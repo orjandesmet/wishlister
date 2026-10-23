@@ -1,0 +1,113 @@
+/* The days to the group's next occasion: the figure a group card is about. Tilted, not level. */
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.countdownTile {
+  --tilt: -4deg;
+  flex-shrink: 0;
+  min-width: 76px;
+  min-height: 76px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px 20px 20px 8px;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  font-size: 14px;
+  line-height: 1.1;
+  transform: rotate(var(--tilt));
+}
+
+.countdownTile strong {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdownTile.soon {
+  --tilt: 3deg;
+  color: var(--positive-ink);
+  background: var(--positive-bg);
+}
+
+.countdownTile.soon strong {
+  font-size: 20px;
+  letter-spacing: -0.01em;
+}
+
+.nextOccasion {
+  font-weight: 500;
+  color: var(--text-strong);
+}
+
+/*
+ * .groupCard has no look of its own; it marks the groups page. Wide screens: that page is 960px wide instead of 720px and lays its cards out on
+ * 12 columns: 7 + 5, then 7 + 5. main.page outranks the 720px column in TabBar.module.css.
+ */
+@media (min-width: 900px) {
+  :global(#root) > :global(main.page):has(.groupCard) {
+    max-width: 960px;
+  }
+
+  :global(.page):has(.groupCard) {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    align-items: start;
+  }
+
+  :global(.page):has(.groupCard) > * {
+    grid-column: 1 / -1;
+  }
+
+  :global(.page):has(.groupCard) > .groupCard:nth-of-type(odd) {
+    grid-column: span 7;
+  }
+
+  :global(.page):has(.groupCard) > .groupCard:nth-of-type(even) {
+    grid-column: span 5;
+  }
+
+  /* A lone last card takes the full row instead of leaving 5 columns empty. */
+  :global(.page):has(.groupCard) > .groupCard:last-of-type:nth-of-type(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes land {
+    0% {
+      opacity: 0;
+      transform: rotate(-16deg) scale(0.6);
+    }
+    60% {
+      opacity: 1;
+      transform: rotate(calc(var(--tilt) + 5deg)) scale(1.06);
+    }
+    100% {
+      transform: rotate(var(--tilt)) scale(1);
+    }
+  }
+
+  @keyframes beat {
+    50% {
+      transform: rotate(var(--tilt)) scale(1.07);
+    }
+  }
+
+  .countdownTile {
+    animation: land 700ms var(--ease-pop) 250ms backwards;
+  }
+
+  /* A group with an occasion today or tomorrow keeps a slow heartbeat. */
+  .countdownTile.soon {
+    animation:
+      land 700ms var(--ease-pop) 250ms backwards,
+      beat 2.4s ease-in-out 1.2s infinite;
+  }
+}

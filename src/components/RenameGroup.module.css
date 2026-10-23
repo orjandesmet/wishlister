@@ -1,0 +1,9 @@
+.renameButton {
+  flex-shrink: 0;
+}
+
+@supports (position-area: bottom) {
+  .renameButton {
+    anchor-name: --rename-group;
+  }
+}

@@ -1,0 +1,38 @@
+@layer base, components, utilities;
+
+@layer components {
+  /* A small label: a role, a category. */
+  .chip {
+    flex-shrink: 0;
+    padding: 0 10px;
+    font-size: 13px;
+    line-height: 24px;
+    font-weight: 500;
+    color: var(--text);
+    background: var(--raised);
+    border-radius: var(--radius-small);
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* A chip to tap: picks a suggestion, or (with aria-pressed) toggles a choice. */
+  .chipButton {
+    min-height: 40px;
+    padding: 0 14px;
+    font-weight: 500;
+    color: var(--text-strong);
+    background: var(--surface);
+    border-color: var(--control);
+    border-radius: var(--radius-control);
+  }
+
+  .chipButton[aria-pressed="true"] {
+    color: var(--accent-contrast);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+}

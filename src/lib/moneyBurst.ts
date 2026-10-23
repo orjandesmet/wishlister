@@ -1,5 +1,6 @@
 import { convertAmount, exchangeRates, type Rates } from "./currency.ts";
 import type { ItemId } from "./ids.ts";
+import styles from "./moneyBurst.module.css";
 
 /** One flying 💸 or 🪙: where it ends up, relative to where it starts, and how it moves. */
 export type Particle = {
@@ -15,7 +16,7 @@ export type Particle = {
 };
 
 const count = 10;
-/** Matches the longest animation in `.money-burst` plus the largest delay. */
+/** Matches the longest animation in moneyBurst.module.css plus the largest delay. */
 const lifetimeMs = 1100;
 
 /**
@@ -51,7 +52,7 @@ function prefersReducedMotion() {
 export function burstMoney(from: DOMRect) {
   if (prefersReducedMotion()) return;
   const burst = document.createElement("div");
-  burst.className = "money-burst";
+  burst.className = styles.burst;
   burst.setAttribute("aria-hidden", "true");
   burst.style.left = `${from.left + from.width / 2}px`;
   burst.style.top = `${from.top + from.height / 2}px`;

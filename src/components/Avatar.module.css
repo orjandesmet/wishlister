@@ -1,0 +1,46 @@
+@layer base, components, utilities;
+
+@layer components {
+  .avatar {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+  }
+
+  .lg {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    font-size: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+
+  @layer components {
+    .avatar {
+      animation: pop 420ms var(--ease-pop) backwards;
+      transition:
+        transform 180ms var(--ease-pop),
+        opacity 140ms ease,
+        filter 140ms ease,
+        background-color 140ms ease;
+    }
+  }
+}

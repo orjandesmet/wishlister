@@ -2,6 +2,8 @@ import { A, useNavigate, useParams } from "@solidjs/router";
 import { createResource, createSignal, Show } from "solid-js";
 import { getJoinPreview, joinGroup } from "../lib/api/groups.ts";
 import { t } from "../lib/i18n.ts";
+import u from "../utilities.module.css";
+import { Card } from "../components/Card.tsx";
 
 /** Opened from a group's invite link: shows which group it is and lets you join. */
 export default function Join() {
@@ -27,26 +29,26 @@ export default function Join() {
     <>
       <h1>{t("join.title")}</h1>
       <Show when={preview.loading}>
-        <p class="muted">{t("common.loading")}</p>
+        <p class={u.muted}>{t("common.loading")}</p>
       </Show>
       <Show when={preview.error}>
-        <p class="error">{t("join.openFailed", { message: preview.error.message })}</p>
+        <p class={u.error}>{t("join.openFailed", { message: preview.error.message })}</p>
       </Show>
       <Show when={preview() === null}>
-        <p class="muted">{t("join.expired")}</p>
-        <A class="link" href="/">
+        <p class={u.muted}>{t("join.expired")}</p>
+        <A class={u.link} href="/">
           {t("join.toGroups")}
         </A>
       </Show>
       <Show when={preview()}>
         {(group) => (
-          <section class="card">
+          <Card>
             <Show
               when={!group().is_member}
               fallback={
                 <>
                   <p>{t("join.alreadyIn", { group: group().group_name })}</p>
-                  <A class="link" href={`/groups/${group().group_id}`}>
+                  <A class={u.link} href={`/groups/${group().group_id}`}>
                     {t("join.open", { group: group().group_name })}
                   </A>
                 </>
@@ -58,9 +60,9 @@ export default function Join() {
               </button>
             </Show>
             <Show when={error()}>
-              <p class="error">{error()}</p>
+              <p class={u.error}>{error()}</p>
             </Show>
-          </section>
+          </Card>
         )}
       </Show>
     </>

@@ -5,6 +5,10 @@ import type { Occasion, OccasionInput } from "../lib/api/occasions.ts";
 import { compareNames, locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
 import { formatOccasionDate, splitOccasions, type IsoDate } from "../lib/occasions.ts";
+import u from "../utilities.module.css";
+import { Button } from "./Button.tsx";
+import { Card } from "./Card.tsx";
+import styles from "./Occasions.module.css";
 
 export type OccasionsProps = {
   occasions: Occasion[];
@@ -37,25 +41,27 @@ export function Occasions(props: OccasionsProps) {
     <Show
       when={editing() === occasion.id}
       fallback={
-        <li class="list-row occasion">
-          <span class="stack small-gap">
+        <li class={`${u.listRow} ${styles.occasion}`}>
+          <span class={`${u.stack} ${u.smallGap} ${styles.dates}`}>
             <span>{occasion.name}</span>
-            <span class="muted small">{formatOccasionDate(occasion.date, locale())}</span>
+            <span class={`${u.muted} ${u.small}`}>
+              {formatOccasionDate(occasion.date, locale())}
+            </span>
           </span>
           <Show when={props.canEdit}>
-            <span class="row">
-              <button type="button" class="link" onClick={() => setEditing(occasion.id)}>
+            <span class={u.row}>
+              <Button variant="link" onClick={() => setEditing(occasion.id)}>
                 <EditLabel label={t("common.edit")} />
-              </button>
-              <button type="button" class="link danger" onClick={() => props.onDelete(occasion)}>
+              </Button>
+              <Button variant="link" danger onClick={() => props.onDelete(occasion)}>
                 <RemoveLabel label={t("common.delete")} />
-              </button>
+              </Button>
             </span>
           </Show>
         </li>
       }
     >
-      <li class="occasion">
+      <li class={styles.occasion}>
         <OccasionForm
           initial={occasion}
           submitLabel={t("common.save")}
@@ -69,18 +75,18 @@ export function Occasions(props: OccasionsProps) {
   );
 
   return (
-    <section class="card">
+    <Card>
       <h2>{t("occasions.title")}</h2>
-      <p class="muted small">{t("occasions.help")}</p>
-      <ul class="list">
-        <For each={split().upcoming} fallback={<li class="muted">{t("occasions.none")}</li>}>
+      <p class={`${u.muted} ${u.small}`}>{t("occasions.help")}</p>
+      <ul class={u.list}>
+        <For each={split().upcoming} fallback={<li class={u.muted}>{t("occasions.none")}</li>}>
           {row}
         </For>
       </ul>
       <Show when={split().past.length > 0}>
-        <details class="past-occasions">
-          <summary class="muted">{t("occasions.past", { count: split().past.length })}</summary>
-          <ul class="list">
+        <details class={styles.past}>
+          <summary class={u.muted}>{t("occasions.past", { count: split().past.length })}</summary>
+          <ul class={u.list}>
             <For each={split().past}>{row}</For>
           </ul>
         </details>
@@ -109,7 +115,7 @@ export function Occasions(props: OccasionsProps) {
           <button type="submit">{t("occasions.add")}</button>
         </form>
       </Show>
-    </section>
+    </Card>
   );
 }
 
@@ -146,11 +152,11 @@ function OccasionForm(props: OccasionFormProps) {
           onInput={(e) => setDate(e.currentTarget.value)}
         />
       </label>
-      <div class="row">
+      <div class={u.row}>
         <button type="submit">{props.submitLabel}</button>
-        <button type="button" class="secondary" onClick={() => props.onCancel()}>
+        <Button variant="secondary" onClick={() => props.onCancel()}>
           {t("common.cancel")}
-        </button>
+        </Button>
       </div>
     </form>
   );

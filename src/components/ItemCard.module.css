@@ -1,0 +1,201 @@
+/* Roomy on purpose: the name and price lead, everything else sits below with space around it. */
+.item {
+  --card-pad: 20px;
+  gap: 12px;
+  border-color: transparent;
+  transition: transform 200ms var(--ease-out);
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+}
+
+.head .name {
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.head > .name,
+.head > .selectRow {
+  flex: 1 1 200px;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  min-width: 0;
+}
+
+.meta .shopLink {
+  min-width: 0;
+  font-weight: 400;
+  color: var(--muted);
+  opacity: 0.75;
+  transition: opacity 150ms;
+}
+
+.shopLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.shopLink svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.meta .shopLink:hover {
+  opacity: 1;
+}
+
+/* An item nobody but the editors can see: worth noticing, so it gets a warning sign. */
+.warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.warning svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--warning);
+}
+
+/* Edit and remove stay quiet, tucked under the main action. */
+.manage {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Typed in quick add, not saved yet. */
+.item.pending {
+  border-style: dashed;
+  border-color: var(--control);
+}
+
+.name {
+  color: var(--text-strong);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* An item no group can see: only you (and other editors of the list) see it. */
+.item.private {
+  background: var(--bg);
+  border-style: dashed;
+  border-color: var(--control);
+}
+
+/* A "please don't buy" entry: set apart from the wishes, never bought. */
+.item.notWanted {
+  background: var(--pill-negative-bg);
+  border-color: var(--danger);
+  border-style: solid;
+}
+
+.item.notWanted .head .name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.item.notWanted .name,
+.item.notWanted .priceAmount,
+.notWantedNote {
+  color: var(--pill-negative-ink);
+}
+
+/* Reads on into the title below: "Please don't buy" + the item's name. */
+.item.notWanted {
+  gap: 4px;
+}
+
+.notWantedNote svg {
+  color: var(--danger);
+}
+
+/* Figures keep their digits in line. */
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+
+.priceAmount {
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+
+.priceConverted {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* What is bought shows as a green pill; what someone else bought is a quiet grey one. */
+.bought {
+  align-self: flex-start;
+  padding: 6px 14px;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--positive-ink);
+  background: var(--positive-bg);
+  border-radius: var(--radius-small);
+}
+
+.bought.someone {
+  color: var(--text);
+  background: var(--raised);
+}
+
+/* Picking items for a bulk action. */
+.item.selected {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.selectRow {
+  min-height: var(--tap);
+  margin: -8px 0;
+  cursor: pointer;
+}
+
+.selectRow .name {
+  flex: 1;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+
+  .bought {
+    animation: pop 420ms var(--ease-pop) backwards;
+  }
+}

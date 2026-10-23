@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test } from "vite-plus/test";
 import type { ItemId } from "./ids.ts";
 import { burstMoneyForTap, isBigPurchase, makeParticles, rememberBuyTap } from "./moneyBurst.ts";
+import styles from "./moneyBurst.module.css";
 
 describe("makeParticles", () => {
   const particles = makeParticles(() => 0.5);
@@ -27,9 +28,9 @@ describe("burstMoneyForTap", () => {
     const button = document.createElement("button");
     rememberBuyTap(itemId as ItemId, button);
   };
-  const bursts = () => document.querySelectorAll(".money-burst").length;
+  const bursts = () => document.querySelectorAll(`.${styles.burst}`).length;
 
-  beforeEach(() => document.querySelectorAll(".money-burst").forEach((b) => b.remove()));
+  beforeEach(() => document.querySelectorAll(`.${styles.burst}`).forEach((b) => b.remove()));
 
   test("bursts once for the item that was tapped, even if its card was rebuilt", () => {
     tapOn("item-1");

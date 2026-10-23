@@ -11,6 +11,7 @@ import { useAuth } from "./auth.tsx";
 import { t } from "./i18n.ts";
 import { isReady } from "./resource.ts";
 import type { AccountId } from "./ids.ts";
+import u from "../utilities.module.css";
 
 type Me = {
   profile: Profile;
@@ -39,7 +40,7 @@ export const MeProvider: ParentComponent = (props) => {
     <Show
       when={ready()}
       fallback={
-        <p class="center muted">
+        <p class={`${u.center} ${u.muted}`}>
           {profile.error
             ? t("me.loadFailed", { message: profile.error.message })
             : t("common.loading")}

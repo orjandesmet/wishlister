@@ -1,0 +1,74 @@
+@layer base, components, utilities;
+
+/* The plain <button> look (the main action) is in index.css; these are the quieter variants. */
+@layer components {
+  .secondary {
+    color: var(--accent-ink);
+    background: var(--accent-soft);
+    border-color: var(--accent-soft);
+  }
+
+  /* Looks like a link, does something on the page. */
+  .link {
+    min-height: auto;
+    padding: 0;
+    color: var(--text-strong);
+    background: none;
+    border: none;
+    text-decoration: underline;
+  }
+
+  .link.danger {
+    color: var(--danger);
+  }
+
+  /* Destructive actions are pale red, so they never read as an ordinary secondary button. */
+  .secondary.danger {
+    color: var(--pill-negative-ink);
+    background: var(--pill-negative-bg);
+    border-color: var(--danger);
+  }
+
+  .small {
+    min-height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+
+  /* A link that goes somewhere but looks like the main action. */
+  .linkButton {
+    min-height: var(--tap);
+    display: grid;
+    place-items: center;
+    padding: 0 20px;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--accent-contrast);
+    background: var(--accent);
+    border-radius: var(--radius-control);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @layer components {
+    .linkButton {
+      transition:
+        transform 180ms var(--ease-pop),
+        opacity 140ms ease,
+        filter 140ms ease,
+        background-color 140ms ease;
+    }
+
+    .linkButton:hover {
+      filter: brightness(1.12) saturate(1.1);
+    }
+
+    .linkButton:active {
+      transform: scale(0.96);
+    }
+
+    .link:hover:not(:disabled) {
+      transform: none;
+    }
+  }
+}

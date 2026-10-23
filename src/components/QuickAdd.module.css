@@ -1,0 +1,142 @@
+/* A transformed parent would become the "fixed" button's frame, parking it halfway up the page. */
+:global(.page) > .quickAdd {
+  animation: none;
+}
+
+.title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.details {
+  align-self: flex-start;
+}
+
+/* Floating "quick add" button, above the tab bar. */
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  height: 56px;
+  min-width: 56px;
+  padding: 0 14px;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: var(--accent);
+  border-radius: 28px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.25);
+}
+
+.fab svg {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+
+/* The text only shows for a moment, see "fabLabel" in the motion rules. */
+.fabLabel {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-weight: 600;
+  opacity: 0;
+}
+
+/* Same shape as the floating button, but with its text kept: under an empty list's message. */
+.inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  min-width: 56px;
+  padding: 0 14px;
+  border-radius: 28px;
+}
+
+.inline svg {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+
+.inline span {
+  padding-right: 6px;
+  font-weight: 600;
+}
+
+/* The inline button replaces the floating one. */
+:global(.page):has(.inline) .fab {
+  display: none;
+}
+
+@supports (position-area: bottom) {
+  .fab,
+  .inline {
+    anchor-name: --quick-add;
+  }
+}
+
+/* Very wide screens: quick add stays open in a column beside the list, so there is no floating button
+ * (WishList.module.css hides the one under an empty list too). */
+@media (min-width: 1200px) {
+  :global(#root) > :global(main.page):has(.quickAdd) {
+    position: relative;
+    max-width: 1080px;
+    padding-right: 340px;
+  }
+
+  .quickAdd {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 320px;
+  }
+
+  .inner {
+    position: sticky;
+    top: var(--gap);
+  }
+
+  .fab {
+    display: none;
+  }
+
+  .popover:popover-open,
+  .popover:not(:popover-open) {
+    display: block;
+    position: static;
+    inset: auto;
+    width: auto;
+    margin: 0;
+    box-shadow: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Introduces the quick add button by name, then folds it into the icon. */
+  .fabLabel {
+    animation: fab-label 1600ms ease 400ms both;
+  }
+
+  @keyframes fab-label {
+    0%,
+    80% {
+      max-width: 10rem;
+      margin-left: 8px;
+      opacity: 1;
+    }
+    100% {
+      max-width: 0;
+      margin-left: 0;
+      opacity: 0;
+    }
+  }
+}

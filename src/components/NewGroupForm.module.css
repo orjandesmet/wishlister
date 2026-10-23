@@ -1,0 +1,11 @@
+/* Wide screens: the name and the button side by side. */
+@media (min-width: 900px) {
+  .inline {
+    flex-direction: row;
+    align-items: flex-end;
+  }
+
+  .inline > label {
+    flex: 1;
+  }
+}

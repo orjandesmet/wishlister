@@ -1,0 +1,151 @@
+/*
+ * Small shared classes for text and layout, too small to be components. Import as `u` and combine:
+ * class={`${u.muted} ${u.small}`}. They sit in the utilities layer, above the shared components.
+ */
+@layer base, components, utilities;
+
+@layer utilities {
+  /* Text */
+  .muted {
+    color: var(--muted);
+  }
+
+  .error {
+    color: var(--danger);
+  }
+
+  .small {
+    font-size: 14px;
+  }
+
+  .center {
+    margin: auto;
+    text-align: center;
+  }
+
+  .truncate {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* A link that reads as one: strong text, underlined. Button variant="link" is the button version. */
+  .link {
+    color: var(--text-strong);
+    font-weight: 600;
+  }
+
+  /* The label above a group of controls that is not a <label> itself. */
+  .fieldLabel {
+    font-weight: 500;
+    color: var(--text-strong);
+  }
+
+  /* A pale tile in the hue set by --h, with the dark of that hue as its ink. */
+  .tinted {
+    background: light-dark(hsl(var(--h) 85% 91%), hsl(var(--h) 30% 21%));
+    color: light-dark(hsl(var(--h) 75% 20%), hsl(var(--h) 85% 85%));
+  }
+
+  /* A short message in a box, like "Saved" after an action. */
+  .notice {
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+  }
+
+  /* Layout */
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stack.smallGap {
+    gap: 6px;
+  }
+
+  .indent {
+    padding-left: 34px;
+  }
+
+  /* A bare list: rows split by a line, or (with .cards) cards with space between. */
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .list.cards {
+    gap: 16px;
+  }
+
+  .list:not(.cards) > li + li {
+    border-top: 1px solid var(--border);
+  }
+
+  /* One line of a list: what it is on the left, what to do with it on the right. */
+  .listRow {
+    min-height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    text-decoration: none;
+    color: var(--text-strong);
+  }
+
+  /* A text label with an icon that stands in for it on small screens (the text stays for screen readers). */
+  .labelIcon {
+    display: none;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+  }
+
+  @media (max-width: 599px) {
+    .labelIcon {
+      display: block;
+    }
+
+    .labelText {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @layer utilities {
+    .listRow {
+      transition:
+        transform 180ms var(--ease-pop),
+        opacity 140ms ease,
+        filter 140ms ease,
+        background-color 140ms ease;
+    }
+
+    /* Rows that open something tilt the person's tile on hover and give a little when pressed. */
+    a.listRow:hover [data-avatar] {
+      transform: rotate(-8deg) scale(1.1);
+    }
+
+    a.listRow:active {
+      transform: scale(0.985);
+    }
+  }
+}

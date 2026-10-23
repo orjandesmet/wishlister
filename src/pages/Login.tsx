@@ -5,6 +5,10 @@ import { useAuth } from "../lib/auth.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
 import { locale, t } from "../lib/i18n.ts";
 import { supabase } from "../lib/supabase.ts";
+import u from "../utilities.module.css";
+import { Button } from "../components/Button.tsx";
+import { Card } from "../components/Card.tsx";
+import styles from "./Login.module.css";
 
 /**
  * Passwordless login. Supabase emails a link and a one-time code.
@@ -63,12 +67,12 @@ export default function Login() {
   }
 
   return (
-    <main class="card center" style={{ width: "100%" }}>
-      <img class="login-mark" src="/favicon.svg" alt="" />
+    <Card as="main" class={`${u.center} ${styles.login}`}>
+      <img class={styles.mark} src="/favicon.svg" alt="" />
       <h1>Wishlister</h1>
       <Switch>
         <Match when={step() === "email"}>
-          <p class="muted">{t("login.intro")}</p>
+          <p class={u.muted}>{t("login.intro")}</p>
           <form onSubmit={sendEmail}>
             <label>
               {t("login.email")}
@@ -91,7 +95,7 @@ export default function Login() {
             <label>
               {t("login.code")}
               <input
-                class="code-input"
+                class={styles.codeInput}
                 inputmode="numeric"
                 autocomplete="one-time-code"
                 required
@@ -102,18 +106,18 @@ export default function Login() {
             <button type="submit" disabled={busy()}>
               {busy() ? t("login.checking") : t("login.signIn")}
             </button>
-            <button type="button" class="secondary" onClick={() => setStep("email")}>
+            <Button variant="secondary" onClick={() => setStep("email")}>
               {t("login.otherEmail")}
-            </button>
+            </Button>
           </form>
         </Match>
       </Switch>
       <Show when={error()}>
-        <p class="error" role="alert">
+        <p class={u.error} role="alert">
           {error()}
         </p>
       </Show>
       <LanguageSelect value={locale()} onChange={(next) => void chooseLocale(next)} />
-    </main>
+    </Card>
   );
 }

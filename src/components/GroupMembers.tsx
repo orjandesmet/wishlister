@@ -5,9 +5,15 @@ import type { GroupData } from "../lib/createGroupData.ts";
 import { createGroupInvites } from "../lib/createGroupInvites.ts";
 import { t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
-import { Avatar } from "./Avatar.tsx";
+import u from "../utilities.module.css";
+import { Button } from "./Button.tsx";
+import { Card } from "./Card.tsx";
+import { Chip } from "./Chip.tsx";
+import { Person } from "./Person.tsx";
+import { Popover } from "./Popover.tsx";
 import { RemoveLabel } from "./RemoveLabel.tsx";
 import { Select } from "./Select.tsx";
+import styles from "./GroupMembers.module.css";
 
 /** The group's adults with their roles, plus pending invites and ways to invite more. */
 export function GroupMembers(props: {
@@ -26,20 +32,23 @@ export function GroupMembers(props: {
     });
 
   return (
-    <section class="card">
+    <Card>
       <h2>{t("group.members")}</h2>
-      <ul class="list">
+      <ul class={u.list}>
         <For each={data.adults()}>
           {(member) => (
-            <li class="list-row member-row">
-              <span class="person">
-                <Avatar id={member.profile_id} name={member.profiles.display_name} />
+            <li class={`${u.listRow} ${styles.memberRow}`}>
+              <Person
+                id={member.profile_id}
+                name={member.profiles.display_name}
+                class={styles.person}
+              >
                 {member.profiles.display_name}
                 {member.profile_id === me().profile.id ? t("common.you") : ""}
-              </span>
-              <Switch fallback={<span class="chip">{t(`roles.${member.role}`)}</span>}>
+              </Person>
+              <Switch fallback={<Chip>{t(`roles.${member.role}`)}</Chip>}>
                 <Match when={data.isManager() && member.profile_id !== me().profile.id}>
-                  <span class="row">
+                  <span class={u.row}>
                     <Select
                       value={member.role}
                       onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
@@ -48,13 +57,9 @@ export function GroupMembers(props: {
                       <option value="guardian">{t("roles.guardian")}</option>
                       <option value="manager">{t("roles.manager")}</option>
                     </Select>
-                    <button
-                      type="button"
-                      class="link danger"
-                      onClick={() => props.onRemove(member)}
-                    >
+                    <Button variant="link" danger onClick={() => props.onRemove(member)}>
                       <RemoveLabel />
-                    </button>
+                    </Button>
                   </span>
                 </Match>
                 {/* Members choose for themselves whether their own list shows in this group. */}
@@ -73,26 +78,22 @@ export function GroupMembers(props: {
         </For>
       </ul>
       <Show when={data.adults().some((m) => m.role === "guardian") || !data.isManager()}>
-        <p class="muted small">{t("group.guardianHelp")}</p>
+        <p class={`${u.muted} ${u.small}`}>{t("group.guardianHelp")}</p>
       </Show>
       <Show when={data.isManager() && (data.invites()?.length ?? 0) > 0}>
         <h3>{t("group.pendingInvites")}</h3>
-        <ul class="list">
+        <ul class={u.list}>
           <For each={data.invites()}>
             {(email) => (
-              <li class="list-row">
-                <span class="muted truncate">{email}</span>
-                <span class="row">
-                  <button type="button" class="link" onClick={() => invites.onEmailInvite(email)}>
+              <li class={u.listRow}>
+                <span class={`${u.muted} ${u.truncate}`}>{email}</span>
+                <span class={u.row}>
+                  <Button variant="link" onClick={() => invites.onEmailInvite(email)}>
                     {t("group.emailInvite")}
-                  </button>
-                  <button
-                    type="button"
-                    class="link danger"
-                    onClick={() => invites.onCancelInvite(email)}
-                  >
+                  </Button>
+                  <Button variant="link" danger onClick={() => invites.onCancelInvite(email)}>
                     {t("common.cancel")}
-                  </button>
+                  </Button>
                 </span>
               </li>
             )}
@@ -112,26 +113,26 @@ export function GroupMembers(props: {
           </label>
           <button type="submit">{t("group.invite")}</button>
         </form>
-        <button
-          type="button"
-          class="secondary invite-link-button"
+        <Button
+          variant="secondary"
+          class={styles.inviteLinkButton}
           popovertarget="invite-link-popover"
         >
           {t("group.inviteLink")}
-        </button>
-        <div id="invite-link-popover" class="popover sheet-popover invite-popover" popover>
+        </Button>
+        <Popover id="invite-link-popover" anchor="--invite-link" area="bottom span-right" sheet>
           <h3>{t("group.inviteLink")}</h3>
-          <p class="muted small">{t("group.inviteLinkHelp")}</p>
-          <div class="row button-row">
+          <p class={`${u.muted} ${u.small}`}>{t("group.inviteLinkHelp")}</p>
+          <div class={`${u.row} ${styles.buttonRow}`}>
             <button type="button" onClick={invites.onShareLink}>
               {t("group.shareLink")}
             </button>
-            <button type="button" class="secondary" onClick={invites.onResetLink}>
+            <Button variant="secondary" onClick={invites.onResetLink}>
               {t("group.newLink")}
-            </button>
+            </Button>
           </div>
-        </div>
+        </Popover>
       </Show>
-    </section>
+    </Card>
   );
 }

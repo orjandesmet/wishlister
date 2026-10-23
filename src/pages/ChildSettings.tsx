@@ -3,12 +3,15 @@ import { RemoveLabel } from "../components/RemoveLabel.tsx";
 import { createResource, createSignal, For, Show } from "solid-js";
 import { addParent, deleteChild, removeParent } from "../lib/api/children.ts";
 import { getAdultProfiles, getProfileDetails, renameProfile } from "../lib/api/profiles.ts";
-import { Avatar } from "../components/Avatar.tsx";
 import { t } from "../lib/i18n.ts";
 import type { ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
 import { isReady } from "../lib/resource.ts";
 import { Select } from "../components/Select.tsx";
+import u from "../utilities.module.css";
+import { Button } from "../components/Button.tsx";
+import { Card } from "../components/Card.tsx";
+import { Person } from "../components/Person.tsx";
 
 /** A child's parents, and deleting the child's profile. */
 export default function ChildSettings() {
@@ -78,22 +81,22 @@ export default function ChildSettings() {
 
   return (
     <>
-      <A class="link" href="/">
+      <A class={u.link} href="/">
         {t("group.back")}
       </A>
       <h1>{child()?.display_name ?? t("child.fallbackTitle")}</h1>
       <Show when={child.error}>
-        <p class="error">{t("child.unavailable")}</p>
+        <p class={u.error}>{t("child.unavailable")}</p>
       </Show>
       <Show when={error()}>
-        <p class="error">{error()}</p>
+        <p class={u.error}>{error()}</p>
       </Show>
       <Show when={!isReady(child) && !child.error}>
-        <p class="muted">{t("common.loading")}</p>
+        <p class={u.muted}>{t("common.loading")}</p>
       </Show>
       <Show when={isReady(child) && isReady(adults)}>
         <Show when={iAmParent()}>
-          <form class="card" onSubmit={onRename}>
+          <Card as="form" onSubmit={onRename}>
             <label>
               {t("child.name")}
               <input
@@ -104,29 +107,24 @@ export default function ChildSettings() {
             </label>
             <button type="submit">{t("account.saveName")}</button>
             <Show when={saved()}>
-              <p class="muted">{t("account.saved")}</p>
+              <p class={u.muted}>{t("account.saved")}</p>
             </Show>
-          </form>
+          </Card>
         </Show>
-        <section class="card">
+        <Card>
           <h2>{t("child.parents")}</h2>
-          <ul class="list">
+          <ul class={u.list}>
             <For each={parentIds()}>
               {(parentId) => (
-                <li class="list-row">
-                  <span class="person">
-                    <Avatar id={parentId} name={nameOf(parentId)} />
+                <li class={u.listRow}>
+                  <Person id={parentId} name={nameOf(parentId)}>
                     {nameOf(parentId)}
                     {parentId === me().profile.id ? t("common.you") : ""}
-                  </span>
+                  </Person>
                   <Show when={iAmParent() && parentIds().length > 1}>
-                    <button
-                      type="button"
-                      class="link danger"
-                      onClick={() => onRemoveParent(parentId)}
-                    >
+                    <Button variant="link" danger onClick={() => onRemoveParent(parentId)}>
                       <RemoveLabel />
-                    </button>
+                    </Button>
                   </Show>
                 </li>
               )}
@@ -138,11 +136,11 @@ export default function ChildSettings() {
               <For each={candidates()}>{(a) => <option value={a.id}>{a.display_name}</option>}</For>
             </Select>
           </Show>
-        </section>
+        </Card>
         <Show when={iAmParent()}>
-          <button type="button" class="secondary danger" onClick={onDelete}>
+          <Button variant="secondary" danger onClick={onDelete}>
             {t("child.deleteProfile")}
-          </button>
+          </Button>
         </Show>
       </Show>
     </>

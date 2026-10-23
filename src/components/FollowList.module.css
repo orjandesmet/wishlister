@@ -1,0 +1,98 @@
+/* The follow bell beside a list's title; coloured while you follow the list. */
+.follow {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.followButton {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  padding: 0;
+  color: var(--muted);
+  background: none;
+  border-color: transparent;
+}
+
+.followButton svg {
+  width: 20px;
+  height: 20px;
+}
+
+.followButton.following {
+  color: var(--accent);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.body h2,
+.body p {
+  margin: 0;
+}
+
+.until {
+  align-self: flex-start;
+  padding: 6px 14px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-radius: 999px;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.tooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 5;
+  padding: 4px 10px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-radius: var(--radius);
+  pointer-events: none;
+}
+
+@supports (position-area: bottom) {
+  .followButton {
+    anchor-name: --follow-list;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes wiggle {
+    0%,
+    100% {
+      transform: rotate(0);
+    }
+    20% {
+      transform: rotate(-18deg);
+    }
+    40% {
+      transform: rotate(14deg);
+    }
+    60% {
+      transform: rotate(-10deg);
+    }
+    80% {
+      transform: rotate(6deg);
+    }
+  }
+
+  .followButton.wiggle svg {
+    transform-origin: 50% 10%;
+    animation: wiggle 700ms ease-in-out 2;
+  }
+}

@@ -17,6 +17,7 @@ import NewGroup from "./pages/NewGroup.tsx";
 import Settings from "./pages/Settings.tsx";
 import Unfollow from "./pages/Unfollow.tsx";
 import WishList from "./pages/WishList.tsx";
+import u from "./utilities.module.css";
 
 function Tabs() {
   const me = useMe();
@@ -30,7 +31,10 @@ const SignedIn: ParentComponent = (props) => {
   // Remember where they were going (an invite link, say) to come back after signing in.
   const login = () => `/login?next=${encodeURIComponent(location.pathname)}`;
   return (
-    <Show when={!loading()} fallback={<p class="center muted">{t("common.loading")}</p>}>
+    <Show
+      when={!loading()}
+      fallback={<p class={`${u.center} ${u.muted}`}>{t("common.loading")}</p>}
+    >
       <Show when={session()} fallback={<Navigate href={login()} />}>
         <MeProvider>
           <main class="page">{props.children}</main>
@@ -73,33 +77,41 @@ function InstallOffer() {
   );
 }
 
+/** Around every page: the session, the account's language and the install banner. */
+export const AppRoot: ParentComponent = (props) => (
+  <AuthProvider>
+    <LocaleSync />
+    <InstallOffer />
+    {props.children}
+  </AuthProvider>
+);
+
+/** Every page by its path. The Screens stories render these in a memory router. */
+export const AppRoutes = () => (
+  <>
+    <Route path="/login" component={Login} />
+    <Route path="/unfollow/:token" component={Unfollow} />
+    <Route component={SignedIn}>
+      <Route path="/" component={Home} />
+      <Route path="/settings" component={Settings} />
+      {/* The old account page. */}
+      <Route path="/mine" component={() => <Navigate href="/settings" />} />
+      <Route path="/groups/new" component={NewGroup} />
+      <Route path="/groups/:groupId" component={freshPer("groupId", GroupSettings)} />
+      <Route path="/children/:profileId" component={freshPer("profileId", ChildSettings)} />
+      <Route path="/lists/:profileId" component={freshPer("profileId", WishList)} />
+      <Route path="/lists/:profileId/items/new" component={freshPer("profileId", ItemForm)} />
+      <Route path="/items/:itemId/edit" component={freshPer("itemId", ItemForm)} />
+      <Route path="/join/:code" component={freshPer("code", Join)} />
+    </Route>
+    <Route path="*" component={() => <Navigate href="/" />} />
+  </>
+);
+
 function App() {
   return (
-    <Router
-      root={(props) => (
-        <AuthProvider>
-          <LocaleSync />
-          <InstallOffer />
-          {props.children}
-        </AuthProvider>
-      )}
-    >
-      <Route path="/login" component={Login} />
-      <Route path="/unfollow/:token" component={Unfollow} />
-      <Route component={SignedIn}>
-        <Route path="/" component={Home} />
-        <Route path="/settings" component={Settings} />
-        {/* The old account page. */}
-        <Route path="/mine" component={() => <Navigate href="/settings" />} />
-        <Route path="/groups/new" component={NewGroup} />
-        <Route path="/groups/:groupId" component={freshPer("groupId", GroupSettings)} />
-        <Route path="/children/:profileId" component={freshPer("profileId", ChildSettings)} />
-        <Route path="/lists/:profileId" component={freshPer("profileId", WishList)} />
-        <Route path="/lists/:profileId/items/new" component={freshPer("profileId", ItemForm)} />
-        <Route path="/items/:itemId/edit" component={freshPer("itemId", ItemForm)} />
-        <Route path="/join/:code" component={freshPer("code", Join)} />
-      </Route>
-      <Route path="*" component={() => <Navigate href="/" />} />
+    <Router root={AppRoot}>
+      <AppRoutes />
     </Router>
   );
 }

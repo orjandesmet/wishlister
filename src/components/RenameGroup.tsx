@@ -3,6 +3,9 @@ import { renameGroup } from "../lib/api/groups.ts";
 import type { ActionRunner } from "../lib/createActionRunner.ts";
 import type { GroupData } from "../lib/createGroupData.ts";
 import { t } from "../lib/i18n.ts";
+import { Button } from "./Button.tsx";
+import { Popover } from "./Popover.tsx";
+import styles from "./RenameGroup.module.css";
 
 /** A button beside the group's title that opens a small form to rename it. */
 export function RenameGroup(props: { data: GroupData; runner: ActionRunner }) {
@@ -20,10 +23,10 @@ export function RenameGroup(props: { data: GroupData; runner: ActionRunner }) {
 
   return (
     <>
-      <button type="button" class="secondary rename-button" popovertarget="rename-popover">
+      <Button variant="secondary" class={styles.renameButton} popovertarget="rename-popover">
         {t("group.rename")}
-      </button>
-      <div id="rename-popover" class="popover sheet-popover rename-popover" popover>
+      </Button>
+      <Popover id="rename-popover" anchor="--rename-group" sheet>
         <form onSubmit={onRename}>
           <label>
             {t("group.groupName")}
@@ -35,7 +38,7 @@ export function RenameGroup(props: { data: GroupData; runner: ActionRunner }) {
           </label>
           <button type="submit">{t("group.rename")}</button>
         </form>
-      </div>
+      </Popover>
     </>
   );
 }

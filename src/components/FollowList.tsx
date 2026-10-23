@@ -1,7 +1,11 @@
 import { createSignal, Show } from "solid-js";
 import { BellIcon } from "./BellIcon.tsx";
+import { Button } from "./Button.tsx";
+import { Popover } from "./Popover.tsx";
 import { locale, t } from "../lib/i18n.ts";
 import { formatOccasionDate, type IsoDate } from "../lib/occasions.ts";
+import u from "../utilities.module.css";
+import styles from "./FollowList.module.css";
 
 export type FollowListProps = {
   /** Whose list it is, for the text. */
@@ -20,6 +24,55 @@ export type FollowListProps = {
   justFollowed?: boolean;
 };
 
+export type FollowDateFormProps = {
+  title: string;
+  /** The date field's label. */
+  label: string;
+  value: IsoDate;
+  min: IsoDate;
+  /** A line under the field, such as the occasion the date comes from. */
+  hint?: string;
+  submitLabel: string;
+  busy?: boolean;
+  onInput: (date: IsoDate) => void;
+  onSubmit: () => void;
+  onCancel: () => void;
+};
+
+/** The form in a follow popover: until which date to follow a list. */
+export function FollowDateForm(props: FollowDateFormProps) {
+  const onSubmit = (event: SubmitEvent) => {
+    event.preventDefault();
+    props.onSubmit();
+  };
+  return (
+    <form class={styles.body} onSubmit={onSubmit}>
+      <h2>{props.title}</h2>
+      <label>
+        {props.label}
+        <input
+          type="date"
+          required
+          min={props.min}
+          value={props.value}
+          onInput={(e) => props.onInput(e.currentTarget.value)}
+        />
+      </label>
+      <Show when={props.hint}>
+        <p class={u.muted}>{props.hint}</p>
+      </Show>
+      <div class={styles.actions}>
+        <button type="submit" disabled={props.busy}>
+          {props.submitLabel}
+        </button>
+        <Button variant="secondary" onClick={() => props.onCancel()}>
+          {t("common.cancel")}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 /** A bell beside the title; its popover follows someone's list until a date, changes the date, or stops following. */
 export function FollowList(props: FollowListProps) {
   const [editing, setEditing] = createSignal(false);
@@ -31,19 +84,13 @@ export function FollowList(props: FollowListProps) {
     setEditing(true);
   };
   const closePopover = () => document.getElementById("follow-popover")?.hidePopover();
-  const onSubmit = (event: SubmitEvent) => {
-    event.preventDefault();
-    props.onFollow(date());
-    setEditing(false);
-    closePopover();
-  };
 
   return (
-    <div class="follow">
+    <div class={styles.follow}>
       <button
         type="button"
-        class="follow-button"
-        classList={{ following: following(), wiggle: props.justFollowed }}
+        class={styles.followButton}
+        classList={{ [styles.following]: following(), [styles.wiggle]: props.justFollowed }}
         popovertarget="follow-popover"
         aria-label={following() ? t("follow.stop") : t("follow.follow")}
         onClick={() => setEditing(false)}
@@ -51,44 +98,39 @@ export function FollowList(props: FollowListProps) {
         <BellIcon filled={following()} />
       </button>
       <Show when={props.justFollowed}>
-        <span class="follow-tooltip" role="status">
+        <span class={styles.tooltip} role="status">
           {t("follow.autoFollowed")}
         </span>
       </Show>
-      <div id="follow-popover" class="popover sheet-popover follow-popover" popover>
+      <Popover id="follow-popover" anchor="--follow-list" area="bottom span-right" sheet>
         <Show
           when={editing()}
           fallback={
             <Show
               when={following()}
               fallback={
-                <div class="follow-body">
+                <div class={styles.body}>
                   <h2>{t("follow.title", { name: props.name })}</h2>
-                  <p class="muted">{t("follow.pitch", { name: props.name })}</p>
+                  <p class={u.muted}>{t("follow.pitch", { name: props.name })}</p>
                   <button type="button" disabled={props.busy} onClick={startEditing}>
                     {t("follow.follow")}
                   </button>
                 </div>
               }
             >
-              <div class="follow-body">
+              <div class={styles.body}>
                 <h2>{t("follow.followingTitle")}</h2>
-                <p class="follow-until">
+                <p class={styles.until}>
                   {t("follow.untilDate", { date: formatOccasionDate(props.until!, locale()) })}
                 </p>
-                <p class="muted">{t("follow.emailNote")}</p>
-                <div class="follow-actions">
-                  <button
-                    type="button"
-                    class="secondary"
-                    disabled={props.busy}
-                    onClick={startEditing}
-                  >
+                <p class={u.muted}>{t("follow.emailNote")}</p>
+                <div class={styles.actions}>
+                  <Button variant="secondary" disabled={props.busy} onClick={startEditing}>
                     {t("follow.changeDate")}
-                  </button>
-                  <button
-                    type="button"
-                    class="link danger"
+                  </Button>
+                  <Button
+                    variant="link"
+                    danger
                     disabled={props.busy}
                     onClick={() => {
                       props.onUnfollow();
@@ -96,46 +138,34 @@ export function FollowList(props: FollowListProps) {
                     }}
                   >
                     {t("follow.stop")}
-                  </button>
+                  </Button>
                 </div>
               </div>
             </Show>
           }
         >
-          <form class="follow-body" onSubmit={onSubmit}>
-            <h2>
-              {following() ? t("follow.changeDate") : t("follow.title", { name: props.name })}
-            </h2>
-            <label>
-              {t("follow.until")}
-              <input
-                type="date"
-                required
-                min={props.today}
-                value={date()}
-                onInput={(e) => setDate(e.currentTarget.value)}
-              />
-            </label>
-            <Show when={date() === props.suggestedUntil && props.suggestedOccasion}>
-              {(occasion) => (
-                <p class="muted">{t("follow.untilOccasion", { occasion: occasion() })}</p>
-              )}
-            </Show>
-            <div class="follow-actions">
-              <button type="submit" disabled={props.busy}>
-                {following() ? t("common.save") : t("follow.follow")}
-              </button>
-              <button
-                type="button"
-                class="secondary"
-                onClick={() => (setEditing(false), closePopover())}
-              >
-                {t("common.cancel")}
-              </button>
-            </div>
-          </form>
+          <FollowDateForm
+            title={following() ? t("follow.changeDate") : t("follow.title", { name: props.name })}
+            label={t("follow.until")}
+            value={date()}
+            min={props.today}
+            hint={
+              date() === props.suggestedUntil && props.suggestedOccasion
+                ? t("follow.untilOccasion", { occasion: props.suggestedOccasion })
+                : undefined
+            }
+            submitLabel={following() ? t("common.save") : t("follow.follow")}
+            busy={props.busy}
+            onInput={setDate}
+            onSubmit={() => {
+              props.onFollow(date());
+              setEditing(false);
+              closePopover();
+            }}
+            onCancel={() => (setEditing(false), closePopover())}
+          />
         </Show>
-      </div>
+      </Popover>
     </div>
   );
 }

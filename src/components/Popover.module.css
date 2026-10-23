@@ -1,0 +1,64 @@
+@layer base, components, utilities;
+
+@layer components {
+  .popover {
+    width: min(360px, calc(100vw - 32px));
+    margin: 0;
+    padding: 20px;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    /* It floats over the page, so it carries a shadow. */
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+  }
+
+  /*
+   * Sits beside its button (Popover's anchor and area props), where anchor positioning exists;
+   * centred otherwise. The button names itself with anchor-name in its own module.
+   */
+  @supports (position-area: bottom) {
+    .popover {
+      position-anchor: var(--popover-anchor);
+      position-area: var(--popover-area, bottom span-left);
+      margin: var(--popover-margin, 8px 0 0);
+    }
+  }
+
+  /* Small screens: a sheet docked to the bottom edge, above the keyboard. */
+  @media (max-width: 899px) {
+    .sheet {
+      position-area: none;
+      inset: auto 0 0 0;
+      width: 100%;
+      max-width: 632px;
+      max-height: 90dvh;
+      margin: 0 auto;
+      padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+      border-width: 1px 1px 0;
+      border-radius: var(--radius) var(--radius) 0 0;
+      overflow-y: auto;
+    }
+
+    .sheet::backdrop {
+      background: rgba(0, 0, 0, 0.4);
+    }
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @layer components {
+    .popover:popover-open {
+      transition:
+        opacity 160ms ease,
+        transform 220ms var(--ease-pop);
+    }
+
+    @starting-style {
+      .popover:popover-open {
+        opacity: 0;
+        transform: translateY(-8px) scale(0.97);
+      }
+    }
+  }
+}

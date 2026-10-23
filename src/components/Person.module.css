@@ -1,0 +1,19 @@
+@layer base, components, utilities;
+
+/* A person: their initial on a tile in their own hue, then their name. */
+@layer components {
+  .person {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+  }
+
+  a.person {
+    text-decoration: none;
+  }
+
+  a.person:hover {
+    text-decoration: underline;
+  }
+}

@@ -1,0 +1,27 @@
+/* Sticks above the tab bar while the list scrolls underneath. */
+.bulkActions {
+  position: sticky;
+  bottom: calc(var(--tap) + var(--gap) + 16px + env(safe-area-inset-bottom));
+  z-index: 1;
+  gap: 12px;
+  /* Floats over the list as it scrolls underneath. */
+  box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.08);
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.buttons button {
+  flex: 1 1 auto;
+  padding: 0 12px;
+}
+
+/* Wide screens: no tab bar underneath. */
+@media (min-width: 900px) {
+  .bulkActions {
+    bottom: var(--gap);
+  }
+}

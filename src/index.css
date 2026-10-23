@@ -3,7 +3,14 @@
  * and categories each get a pale hue (see lib/hues.ts) with the dark of the same hue as ink; the
  * one accent colour is the main action and the figures a screen is about. Change the tokens here
  * to restyle the whole app.
+ *
+ * Everything else lives in CSS modules next to what it styles. The cascade layers keep their order
+ * independent of import order: base element styles here lose to the shared components (Button,
+ * Card, …), which lose to the shared utilities (utilities.module.css), and every component's own
+ * module is unlayered, so it beats all three.
  */
+@layer base, components, utilities;
+
 :root {
   /* light-dark() picks the first value on a light system and the second on a dark one. */
   --bg: light-dark(#f3f5f7, #0d0e10);
@@ -54,1246 +61,166 @@
     --gap: 14px;
     --card-pad: 16px;
   }
+}
 
-  .list.cards {
-    gap: 12px;
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
   }
 
-  .item {
-    --card-pad: 16px;
-    gap: 10px;
+  body {
+    margin: 0;
   }
 
-  .tabs {
-    padding-inline: 8px;
-  }
-}
-
-/* A pale tile in the hue set by --h, with the dark of that hue as its ink. */
-.tinted,
-.chip.tinted {
-  background: light-dark(hsl(var(--h) 85% 91%), hsl(var(--h) 30% 21%));
-  color: light-dark(hsl(var(--h) 75% 20%), hsl(var(--h) 85% 85%));
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-}
-
-#root {
-  max-width: 560px;
-  min-height: 100svh;
-  margin: 0 auto;
-  padding: var(--pad);
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap);
-}
-
-/* Signed-in pages: content above a bottom tab bar. */
-.page {
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap);
-  padding-bottom: calc(var(--tap) + 2 * var(--gap));
-}
-
-.tabs {
-  position: fixed;
-  inset: auto 0 0 0;
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-}
-
-.tabs a {
-  flex: 1;
-  max-width: 220px;
-  min-height: 56px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  border-radius: 14px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  text-decoration: none;
-}
-
-.tabs a.active {
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-}
-
-.tabs .brand {
-  display: none;
-}
-
-.tab-icon {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  /* Parts that move may leave the 24px box for a moment. */
-  overflow: visible;
-}
-
-h1,
-h2,
-h3 {
-  margin: 0;
-  color: var(--text-strong);
-  line-height: 1.2;
-}
-
-h1 {
-  font-size: 28px;
-  font-weight: 600;
-  letter-spacing: -0.025em;
-}
-
-h2 {
-  font-size: 20px;
-  font-weight: 600;
-  letter-spacing: -0.015em;
-}
-
-h3 {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-p {
-  margin: 0;
-}
-
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: var(--card-pad);
-  display: flex;
-  flex-direction: column;
-  gap: var(--gap);
-}
-
-.muted {
-  color: var(--muted);
-}
-
-.error {
-  color: var(--danger);
-}
-
-.center {
-  margin: auto;
-  text-align: center;
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-label {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-weight: 500;
-  color: var(--text-strong);
-}
-
-input {
-  min-height: var(--tap);
-  padding: 0 14px;
-  font: inherit;
-  color: var(--text-strong);
-  background: var(--surface);
-  border: 1px solid var(--control);
-  border-radius: var(--radius-control);
-}
-
-input::placeholder {
-  color: var(--muted);
-}
-
-input:focus-visible {
-  border-color: var(--accent);
-}
-
-input:focus-visible,
-button:focus-visible,
-select:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
-input[type="checkbox"],
-input[type="radio"] {
-  accent-color: var(--accent);
-}
-
-button {
-  min-height: var(--tap);
-  padding: 0 20px;
-  font: inherit;
-  font-weight: 600;
-  color: var(--accent-contrast);
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: var(--radius-control);
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-
-button.secondary {
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-  border-color: var(--accent-soft);
-}
-
-.code-input {
-  font-size: 1.5rem;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.4em;
-  text-align: center;
-}
-
-a {
-  color: inherit;
-}
-
-.row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-/* Buttons keep their text on one line; when they don't fit side by side, the last one drops below. */
-.row.button-row {
-  flex-wrap: wrap;
-  justify-content: flex-start;
-}
-
-.row.button-row > button {
-  white-space: nowrap;
-}
-
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.list.cards {
-  gap: 16px;
-}
-
-.list-row {
-  min-height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  text-decoration: none;
-  color: var(--text-strong);
-}
-
-.icon-heading {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.icon-heading svg {
-  width: 1.1em;
-  height: 1.1em;
-  flex: none;
-}
-
-/* Edit and remove side by side, spaced like the ones on an item card. */
-.row-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px 14px;
-}
-
-/* A member's role controls drop below the name when they don't both fit, never over it. */
-.member-row {
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  padding-block: 8px;
-}
-
-.member-row > .person {
-  flex: 1 1 140px;
-}
-
-.member-row > :not(.person) {
-  margin-left: auto;
-}
-
-.list > li + li:not(.card) {
-  border-top: 1px solid var(--border);
-}
-
-.chevron {
-  font-size: 20px;
-  line-height: 1;
-}
-
-.child {
-  padding-bottom: 12px;
-}
-
-/* Roomy on purpose: the name and price lead, everything else sits below with space around it. */
-.item {
-  --card-pad: 20px;
-  gap: 12px;
-  border-color: transparent;
-  transition: transform 200ms var(--ease-out);
-}
-
-.item-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 6px 20px;
-}
-
-.item-head .item-name {
-  font-size: 18px;
-  line-height: 1.3;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
-.item-head > .item-name,
-.item-head > .select-row {
-  flex: 1 1 200px;
-}
-
-.item-meta {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px 14px;
-  min-width: 0;
-}
-
-.item-meta .link {
-  min-width: 0;
-  font-weight: 400;
-  color: var(--muted);
-  opacity: 0.75;
-  transition: opacity 150ms;
-}
-
-.item-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-}
-
-.item-link svg {
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-}
-
-.item-meta .link:hover {
-  opacity: 1;
-}
-
-/* An item nobody but the editors can see: worth noticing, so it gets a warning sign. */
-.item-warning {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  color: var(--text-strong);
-}
-
-.item-warning svg {
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  color: var(--warning);
-}
-
-/* Edit and remove stay quiet, tucked under the main action. */
-.item-manage {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-}
-
-.item.pending {
-  border-style: dashed;
-  border-color: var(--control);
-}
-
-.item-name {
-  color: var(--text-strong);
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
-.chip {
-  flex-shrink: 0;
-  padding: 0 10px;
-  font-size: 13px;
-  line-height: 24px;
-  font-weight: 500;
-  color: var(--text);
-  background: var(--raised);
-  border-radius: var(--radius-small);
-}
-
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-button.chip-button[aria-pressed="true"] {
-  color: var(--accent-contrast);
-  background: var(--accent);
-  border-color: var(--accent);
-}
-
-.field-label {
-  font-weight: 500;
-  color: var(--text-strong);
-}
-
-.stack.small-gap {
-  gap: 6px;
-}
-
-/* An item no group can see: only you (and other editors of the list) see it. */
-.item.private {
-  background: var(--bg);
-  border-style: dashed;
-  border-color: var(--control);
-}
-
-/* A "please don't buy" entry: set apart from the wishes, never bought. */
-.item.not-wanted {
-  background: var(--pill-negative-bg);
-  border-color: var(--danger);
-  border-style: solid;
-}
-
-.item.not-wanted .item-head .item-name {
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.item.not-wanted .item-name,
-.item.not-wanted .price-amount,
-.not-wanted-note {
-  color: var(--pill-negative-ink);
-}
-
-/* Reads on into the title below: "Please don't buy" + the item's name. */
-.item.not-wanted {
-  gap: 4px;
-}
-
-.not-wanted-note svg {
-  color: var(--danger);
-}
-
-button.chip-button {
-  min-height: 40px;
-  padding: 0 14px;
-  font-weight: 500;
-  color: var(--text-strong);
-  background: var(--surface);
-  border-color: var(--control);
-  border-radius: var(--radius-control);
-}
-
-.link {
-  color: var(--text-strong);
-  font-weight: 600;
-}
-
-button.link {
-  min-height: auto;
-  padding: 0;
-  color: var(--text-strong);
-  background: none;
-  border: none;
-  text-decoration: underline;
-}
-
-.danger,
-button.link.danger {
-  color: var(--danger);
-}
-
-/* Destructive actions are pale red, so they never read as an ordinary secondary button. */
-button.secondary.danger {
-  color: var(--pill-negative-ink);
-  background: var(--pill-negative-bg);
-  border-color: var(--danger);
-}
-
-button.small {
-  min-height: 40px;
-  padding: 0 16px;
-}
-
-.small {
-  font-size: 14px;
-}
-
-.truncate {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.price-fields {
-  align-items: flex-end;
-}
-
-.price-fields > label:first-child {
-  flex: 1;
-}
-
-/* Figures keep their digits in line. */
-.price {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-strong);
-}
-
-.price-amount {
-  font-size: 20px;
-  line-height: 1.2;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--accent);
-}
-
-.price-converted {
-  font-size: 14px;
-  color: var(--muted);
-}
-
-/* What is bought shows as a green pill; what someone else bought is a quiet grey one. */
-.bought {
-  align-self: flex-start;
-  padding: 6px 14px;
-  font-size: 14px;
-  line-height: 1.35;
-  font-weight: 600;
-  color: var(--positive-ink);
-  background: var(--positive-bg);
-  border-radius: var(--radius-small);
-}
-
-.bought.someone {
-  color: var(--text);
-  background: var(--raised);
-}
-
-.notice {
-  padding: 16px 20px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-
-a.button {
-  min-height: var(--tap);
-  display: grid;
-  place-items: center;
-  padding: 0 20px;
-  font-weight: 600;
-  text-decoration: none;
-  color: var(--accent-contrast);
-  background: var(--accent);
-  border-radius: var(--radius-control);
-}
-
-fieldset {
-  margin: 0;
-  padding: 16px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-control);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-legend {
-  padding: 0 4px;
-  font-weight: 500;
-  color: var(--text-strong);
-}
-
-label.check {
-  min-height: 44px;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  font-weight: 400;
-  color: var(--text);
-}
-
-label.check input {
-  min-height: auto;
-  width: 22px;
-  height: 22px;
-}
-
-.indent {
-  padding-left: 34px;
-}
-
-.select {
-  position: relative;
-  display: inline-flex;
-}
-
-.select select {
-  flex: 1;
-  min-width: 0;
-  min-height: 44px;
-  padding: 0 40px 0 14px;
-  font: inherit;
-  color: var(--text-strong);
-  appearance: none;
-  background: var(--surface);
-  border: 1px solid var(--control);
-  border-radius: var(--radius-control);
-}
-
-/* The chevron, drawn from borders so it follows --control. */
-.select::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  right: 18px;
-  width: 7px;
-  height: 7px;
-  border-right: 2px solid var(--control);
-  border-bottom: 2px solid var(--control);
-  transform: translateY(-75%) rotate(45deg);
-  pointer-events: none;
-}
-
-.install-banner {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.install-banner p {
-  margin: 0;
-}
-
-.install-banner button.link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 44px;
-  min-height: 44px;
-  margin: -10px -10px -10px 0;
-  font-size: 28px;
-  line-height: 1;
-  text-decoration: none;
-}
-
-/* "Sort by [select]" on one line above a wish list. */
-label.list-order {
-  flex-direction: row;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-left: auto;
-  font-weight: 400;
-  color: var(--text);
-}
-
-.edit-icon,
-.remove-icon,
-.select-button-icon {
-  display: none;
-  width: 20px;
-  height: 20px;
-}
-
-.list-order-icon {
-  display: none;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-}
-
-/* Small screens: the icon replaces the label (which stays available to screen readers). */
-@media (max-width: 599px) {
-  .list-order-icon,
-  .edit-icon,
-  .remove-icon,
-  .select-button-icon {
-    display: block;
-  }
-  button.select-button {
-    padding: 0 12px;
-  }
-  .link .edit-icon,
-  button.link .remove-icon {
-    width: 20px;
-    height: 20px;
-  }
-  /* Long options ("Nog niet gekocht eerst") must not stretch the select past the row. */
-  label.list-order {
-    min-width: 0;
-  }
-  label.list-order .select {
-    min-width: 0;
-    max-width: 100%;
-  }
-  .list-order-text,
-  .edit-text,
-  .remove-text,
-  .select-button-text {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
-
-/* Parents: a chevron beside the title opens a menu of their own and their children's lists. */
-.menu-button {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  min-height: 0;
-  padding: 0;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-  border-color: var(--accent-soft);
-  anchor-name: --list-menu;
-}
-
-.menu-button::after {
-  content: "";
-  width: 8px;
-  height: 8px;
-  margin-top: -3px;
-  border-right: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
-  transform: rotate(45deg);
-}
-
-.menu {
-  min-width: 240px;
-  margin: 0;
-  padding: 8px;
-  flex-direction: column;
-  gap: 2px;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  /* It floats over the page, so it carries a shadow. */
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
-}
-
-.menu:popover-open {
-  display: flex;
-}
-
-.menu a.person {
-  min-height: 48px;
-  padding: 0 12px;
-  border-radius: 12px;
-  color: var(--text-strong);
-}
-
-.menu a.person:hover {
-  text-decoration: none;
-  background: var(--raised);
-}
-
-.menu a[aria-current="page"] {
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-  font-weight: 600;
-}
-
-@supports (position-area: bottom) {
-  .menu {
-    position-anchor: --list-menu;
-    position-area: bottom span-right;
-    margin-top: 8px;
-  }
-}
-
-/* Picking items for a bulk action. */
-.item.selected {
-  border-color: var(--accent);
-  box-shadow: inset 0 0 0 1px var(--accent);
-}
-
-label.check.select-row {
-  min-height: var(--tap);
-  margin: -8px 0;
-  cursor: pointer;
-}
-
-label.check.select-row .item-name {
-  flex: 1;
-}
-
-/* Sticks above the tab bar while the list scrolls underneath. */
-.bulk-actions {
-  position: sticky;
-  bottom: calc(var(--tap) + var(--gap) + 16px + env(safe-area-inset-bottom));
-  z-index: 1;
-  gap: 12px;
-  /* Floats over the list as it scrolls underneath. */
-  box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.08);
-}
-
-.bulk-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.bulk-buttons button {
-  flex: 1 1 auto;
-  padding: 0 12px;
-}
-
-.occasion .stack {
-  gap: 2px;
-}
-
-.past-occasions summary {
-  min-height: var(--tap);
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-}
-
-.occasion {
-  padding: 8px 0;
-}
-
-/* A person: their initial on a tile in their own hue, then their name. */
-.person {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-}
-
-a.person {
-  text-decoration: none;
-}
-
-a.person:hover {
-  text-decoration: underline;
-}
-
-.person.title {
-  gap: 14px;
-}
-
-/* A long name wraps instead of pushing the bell and menu over the "+" beside the title. */
-.person.title h1 {
-  min-width: 0;
-  font-size: 22px;
-  overflow-wrap: anywhere;
-}
-
-.avatar {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  display: grid;
-  place-items: center;
-  border-radius: 12px;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1;
-}
-
-.avatar.lg {
-  width: 52px;
-  height: 52px;
-  border-radius: 18px;
-  font-size: 24px;
-}
-
-/* The days to the group's next occasion: the figure a group card is about. Tilted, not level. */
-.countdown {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.countdown-tile {
-  --tilt: -4deg;
-  flex-shrink: 0;
-  min-width: 76px;
-  min-height: 76px;
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border-radius: 20px 20px 20px 8px;
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-  font-size: 14px;
-  line-height: 1.1;
-  transform: rotate(var(--tilt));
-}
-
-.countdown-tile strong {
-  font-size: 32px;
-  font-weight: 700;
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-}
-
-.countdown-tile.soon {
-  --tilt: 3deg;
-  color: var(--positive-ink);
-  background: var(--positive-bg);
-}
-
-.countdown-tile.soon strong {
-  font-size: 20px;
-  letter-spacing: -0.01em;
-}
-
-.next-occasion {
-  font-weight: 500;
-  color: var(--text-strong);
-}
-
-/* Adding a group: a round "+" opening a page on phones, a labelled button opening a popover on wide screens. */
-.add-link,
-.add-action {
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  display: grid;
-  place-items: center;
-  border-radius: 14px;
-  font-size: 26px;
-  font-weight: 500;
-  line-height: 1;
-  text-decoration: none;
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-}
-
-/* An add action that is a plain link: "+" on phones, its label on wide screens. */
-.add-action::before {
-  content: "+";
-}
-
-.add-action span {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
-.add-popover-button {
-  display: none;
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-  border-color: var(--accent-soft);
-}
-
-.rename-button {
-  flex-shrink: 0;
-}
-
-/* The follow bell beside a list's title; coloured while you follow the list. */
-.follow {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.follow-button {
-  display: inline-grid;
-  place-items: center;
-  width: 40px;
-  padding: 0;
-  color: var(--muted);
-  background: none;
-  border-color: transparent;
-}
-
-.follow-button svg {
-  width: 20px;
-  height: 20px;
-}
-
-.follow-button.following {
-  color: var(--accent);
-}
-
-.follow-popover {
-  padding: 28px 24px;
-}
-
-.follow-body {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.follow-body h2,
-.follow-body p {
-  margin: 0;
-}
-
-.follow-until {
-  align-self: flex-start;
-  padding: 6px 14px;
-  font-weight: 600;
-  color: var(--accent-ink);
-  background: var(--accent-soft);
-  border-radius: 999px;
-}
-
-.follow-actions {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.follow-tooltip {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  z-index: 5;
-  padding: 4px 10px;
-  font-size: 0.85rem;
-  white-space: nowrap;
-  color: var(--accent-contrast);
-  background: var(--accent);
-  border-radius: var(--radius);
-  pointer-events: none;
-}
-
-.popover {
-  width: min(360px, calc(100vw - 32px));
-  margin: 0;
-  padding: 20px;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  /* It floats over the page, so it carries a shadow. */
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
-}
-
-/* Sits under its button, right edges level, where anchor positioning exists; centred otherwise. */
-@supports (position-area: bottom) {
-  .add-popover-button {
-    anchor-name: --add-group;
-  }
-
-  .rename-button {
-    anchor-name: --rename-group;
-  }
-
-  .follow-button {
-    anchor-name: --follow-list;
-  }
-
-  .popover {
-    position-anchor: --add-group;
-    position-area: bottom span-left;
-    margin-top: 8px;
-  }
-
-  .rename-popover {
-    position-anchor: --rename-group;
-  }
-
-  .follow-popover {
-    position-anchor: --follow-list;
-    position-area: bottom span-right;
-  }
-
-  .notifications .icon-heading {
-    anchor-name: --notifications;
-  }
-
-  .notification-popover {
-    position-anchor: --notifications;
-    position-area: bottom span-right;
-  }
-
-  .fab,
-  .quick-add-inline {
-    anchor-name: --quick-add;
-  }
-
-  .quick-add-popover {
-    position-anchor: --quick-add;
-    position-area: top span-left;
-    margin: 0 0 8px;
-  }
-
-  .invite-link-button {
-    anchor-name: --invite-link;
-  }
-
-  .invite-popover {
-    position-anchor: --invite-link;
-    position-area: bottom span-right;
-  }
-}
-
-/* Small screens: rename and invite link open as a sheet docked to the bottom edge, above the keyboard. */
-@media (max-width: 899px) {
-  .sheet-popover {
-    position-area: none;
-    inset: auto 0 0 0;
-    width: 100%;
-    max-width: 632px;
-    max-height: 90dvh;
+  /* The app's frame. TabBar.module.css widens it into a sidebar layout on wide screens. */
+  #root {
+    max-width: 560px;
+    min-height: 100svh;
     margin: 0 auto;
-    padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
-    border-width: 1px 1px 0;
-    border-radius: var(--radius) var(--radius) 0 0;
-    overflow-y: auto;
+    padding: var(--pad);
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
   }
 
-  .sheet-popover::backdrop {
-    background: rgba(0, 0, 0, 0.4);
+  /*
+   * Signed-in pages: content above a bottom tab bar. A global class, because components reach
+   * for it with :global(.page) to change the page they are on (the groups grid, quick add's column).
+   */
+  .page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+    padding-bottom: calc(var(--tap) + 2 * var(--gap));
   }
-}
 
-/* The login screen's mark. */
-.login-mark {
-  width: 72px;
-  height: 72px;
-  margin: 0 auto;
-  transform: rotate(-6deg);
-}
-
-/* 💸 flying out of "I bought this" (src/lib/moneyBurst.ts). Never drawn with reduced motion. */
-.money-burst {
-  position: fixed;
-  z-index: 10;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
-
-.money-burst span {
-  position: absolute;
-  left: 0;
-  top: 0;
-  font-size: 1.5rem;
-  line-height: 1;
-  opacity: 0;
-  translate: -50% -50%;
-  animation: money-fly 900ms cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
-}
-
-@keyframes money-fly {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0) scale(0.5);
+  h1,
+  h2,
+  h3 {
+    margin: 0;
+    color: var(--text-strong);
+    line-height: 1.2;
   }
-  15% {
-    opacity: 1;
+
+  h1 {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: -0.025em;
   }
-  70% {
-    opacity: 1;
+
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
   }
-  100% {
-    opacity: 0;
-    transform: translate(var(--dx), var(--dy)) rotate(var(--rotate)) scale(1);
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: 0;
+  }
+
+  form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-weight: 500;
+    color: var(--text-strong);
+  }
+
+  input {
+    min-height: var(--tap);
+    padding: 0 14px;
+    font: inherit;
+    color: var(--text-strong);
+    background: var(--surface);
+    border: 1px solid var(--control);
+    border-radius: var(--radius-control);
+  }
+
+  input::placeholder {
+    color: var(--muted);
+  }
+
+  input:focus-visible {
+    border-color: var(--accent);
+  }
+
+  input:focus-visible,
+  button:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--accent);
+  }
+
+  /* A plain <button> is the main action; Button's variants make the quieter ones. */
+  button {
+    min-height: var(--tap);
+    padding: 0 20px;
+    font: inherit;
+    font-weight: 600;
+    color: var(--accent-contrast);
+    background: var(--accent);
+    border: 1px solid var(--accent);
+    border-radius: var(--radius-control);
+    cursor: pointer;
+  }
+
+  button:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  fieldset {
+    margin: 0;
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-control);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  legend {
+    padding: 0 4px;
+    font-weight: 500;
+    color: var(--text-strong);
+  }
+
+  /* Wide screens: the tab bar is a sidebar, so nothing sits under the page. */
+  @media (min-width: 900px) {
+    .page {
+      padding-bottom: 0;
+    }
   }
 }
 
 /*
  * Motion. Everything here is feedback or an arrival, built from transform and opacity, and only
  * runs when the system has not asked for reduced motion. Without it the page is the same, still.
+ * Each component's own motion is in its module, under the same media query.
  */
 @media (prefers-reduced-motion: no-preference) {
-  @keyframes wiggle {
-    0%,
-    100% {
-      transform: rotate(0);
-    }
-    20% {
-      transform: rotate(-18deg);
-    }
-    40% {
-      transform: rotate(14deg);
-    }
-    60% {
-      transform: rotate(-10deg);
-    }
-    80% {
-      transform: rotate(6deg);
-    }
-  }
-
-  .follow-button.wiggle svg {
-    transform-origin: 50% 10%;
-    animation: wiggle 700ms ease-in-out 2;
-  }
-
   @keyframes rise {
     from {
       opacity: 0;
@@ -1301,514 +228,49 @@ a.person:hover {
     }
   }
 
-  @keyframes pop {
-    0% {
-      opacity: 0;
-      transform: scale(0.6);
+  @layer base {
+    /* Parts of a page arrive one after the other. */
+    .page > * {
+      animation: rise 460ms var(--ease-out) backwards;
     }
-    60% {
-      opacity: 1;
-      transform: scale(1.08);
+    .page > :nth-child(2) {
+      animation-delay: 70ms;
     }
-  }
-
-  @keyframes land {
-    0% {
-      opacity: 0;
-      transform: rotate(-16deg) scale(0.6);
+    .page > :nth-child(3) {
+      animation-delay: 140ms;
     }
-    60% {
-      opacity: 1;
-      transform: rotate(calc(var(--tilt) + 5deg)) scale(1.06);
+    .page > :nth-child(4) {
+      animation-delay: 210ms;
     }
-    100% {
-      transform: rotate(var(--tilt)) scale(1);
+    .page > :nth-child(5) {
+      animation-delay: 280ms;
     }
-  }
-
-  @keyframes beat {
-    50% {
-      transform: rotate(var(--tilt)) scale(1.07);
+    .page > :nth-child(n + 6) {
+      animation-delay: 340ms;
     }
-  }
 
-  /* Introduces the quick add button by name, then folds it into the icon. */
-  .fab-label {
-    animation: fab-label 1600ms ease 400ms both;
-  }
-
-  @keyframes fab-label {
-    0%,
-    80% {
-      max-width: 10rem;
-      margin-left: 8px;
-      opacity: 1;
+    /* Press, hover and focus feedback on every control. */
+    input {
+      transition:
+        border-color 140ms ease,
+        background-color 160ms ease,
+        color 160ms ease;
     }
-    100% {
-      max-width: 0;
-      margin-left: 0;
-      opacity: 0;
+
+    button {
+      transition:
+        transform 180ms var(--ease-pop),
+        opacity 140ms ease,
+        filter 140ms ease,
+        background-color 140ms ease;
     }
-  }
 
-  /* Parts of a page arrive one after the other. */
-  .page > * {
-    animation: rise 460ms var(--ease-out) backwards;
-  }
-  .page > :nth-child(2) {
-    animation-delay: 70ms;
-  }
-  .page > :nth-child(3) {
-    animation-delay: 140ms;
-  }
-  .page > :nth-child(4) {
-    animation-delay: 210ms;
-  }
-  .page > :nth-child(5) {
-    animation-delay: 280ms;
-  }
-  .page > :nth-child(n + 6) {
-    animation-delay: 340ms;
-  }
-  /* A transformed parent would become the "fixed" button's frame, parking it halfway up the page. */
-  .page > .quick-add {
-    animation: none;
-  }
-
-  .countdown-tile {
-    animation: land 700ms var(--ease-pop) 250ms backwards;
-  }
-
-  /* A group with an occasion today or tomorrow keeps a slow heartbeat. */
-  .countdown-tile.soon {
-    animation:
-      land 700ms var(--ease-pop) 250ms backwards,
-      beat 2.4s ease-in-out 1.2s infinite;
-  }
-
-  .avatar,
-  .bought,
-  .login-mark {
-    animation: pop 420ms var(--ease-pop) backwards;
-  }
-
-  .login-mark {
-    animation-name: land;
-    --tilt: -6deg;
-  }
-
-  .popover:popover-open,
-  .menu:popover-open {
-    transition:
-      opacity 160ms ease,
-      transform 220ms var(--ease-pop);
-  }
-
-  @starting-style {
-    .popover:popover-open,
-    .menu:popover-open {
-      opacity: 0;
-      transform: translateY(-8px) scale(0.97);
+    button:hover:not(:disabled) {
+      filter: brightness(1.12) saturate(1.1);
     }
-  }
 
-  /*
-   * Tab icons: when a tab becomes the current one, its icon plays one short move and stops.
-   * The people nod, the gift's lid pops open, the gear spins half a turn (it is
-   * drawn with six teeth, so 180 degrees lands on the same picture).
-   */
-  .gift-lid,
-  .gear {
-    transform-box: fill-box;
-    transform-origin: center;
-  }
-
-  .tabs a.active .head-left {
-    animation: nod-left 700ms ease-in-out;
-  }
-
-  .tabs a.active .head-right {
-    animation: nod-right 700ms ease-in-out;
-  }
-
-  .tabs a.active .gift-lid {
-    transform-origin: left bottom;
-    animation: unwrap 800ms var(--ease-pop);
-  }
-
-  .tabs a.active .gear {
-    animation: turn 1100ms var(--ease-out);
-  }
-
-  /* Groups: both heads dip and spring back, the right one a beat after the left. */
-  @keyframes nod-left {
-    25% {
-      transform: translateY(1.6px);
+    button:active:not(:disabled) {
+      transform: scale(0.96);
     }
-  }
-
-  @keyframes nod-right {
-    12% {
-      transform: translateY(0);
-    }
-    37% {
-      transform: translateY(1.6px);
-    }
-  }
-
-  @keyframes unwrap {
-    35%,
-    60% {
-      transform: translateY(-2px) rotate(-10deg);
-    }
-  }
-
-  @keyframes turn {
-    from {
-      transform: rotate(0);
-    }
-    to {
-      transform: rotate(180deg);
-    }
-  }
-
-  /* Press, hover and focus feedback on every control. */
-  input,
-  .tabs a {
-    transition:
-      border-color 140ms ease,
-      background-color 160ms ease,
-      color 160ms ease;
-  }
-
-  button,
-  a.button,
-  .add-link,
-  .add-action,
-  .list-row,
-  .avatar {
-    transition:
-      transform 180ms var(--ease-pop),
-      opacity 140ms ease,
-      filter 140ms ease,
-      background-color 140ms ease;
-  }
-
-  button:hover:not(:disabled),
-  a.button:hover,
-  .add-link:hover,
-  .add-action:hover {
-    filter: brightness(1.12) saturate(1.1);
-  }
-
-  button:active:not(:disabled),
-  a.button:active,
-  .add-link:active,
-  .add-action:active {
-    transform: scale(0.96);
-  }
-
-  button.link:hover:not(:disabled) {
-    transform: none;
-  }
-
-  a.list-row:hover .avatar {
-    transform: rotate(-8deg) scale(1.1);
-  }
-
-  a.list-row:active {
-    transform: scale(0.985);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .money-burst {
-    display: none;
-  }
-}
-
-/*
- * Wide screens: the bottom tabs become a labelled sidebar on the page ground, and the content
- * keeps a 720px column in the canvas beside it (960px for the groups page, which lays its cards
- * out on 12 columns: 7 + 5, then 7 + 5). The canvas is centred, so its two margins are equal.
- */
-@media (min-width: 900px) {
-  .person.title h1 {
-    font-size: 28px;
-  }
-
-  #root:has(> .tabs) {
-    max-width: none;
-    padding: 40px 32px 48px calc(var(--sidebar) + 32px);
-  }
-
-  #root:has(> .tabs) > :not(.tabs) {
-    width: 100%;
-    max-width: 720px;
-    margin-inline: auto;
-  }
-
-  #root:has(> .tabs) > .page:has(.group-card) {
-    max-width: 960px;
-  }
-
-  .page {
-    padding-bottom: 0;
-  }
-
-  .page:has(.group-card) {
-    display: grid;
-    grid-template-columns: repeat(12, 1fr);
-    align-items: start;
-  }
-
-  .page:has(.group-card) > * {
-    grid-column: 1 / -1;
-  }
-
-  .page:has(.group-card) > .group-card:nth-of-type(odd) {
-    grid-column: span 7;
-  }
-
-  .page:has(.group-card) > .group-card:nth-of-type(even) {
-    grid-column: span 5;
-  }
-
-  /* A lone last card takes the full row instead of leaving 5 columns empty. */
-  .page:has(.group-card) > .group-card:last-of-type:nth-of-type(odd) {
-    grid-column: 1 / -1;
-  }
-
-  .add-link {
-    display: none;
-  }
-
-  .add-action {
-    width: auto;
-    height: var(--tap);
-    padding: 0 20px;
-    gap: 8px;
-    display: inline-flex;
-    align-items: center;
-    border-radius: var(--radius-control);
-    font-size: 16px;
-    font-weight: 600;
-  }
-
-  .add-action::before {
-    font-size: 20px;
-  }
-
-  .add-action span {
-    position: static;
-    width: auto;
-    height: auto;
-    clip-path: none;
-  }
-
-  .add-popover-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .add-popover-button::before {
-    content: "+";
-    font-size: 20px;
-    line-height: 1;
-  }
-
-  .inline-form {
-    flex-direction: row;
-    align-items: flex-end;
-  }
-
-  .inline-form > label {
-    flex: 1;
-  }
-
-  .tabs {
-    inset: 0 auto 0 0;
-    width: var(--sidebar);
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 4px;
-    padding: 24px 12px;
-    background: var(--bg);
-    border-top: none;
-  }
-
-  .tabs .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 12px 24px;
-    font-size: 18px;
-    font-weight: 600;
-    letter-spacing: -0.02em;
-    color: var(--text-strong);
-  }
-
-  .tabs .brand img {
-    width: 28px;
-    height: 28px;
-    transform: rotate(-6deg);
-  }
-
-  .tabs a {
-    flex: none;
-    max-width: none;
-    min-height: 40px;
-    padding: 0 12px;
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
-    border-radius: 12px;
-    font-size: 16px;
-  }
-
-  .tabs a:hover {
-    color: var(--text-strong);
-  }
-
-  .bulk-actions {
-    bottom: var(--gap);
-  }
-}
-
-.card-title {
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--muted);
-}
-
-/* A message with its one action, centred in the space the page has left. */
-.page:has(> .empty-state) {
-  flex: 1;
-}
-
-.empty-state {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--gap);
-  text-align: center;
-}
-
-/* The button under an empty list's message, which replaces the floating one. */
-.empty-quick-add {
-  display: flex;
-  justify-content: center;
-}
-
-/* Same shape as the floating button, but with its text kept. */
-.quick-add-inline {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 56px;
-  min-width: 56px;
-  padding: 0 14px;
-  border-radius: 28px;
-}
-
-.quick-add-inline svg {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-}
-
-.quick-add-inline span {
-  padding-right: 6px;
-  font-weight: 600;
-}
-
-.page:has(.empty-quick-add) .fab {
-  display: none;
-}
-
-.quick-add-details {
-  align-self: flex-start;
-}
-
-/* Floating "quick add" button, above the tab bar. */
-.fab {
-  position: fixed;
-  right: 16px;
-  bottom: calc(88px + env(safe-area-inset-bottom));
-  z-index: 5;
-  display: inline-flex;
-  align-items: center;
-  height: 56px;
-  min-width: 56px;
-  padding: 0 14px;
-  color: var(--accent-contrast);
-  background: var(--accent);
-  border-color: var(--accent);
-  border-radius: 28px;
-  box-shadow: 0 4px 14px rgb(0 0 0 / 0.25);
-}
-
-.fab svg {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-}
-
-/* The text only shows for a moment, see "fab-label" in the motion rules. */
-.fab-label {
-  max-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-  font-weight: 600;
-  opacity: 0;
-}
-
-/* Between 900px and 1200px quick add is a popover, which has no use for "Ready". */
-@media (min-width: 900px) {
-  .quick-add-ready {
-    display: none;
-  }
-}
-
-/* Very wide screens: quick add stays open in a column beside the list, so there is no button and no "Ready". */
-@media (min-width: 1200px) {
-  #root:has(> .tabs) > .page:has(.quick-add) {
-    position: relative;
-    max-width: 1080px;
-    padding-right: 340px;
-  }
-
-  .quick-add {
-    position: absolute;
-    inset: 0 0 0 auto;
-    width: 320px;
-  }
-
-  .quick-add-inner {
-    position: sticky;
-    top: var(--gap);
-  }
-
-  .fab,
-  .empty-quick-add {
-    display: none;
-  }
-
-  .quick-add-popover:popover-open,
-  .quick-add-popover:not(:popover-open) {
-    display: block;
-    position: static;
-    inset: auto;
-    width: auto;
-    margin: 0;
-    box-shadow: none;
-    opacity: 1;
-    transform: none;
   }
 }
