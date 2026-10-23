@@ -1413,21 +1413,28 @@ a.person:hover {
 
   button,
   a.button,
+  .add-link,
+  .add-action,
   .list-row,
   .avatar {
     transition:
       transform 180ms var(--ease-pop),
       opacity 140ms ease,
+      filter 140ms ease,
       background-color 140ms ease;
   }
 
   button:hover:not(:disabled),
-  a.button:hover {
-    transform: translateY(-1px);
+  a.button:hover,
+  .add-link:hover,
+  .add-action:hover {
+    filter: brightness(1.12) saturate(1.1);
   }
 
   button:active:not(:disabled),
-  a.button:active {
+  a.button:active,
+  .add-link:active,
+  .add-action:active {
     transform: scale(0.96);
   }
 
