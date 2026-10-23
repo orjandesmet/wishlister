@@ -923,6 +923,12 @@ a.person:hover {
   gap: 14px;
 }
 
+/* A long name wraps instead of pushing the bell and menu over the "+" beside the title. */
+.person.title h1 {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
 .avatar {
   flex-shrink: 0;
   width: 36px;

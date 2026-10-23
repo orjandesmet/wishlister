@@ -271,7 +271,7 @@ export const nl: Dictionary = {
     childrenHelp:
       "De verlanglijstjes van de kinderen voor wie je zorgt. Open er een om hun wensen toe te voegen.",
     deleteProfile: "Profiel wissen",
-    childWishlist: (p) => `Verlanglijstje van ${p.name}`,
+    childWishlist: (p) => `Lijstje van ${p.name}`,
     yourName: "Je naam, zoals anderen hem zien",
     saveName: "Naam opslaan",
     saved: "Opgeslagen.",
@@ -299,7 +299,7 @@ export const nl: Dictionary = {
     fallbackTitle: "Verlanglijstje",
     switchList: "Andere lijstjes",
     mine: "Mijn verlanglijstje",
-    theirs: (p) => `Verlanglijstje van ${p.name}`,
+    theirs: (p) => `Lijstje van ${p.name}`,
     unavailable: "Dit lijstje is niet beschikbaar. Misschien is het niet met jou gedeeld.",
     emptyOwn: "Nog niets op dit lijstje.",
     empty: "Dit lijstje is nog leeg.",
