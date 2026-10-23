@@ -18,6 +18,7 @@ import u from "../utilities.module.css";
 import { Button } from "../components/Button.tsx";
 import { Card } from "../components/Card.tsx";
 import { Person } from "../components/Person.tsx";
+import { usePageTitle } from "../lib/a11y.ts";
 
 /** Your name, language and currency, the children you look after, and signing out. */
 export default function Settings() {
@@ -61,6 +62,8 @@ export default function Settings() {
       await action();
       await refetchFollows();
     });
+
+  usePageTitle(() => t("account.title"));
 
   return (
     <>

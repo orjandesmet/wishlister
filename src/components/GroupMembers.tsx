@@ -50,6 +50,7 @@ export function GroupMembers(props: {
                 <Match when={data.isManager() && member.profile_id !== me().profile.id}>
                   <span class={u.row}>
                     <Select
+                      aria-label={t("a11y.roleOf", { name: member.profiles.display_name })}
                       value={member.role}
                       onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
                     >
@@ -58,13 +59,14 @@ export function GroupMembers(props: {
                       <option value="manager">{t("roles.manager")}</option>
                     </Select>
                     <Button variant="link" danger onClick={() => props.onRemove(member)}>
-                      <RemoveLabel />
+                      <RemoveLabel of={member.profiles.display_name} />
                     </Button>
                   </span>
                 </Match>
                 {/* Members choose for themselves whether their own list shows in this group. */}
                 <Match when={member.profile_id === me().profile.id && member.role !== "manager"}>
                   <Select
+                    aria-label={t("a11y.roleOf", { name: member.profiles.display_name })}
                     value={member.role}
                     onChange={(e) => onRole(member, e.currentTarget.value as Member["role"])}
                   >
@@ -90,9 +92,11 @@ export function GroupMembers(props: {
                 <span class={u.row}>
                   <Button variant="link" onClick={() => invites.onEmailInvite(email)}>
                     {t("group.emailInvite")}
+                    <span class={u.visuallyHidden}> {email}</span>
                   </Button>
                   <Button variant="link" danger onClick={() => invites.onCancelInvite(email)}>
                     {t("common.cancel")}
+                    <span class={u.visuallyHidden}> {email}</span>
                   </Button>
                 </span>
               </li>

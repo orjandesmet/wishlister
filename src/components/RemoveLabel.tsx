@@ -1,11 +1,18 @@
+import { Show } from "solid-js";
 import { t } from "../lib/i18n.ts";
 import u from "../utilities.module.css";
 
-/** "Remove" (or another label for the same action) as text, or a trash can on small screens (the text stays available to screen readers). */
-export function RemoveLabel(props: { label?: string }) {
+/**
+ * "Remove" (or another label for the same action) as text, or a trash can on small screens (the text stays available to screen readers).
+ * `of` names what it removes for screen readers only ("Remove Lego castle"), where the same button repeats on every row.
+ */
+export function RemoveLabel(props: { label?: string; of?: string }) {
   return (
     <>
       <span class={u.labelText}>{props.label ?? t("common.remove")}</span>
+      <Show when={props.of}>
+        <span class={u.visuallyHidden}> {props.of}</span>
+      </Show>
       {/* Lucide "trash-2" (ISC licence). */}
       <svg
         class={u.labelIcon}

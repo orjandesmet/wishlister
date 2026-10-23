@@ -49,9 +49,11 @@ export function GroupCard(props: GroupCardProps) {
         <A class={u.link} href={`/groups/${props.group.id}`}>
           <Show
             when={isManager()}
-            fallback={<EditLabel icon="chevron" label={t("groupCard.details")} />}
+            fallback={
+              <EditLabel icon="chevron" label={t("groupCard.details")} of={props.group.name} />
+            }
           >
-            <EditLabel label={t("groupCard.manage")} />
+            <EditLabel label={t("groupCard.manage")} of={props.group.name} />
           </Show>
         </A>
       </div>

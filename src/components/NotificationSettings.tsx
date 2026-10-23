@@ -58,7 +58,7 @@ export function NotificationSettings(props: NotificationSettingsProps) {
                     popovertarget="notification-popover"
                     onClick={() => startEditing(follow)}
                   >
-                    <EditLabel label={t("follow.changeDate")} />
+                    <EditLabel label={t("follow.changeDate")} of={follow.name} />
                   </Button>
                   <Button
                     variant="link"
@@ -66,7 +66,7 @@ export function NotificationSettings(props: NotificationSettingsProps) {
                     disabled={props.busy}
                     onClick={() => props.onUnfollow(follow.listId)}
                   >
-                    <RemoveLabel label={t("follow.stop")} />
+                    <RemoveLabel label={t("follow.stop")} of={follow.name} />
                   </Button>
                 </span>
               </li>

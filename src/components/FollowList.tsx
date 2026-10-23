@@ -2,6 +2,7 @@ import { createSignal, Show } from "solid-js";
 import { BellIcon } from "./BellIcon.tsx";
 import { Button } from "./Button.tsx";
 import { Popover } from "./Popover.tsx";
+import { focusSoon } from "../lib/a11y.ts";
 import { locale, t } from "../lib/i18n.ts";
 import { formatOccasionDate, type IsoDate } from "../lib/occasions.ts";
 import u from "../utilities.module.css";
@@ -50,8 +51,10 @@ export function FollowDateForm(props: FollowDateFormProps) {
       <h2>{props.title}</h2>
       <label>
         {props.label}
+        {/* Focused when its popover opens. */}
         <input
           type="date"
+          autofocus
           required
           min={props.min}
           value={props.value}
@@ -79,11 +82,16 @@ export function FollowList(props: FollowListProps) {
   const [date, setDate] = createSignal<IsoDate>("");
   const following = () => props.until !== null && props.until >= props.today;
 
+  const popover = () => document.getElementById("follow-popover");
+  // The popover is already open here, so its content swaps: focus moves into the new form.
   const startEditing = () => {
     setDate(following() ? props.until! : props.suggestedUntil);
     setEditing(true);
+    focusSoon(() => popover()?.querySelector("input"));
   };
-  const closePopover = () => document.getElementById("follow-popover")?.hidePopover();
+  // Closed before its content changes, while focus is still inside, so the browser hands
+  // focus back to the bell.
+  const closePopover = () => popover()?.hidePopover();
 
   return (
     <div class={styles.follow}>
@@ -133,8 +141,8 @@ export function FollowList(props: FollowListProps) {
                     danger
                     disabled={props.busy}
                     onClick={() => {
-                      props.onUnfollow();
                       closePopover();
+                      props.onUnfollow();
                     }}
                   >
                     {t("follow.stop")}
@@ -158,11 +166,11 @@ export function FollowList(props: FollowListProps) {
             busy={props.busy}
             onInput={setDate}
             onSubmit={() => {
+              closePopover();
               props.onFollow(date());
               setEditing(false);
-              closePopover();
             }}
-            onCancel={() => (setEditing(false), closePopover())}
+            onCancel={() => (closePopover(), setEditing(false))}
           />
         </Show>
       </Popover>

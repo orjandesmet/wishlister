@@ -14,6 +14,7 @@ import type { GroupId } from "../lib/ids.ts";
 import { today } from "../lib/occasions.ts";
 import { isReady } from "../lib/resource.ts";
 import u from "../utilities.module.css";
+import { usePageTitle } from "../lib/a11y.ts";
 
 export default function GroupSettings() {
   const params = useParams<{ groupId: GroupId }>();
@@ -22,6 +23,8 @@ export default function GroupSettings() {
   const occasions = createGroupOccasions(() => params.groupId, runner);
   const onRemove = createMemberRemoval(data, runner);
   const { group } = data;
+
+  usePageTitle(() => group()?.name ?? t("group.fallbackTitle"));
 
   return (
     <>
@@ -35,13 +38,20 @@ export default function GroupSettings() {
         </Show>
       </div>
       <Show when={group.error}>
-        <p class={u.error}>{t("group.unavailable")}</p>
+        <p class={u.error} role="alert">
+          {t("group.unavailable")}
+        </p>
       </Show>
-      <Show when={runner.notice()}>
-        <p class={u.notice}>{runner.notice()}</p>
-      </Show>
+      {/* Always there, so screen readers notice when a message appears in it. */}
+      <div role="status">
+        <Show when={runner.notice()}>
+          <p class={u.notice}>{runner.notice()}</p>
+        </Show>
+      </div>
       <Show when={runner.error()}>
-        <p class={u.error}>{runner.error()}</p>
+        <p class={u.error} role="alert">
+          {runner.error()}
+        </p>
       </Show>
       <Show when={!isReady(group) && !group.error}>
         <p class={u.muted}>{t("common.loading")}</p>

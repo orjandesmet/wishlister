@@ -1,6 +1,7 @@
 import { EditLabel } from "./EditLabel.tsx";
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, For, onMount, Show } from "solid-js";
 import { RemoveLabel } from "./RemoveLabel.tsx";
+import { focusSoon } from "../lib/a11y.ts";
 import type { Occasion, OccasionInput } from "../lib/api/occasions.ts";
 import { compareNames, locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
@@ -37,11 +38,20 @@ export function Occasions(props: OccasionsProps) {
     setDate("");
   };
 
+  // Editing swaps a row for a form and back, so focus is moved by hand: the form focuses its
+  // first field, and closing it goes back to that row's Edit button.
+  // oxlint-disable-next-line no-unassigned-vars
+  let list: HTMLElement | undefined;
+  const stopEditing = (id: OccasionId) => {
+    setEditing(undefined);
+    focusSoon(() => list?.querySelector<HTMLElement>(`[data-occasion="${id}"] button`));
+  };
+
   const row = (occasion: Occasion) => (
     <Show
       when={editing() === occasion.id}
       fallback={
-        <li class={`${u.listRow} ${styles.occasion}`}>
+        <li class={`${u.listRow} ${styles.occasion}`} data-occasion={occasion.id}>
           <span class={`${u.stack} ${u.smallGap} ${styles.dates}`}>
             <span>{occasion.name}</span>
             <span class={`${u.muted} ${u.small}`}>
@@ -51,10 +61,10 @@ export function Occasions(props: OccasionsProps) {
           <Show when={props.canEdit}>
             <span class={u.row}>
               <Button variant="link" onClick={() => setEditing(occasion.id)}>
-                <EditLabel label={t("common.edit")} />
+                <EditLabel label={t("common.edit")} of={occasion.name} />
               </Button>
               <Button variant="link" danger onClick={() => props.onDelete(occasion)}>
-                <RemoveLabel label={t("common.delete")} />
+                <RemoveLabel label={t("common.delete")} of={occasion.name} />
               </Button>
             </span>
           </Show>
@@ -66,16 +76,16 @@ export function Occasions(props: OccasionsProps) {
           initial={occasion}
           submitLabel={t("common.save")}
           onSubmit={async (input) => {
-            if (await props.onUpdate(occasion.id, input)) setEditing(undefined);
+            if (await props.onUpdate(occasion.id, input)) stopEditing(occasion.id);
           }}
-          onCancel={() => setEditing(undefined)}
+          onCancel={() => stopEditing(occasion.id)}
         />
       </li>
     </Show>
   );
 
   return (
-    <Card>
+    <Card ref={list}>
       <h2>{t("occasions.title")}</h2>
       <p class={`${u.muted} ${u.small}`}>{t("occasions.help")}</p>
       <ul class={u.list}>
@@ -131,6 +141,10 @@ function OccasionForm(props: OccasionFormProps) {
   // Only the starting values: reading props once here, outside JSX, is on purpose.
   const [name, setName] = createSignal(props.initial.name);
   const [date, setDate] = createSignal(props.initial.date);
+  // It opens from an Edit button that's gone now, so it starts in the first field.
+  // oxlint-disable-next-line no-unassigned-vars
+  let nameInput: HTMLInputElement | undefined;
+  onMount(() => nameInput?.focus());
 
   const onSubmit = (event: SubmitEvent) => {
     event.preventDefault();
@@ -141,7 +155,12 @@ function OccasionForm(props: OccasionFormProps) {
     <form onSubmit={onSubmit}>
       <label>
         {t("occasions.name")}
-        <input required value={name()} onInput={(e) => setName(e.currentTarget.value)} />
+        <input
+          ref={nameInput}
+          required
+          value={name()}
+          onInput={(e) => setName(e.currentTarget.value)}
+        />
       </label>
       <label>
         {t("occasions.date")}

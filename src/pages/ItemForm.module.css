@@ -1,7 +1,15 @@
+/* Side by side, until the phone is too narrow or the text too large: then the currency wraps below. */
 .priceFields {
   align-items: flex-end;
+  flex-wrap: wrap;
 }
 
 .priceFields > label:first-child {
-  flex: 1;
+  flex: 1 1 8em;
+  min-width: 0;
+}
+
+.priceFields input {
+  width: 100%;
+  min-width: 0;
 }

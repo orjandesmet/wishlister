@@ -4,6 +4,7 @@ import { getJoinPreview, joinGroup } from "../lib/api/groups.ts";
 import { t } from "../lib/i18n.ts";
 import u from "../utilities.module.css";
 import { Card } from "../components/Card.tsx";
+import { usePageTitle } from "../lib/a11y.ts";
 
 /** Opened from a group's invite link: shows which group it is and lets you join. */
 export default function Join() {
@@ -25,6 +26,8 @@ export default function Join() {
     }
   }
 
+  usePageTitle(() => t("join.title"));
+
   return (
     <>
       <h1>{t("join.title")}</h1>
@@ -32,7 +35,9 @@ export default function Join() {
         <p class={u.muted}>{t("common.loading")}</p>
       </Show>
       <Show when={preview.error}>
-        <p class={u.error}>{t("join.openFailed", { message: preview.error.message })}</p>
+        <p class={u.error} role="alert">
+          {t("join.openFailed", { message: preview.error.message })}
+        </p>
       </Show>
       <Show when={preview() === null}>
         <p class={u.muted}>{t("join.expired")}</p>
@@ -60,7 +65,9 @@ export default function Join() {
               </button>
             </Show>
             <Show when={error()}>
-              <p class={u.error}>{error()}</p>
+              <p class={u.error} role="alert">
+                {error()}
+              </p>
             </Show>
           </Card>
         )}

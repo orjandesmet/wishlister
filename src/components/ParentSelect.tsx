@@ -1,5 +1,6 @@
 import { For } from "solid-js";
 import type { ProfileId } from "../lib/ids.ts";
+import { t } from "../lib/i18n.ts";
 import { Select } from "./Select.tsx";
 
 export type ParentOption = { id: ProfileId; name: string };
@@ -15,7 +16,11 @@ export type ParentSelectProps = {
 /** Picks a parent for a child from the adults in a group. */
 export function ParentSelect(props: ParentSelectProps) {
   return (
-    <Select name={props.name} onChange={(e) => props.onChange(e.currentTarget.value as ProfileId)}>
+    <Select
+      name={props.name}
+      aria-label={t("group.parent")}
+      onChange={(e) => props.onChange(e.currentTarget.value as ProfileId)}
+    >
       <For each={props.options}>
         {(option) => (
           // `selected` on each option, not `value` on the select: when the options are

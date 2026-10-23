@@ -1,7 +1,7 @@
 import { EditLabel } from "./EditLabel.tsx";
 import { A } from "@solidjs/router";
 import { RemoveLabel } from "./RemoveLabel.tsx";
-import { For, Match, Show, Switch } from "solid-js";
+import { createEffect, createUniqueId, For, Match, on, Show, Switch } from "solid-js";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
 import { convertAmount, displayCurrency, exchangeRates, formatPrice } from "../lib/currency.ts";
@@ -103,9 +103,34 @@ export function ItemCard(props: ItemCardProps) {
   const showUrl = () => !props.selecting && !props.item.not_wanted && props.item.url;
   const rememberButton = (event: MouseEvent) =>
     rememberBuyTap(props.item.id, event.currentTarget as Element);
+
+  // "I bought this", Undo and the occasion buttons replace each other once the page has saved,
+  // so the pressed button is gone. Focus then moves to whatever replaced it (or the card),
+  // instead of dropping to the top of the page. Only when focus was really lost, so it never
+  // pulls focus away from somewhere else.
+  // oxlint-disable-next-line no-unassigned-vars
+  let card: HTMLElement | undefined;
+  let refocus = false;
+  const pressed = () => (refocus = true);
+  createEffect(
+    on(
+      () => [props.purchase, props.occasionChoices],
+      () => {
+        const lost = !document.activeElement || document.activeElement === document.body;
+        if (!refocus || !lost || !card) return;
+        refocus = false;
+        (card.querySelector<HTMLElement>("[data-purchase]") ?? card).focus();
+      },
+      { defer: true },
+    ),
+  );
+  const occasionLabel = createUniqueId();
+
   return (
     <Card
+      ref={card}
       as="li"
+      tabIndex={-1}
       class={styles.item}
       classList={{
         [styles.private]: isPrivate(),
@@ -149,10 +174,10 @@ export function ItemCard(props: ItemCardProps) {
         <Show when={props.canEdit && !props.selecting}>
           <div class={styles.manage}>
             <A class={u.link} href={`/items/${props.item.id}/edit`}>
-              <EditLabel label={t("common.edit")} />
+              <EditLabel label={t("common.edit")} of={props.item.name} />
             </A>
             <Button variant="link" danger onClick={() => props.onRemove()}>
-              <RemoveLabel />
+              <RemoveLabel of={props.item.name} />
             </Button>
           </div>
         </Show>
@@ -226,8 +251,17 @@ export function ItemCard(props: ItemCardProps) {
                 ? t("item.youBoughtFor", { occasion: props.boughtFor })
                 : t("item.youBought")}
             </span>
-            <Button variant="secondary" size="small" onClick={() => props.onUndo()}>
+            <Button
+              variant="secondary"
+              size="small"
+              data-purchase
+              onClick={() => {
+                pressed();
+                props.onUndo();
+              }}
+            >
               {t("item.undo")}
+              <span class={u.visuallyHidden}>: {props.item.name}</span>
             </Button>
           </div>
         </Match>
@@ -236,13 +270,17 @@ export function ItemCard(props: ItemCardProps) {
         </Match>
         <Match when={props.purchase === "available" && props.occasionChoices}>
           {(choices) => (
-            <div class={`${u.stack} ${u.smallGap}`}>
-              <span class={u.fieldLabel}>{t("item.forWhichOccasion")}</span>
+            <div class={`${u.stack} ${u.smallGap}`} role="group" aria-labelledby={occasionLabel}>
+              <span class={u.fieldLabel} id={occasionLabel}>
+                {t("item.forWhichOccasion")}
+              </span>
               <For each={choices()}>
                 {(occasion) => (
                   <Button
                     variant="secondary"
+                    data-purchase
                     onClick={(event) => {
+                      pressed();
                       rememberButton(event);
                       props.onPickOccasion?.(occasion.id);
                     }}
@@ -255,13 +293,20 @@ export function ItemCard(props: ItemCardProps) {
                 <Button
                   variant="link"
                   onClick={(event) => {
+                    pressed();
                     rememberButton(event);
                     props.onPickOccasion?.(null);
                   }}
                 >
                   {t("item.noOccasion")}
                 </Button>
-                <Button variant="link" onClick={() => props.onCancelPick?.()}>
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    pressed();
+                    props.onCancelPick?.();
+                  }}
+                >
                   {t("common.cancel")}
                 </Button>
               </div>
@@ -271,12 +316,15 @@ export function ItemCard(props: ItemCardProps) {
         <Match when={props.purchase === "available"}>
           <button
             type="button"
+            data-purchase
             onClick={(event) => {
+              pressed();
               rememberButton(event);
               props.onBuy();
             }}
           >
             {t("item.iBought")}
+            <span class={u.visuallyHidden}>: {props.item.name}</span>
           </button>
         </Match>
       </Switch>

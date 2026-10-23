@@ -1,10 +1,17 @@
+import { Show } from "solid-js";
 import u from "../utilities.module.css";
 
-/** An "edit" or "manage" label as text, or a pencil on small screens (the text stays available to screen readers). */
-export function EditLabel(props: { label: string; icon?: "pencil" | "chevron" }) {
+/**
+ * An "edit" or "manage" label as text, or a pencil on small screens (the text stays available to screen readers).
+ * `of` names what it edits for screen readers only ("Edit Lego castle"), where the same button repeats on every row.
+ */
+export function EditLabel(props: { label: string; icon?: "pencil" | "chevron"; of?: string }) {
   return (
     <>
       <span class={u.labelText}>{props.label}</span>
+      <Show when={props.of}>
+        <span class={u.visuallyHidden}> {props.of}</span>
+      </Show>
       {/* Lucide "pencil" and "chevron-right" (ISC licence). */}
       <svg
         class={u.labelIcon}

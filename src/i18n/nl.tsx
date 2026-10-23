@@ -309,6 +309,17 @@ export const nl: Dictionary = {
         ? "1 item van het lijstje verwijderen?"
         : `${p.count} items van het lijstje verwijderen?`,
   },
+  a11y: {
+    mainNav: "Hoofdmenu",
+    roleOf: (p) => `Rol van ${p.name}`,
+    added: (p) => `${p.items} toegevoegd.`,
+    removed: (p) => `${p.item} verwijderd.`,
+    bought: (p) => `${p.item} gemarkeerd als gekocht.`,
+    unbought: (p) => `${p.item} is niet meer gemarkeerd als gekocht.`,
+    changed: (p) => (p.count === 1 ? "1 item gewijzigd." : `${p.count} items gewijzigd.`),
+    deleted: (p) => (p.count === 1 ? "1 item verwijderd." : `${p.count} items verwijderd.`),
+    unfollowed: "Je volgt dit lijstje niet meer.",
+  },
   wishlist: {
     fallbackTitle: "Verlanglijstje",
     switchList: "Andere lijstjes",

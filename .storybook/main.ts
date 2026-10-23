@@ -3,7 +3,8 @@ import type { StorybookConfig } from "storybook-solidjs-vite";
 export default {
   framework: "storybook-solidjs-vite",
   stories: ["../src/**/*.stories.tsx"],
-  addons: ["@storybook/addon-docs"],
+  // addon-a11y runs axe on every story: its Accessibility panel lists what fails.
+  addons: ["@storybook/addon-docs", "@storybook/addon-a11y", "@storybook/addon-vitest"],
   // The app's vite.config.ts is used as is, minus the PWA plugin: Storybook needs
   // no service worker, and one would cache old stories.
   async viteFinal(config) {
