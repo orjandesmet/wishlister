@@ -1,4 +1,4 @@
-import { A, useParams } from "@solidjs/router";
+import { useNavigate, useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
@@ -6,7 +6,7 @@ import { ListMenu } from "../components/ListMenu.tsx";
 import { FollowList } from "../components/FollowList.tsx";
 import { ItemCard } from "../components/ItemCard.tsx";
 import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
-import { QuickAdd } from "../components/QuickAdd.tsx";
+import { QuickAdd, QuickAddButton } from "../components/QuickAdd.tsx";
 import {
   deleteItem,
   deleteItems,
@@ -39,6 +39,7 @@ const FOLLOWED_NOTICE_MS = 3500;
 
 export default function WishList() {
   const params = useParams<{ profileId: ProfileId }>();
+  const navigate = useNavigate();
   const me = useMe();
   // Parents jump between their own list and their children's from a menu beside the title.
   const switchOptions = () => [
@@ -186,12 +187,6 @@ export default function WishList() {
             />
           </Show>
         </div>
-        {/* "+" on phones, "Add item" on wide screens: the same link, so the screen has one add action. */}
-        <Show when={ready() && canEdit() && !select.selecting()}>
-          <A class="add-action" href={`/lists/${params.profileId}/items/new`}>
-            <span>{t("wishlist.addItem")}</span>
-          </A>
-        </Show>
       </div>
       <Show when={profile.error || items.error}>
         <p class="error">{t("wishlist.unavailable")}</p>
@@ -205,6 +200,11 @@ export default function WishList() {
         </Show>
         <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
           <p class="muted">{canEdit() ? t("wishlist.emptyOwn") : t("wishlist.empty")}</p>
+          <Show when={canEdit() && !select.selecting()}>
+            <div class="empty-quick-add">
+              <QuickAddButton inline />
+            </div>
+          </Show>
         </Show>
         <Show when={(items()?.length ?? 0) > 1}>
           <div class="row">
@@ -279,6 +279,9 @@ export default function WishList() {
             retrying={quickAdd().state().retrying}
             onAdd={(name, groups) => quickAdd().add(name, groups)}
             onCancel={() => quickAdd().cancel()}
+            onOpenForm={(draft) =>
+              navigate(`/lists/${params.profileId}/items/new`, { state: draft })
+            }
           />
         </Show>
       </Show>

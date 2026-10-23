@@ -7,6 +7,7 @@ const meta = {
   title: "Wishlist/QuickAdd",
   component: QuickAdd,
   args: {
+    initiallyOpen: true,
     pending: [],
     retrying: false,
     groups: [
@@ -15,6 +16,7 @@ const meta = {
     ],
     onAdd: fn(),
     onCancel: fn(),
+    onOpenForm: fn(),
   },
 } satisfies Meta<typeof QuickAdd>;
 

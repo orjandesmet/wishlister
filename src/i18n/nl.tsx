@@ -220,7 +220,12 @@ export const nl: Dictionary = {
     saving: "Opslaan…",
     notSaved: "Nog niet opgeslagen",
     retrying: "Opslaan mislukt. We proberen het opnieuw…",
-    notWantedHint: "Begin met ! voor iets wat je niet wilt, zoals !mokken.",
+    moreOptions: "Meer opties…",
+    notWantedHint: () => (
+      <>
+        Begin met <strong>!</strong> voor iets wat je niet wilt, zoals <strong>!kousen</strong>.
+      </>
+    ),
   },
   itemForm: {
     addTitle: "Item toevoegen",

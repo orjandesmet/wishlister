@@ -204,9 +204,6 @@ export const OwnList: Story = {
     <Screen>
       <div class="row">
         <h1>My list</h1>
-        <A class="add-action" href="/lists/me/items/new">
-          <span>Add item</span>
-        </A>
       </div>
       <div class="row">
         <button type="button" class="secondary small">
@@ -219,6 +216,7 @@ export const OwnList: Story = {
         {card(item(6, "Sourdough starter kit", null, null), "hidden", { canEdit: true })}
       </ul>
       <QuickAdd
+        initiallyOpen
         pending={[]}
         retrying={false}
         groups={[
@@ -227,6 +225,7 @@ export const OwnList: Story = {
         ]}
         onAdd={fn()}
         onCancel={fn()}
+        onOpenForm={fn()}
       />
     </Screen>
   ),
@@ -298,12 +297,17 @@ export const ListEmptyOwn: Story = {
     <Screen>
       <div class="row">
         <h1>{t("wishlist.mine")}</h1>
-        <A class="add-action" href="/lists/me/items/new">
-          <span>{t("wishlist.addItem")}</span>
-        </A>
       </div>
       <p class="muted">{t("wishlist.emptyOwn")}</p>
-      <QuickAdd pending={[]} retrying={false} groups={groupGroups} onAdd={fn()} onCancel={fn()} />
+      <QuickAdd
+        initiallyOpen
+        pending={[]}
+        retrying={false}
+        groups={groupGroups}
+        onAdd={fn()}
+        onCancel={fn()}
+        onOpenForm={fn()}
+      />
     </Screen>
   ),
 };
@@ -379,11 +383,13 @@ export const OwnListStates: Story = {
         </ul>
       </section>
       <QuickAdd
+        initiallyOpen
         pending={[{ name: "Sourdough starter kit", groups: "all" } as never]}
         retrying
         groups={groupGroups}
         onAdd={fn()}
         onCancel={fn()}
+        onOpenForm={fn()}
       />
     </Screen>
   ),
@@ -956,9 +962,6 @@ export const OwnListAsParent: Story = {
             ]}
           />
         </div>
-        <A class="add-action" href="/lists/me/items/new">
-          <span>{t("wishlist.addItem")}</span>
-        </A>
       </div>
       <div class="row">
         <button type="button" class="secondary small">

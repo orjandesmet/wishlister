@@ -1,4 +1,4 @@
-import { useNavigate, useParams } from "@solidjs/router";
+import { useLocation, useNavigate, useParams } from "@solidjs/router";
 import { createEffect, createMemo, createResource, createSignal, For, on, Show } from "solid-js";
 import { CategoryChips } from "../components/CategoryChips.tsx";
 import { addItem, getCategories, getItem, updateItem } from "../lib/api/items.ts";
@@ -7,6 +7,9 @@ import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { currencies, displayCurrency, parsePriceInput } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
+import type { ItemDraft } from "../lib/itemDraft.ts";
+import { splitLink } from "../lib/links.ts";
+import { splitNotWanted } from "../lib/notWanted.ts";
 import { isReady } from "../lib/resource.ts";
 import { Select } from "../components/Select.tsx";
 
@@ -14,6 +17,7 @@ import { Select } from "../components/Select.tsx";
 export default function ItemForm() {
   const params = useParams<{ profileId?: ProfileId; itemId?: ItemId }>();
   const navigate = useNavigate();
+  const location = useLocation<ItemDraft>();
 
   const [item] = createResource(() => params.itemId, getItem);
   const profileId = () => params.profileId ?? item()?.profile_id;
@@ -63,6 +67,20 @@ export default function ItemForm() {
       setGroupIds(ids);
     }),
   );
+
+  // Coming from quick add: carry on with what was typed there.
+  const draft = location.state;
+  if (draft && !params.itemId) {
+    const { notWanted: unwanted, text } = splitNotWanted(draft.text ?? "");
+    const { url: link, name: typedName } = splitLink(text);
+    setName(typedName);
+    setUrl(link ?? "");
+    setNotWanted(unwanted);
+    const picked = draft.groups ?? "all";
+    const ids = picked === "all" ? [] : picked;
+    setVisibility(picked === "all" ? "all" : ids.length > 0 ? "some" : "none");
+    setGroupIds(ids);
+  }
 
   const toggleGroup = (id: GroupId, checked: boolean) =>
     setGroupIds((ids) => (checked ? [...ids, id] : ids.filter((other) => other !== id)));

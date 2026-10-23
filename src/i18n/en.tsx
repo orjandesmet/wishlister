@@ -229,7 +229,12 @@ export const en = {
     saving: "Saving…",
     notSaved: "Not saved yet",
     retrying: "Couldn't save. Trying again…",
-    notWantedHint: "Start with ! for something you don't want, like !mugs.",
+    moreOptions: "More options…",
+    notWantedHint: () => (
+      <>
+        Start with <strong>!</strong> for something you don't want, like <strong>!socks</strong>.
+      </>
+    ),
   },
   itemForm: {
     addTitle: "Add item",

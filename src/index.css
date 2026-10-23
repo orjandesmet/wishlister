@@ -926,6 +926,7 @@ a.person:hover {
 /* A long name wraps instead of pushing the bell and menu over the "+" beside the title. */
 .person.title h1 {
   min-width: 0;
+  font-size: 22px;
   overflow-wrap: anywhere;
 }
 
@@ -1150,6 +1151,17 @@ a.person:hover {
     position-area: bottom span-right;
   }
 
+  .fab,
+  .quick-add-inline {
+    anchor-name: --quick-add;
+  }
+
+  .quick-add-popover {
+    position-anchor: --quick-add;
+    position-area: top span-left;
+    margin: 0 0 8px;
+  }
+
   .invite-link-button {
     anchor-name: --invite-link;
   }
@@ -1166,10 +1178,11 @@ a.person:hover {
     position-area: none;
     inset: auto 0 0 0;
     width: 100%;
+    max-width: 632px;
     max-height: 90dvh;
-    margin: 0;
+    margin: 0 auto;
     padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
-    border-width: 1px 0 0;
+    border-width: 1px 1px 0;
     border-radius: var(--radius) var(--radius) 0 0;
     overflow-y: auto;
   }
@@ -1291,6 +1304,25 @@ a.person:hover {
     }
   }
 
+  /* Introduces the quick add button by name, then folds it into the icon. */
+  .fab-label {
+    animation: fab-label 1600ms ease 400ms both;
+  }
+
+  @keyframes fab-label {
+    0%,
+    80% {
+      max-width: 10rem;
+      margin-left: 8px;
+      opacity: 1;
+    }
+    100% {
+      max-width: 0;
+      margin-left: 0;
+      opacity: 0;
+    }
+  }
+
   /* Parts of a page arrive one after the other. */
   .page > * {
     animation: rise 460ms var(--ease-out) backwards;
@@ -1309,6 +1341,10 @@ a.person:hover {
   }
   .page > :nth-child(n + 6) {
     animation-delay: 340ms;
+  }
+  /* A transformed parent would become the "fixed" button's frame, parking it halfway up the page. */
+  .page > .quick-add {
+    animation: none;
   }
 
   .countdown-tile {
@@ -1469,6 +1505,10 @@ a.person:hover {
  * out on 12 columns: 7 + 5, then 7 + 5). The canvas is centred, so its two margins are equal.
  */
 @media (min-width: 900px) {
+  .person.title h1 {
+    font-size: 28px;
+  }
+
   #root:has(> .tabs) {
     max-width: none;
     padding: 40px 32px 48px calc(var(--sidebar) + 32px);
@@ -1615,4 +1655,117 @@ a.person:hover {
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--muted);
+}
+
+/* The button under an empty list's message, which replaces the floating one. */
+.empty-quick-add {
+  display: flex;
+  justify-content: center;
+}
+
+/* Same shape as the floating button, but with its text kept. */
+.quick-add-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 56px;
+  min-width: 56px;
+  padding: 0 14px;
+  border-radius: 28px;
+}
+
+.quick-add-inline svg {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+
+.quick-add-inline span {
+  padding-right: 6px;
+  font-weight: 600;
+}
+
+.page:has(.empty-quick-add) .fab {
+  display: none;
+}
+
+.quick-add-details {
+  align-self: flex-start;
+}
+
+/* Floating "quick add" button, above the tab bar. */
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  height: 56px;
+  min-width: 56px;
+  padding: 0 14px;
+  color: var(--accent-contrast);
+  background: var(--accent);
+  border-color: var(--accent);
+  border-radius: 28px;
+  box-shadow: 0 4px 14px rgb(0 0 0 / 0.25);
+}
+
+.fab svg {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+}
+
+/* The text only shows for a moment, see "fab-label" in the motion rules. */
+.fab-label {
+  max-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-weight: 600;
+  opacity: 0;
+}
+
+/* Between 900px and 1200px quick add is a popover, which has no use for "Ready". */
+@media (min-width: 900px) {
+  .quick-add-ready {
+    display: none;
+  }
+}
+
+/* Very wide screens: quick add stays open in a column beside the list, so there is no button and no "Ready". */
+@media (min-width: 1200px) {
+  #root:has(> .tabs) > .page:has(.quick-add) {
+    position: relative;
+    max-width: 1080px;
+    padding-right: 340px;
+  }
+
+  .quick-add {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: 320px;
+  }
+
+  .quick-add-inner {
+    position: sticky;
+    top: var(--gap);
+  }
+
+  .fab,
+  .empty-quick-add {
+    display: none;
+  }
+
+  .quick-add-popover:popover-open,
+  .quick-add-popover:not(:popover-open) {
+    display: block;
+    position: static;
+    inset: auto;
+    width: auto;
+    margin: 0;
+    box-shadow: none;
+    opacity: 1;
+    transform: none;
+  }
 }
