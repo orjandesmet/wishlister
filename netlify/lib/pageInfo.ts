@@ -117,21 +117,46 @@ function parseAmount(raw: unknown): number | null {
 /**
  * Reads the page ourselves first. Big shops behind bot protection (lego.com…)
  * refuse that, so then Microlink, which opens the page in a real browser, is
- * asked instead. Never throws.
+ * asked instead. A page titled only with the shop's name is a block page, not
+ * the product (bol.com answers both with one titled "bol"), so it counts as
+ * nothing found and the app keeps the name it made from the link. Never throws.
  */
 export async function lookUpPage(
   url: string,
   microlinkKey: string | undefined,
   fetchImpl: typeof fetch = fetch,
 ): Promise<PageInfo> {
-  const direct = await fetchPageInfo(url, fetchImpl);
+  const direct = withoutBlockPage(await fetchPageInfo(url, fetchImpl), url);
   if (direct.title) return direct;
-  const microlink = await fetchMicrolink(url, microlinkKey, fetchImpl);
+  const microlink = withoutBlockPage(await fetchMicrolink(url, microlinkKey, fetchImpl), url);
   return {
     title: microlink.title,
     image: direct.image ?? microlink.image,
     price: direct.price ?? microlink.price,
   };
+}
+
+/**
+ * Whether a title is just the site's name: "bol" or "bol.com" for www.bol.com.
+ * That's what shops' block and error pages are called.
+ */
+export function isSiteName(title: string, url: string): boolean {
+  let host: string;
+  try {
+    host = new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return false;
+  }
+  const name = title.toLowerCase().replace(/\s+/g, "");
+  const site = host.split(".").at(-2);
+  return name === host || (site !== undefined && name === site);
+}
+
+/** Drops the title and picture of a block page (see isSiteName), keeping any price. */
+function withoutBlockPage(info: PageInfo, url: string): PageInfo {
+  if (!info.title || !isSiteName(info.title, url)) return info;
+  console.log(`page-info: only the site's name ("${info.title}") for ${url}, probably blocked`);
+  return { title: null, image: null, price: info.price };
 }
 
 /**

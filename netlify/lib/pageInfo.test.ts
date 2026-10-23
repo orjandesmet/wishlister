@@ -3,6 +3,7 @@ import {
   fetchMicrolink,
   fetchPageInfo,
   isFetchableUrl,
+  isSiteName,
   lookUpPage,
   parsePageInfo,
   toPrice,
@@ -134,6 +135,15 @@ describe("parsePageInfo", () => {
   });
 });
 
+describe("isSiteName", () => {
+  it("spots titles that are only the site's name", () => {
+    expect(isSiteName("bol", "https://www.bol.com/be/nl/p/x/1/")).toBe(true);
+    expect(isSiteName("Bol.com", "https://www.bol.com/x")).toBe(true);
+    expect(isSiteName("LEGO", "https://www.lego.com/nl-be/product/x")).toBe(true);
+    expect(isSiteName("Xiaomi stofzuiger | bol", "https://www.bol.com/x")).toBe(false);
+  });
+});
+
 describe("toPrice", () => {
   it("reads the ways shops write amounts", () => {
     expect(toPrice("19.99", "EUR")).toEqual({ amount: 19.99, currency: "EUR" });
@@ -254,6 +264,21 @@ describe("Microlink fallback", () => {
     const [endpoint] = fetch.mock.calls[1] as [URL];
     expect(endpoint.origin).toBe("https://api.microlink.io");
     expect(endpoint.searchParams.get("url")).toBe("https://www.lego.com/nl-nl/product/x-77244");
+  });
+
+  it("treats a page titled with only the shop's name as nothing found", async () => {
+    // bol.com blocks us and Microlink with a page titled "bol".
+    const block = () =>
+      new Response("<head><title>bol</title></head>", { headers: { "content-type": "text/html" } });
+    const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
+      new URL(url instanceof Request ? url.url : url).hostname.endsWith("microlink.io")
+        ? Response.json({ status: "success", data: { title: "bol", html: "<title>bol</title>" } })
+        : block(),
+    );
+    expect(
+      await lookUpPage("https://www.bol.com/be/nl/p/stofzuiger/930/", undefined, fetch),
+    ).toEqual({ title: null, image: null, price: null });
+    expect(fetch).toHaveBeenCalledTimes(2);
   });
 
   it("doesn't ask Microlink when the page itself has a title", async () => {
