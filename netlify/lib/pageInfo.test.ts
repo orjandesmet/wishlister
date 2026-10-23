@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vite-plus/test";
 import {
   fetchMicrolink,
   fetchPageInfo,
+  isBlockingSite,
   isFetchableUrl,
   isSiteName,
   lookUpPage,
@@ -266,18 +267,37 @@ describe("Microlink fallback", () => {
     expect(endpoint.searchParams.get("url")).toBe("https://www.lego.com/nl-nl/product/x-77244");
   });
 
+  it("doesn't look up sites that block lookups", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>();
+    expect(await lookUpPage("https://www.bol.com/be/nl/p/x/930/", "key_1", fetch)).toEqual({
+      title: null,
+      image: null,
+      price: null,
+    });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(isBlockingSite("https://bol.com/x")).toBe(true);
+    expect(isBlockingSite("https://www.symbol.com/x")).toBe(false);
+  });
+
   it("treats a page titled with only the shop's name as nothing found", async () => {
-    // bol.com blocks us and Microlink with a page titled "bol".
+    // Shops' block pages are often titled like this, e.g. bol.com's "bol".
     const block = () =>
-      new Response("<head><title>bol</title></head>", { headers: { "content-type": "text/html" } });
+      new Response("<head><title>Blokker</title></head>", {
+        headers: { "content-type": "text/html" },
+      });
     const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
       new URL(url instanceof Request ? url.url : url).hostname.endsWith("microlink.io")
-        ? Response.json({ status: "success", data: { title: "bol", html: "<title>bol</title>" } })
+        ? Response.json({
+            status: "success",
+            data: { title: "blokker.nl", html: "<title>blokker.nl</title>" },
+          })
         : block(),
     );
-    expect(
-      await lookUpPage("https://www.bol.com/be/nl/p/stofzuiger/930/", undefined, fetch),
-    ).toEqual({ title: null, image: null, price: null });
+    expect(await lookUpPage("https://www.blokker.nl/p/stofzuiger/930/", undefined, fetch)).toEqual({
+      title: null,
+      image: null,
+      price: null,
+    });
     expect(fetch).toHaveBeenCalledTimes(2);
   });
 

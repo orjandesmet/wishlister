@@ -15,6 +15,12 @@ const MAX_REDIRECTS = 8;
 const TIMEOUT_MS = 4000;
 /** Both together stay under the 9.5s the app waits (and Netlify's 10s limit). */
 const MICROLINK_TIMEOUT_MS = 3500;
+/**
+ * Shops that block both us and Microlink (bol.com: "Your access to bol has been
+ * temporarily blocked"), so looking them up only spends Microlink requests.
+ * Matches the domain and its subdomains. bol.com data needs its API (#72).
+ */
+const BLOCKING_SITES = ["bol.com"];
 /** Longer titles are cut, so a name still fits on a card. */
 const MAX_TITLE = 150;
 
@@ -126,6 +132,10 @@ export async function lookUpPage(
   microlinkKey: string | undefined,
   fetchImpl: typeof fetch = fetch,
 ): Promise<PageInfo> {
+  if (isBlockingSite(url)) {
+    console.log(`page-info: skipping ${url}, the site blocks lookups`);
+    return { title: null, image: null, price: null };
+  }
   const direct = withoutBlockPage(await fetchPageInfo(url, fetchImpl), url);
   if (direct.title) return direct;
   const microlink = withoutBlockPage(await fetchMicrolink(url, microlinkKey, fetchImpl), url);
@@ -134,6 +144,17 @@ export async function lookUpPage(
     image: direct.image ?? microlink.image,
     price: direct.price ?? microlink.price,
   };
+}
+
+/** Whether the link is on a site in BLOCKING_SITES. */
+export function isBlockingSite(url: string): boolean {
+  let host: string;
+  try {
+    host = new URL(url).hostname.toLowerCase();
+  } catch {
+    return false;
+  }
+  return BLOCKING_SITES.some((site) => host === site || host.endsWith(`.${site}`));
 }
 
 /**
