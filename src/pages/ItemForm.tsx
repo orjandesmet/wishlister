@@ -1,7 +1,17 @@
 import { useLocation, useNavigate, useParams } from "@solidjs/router";
-import { createEffect, createMemo, createResource, createSignal, For, on, Show } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createResource,
+  createSignal,
+  For,
+  on,
+  onCleanup,
+  Show,
+} from "solid-js";
 import { CategoryChips } from "../components/CategoryChips.tsx";
 import { addItem, getCategories, getItem, updateItem } from "../lib/api/items.ts";
+import { getPageInfo } from "../lib/api/pageInfo.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { currencies, displayCurrency, parsePriceInput } from "../lib/currency.ts";
@@ -10,6 +20,7 @@ import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
 import type { ItemDraft } from "../lib/itemDraft.ts";
 import { splitLink } from "../lib/links.ts";
 import { splitNotWanted } from "../lib/notWanted.ts";
+import { fillFromPage, lookupUrl } from "../lib/pageFill.ts";
 import { isReady } from "../lib/resource.ts";
 import { Select } from "../components/Select.tsx";
 import u from "../utilities.module.css";
@@ -55,12 +66,60 @@ export default function ItemForm() {
   const [savedName, setSavedName] = createSignal<string>();
   const [nameInput, setNameInput] = createSignal<HTMLInputElement>();
 
+  // Looking up the linked page, like quick add does: its picture, its price and (only
+  // when no name was typed yet) its title. `lookedUp` is the last link looked up, so the
+  // same link isn't fetched twice; `filledPrice` the price text a lookup put in, which a
+  // later lookup may replace (a price typed by hand is never replaced).
+  const [imageUrl, setImageUrl] = createSignal<string | null>();
+  const [lookup, setLookup] = createSignal<"idle" | "busy" | "filled" | "nothing">("idle");
+  let lookedUp: string | null = null;
+  let filledPrice: string | null = null;
+  let lookupTimer: ReturnType<typeof setTimeout> | undefined;
+  onCleanup(() => clearTimeout(lookupTimer));
+
+  async function lookUpLink() {
+    clearTimeout(lookupTimer);
+    const link = lookupUrl(url());
+    if (!link || link === lookedUp) return;
+    lookedUp = link;
+    setLookup("busy");
+    const page = await getPageInfo(link);
+    // The link was changed again while this one was being read.
+    if (lookupUrl(url()) !== link) return;
+    const changes = fillFromPage(
+      { name: name(), price: price(), currency: currency() },
+      page,
+      filledPrice,
+      locale(),
+    );
+    if (changes.name !== undefined) setName(changes.name);
+    if (changes.price !== undefined) {
+      setPrice(changes.price);
+      filledPrice = changes.price;
+    }
+    if (changes.currency !== undefined) setCurrency(changes.currency);
+    // A new link's picture replaces the old link's, even when it has none.
+    setImageUrl(page.image);
+    const filled = page.image || Object.keys(changes).length > 0;
+    setLookup(filled ? "filled" : "nothing");
+  }
+
+  // Typing or pasting: look up once the link has stood still for a moment.
+  function onUrlInput(text: string) {
+    setUrl(text);
+    setLookup("idle");
+    clearTimeout(lookupTimer);
+    lookupTimer = setTimeout(lookUpLink, 800);
+  }
+
   // When editing, copy the loaded item into the form once.
   createEffect(
     on(item, (loaded) => {
       if (!loaded) return;
       setName(loaded.name);
       setUrl(loaded.url ?? "");
+      // Opening an item to edit it doesn't look up its link again; changing the link does.
+      lookedUp = lookupUrl(loaded.url ?? "");
       setCategory(loaded.category ?? "");
       setNotWanted(loaded.not_wanted);
       if (loaded.price !== null && loaded.price_currency) {
@@ -88,6 +147,7 @@ export default function ItemForm() {
     const ids = picked === "all" ? [] : picked;
     setVisibility(picked === "all" ? "all" : ids.length > 0 ? "some" : "none");
     setGroupIds(ids);
+    if (link) void lookUpLink();
   }
 
   const toggleGroup = (id: GroupId, checked: boolean) =>
@@ -112,6 +172,8 @@ export default function ItemForm() {
       not_wanted: notWanted(),
       groupIds: visibility() === "some" ? groupIds() : [],
       price: amount === null ? null : { amount, currency: currency() },
+      // The picture belongs to the link: no link, no picture.
+      imageUrl: url().trim() ? imageUrl() : null,
     };
     try {
       if (params.itemId) await updateItem(params.itemId, input);
@@ -122,6 +184,10 @@ export default function ItemForm() {
         setName("");
         setUrl("");
         setPrice("");
+        setImageUrl(undefined);
+        setLookup("idle");
+        lookedUp = null;
+        filledPrice = null;
         setNotWanted(false);
         setBusy(false);
         nameInput()?.focus();
@@ -170,9 +236,15 @@ export default function ItemForm() {
               inputmode="url"
               placeholder="https://"
               value={url()}
-              onInput={(e) => setUrl(e.currentTarget.value)}
+              onInput={(e) => onUrlInput(e.currentTarget.value)}
+              onChange={() => void lookUpLink()}
             />
           </label>
+          <p class={`${u.muted} ${u.small}`} role="status">
+            <Show when={lookup() === "busy"}>{t("itemForm.lookingUp")}</Show>
+            <Show when={lookup() === "filled"}>{t("itemForm.filledFromLink")}</Show>
+            <Show when={lookup() === "nothing"}>{t("itemForm.nothingFromLink")}</Show>
+          </p>
           <label>
             {t("itemForm.category")}
             <input

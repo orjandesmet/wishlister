@@ -25,6 +25,8 @@ export type ItemInput = {
   not_wanted: boolean;
   groupIds: GroupId[];
   price: Price | null;
+  /** The linked page's picture. Left out, the saved picture stays as it is. */
+  imageUrl?: string | null;
 };
 
 const ITEM_COLUMNS =
@@ -72,6 +74,7 @@ function itemColumns(input: ItemInput) {
     not_wanted: input.not_wanted,
     price: input.price?.amount ?? null,
     price_currency: input.price?.currency ?? null,
+    ...(input.imageUrl !== undefined ? { image_url: input.imageUrl } : {}),
   };
 }
 
