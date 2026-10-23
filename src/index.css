@@ -613,6 +613,14 @@ label.check input {
 }
 
 .install-banner button.link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -10px -10px -10px 0;
+  font-size: 28px;
+  line-height: 1;
   text-decoration: none;
 }
 
