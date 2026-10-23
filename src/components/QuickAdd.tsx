@@ -68,6 +68,16 @@ export function QuickAdd(props: QuickAddProps) {
         </div>
       </Show>
       <form class="card" onSubmit={onSubmit}>
+        <h2 class="card-title">{t("quickAdd.label")}</h2>
+        <input
+          aria-label={t("quickAdd.label")}
+          value={name()}
+          onInput={(e) => setName(e.currentTarget.value)}
+          placeholder={t("quickAdd.placeholder")}
+          enterkeyhint="go"
+          autocomplete="off"
+        />
+        <p class="muted small">{t("quickAdd.notWantedHint")}</p>
         <div class="stack small-gap">
           <span class="field-label">{t("quickAdd.visibleIn")}</span>
           <div class="chips" role="group" aria-label={t("quickAdd.visibleIn")}>
@@ -96,17 +106,6 @@ export function QuickAdd(props: QuickAddProps) {
             <p class="muted small">{t("quickAdd.noGroupsHint")}</p>
           </Show>
         </div>
-        <label>
-          {t("quickAdd.label")}
-          <input
-            value={name()}
-            onInput={(e) => setName(e.currentTarget.value)}
-            placeholder={t("quickAdd.placeholder")}
-            enterkeyhint="go"
-            autocomplete="off"
-          />
-        </label>
-        <p class="muted small">{t("quickAdd.notWantedHint")}</p>
       </form>
     </section>
   );
