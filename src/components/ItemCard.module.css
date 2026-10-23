@@ -38,8 +38,7 @@
   min-width: 0;
   font-weight: 400;
   color: var(--muted);
-  opacity: 0.75;
-  transition: opacity 150ms;
+  transition: color 150ms;
 }
 
 .shopLink {
@@ -56,7 +55,7 @@
 }
 
 .meta .shopLink:hover {
-  opacity: 1;
+  color: var(--text-strong);
 }
 
 /* An item nobody but the editors can see: worth noticing, so it gets a warning sign. */
