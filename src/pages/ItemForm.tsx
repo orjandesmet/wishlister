@@ -71,7 +71,9 @@ export default function ItemForm() {
   // same link isn't fetched twice; `filledPrice` the price text a lookup put in, which a
   // later lookup may replace (a price typed by hand is never replaced).
   const [imageUrl, setImageUrl] = createSignal<string | null>();
-  const [lookup, setLookup] = createSignal<"idle" | "busy" | "filled" | "nothing">("idle");
+  const [lookup, setLookup] = createSignal<"idle" | "busy" | "filled" | "image" | "nothing">(
+    "idle",
+  );
   let lookedUp: string | null = null;
   let filledPrice: string | null = null;
   let lookupTimer: ReturnType<typeof setTimeout> | undefined;
@@ -101,7 +103,7 @@ export default function ItemForm() {
     // A new link's picture replaces the old link's, even when it has none.
     setImageUrl(page.image);
     const filled = page.image || Object.keys(changes).length > 0;
-    setLookup(filled ? "filled" : "nothing");
+    setLookup(page.isImage ? "image" : filled ? "filled" : "nothing");
   }
 
   // Typing or pasting: look up once the link has stood still for a moment.
@@ -243,6 +245,7 @@ export default function ItemForm() {
           <p class={`${u.muted} ${u.small}`} role="status">
             <Show when={lookup() === "busy"}>{t("itemForm.lookingUp")}</Show>
             <Show when={lookup() === "filled"}>{t("itemForm.filledFromLink")}</Show>
+            <Show when={lookup() === "image"}>{t("itemForm.imageLink")}</Show>
             <Show when={lookup() === "nothing"}>{t("itemForm.nothingFromLink")}</Show>
           </p>
           <label>

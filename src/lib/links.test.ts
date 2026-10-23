@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { linkLabel, splitLink } from "./links.ts";
+import { isImageLink, linkLabel, splitLink } from "./links.ts";
 
 describe("splitLink", () => {
   it("leaves text without a link as the name", () => {
@@ -54,5 +54,18 @@ describe("linkLabel", () => {
     const label = linkLabel(`https://example.com/${"a".repeat(100)}`);
     expect(label).toHaveLength(60);
     expect(label.endsWith("…")).toBe(true);
+  });
+});
+
+describe("isImageLink", () => {
+  it("spots links to pictures", () => {
+    expect(isImageLink("https://cdn.example/photos/bike.JPG")).toBe(true);
+    expect(isImageLink("https://cdn.example/a/b.webp?w=800")).toBe(true);
+  });
+
+  it("leaves pages alone", () => {
+    expect(isImageLink("https://shop.example/p/bike")).toBe(false);
+    expect(isImageLink("https://shop.example/jpg/bike.html")).toBe(false);
+    expect(isImageLink("not a link.png")).toBe(false);
   });
 });

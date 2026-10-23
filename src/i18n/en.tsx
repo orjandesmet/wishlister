@@ -245,6 +245,7 @@ export const en = {
     link: "Link (optional)",
     lookingUp: "Looking up the link…",
     filledFromLink: "Filled in from the link's page.",
+    imageLink: "This link is a picture: it's used as the item's picture.",
     nothingFromLink: "Couldn't read anything from this link.",
     category: "Category (optional)",
     visibility: "Who can see it",

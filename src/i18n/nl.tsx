@@ -236,6 +236,7 @@ export const nl: Dictionary = {
     link: "Link (optioneel)",
     lookingUp: "Link opzoeken…",
     filledFromLink: "Aangevuld met info van de pagina.",
+    imageLink: "Deze link is een afbeelding: die wordt de afbeelding van het item.",
     nothingFromLink: "Kon niets lezen van deze link.",
     category: "Categorie (optioneel)",
     visibility: "Wie kan het zien",
