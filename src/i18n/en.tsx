@@ -173,7 +173,7 @@ export const en = {
       `Delete ${p.name}'s profile and wishlist for everyone? This can't be undone.`,
   },
   item: {
-    onlyVisibleIn: (p: { groups: string }) => `Only visible in ${p.groups}`,
+    onlyVisibleIn: (p: { groups: JSX.Element }) => <>Only visible in {p.groups}</>,
     private: "Not shared with any group",
     youBought: "You bought this",
     undo: "Undo",

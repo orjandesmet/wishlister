@@ -20,6 +20,7 @@
   --accent-ink: light-dark(#0a3a80, #bcd7ff);
   --positive-bg: light-dark(#dcfae5, #14301d);
   --positive-ink: light-dark(#04250e, #a8e8bb);
+  --warning: light-dark(#d99a00, #f2c14e);
   --danger: light-dark(#c41c29, #f2777a);
   --pill-negative-bg: light-dark(#ffedea, #3a1618);
   --pill-negative-ink: light-dark(#831c1e, #f7b4b6);
@@ -56,6 +57,11 @@
 
   .list.cards {
     gap: 12px;
+  }
+
+  .item {
+    --card-pad: 16px;
+    gap: 10px;
   }
 
   .tabs {
@@ -345,8 +351,88 @@ a {
   padding-bottom: 12px;
 }
 
+/* Roomy on purpose: the name and price lead, everything else sits below with space around it. */
 .item {
+  --card-pad: 20px;
   gap: 12px;
+  border-color: transparent;
+  transition: transform 200ms var(--ease-out);
+}
+
+.item-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+}
+
+.item-head .item-name {
+  font-size: 18px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.item-head > .item-name,
+.item-head > .select-row {
+  flex: 1 1 200px;
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+  min-width: 0;
+}
+
+.item-meta .link {
+  min-width: 0;
+  font-weight: 400;
+  color: var(--muted);
+  opacity: 0.75;
+  transition: opacity 150ms;
+}
+
+.item-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+}
+
+.item-link svg {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.item-meta .link:hover {
+  opacity: 1;
+}
+
+/* An item nobody but the editors can see: worth noticing, so it gets a warning sign. */
+.item-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.item-warning svg {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--warning);
+}
+
+/* Edit and remove stay quiet, tucked under the main action. */
+.item-manage {
+  display: flex;
+  align-items: center;
+  gap: 20px;
 }
 
 .item.pending {
@@ -401,30 +487,29 @@ button.chip-button[aria-pressed="true"] {
 
 /* A "please don't buy" entry: set apart from the wishes, never bought. */
 .item.not-wanted {
-  border-color: var(--danger);
-  border-style: dashed;
-}
-
-.badge-not-wanted {
-  align-self: flex-start;
-  padding: 0 10px;
-  font-size: 13px;
-  line-height: 24px;
-  font-weight: 600;
-  color: var(--pill-negative-ink);
   background: var(--pill-negative-bg);
-  border-radius: var(--radius-small);
+  border-color: var(--danger);
+  border-style: solid;
 }
 
-.badge-private {
-  align-self: flex-start;
-  padding: 0 10px;
-  font-size: 13px;
-  line-height: 24px;
-  font-weight: 500;
-  color: var(--text-strong);
-  background: var(--raised);
-  border-radius: var(--radius-small);
+.item.not-wanted .item-head .item-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.item.not-wanted .item-name,
+.item.not-wanted .price-amount,
+.not-wanted-note {
+  color: var(--pill-negative-ink);
+}
+
+/* Reads on into the title below: "Please don't buy" + the item's name. */
+.item.not-wanted {
+  gap: 4px;
+}
+
+.not-wanted-note svg {
+  color: var(--danger);
 }
 
 button.chip-button {
@@ -488,21 +573,30 @@ button.small {
 
 /* Figures keep their digits in line. */
 .price {
-  font-weight: 600;
-  font-size: 18px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
   font-variant-numeric: tabular-nums;
   color: var(--text-strong);
 }
 
-.price .muted {
+.price-amount {
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+
+.price-converted {
   font-size: 14px;
-  font-weight: 400;
+  color: var(--muted);
 }
 
 /* What is bought shows as a green pill; what someone else bought is a quiet grey one. */
 .bought {
   align-self: flex-start;
-  padding: 4px 12px;
+  padding: 6px 14px;
   font-size: 14px;
   line-height: 1.35;
   font-weight: 600;

@@ -164,7 +164,7 @@ export const nl: Dictionary = {
       `Het profiel en verlanglijstje van ${p.name} voor iedereen wissen? Dit kan niet ongedaan gemaakt worden.`,
   },
   item: {
-    onlyVisibleIn: (p) => `Alleen zichtbaar in ${p.groups}`,
+    onlyVisibleIn: (p) => <>Alleen zichtbaar in {p.groups}</>,
     private: "Met geen enkele groep gedeeld",
     youBought: "Jij hebt dit gekocht",
     undo: "Ongedaan maken",

@@ -5,7 +5,7 @@ import { For, Match, Show, Switch } from "solid-js";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
 import { convertAmount, displayCurrency, exchangeRates, formatPrice } from "../lib/currency.ts";
-import { formatList, locale, t } from "../lib/i18n.ts";
+import { locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
 import { hueFor } from "../lib/hues.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
@@ -54,13 +54,35 @@ function PriceTag(props: { amount: number; currency: string }) {
     return amount === null ? null : formatPrice(amount, displayCurrency(), locale());
   };
   return (
-    <span class="price">
-      {formatPrice(props.amount, props.currency, locale())}
+    <p class="price">
+      <span class="price-amount">{formatPrice(props.amount, props.currency, locale())}</span>
       <Show when={converted()}>
-        {(price) => <span class="muted"> {t("item.convertedPrice", { price: price() })}</span>}
+        {(price) => (
+          <span class="price-converted">{t("item.convertedPrice", { price: price() })}</span>
+        )}
       </Show>
-    </span>
+    </p>
   );
+}
+
+/** A list of names in the language's own wording ("A, B and C"), the names themselves in bold. */
+function BoldList(props: { items: string[] }) {
+  const parts = () =>
+    new Intl.ListFormat(locale(), { type: "conjunction" }).formatToParts(props.items);
+  return (
+    <For each={parts()}>
+      {(part) => (part.type === "element" ? <strong>{part.value}</strong> : part.value)}
+    </For>
+  );
+}
+
+/** The shop's name instead of the whole address, which only crowds the card. */
+function shopName(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
 }
 
 /**
@@ -71,6 +93,8 @@ export function ItemCard(props: ItemCardProps) {
   // Limited to groups, but none picked: nobody but the list's editors sees it.
   const isPrivate = () => !props.item.visible_in_all_groups && props.groupNames.length === 0;
   // The page starts the 💸 once the purchase is saved; remember where the tap was.
+  // A "please don't buy" entry describes something; it has no shop or price to show.
+  const showUrl = () => !props.selecting && !props.item.not_wanted && props.item.url;
   const rememberButton = (event: MouseEvent) =>
     rememberBuyTap(props.item.id, event.currentTarget as Element);
   return (
@@ -83,52 +107,104 @@ export function ItemCard(props: ItemCardProps) {
       }}
     >
       <Show when={props.item.not_wanted}>
-        <span class="badge-not-wanted">{t("item.notWanted")}</span>
+        <p class="item-warning not-wanted-note">
+          {/* Lucide "ban" (ISC licence). */}
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="10" />
+            <path d="m4.9 4.9 14.2 14.2" />
+          </svg>
+          {t("item.notWanted")}
+        </p>
       </Show>
-      <Show when={props.canEdit && isPrivate()}>
-        <span class="badge-private">{t("item.private")}</span>
-      </Show>
-      <Show
-        when={props.selecting}
-        fallback={
-          <div class="row">
+      <div class="item-head">
+        <Show
+          when={props.selecting}
+          fallback={<strong class="item-name">{props.item.name}</strong>}
+        >
+          {/* The whole row is the label, so tapping anywhere on it ticks the box. */}
+          <label class="check select-row">
+            <input
+              type="checkbox"
+              checked={props.selected ?? false}
+              onChange={() => props.onToggleSelect?.()}
+            />
             <strong class="item-name">{props.item.name}</strong>
-            <Show when={props.item.category}>
-              <span class="chip tinted" style={{ "--h": hueFor(props.item.category!) }}>
-                {props.item.category}
-              </span>
-            </Show>
+          </label>
+        </Show>
+        <Show when={props.canEdit && !props.selecting}>
+          <div class="item-manage">
+            <A class="link" href={`/items/${props.item.id}/edit`}>
+              <EditLabel label={t("common.edit")} />
+            </A>
+            <button type="button" class="link danger" onClick={() => props.onRemove()}>
+              <RemoveLabel />
+            </button>
           </div>
-        }
-      >
-        {/* The whole row is the label, so tapping anywhere on it ticks the box. */}
-        <label class="check select-row">
-          <input
-            type="checkbox"
-            checked={props.selected ?? false}
-            onChange={() => props.onToggleSelect?.()}
-          />
-          <strong class="item-name">{props.item.name}</strong>
+        </Show>
+      </div>
+      <Show when={!props.item.not_wanted && props.item.price !== null && props.item.price_currency}>
+        {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
+      </Show>
+      <Show when={props.item.category || showUrl()}>
+        <div class="item-meta">
           <Show when={props.item.category}>
             <span class="chip tinted" style={{ "--h": hueFor(props.item.category!) }}>
               {props.item.category}
             </span>
           </Show>
-        </label>
-      </Show>
-      <Show when={props.item.price !== null && props.item.price_currency}>
-        {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
-      </Show>
-      <Show when={!props.selecting && props.item.url}>
-        {(url) => (
-          <a class="link truncate" href={url()} target="_blank" rel="noopener noreferrer">
-            {url()}
-          </a>
-        )}
+          <Show when={showUrl()}>
+            {(url) => (
+              <a class="link item-link" href={url()} target="_blank" rel="noopener noreferrer">
+                <span class="truncate">{shopName(url())}</span>
+                {/* Lucide "external-link" (ISC licence). */}
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M15 3h6v6" />
+                  <path d="M10 14 21 3" />
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                </svg>
+              </a>
+            )}
+          </Show>
+        </div>
       </Show>
       <Show when={props.canEdit && !props.item.visible_in_all_groups && !isPrivate()}>
         <p class="muted small">
-          {t("item.onlyVisibleIn", { groups: formatList(props.groupNames) })}
+          {t("item.onlyVisibleIn", { groups: <BoldList items={props.groupNames} /> })}
+        </p>
+      </Show>
+      <Show when={props.canEdit && isPrivate()}>
+        <p class="item-warning small">
+          {/* Lucide "triangle-alert" (ISC licence). */}
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+            <path d="M12 9v4" />
+            <path d="M12 17h.01" />
+          </svg>
+          {t("item.private")}
         </p>
       </Show>
       <Switch>
@@ -196,16 +272,6 @@ export function ItemCard(props: ItemCardProps) {
           </button>
         </Match>
       </Switch>
-      <Show when={props.canEdit && !props.selecting}>
-        <div class="row">
-          <A class="link" href={`/items/${props.item.id}/edit`}>
-            <EditLabel label={t("common.edit")} />
-          </A>
-          <button type="button" class="link danger" onClick={() => props.onRemove()}>
-            <RemoveLabel />
-          </button>
-        </div>
-      </Show>
     </li>
   );
 }
