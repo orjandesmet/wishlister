@@ -24,7 +24,16 @@ sb.mock(import("../src/lib/install.ts"), { spy: true });
 export default {
   // Every component gets a Docs page with its props and all its stories.
   tags: ["autodocs"],
-  parameters: { layout: "padded" },
+  parameters: {
+    layout: "padded",
+
+    a11y: {
+      // 'todo' - show a11y violations in the test UI only
+      // 'error' - fail CI on a11y violations
+      // 'off' - skip a11y checks entirely
+      test: "todo",
+    },
+  },
   // A globe in the toolbar switches every story's language.
   globalTypes: {
     // Forces the light or dark tokens instead of following the system.
