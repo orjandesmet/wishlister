@@ -1,6 +1,6 @@
-import { defineConfig, lazyPlugins } from "vite-plus";
 import { VitePWA } from "vite-plugin-pwa";
 import solid from "vite-plugin-solid";
+import { defineConfig, lazyPlugins } from "vite-plus";
 
 export default defineConfig({
   staged: {
@@ -31,10 +31,36 @@ export default defineConfig({
         theme_color: "#f3f5f7",
         background_color: "#f3f5f7",
         icons: [
-          { src: "pwa-192x192.png", sizes: "192x192", type: "image/png" },
-          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png" },
-          // The artwork sits in the middle 60%, so Android may crop it to any shape.
-          { src: "pwa-512x512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
+          {
+            src: "/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/icon-384x384.png",
+            sizes: "384x384",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/icon-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "/icon-192x192-maskable.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "maskable",
+          },
+          {
+            src: "/icon-512x512-maskable.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
         ],
       },
       workbox: {
