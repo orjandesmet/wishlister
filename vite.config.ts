@@ -19,7 +19,7 @@ export default defineConfig({
     VitePWA({
       // A new deploy activates on the next visit, no "update available" prompt.
       registerType: "autoUpdate",
-      includeAssets: ["favicon.svg", "apple-touch-icon.png"],
+      includeAssets: ["favicon.svg", "icon-180x180.png"],
       manifest: {
         name: "Wishlister",
         short_name: "Wishlister",
