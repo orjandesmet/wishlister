@@ -3,6 +3,7 @@ import { setMemberRole, type Member } from "../lib/api/groups.ts";
 import type { ActionRunner } from "../lib/createActionRunner.ts";
 import type { GroupData } from "../lib/createGroupData.ts";
 import { createGroupInvites } from "../lib/createGroupInvites.ts";
+import { isDemo } from "../lib/demo.ts";
 import { t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
 import u from "../utilities.module.css";
@@ -105,18 +106,21 @@ export function GroupMembers(props: {
         </ul>
       </Show>
       <Show when={data.isManager()}>
-        <form onSubmit={invites.onInvite}>
-          <label>
-            {t("group.inviteByEmail")}
-            <input
-              type="email"
-              required
-              value={invites.inviteEmail()}
-              onInput={(e) => invites.setInviteEmail(e.currentTarget.value)}
-            />
-          </label>
-          <button type="submit">{t("group.invite")}</button>
-        </form>
+        {/* The demo sends no email: its accounts are made up. */}
+        <Show when={!isDemo}>
+          <form onSubmit={invites.onInvite}>
+            <label>
+              {t("group.inviteByEmail")}
+              <input
+                type="email"
+                required
+                value={invites.inviteEmail()}
+                onInput={(e) => invites.setInviteEmail(e.currentTarget.value)}
+              />
+            </label>
+            <button type="submit">{t("group.invite")}</button>
+          </form>
+        </Show>
         <Button
           variant="secondary"
           class={styles.inviteLinkButton}

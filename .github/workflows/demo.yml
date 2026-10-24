@@ -1,0 +1,52 @@
+name: Demo
+
+# Keeps the demo site (a branch deploy of `demo`, on its own Supabase project) fresh:
+# every three days, and by hand, it applies new migrations to the demo database and
+# wipes it back to the seed. A release tag also puts that release on the demo site.
+on:
+  schedule:
+    - cron: "0 4 */3 * *"
+  workflow_dispatch:
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: demo
+  cancel-in-progress: false
+
+permissions:
+  # Moves the `demo` branch on a release tag.
+  contents: write
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    env:
+      # Session pooler connection string of the demo Supabase project, never the real one.
+      DEMO_DATABASE_URL: ${{ secrets.DEMO_DATABASE_URL }}
+    steps:
+      - name: Check the demo is set up
+        id: setup
+        run: |
+          if [ -z "$DEMO_DATABASE_URL" ]; then
+            echo "::notice::No DEMO_DATABASE_URL secret, so there is no demo to reset."
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.setup.outputs.ready
+        uses: actions/checkout@v7
+      - if: steps.setup.outputs.ready
+        uses: supabase/setup-cli@v1
+        with:
+          version: 2.121.0
+      - name: Apply new migrations
+        if: steps.setup.outputs.ready
+        run: supabase db push --db-url "$DEMO_DATABASE_URL" --yes
+      # Refuses to run on a database with accounts outside @example.com.
+      - name: Wipe and reseed
+        if: steps.setup.outputs.ready
+        run: psql "$DEMO_DATABASE_URL" -v ON_ERROR_STOP=1 --single-transaction -f supabase/demo/reset.sql
+      # Netlify builds the branch deploy; branch deploys cost no credits.
+      - name: Put the release on the demo site
+        if: steps.setup.outputs.ready && startsWith(github.ref, 'refs/tags/')
+        run: git push --force origin HEAD:refs/heads/demo
