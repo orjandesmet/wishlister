@@ -27,6 +27,22 @@ export const en = {
   language: {
     label: "Language",
   },
+  themes: {
+    label: "Theme",
+    default: "Default",
+    christmas: "Christmas",
+    sinterklaas: "Sinterklaas",
+    birthday: "Birthday",
+    keepMine: "Always use my theme",
+    keepMineHint:
+      "When a group has a themed occasion coming up, the app wears that theme from two weeks before until the day after.",
+    now: (p: { occasion: string; theme: string }) =>
+      `Showing the ${p.theme} theme for ${p.occasion}.`,
+    none: "No theme",
+    occasionLabel: "Theme for the group",
+    occasionHint: "Members see it from two weeks before until the day after.",
+    occasionBadge: (p: { theme: string }) => `${p.theme} theme`,
+  },
   currency: {
     label: "Show prices in",
     hint: "Prices in another currency also show roughly what they are in this one.",

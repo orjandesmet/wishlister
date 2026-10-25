@@ -21,6 +21,21 @@ export const nl: Dictionary = {
   language: {
     label: "Taal",
   },
+  themes: {
+    label: "Thema",
+    default: "Standaard",
+    christmas: "Kerstmis",
+    sinterklaas: "Sinterklaas",
+    birthday: "Verjaardag",
+    keepMine: "Altijd mijn eigen thema gebruiken",
+    keepMineHint:
+      "Heeft een groep binnenkort een gelegenheid met een thema, dan krijgt de app dat thema van twee weken ervoor tot de dag erna.",
+    now: (p) => `Thema ${p.theme} voor ${p.occasion}.`,
+    none: "Geen thema",
+    occasionLabel: "Thema voor de groep",
+    occasionHint: "Leden zien het van twee weken ervoor tot de dag erna.",
+    occasionBadge: (p) => `Thema ${p.theme}`,
+  },
   currency: {
     label: "Toon prijzen in",
     hint: "Bij prijzen in een andere munt zie je ook ongeveer hoeveel dat in deze munt is.",

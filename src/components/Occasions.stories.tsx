@@ -4,11 +4,17 @@ import type { Occasion } from "../lib/api/occasions.ts";
 import type { GroupId, OccasionId } from "../lib/ids.ts";
 import { Occasions } from "./Occasions.tsx";
 
-const makeOccasion = (id: string, name: string, date: string): Occasion => ({
+const makeOccasion = (
+  id: string,
+  name: string,
+  date: string,
+  theme: Occasion["theme"] = null,
+): Occasion => ({
   id: id as OccasionId,
   group_id: "group-1" as GroupId,
   name,
   date,
+  theme,
 });
 
 const meta = {
@@ -18,7 +24,7 @@ const meta = {
     today: "2026-10-21",
     canEdit: false,
     occasions: [
-      makeOccasion("1", "Christmas 2026", "2026-12-25"),
+      makeOccasion("1", "Christmas 2026", "2026-12-25", "christmas"),
       makeOccasion("2", "Sinterklaas 2026", "2026-12-06"),
       makeOccasion("3", "Easter 2027", "2027-03-28"),
       makeOccasion("4", "Christmas 2025", "2025-12-25"),

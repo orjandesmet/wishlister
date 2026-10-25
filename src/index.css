@@ -54,6 +54,49 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Themes (lib/theme.ts) swap the surface and accent tokens; text and the warning and danger
+ * colours stay. Each keeps a light and a dark value, with white (or near-black) on the accent at
+ * 4.5:1 or more. The Storybook toolbar has a brush to preview them.
+ */
+:root[data-theme="christmas"] {
+  --bg: light-dark(#f6f3ee, #10120f);
+  --surface: light-dark(#fffdfa, #1a1c18);
+  --raised: light-dark(#efe9e1, #24271f);
+  --border: light-dark(#e8e0d6, #2f3229);
+  --control: light-dark(#d8cfc4, #42463b);
+  --accent: light-dark(#b3202f, #f07a84);
+  --accent-contrast: light-dark(#ffffff, #1d0a0d);
+  --accent-soft: light-dark(#fbe3e5, #3d1a1f);
+  --accent-ink: light-dark(#6e0f19, #ffc9ce);
+  --positive-bg: light-dark(#dcefe2, #13301f);
+  --positive-ink: light-dark(#0f3d22, #a9e3bf);
+}
+
+:root[data-theme="sinterklaas"] {
+  --bg: light-dark(#f8f3e8, #14110b);
+  --surface: light-dark(#fffcf5, #1e1a12);
+  --raised: light-dark(#f1e9d8, #29231a);
+  --border: light-dark(#eadfc8, #352d20);
+  --control: light-dark(#d9cbb0, #4a3f2c);
+  --accent: light-dark(#b5172f, #f2c14e);
+  --accent-contrast: light-dark(#ffffff, #1f1500);
+  --accent-soft: light-dark(#fbeec8, #3b2e12);
+  --accent-ink: light-dark(#5c3d00, #ffe3a3);
+}
+
+:root[data-theme="birthday"] {
+  --bg: light-dark(#f8f4fb, #110e14);
+  --surface: light-dark(#ffffff, #1b1720);
+  --raised: light-dark(#f1eaf6, #25202c);
+  --border: light-dark(#e9e0f0, #312a3a);
+  --control: light-dark(#d7cbe2, #463d52);
+  --accent: light-dark(#7b2cbf, #c79bff);
+  --accent-contrast: light-dark(#ffffff, #1a0b2e);
+  --accent-soft: light-dark(#f1e4ff, #2e2142);
+  --accent-ink: light-dark(#44107a, #e6d2ff);
+}
+
 /* Phones: tighter page margins, gaps and card padding. */
 @media (max-width: 599px) {
   :root {

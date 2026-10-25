@@ -28,6 +28,7 @@ import {
 } from "../lib/api/items.ts";
 import {
   getNextSharedOccasion,
+  getThemedOccasions,
   getOccasions,
   getUpcomingOccasions,
   type Occasion,
@@ -76,6 +77,7 @@ const meta = {
     mocked(getUpcomingOccasions).mockImplementation(async () => data.occasions);
     mocked(getOccasions).mockImplementation(async () => data.occasions);
     mocked(getNextSharedOccasion).mockImplementation(async () => data.occasions[0] ?? null);
+    mocked(getThemedOccasions).mockImplementation(async () => []);
     mocked(getItems).mockImplementation((id) => data.items(id));
     mocked(getItem).mockImplementation(async (id) => {
       const found = Object.values(data.lists)
@@ -153,6 +155,7 @@ const occasion = (id: string, name: string, date: string): Occasion => ({
   group_id: family.id,
   name,
   date,
+  theme: null,
 });
 const annasBirthday = occasion("o1", "Anna's birthday", "2026-11-02");
 

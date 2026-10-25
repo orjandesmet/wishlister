@@ -5,6 +5,7 @@ import { InstallBanner } from "./components/InstallBanner.tsx";
 import { focusHeading } from "./lib/a11y.ts";
 import { AuthProvider, useAuth } from "./lib/auth.tsx";
 import { syncLocaleWithAccount } from "./lib/accountLocale.ts";
+import { syncThemeWithAccount } from "./lib/accountTheme.ts";
 import { t } from "./lib/i18n.ts";
 import { dismiss, install, installOffer } from "./lib/install.ts";
 import { MeProvider, useMe } from "./lib/me.tsx";
@@ -70,9 +71,11 @@ function freshPer(param: string, Page: Component): Component {
   };
 }
 
-/** Follows the language saved on the account once someone signs in. */
-function LocaleSync() {
-  syncLocaleWithAccount(useAuth().session);
+/** Follows the language and theme saved on the account once someone signs in. */
+function AccountSync() {
+  const { session } = useAuth();
+  syncLocaleWithAccount(session);
+  syncThemeWithAccount(session);
   return null;
 }
 
@@ -87,10 +90,10 @@ function InstallOffer() {
   );
 }
 
-/** Around every page: the session, the account's language and the install banner. */
+/** Around every page: the session, the account's language and theme, and the install banner. */
 export const AppRoot: ParentComponent = (props) => (
   <AuthProvider>
-    <LocaleSync />
+    <AccountSync />
     <InstallOffer />
     {props.children}
   </AuthProvider>
