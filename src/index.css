@@ -128,9 +128,14 @@
   --accent-ink: light-dark(#5c4600, #ffe9a3);
 }
 
-/* Room at the top for the theme's garland (ThemeDecorations.tsx). */
-:root[data-theme] body {
-  padding-top: 20px;
+/*
+ * Room at the top for the theme's garland (ThemeDecorations.tsx) on phones. The sidebar layout from
+ * 900px already has 40px above the page (TabBar.module.css), so it needs none.
+ */
+@media (max-width: 899px) {
+  :root[data-theme] body {
+    padding-top: 20px;
+  }
 }
 
 /* Phones: tighter page margins, gaps and card padding. */

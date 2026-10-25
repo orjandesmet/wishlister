@@ -1,6 +1,6 @@
 /*
- * Along the very top of the page, above the frame's own padding (index.css makes room with
- * --decoration-room). It scrolls away with the page and lets every tap through.
+ * Along the very top of the page, above the frame's own padding (index.css adds room for it on
+ * phones). It scrolls away with the page and lets every tap through.
  */
 .decorations {
   position: absolute;

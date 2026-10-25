@@ -72,6 +72,11 @@
     border-top: none;
   }
 
+  /* A seasonal theme's garland runs across the top of the window, so the brand moves below it. */
+  :global(:root[data-theme]) .tabs {
+    padding-top: 44px;
+  }
+
   .brand {
     display: flex;
     align-items: center;
