@@ -1,7 +1,7 @@
 import { EditLabel } from "./EditLabel.tsx";
 import { A } from "@solidjs/router";
 import { RemoveLabel } from "./RemoveLabel.tsx";
-import { createEffect, createUniqueId, For, Match, on, Show, Switch } from "solid-js";
+import { createEffect, createSignal, createUniqueId, For, Match, on, Show, Switch } from "solid-js";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
 import { convertAmount, displayCurrency, exchangeRates, formatPrice } from "../lib/currency.ts";
@@ -92,6 +92,31 @@ function shopName(url: string) {
 }
 
 /**
+ * The item's picture, next to its name. Decorative: the name beside it already says
+ * what it is, so screen readers skip it (empty alt). A picture that can't be loaded
+ * (moved, or the shop blocks hotlinking) is left out instead of showing a broken icon.
+ */
+export function ItemThumbnail(props: { src: string; class?: string }) {
+  const [failed, setFailed] = createSignal<string>();
+  return (
+    <Show when={failed() !== props.src}>
+      <img
+        class={`${styles.thumb} ${props.class ?? ""}`}
+        src={props.src}
+        alt=""
+        width="72"
+        height="72"
+        loading="lazy"
+        decoding="async"
+        // Some shops refuse pictures shown on other sites; without a referrer most allow it.
+        referrerpolicy="no-referrer"
+        onError={() => setFailed(props.src)}
+      />
+    </Show>
+  );
+}
+
+/**
  * One wish, or "please don't buy" entry, on a list. Only shows things; the page
  * decides what the buttons do.
  */
@@ -156,35 +181,42 @@ export function ItemCard(props: ItemCardProps) {
           {t("item.notWanted")}
         </p>
       </Show>
-      <div class={styles.head}>
-        <Show
-          when={props.selecting}
-          fallback={<strong class={styles.name}>{props.item.name}</strong>}
-        >
-          {/* The whole row is the label, so tapping anywhere on it ticks the box. */}
-          <Check class={styles.selectRow}>
-            <input
-              type="checkbox"
-              checked={props.selected ?? false}
-              onChange={() => props.onToggleSelect?.()}
-            />
-            <strong class={styles.name}>{props.item.name}</strong>
-          </Check>
-        </Show>
-        <Show when={props.canEdit && !props.selecting}>
-          <div class={styles.manage}>
-            <A class={u.link} href={`/items/${props.item.id}/edit`}>
-              <EditLabel label={t("common.edit")} of={props.item.name} />
-            </A>
-            <Button variant="link" danger onClick={() => props.onRemove()}>
-              <RemoveLabel of={props.item.name} />
-            </Button>
+      <div class={styles.top}>
+        <Show when={props.item.image_url}>{(src) => <ItemThumbnail src={src()} />}</Show>
+        <div class={styles.topText}>
+          <div class={styles.head}>
+            <Show
+              when={props.selecting}
+              fallback={<strong class={styles.name}>{props.item.name}</strong>}
+            >
+              {/* The whole row is the label, so tapping anywhere on it ticks the box. */}
+              <Check class={styles.selectRow}>
+                <input
+                  type="checkbox"
+                  checked={props.selected ?? false}
+                  onChange={() => props.onToggleSelect?.()}
+                />
+                <strong class={styles.name}>{props.item.name}</strong>
+              </Check>
+            </Show>
+            <Show when={props.canEdit && !props.selecting}>
+              <div class={styles.manage}>
+                <A class={u.link} href={`/items/${props.item.id}/edit`}>
+                  <EditLabel label={t("common.edit")} of={props.item.name} />
+                </A>
+                <Button variant="link" danger onClick={() => props.onRemove()}>
+                  <RemoveLabel of={props.item.name} />
+                </Button>
+              </div>
+            </Show>
           </div>
-        </Show>
+          <Show
+            when={!props.item.not_wanted && props.item.price !== null && props.item.price_currency}
+          >
+            {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
+          </Show>
+        </div>
       </div>
-      <Show when={!props.item.not_wanted && props.item.price !== null && props.item.price_currency}>
-        {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
-      </Show>
       <Show when={props.item.category || showUrl()}>
         <div class={styles.meta}>
           <Show when={props.item.category}>

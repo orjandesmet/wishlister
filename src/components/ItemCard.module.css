@@ -1,9 +1,36 @@
 /* Roomy on purpose: the name and price lead, everything else sits below with space around it. */
 .item {
   --card-pad: 20px;
-  gap: 12px;
+  --item-gap: 12px;
+  gap: var(--item-gap);
   border-color: transparent;
   transition: transform 200ms var(--ease-out);
+}
+
+/* The picture, when there is one, beside the name and price. */
+.top {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.topText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: var(--item-gap);
+  min-width: 0;
+}
+
+/* Shop pictures come in every shape and often on white: shown whole on a white tile. */
+.thumb {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-small);
 }
 
 .head {
@@ -120,7 +147,7 @@
 
 /* Reads on into the title below: "Please don't buy" + the item's name. */
 .item.notWanted {
-  gap: 4px;
+  --item-gap: 4px;
 }
 
 .notWantedNote svg {
