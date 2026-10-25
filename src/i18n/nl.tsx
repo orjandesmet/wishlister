@@ -175,6 +175,9 @@ export const nl: Dictionary = {
     noOccasion: "Niet voor een gelegenheid",
     notWanted: "Liever niet",
     convertedPrice: (p) => `≈ ${p.price}`,
+    removed: "Van het lijstje gehaald nadat het gekocht was",
+    removedMine:
+      "Van het lijstje gehaald nadat jij het kocht. Kun je je bestelling nog annuleren? Maak het dan ongedaan, dan verdwijnt het voorgoed.",
   },
   unfollow: {
     title: "Niet meer volgen",

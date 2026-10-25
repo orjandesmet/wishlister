@@ -174,6 +174,7 @@ const item = (
   item_groups: [],
   price,
   price_currency: price === null ? null : n % 3 === 0 ? "EUR" : n % 3 === 1 ? "USD" : "GBP",
+  removed_at: null,
   ...extra,
 });
 

@@ -29,6 +29,7 @@ const meta = {
       item_groups: [],
       price: 49.99,
       price_currency: "EUR",
+      removed_at: null,
     },
     purchase: "available",
     canEdit: false,
@@ -99,6 +100,16 @@ export const ChoosingAnOccasion: Story = {
 };
 
 export const BoughtBySomeoneElse: Story = { args: { purchase: "someone" } };
+
+/** The owner took it off their list after you bought it: they don't know, and you got an email. */
+export const RemovedAfterYouBoughtIt: Story = {
+  args: { purchase: "mine", item: { ...meta.args.item, removed_at: "2026-10-25T09:00:00Z" } },
+};
+
+/** Taken off the list after someone else bought it: it stays so nobody buys it twice. */
+export const RemovedAfterSomeoneBoughtIt: Story = {
+  args: { purchase: "someone", item: { ...meta.args.item, removed_at: "2026-10-25T09:00:00Z" } },
+};
 
 /** Your own list: you can edit, and never see who bought what. */
 export const OwnList: Story = { args: { purchase: "hidden", canEdit: true } };
