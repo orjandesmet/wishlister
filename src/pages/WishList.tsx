@@ -18,6 +18,7 @@ import {
   type Item,
 } from "../lib/api/items.ts";
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
+import { getMyGroups } from "../lib/api/groups.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
@@ -25,10 +26,11 @@ import { createBulkSelect } from "../lib/createBulkSelect.ts";
 import { createFollow } from "../lib/createFollow.ts";
 import { createListSections } from "../lib/createListSections.ts";
 import { createPurchases } from "../lib/createPurchases.ts";
-import { formatList, locale, t } from "../lib/i18n.ts";
+import { compareNames, formatList, locale, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
 import { addDays, formatOccasionDate, today, type IsoDate } from "../lib/occasions.ts";
 import { useMe } from "../lib/me.tsx";
+import { listMenuSections } from "../lib/listMenu.ts";
 import { isReady } from "../lib/resource.ts";
 import { useQuickAdd } from "../lib/quickAdd.ts";
 import u from "../utilities.module.css";
@@ -46,17 +48,23 @@ export default function WishList() {
   const params = useParams<{ profileId: ProfileId }>();
   const navigate = useNavigate();
   const me = useMe();
-  // Parents jump between their own list and their children's from a menu beside the title.
-  const switchOptions = () => [
-    { id: me().profile.id, name: t("nav.myList"), person: me().profile.display_name },
-    ...(me().managed() ?? []).map((child) => ({
-      id: child.id,
-      name: t("account.childWishlist", { name: child.display_name }),
-      person: child.display_name,
-    })),
-  ];
-  const showSwitcher = () =>
-    switchOptions().length > 1 && switchOptions().some((o) => o.id === params.profileId);
+  // A menu beside the title opens your own list, your children's, or anyone's from your groups.
+  // The groups are an extra: if they fail to load, the menu still has your own lists.
+  const [groups] = createResource(() => getMyGroups().catch(() => []));
+  const menuSections = () =>
+    listMenuSections(
+      [
+        { id: me().profile.id, name: t("nav.myList"), person: me().profile.display_name },
+        ...(me().managed() ?? []).map((child) => ({
+          id: child.id,
+          name: t("account.childWishlist", { name: child.display_name }),
+          person: child.display_name,
+        })),
+      ],
+      groups() ?? [],
+      compareNames,
+    );
+  const showMenu = () => menuSections().flatMap((section) => section.options).length > 1;
 
   const runner = createActionRunner();
   const { error, run } = runner;
@@ -216,8 +224,8 @@ export default function WishList() {
             {(p) => <Avatar id={params.profileId} name={p().display_name} size="lg" />}
           </Show>
           <h1>{title()}</h1>
-          <Show when={showSwitcher()}>
-            <ListMenu value={params.profileId} options={switchOptions()} />
+          <Show when={showMenu()}>
+            <ListMenu value={params.profileId} sections={menuSections()} />
           </Show>
           <Show
             when={
