@@ -7,7 +7,6 @@
   inset: 0 0 auto;
   height: 32px;
   pointer-events: none;
-  overflow: hidden;
   z-index: 1;
   /* The sidebar layout centres everything in #root at 720px (TabBar.module.css); the garland spans the window. */
   width: auto !important;
@@ -15,7 +14,13 @@
   margin: 0 !important;
 }
 
+/* Wider than any screen, cut off at the window's edge so the page never scrolls sideways. */
 .garland {
+  height: 100%;
+  overflow: hidden;
+}
+
+.row {
   display: flex;
   width: max-content;
 }
@@ -36,12 +41,9 @@
   position: absolute;
   top: 0;
   left: 58%;
-  height: 120px;
-  overflow: visible;
-}
-
-/* The spider hangs lower than the garland. */
-.decorations:has(.spider) {
+  height: 80px;
+  /* Hangs over the page's top padding and heading, never wider than the window. */
+  max-width: 24px;
   overflow: visible;
 }
 
@@ -105,7 +107,7 @@
 
 @keyframes dangle {
   from {
-    transform: translateY(-40px);
+    transform: translateY(-30px);
   }
   to {
     transform: translateY(0);
