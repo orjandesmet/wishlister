@@ -7,7 +7,13 @@
 /** An amount in a currency, as an ISO 4217 code ("EUR"). */
 export type Price = { amount: number; currency: string };
 
-export type PageInfo = { title: string | null; image: string | null; price: Price | null };
+export type PageInfo = {
+  title: string | null;
+  image: string | null;
+  price: Price | null;
+  /** The link is a picture itself (an image/* answer): it's the item's picture, nothing more. */
+  isImage?: true;
+};
 
 /** Stop reading the page after this much: some shops put megabytes of inline CSS in the <head>. */
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -137,7 +143,7 @@ export async function lookUpPage(
     return { title: null, image: null, price: null };
   }
   const direct = withoutBlockPage(await fetchPageInfo(url, fetchImpl), url);
-  if (direct.title) return direct;
+  if (direct.title || direct.isImage) return direct;
   const microlink = withoutBlockPage(await fetchMicrolink(url, microlinkKey, fetchImpl), url);
   return {
     title: microlink.title,
@@ -273,6 +279,10 @@ export async function fetchPageInfo(
         continue;
       }
       const type = response.headers.get("content-type") ?? "";
+      if (response.ok && /^image\//i.test(type)) {
+        await response.body?.cancel();
+        return { title: null, image: url, price: null, isImage: true };
+      }
       if (!response.ok || !/html/i.test(type)) {
         await response.body?.cancel();
         return failed(rawUrl, `status ${response.status}, ${type || "no content type"}`, url);

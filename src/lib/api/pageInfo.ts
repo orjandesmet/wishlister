@@ -1,18 +1,28 @@
+import { isImageLink } from "../links.ts";
 import { supabase } from "../supabase.ts";
 
 /** An amount in a currency, as an ISO 4217 code ("EUR"). */
 export type Price = { amount: number; currency: string };
 
-export type PageInfo = { title: string | null; image: string | null; price: Price | null };
+export type PageInfo = {
+  title: string | null;
+  image: string | null;
+  price: Price | null;
+  /** The link is a picture itself: it becomes the item's picture, there's no title or price. */
+  isImage?: boolean;
+};
 
 const NOTHING: PageInfo = { title: null, image: null, price: null };
 
 /**
  * The name, picture and price of a linked page, read by the page-info Netlify
  * function (browsers can't read other sites' pages). Never throws and gives up
- * after a few seconds: a page that can't be read just gives nulls.
+ * after a few seconds: a page that can't be read just gives nulls. A link that
+ * ends in .jpg, .png… is taken as the picture without asking the function; one
+ * without such an ending is recognised by the function from its content type.
  */
 export async function getPageInfo(url: string): Promise<PageInfo> {
+  if (isImageLink(url)) return { ...NOTHING, image: url, isImage: true };
   try {
     const { data } = await supabase.auth.getSession();
     const response = await fetch("/.netlify/functions/page-info", {
@@ -26,7 +36,12 @@ export async function getPageInfo(url: string): Promise<PageInfo> {
     });
     if (!response.ok) return NOTHING;
     const info = (await response.json()) as Partial<PageInfo>;
-    return { title: info.title || null, image: info.image || null, price: info.price ?? null };
+    return {
+      title: info.title || null,
+      image: info.image || null,
+      price: info.price ?? null,
+      isImage: info.isImage === true,
+    };
   } catch {
     return NOTHING;
   }
