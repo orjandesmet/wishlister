@@ -15,6 +15,7 @@ import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import { Check } from "./Check.tsx";
 import { Chip } from "./Chip.tsx";
+import { ItemPicture } from "./ItemPicture.tsx";
 import styles from "./ItemCard.module.css";
 
 /**
@@ -156,35 +157,44 @@ export function ItemCard(props: ItemCardProps) {
           {t("item.notWanted")}
         </p>
       </Show>
-      <div class={styles.head}>
-        <Show
-          when={props.selecting}
-          fallback={<strong class={styles.name}>{props.item.name}</strong>}
-        >
-          {/* The whole row is the label, so tapping anywhere on it ticks the box. */}
-          <Check class={styles.selectRow}>
-            <input
-              type="checkbox"
-              checked={props.selected ?? false}
-              onChange={() => props.onToggleSelect?.()}
-            />
-            <strong class={styles.name}>{props.item.name}</strong>
-          </Check>
+      <div class={styles.top}>
+        <Show when={props.item.image_url}>
+          {(src) => <ItemPicture src={src()} name={props.item.name} zoomable={!props.selecting} />}
         </Show>
-        <Show when={props.canEdit && !props.selecting}>
-          <div class={styles.manage}>
-            <A class={u.link} href={`/items/${props.item.id}/edit`}>
-              <EditLabel label={t("common.edit")} of={props.item.name} />
-            </A>
-            <Button variant="link" danger onClick={() => props.onRemove()}>
-              <RemoveLabel of={props.item.name} />
-            </Button>
+        <div class={styles.topText}>
+          <div class={styles.head}>
+            <Show
+              when={props.selecting}
+              fallback={<strong class={styles.name}>{props.item.name}</strong>}
+            >
+              {/* The whole row is the label, so tapping anywhere on it ticks the box. */}
+              <Check class={styles.selectRow}>
+                <input
+                  type="checkbox"
+                  checked={props.selected ?? false}
+                  onChange={() => props.onToggleSelect?.()}
+                />
+                <strong class={styles.name}>{props.item.name}</strong>
+              </Check>
+            </Show>
+            <Show when={props.canEdit && !props.selecting}>
+              <div class={styles.manage}>
+                <A class={u.link} href={`/items/${props.item.id}/edit`}>
+                  <EditLabel label={t("common.edit")} of={props.item.name} />
+                </A>
+                <Button variant="link" danger onClick={() => props.onRemove()}>
+                  <RemoveLabel of={props.item.name} />
+                </Button>
+              </div>
+            </Show>
           </div>
-        </Show>
+          <Show
+            when={!props.item.not_wanted && props.item.price !== null && props.item.price_currency}
+          >
+            {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
+          </Show>
+        </div>
       </div>
-      <Show when={!props.item.not_wanted && props.item.price !== null && props.item.price_currency}>
-        {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
-      </Show>
       <Show when={props.item.category || showUrl()}>
         <div class={styles.meta}>
           <Show when={props.item.category}>

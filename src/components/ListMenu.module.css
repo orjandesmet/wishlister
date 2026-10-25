@@ -1,4 +1,4 @@
-/* Parents: a chevron beside the title opens a menu of their own and their children's lists. */
+/* A chevron beside the title opens a menu of your own, your children's and your groups' lists. */
 .menuButton {
   flex-shrink: 0;
   width: 36px;
@@ -25,7 +25,13 @@
 }
 
 .menu {
-  min-width: 240px;
+  --menu-width: min(280px, calc(100vw - 32px));
+  width: var(--menu-width);
+  /* Big families or many groups: the menu scrolls instead of running off the screen. */
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+  /* Scrolling past the end of the menu doesn't scroll the page behind it. */
+  overscroll-behavior: contain;
   margin: 0;
   padding: 8px;
   flex-direction: column;
@@ -40,6 +46,27 @@
 
 .menu:popover-open {
   display: flex;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section + .section {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.heading {
+  margin: 4px 12px 2px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
 }
 
 .menu .option {
@@ -60,10 +87,17 @@
   font-weight: 600;
 }
 
-@supports (position-area: bottom) {
+/*
+ * Below the chevron, slid left when it sits too far right, but never past the 16px page gutter.
+ * One fixed rule rather than position-try fallbacks: Safari picks the fallback a frame late,
+ * so the menu jumped sideways while it opened.
+ */
+@supports (top: anchor(bottom)) {
   .menu {
     position-anchor: --list-menu;
-    position-area: bottom span-right;
+    inset: auto;
+    top: anchor(bottom);
+    left: clamp(16px, anchor(left), calc(100% - 16px - var(--menu-width)));
     margin-top: 8px;
   }
 }

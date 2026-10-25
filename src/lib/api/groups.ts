@@ -61,8 +61,37 @@ export async function getInvites(groupId: GroupId): Promise<string[]> {
  * Runs in a Netlify function because it needs Supabase's secret key.
  */
 export async function sendInviteEmail(groupId: GroupId, email: string) {
+  await callMailFunction("send-invite", groupId, email, "Couldn't send the invite email");
+}
+
+/**
+ * Lets someone who already had an account know a manager added them to the group.
+ * "not_set_up" means the site can't send emails (yet); they're in the group anyway.
+ */
+export async function sendAddedEmail(
+  groupId: GroupId,
+  email: string,
+): Promise<"sent" | "not_set_up"> {
+  const status = await callMailFunction(
+    "send-added-email",
+    groupId,
+    email,
+    "Couldn't send the email",
+    [503],
+  );
+  return status === 503 ? "not_set_up" : "sent";
+}
+
+/** Calls a Netlify mail function as the signed-in user. Throws on any status not in `allowed`. */
+async function callMailFunction(
+  name: string,
+  groupId: GroupId,
+  email: string,
+  failure: string,
+  allowed: number[] = [],
+): Promise<number> {
   const { data } = await supabase.auth.getSession();
-  const response = await fetch("/.netlify/functions/send-invite", {
+  const response = await fetch(`/.netlify/functions/${name}`, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${data.session?.access_token ?? ""}`,
@@ -70,10 +99,11 @@ export async function sendInviteEmail(groupId: GroupId, email: string) {
     },
     body: JSON.stringify({ groupId, email }),
   });
-  if (!response.ok) {
+  if (!response.ok && !allowed.includes(response.status)) {
     const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(body?.message ?? `Couldn't send the invite email (${response.status})`);
+    throw new Error(body?.message ?? `${failure} (${response.status})`);
   }
+  return response.status;
 }
 
 export async function cancelInvite(groupId: GroupId, email: string) {
