@@ -22,17 +22,6 @@
   min-width: 0;
 }
 
-/* Shop pictures come in every shape and often on white: shown whole on a white tile. */
-.thumb {
-  flex-shrink: 0;
-  width: 72px;
-  height: 72px;
-  object-fit: contain;
-  background: #fff;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-small);
-}
-
 .head {
   display: flex;
   align-items: baseline;

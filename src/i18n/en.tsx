@@ -16,6 +16,7 @@ export const en = {
     cancel: "Cancel",
     edit: "Edit",
     remove: "Remove",
+    close: "Close",
     delete: "Delete",
     someone: "someone",
   },
@@ -173,6 +174,8 @@ export const en = {
       `Delete ${p.name}'s profile and wishlist for everyone? This can't be undone.`,
   },
   item: {
+    viewPicture: (p: { name: string }) => `View picture: ${p.name}`,
+    pictureOf: (p: { name: string }) => `Picture of ${p.name}`,
     onlyVisibleIn: (p: { groups: JSX.Element }) => <>Only visible in {p.groups}</>,
     private: "Not shared with any group",
     youBought: "You bought this",

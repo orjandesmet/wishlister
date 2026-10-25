@@ -29,7 +29,7 @@ import { Card } from "../components/Card.tsx";
 import { Check } from "../components/Check.tsx";
 import styles from "./ItemForm.module.css";
 import { announce, focusSoon, usePageTitle } from "../lib/a11y.ts";
-import { ItemThumbnail } from "../components/ItemCard.tsx";
+import { ItemThumbnail } from "../components/ItemPicture.tsx";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {

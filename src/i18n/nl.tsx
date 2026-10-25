@@ -10,6 +10,7 @@ export const nl: Dictionary = {
     cancel: "Annuleren",
     edit: "Bewerken",
     remove: "Verwijderen",
+    close: "Sluiten",
     delete: "Wissen",
     someone: "iemand",
   },
@@ -164,6 +165,8 @@ export const nl: Dictionary = {
       `Het profiel en verlanglijstje van ${p.name} voor iedereen wissen? Dit kan niet ongedaan gemaakt worden.`,
   },
   item: {
+    viewPicture: (p) => `Afbeelding bekijken: ${p.name}`,
+    pictureOf: (p) => `Afbeelding van ${p.name}`,
     onlyVisibleIn: (p) => <>Alleen zichtbaar in {p.groups}</>,
     private: "Met geen enkele groep gedeeld",
     youBought: "Jij hebt dit gekocht",

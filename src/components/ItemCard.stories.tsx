@@ -1,6 +1,6 @@
 import { createSignal } from "solid-js";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
-import { fn } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { ItemCard } from "./ItemCard.tsx";
@@ -145,6 +145,16 @@ export const ForeignPrice: Story = {
 /** The linked page's picture, beside the name. Screen readers skip it: the name says it all. */
 export const WithPicture: Story = {
   args: { item: { ...meta.args.item, image_url: bonsaiPicture } },
+};
+
+/** Tapping the picture opens it bigger; Close (or Escape, or tapping outside) brings you back. */
+export const PictureOpened: Story = {
+  args: WithPicture.args,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: /bonsai/i }));
+    await expect(canvas.getByRole("dialog")).toBeVisible();
+  },
 };
 
 /** A picture that isn't square is shown whole. */
