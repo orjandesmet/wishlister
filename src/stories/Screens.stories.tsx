@@ -269,6 +269,21 @@ export const OwnList: Story = {
   play: () => openPopover("quick-add-popover", quickAddIsPopover),
 };
 
+/** The list menu with many groups: it scrolls on its own and sits above the quick add button. */
+export const ListMenuLong: Story = {
+  beforeEach: () => {
+    const names = ["anna", "bert", "carla", "dirk", "eva", "fien", "gust", "hanne", "ines"];
+    const club = (n: number, name: string): Group => ({
+      id: `group-${n}` as GroupId,
+      name,
+      group_members: [member(orjan, "member"), ...names.map((id) => member(profile(id), "member"))],
+    });
+    data.groups = async () => [family, club(3, "Colleagues"), club(4, "Football"), bookClub];
+  },
+  render: app("/lists/me"),
+  play: () => openPopover("list-menu"),
+};
+
 export const Settings: Story = { render: app("/settings") };
 
 export const Login: Story = {
