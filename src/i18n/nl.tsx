@@ -95,6 +95,10 @@ export const nl: Dictionary = {
     inviteByEmail: "Uitnodigen via e-mail",
     invite: "Uitnodigen",
     added: (p) => `${p.email} is aan de groep toegevoegd.`,
+    addedEmailed: (p) =>
+      `${p.email} is aan de groep toegevoegd. We hebben een e-mail gestuurd om het te laten weten.`,
+    addedEmailFailed: (p) =>
+      `${p.email} is aan de groep toegevoegd, maar de e-mail om het te laten weten is niet verstuurd: ${p.message}`,
     alreadyInvited: (p) => `${p.email} is al uitgenodigd.`,
     alreadyMember: (p) => `${p.email} zit al in de groep.`,
     inviteSent: (p) =>

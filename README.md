@@ -96,28 +96,30 @@ register it in `src/lib/i18n.ts`, and add a branch for it to the email templates
 
 ## Project layout
 
-| Path                       | What it is                                                          |
-| -------------------------- | ------------------------------------------------------------------- |
-| `src/lib/supabase.ts`      | The Supabase client                                                 |
-| `src/lib/auth.tsx`         | `AuthProvider` and `useAuth()`: the signed-in session as a signal   |
-| `src/pages/`               | One component per screen                                            |
-| `src/components/`          | Presentational components and their Storybook stories               |
-| `.storybook/`              | Storybook config                                                    |
-| `src/index.css`            | Theme tokens (colours, spacing) and base styles                     |
-| `src/utilities.module.css` | Shared text and layout classes (see Styles)                         |
-| `src/i18n/`                | UI text in English and Dutch, and language detection                |
-| `supabase/templates/`      | Sign-in and invite email bodies, to paste into Supabase             |
-| `supabase/migrations/`     | Database schema and row-level security policies                     |
-| `supabase/seed.sql`        | Made-up accounts, groups and items for the local Supabase           |
-| `supabase/config.toml`     | Settings for the local Supabase (`vp run db:start`)                 |
-| `netlify/functions/`       | `keepalive`: daily ping so the free Supabase project never pauses   |
-|                            | `send-invite`: emails people invited to a group who have no account |
-|                            | `page-info`: title and picture of a link pasted into quick add      |
-|                            | `send-digests`: evening email to followers of lists that changed    |
-| `netlify/lib/mail.ts`      | `sendEmail()`: app emails (not sign-in emails) through Resend       |
-| `netlify/lib/digest.ts`    | Builds the daily "what changed on lists you follow" emails          |
-| `netlify/lib/pageInfo.ts`  | Reads a page's `og:` tags, with Microlink as fallback               |
-| `public/icon.svg`          | Source of the home-screen icons (`icon-*.png`)                      |
+| Path                        | What it is                                                          |
+| --------------------------- | ------------------------------------------------------------------- |
+| `src/lib/supabase.ts`       | The Supabase client                                                 |
+| `src/lib/auth.tsx`          | `AuthProvider` and `useAuth()`: the signed-in session as a signal   |
+| `src/pages/`                | One component per screen                                            |
+| `src/components/`           | Presentational components and their Storybook stories               |
+| `.storybook/`               | Storybook config                                                    |
+| `src/index.css`             | Theme tokens (colours, spacing) and base styles                     |
+| `src/utilities.module.css`  | Shared text and layout classes (see Styles)                         |
+| `src/i18n/`                 | UI text in English and Dutch, and language detection                |
+| `supabase/templates/`       | Sign-in and invite email bodies, to paste into Supabase             |
+| `supabase/migrations/`      | Database schema and row-level security policies                     |
+| `supabase/seed.sql`         | Made-up accounts, groups and items for the local Supabase           |
+| `supabase/config.toml`      | Settings for the local Supabase (`vp run db:start`)                 |
+| `netlify/functions/`        | `keepalive`: daily ping so the free Supabase project never pauses   |
+|                             | `send-invite`: emails people invited to a group who have no account |
+|                             | `send-added-email`: tells people with an account they were added    |
+|                             | `page-info`: title and picture of a link pasted into quick add      |
+|                             | `send-digests`: evening email to followers of lists that changed    |
+| `netlify/lib/mail.ts`       | `sendEmail()`: app emails (not sign-in emails) through Resend       |
+| `netlify/lib/digest.ts`     | Builds the daily "what changed on lists you follow" emails          |
+| `netlify/lib/addedEmail.ts` | Builds the "you were added to a group" email                        |
+| `netlify/lib/pageInfo.ts`   | Reads a page's `og:` tags, with Microlink as fallback               |
+| `public/icon.svg`           | Source of the home-screen icons (`icon-*.png`)                      |
 
 ## Installing on a phone
 
@@ -197,6 +199,10 @@ UTC. It also needs `SUPABASE_SECRET_KEY` (see `send-invite`). Until Resend is se
 nothing, and changes from that time are never mailed. One digest goes to each follower per
 day, so the 100-a-day limit holds as long as fewer than 100 people follow a list on the same
 day.
+
+The `send-added-email` function tells someone who already has an account that a manager added
+them to a group. It also needs `SUPABASE_SECRET_KEY`. Until Resend is set up, people are still
+added, just without the email.
 
 ### 4. Microlink (link titles in quick add)
 

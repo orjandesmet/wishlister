@@ -101,6 +101,10 @@ export const en = {
     inviteByEmail: "Invite by email",
     invite: "Invite",
     added: (p: { email: string }) => `${p.email} was added to the group.`,
+    addedEmailed: (p: { email: string }) =>
+      `${p.email} was added to the group. We emailed them to let them know.`,
+    addedEmailFailed: (p: { email: string; message: string }) =>
+      `${p.email} was added to the group, but the email to let them know didn't go out: ${p.message}`,
     alreadyInvited: (p: { email: string }) => `${p.email} is already invited.`,
     alreadyMember: (p: { email: string }) => `${p.email} is already in the group.`,
     inviteSent: (p: { email: string }) =>

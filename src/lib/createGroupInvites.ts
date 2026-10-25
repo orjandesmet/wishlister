@@ -4,6 +4,7 @@ import {
   getJoinLink,
   inviteToGroup,
   resetJoinLink,
+  sendAddedEmail,
   sendInviteEmail,
   type InviteResult,
 } from "./api/groups.ts";
@@ -30,6 +31,16 @@ export function createGroupInvites(data: GroupData, runner: ActionRunner) {
     }
   }
 
+  /** Lets someone who already had an account know they're in the group now. */
+  async function emailAdded(email: string) {
+    try {
+      const sent = await sendAddedEmail(data.groupId(), email);
+      setNotice(t(sent === "sent" ? "group.addedEmailed" : "group.added", { email }));
+    } catch (e) {
+      setError(t("group.addedEmailFailed", { email, message: (e as Error).message }));
+    }
+  }
+
   const onInvite = (event: SubmitEvent) => {
     event.preventDefault();
     void run(async () => {
@@ -42,8 +53,13 @@ export function createGroupInvites(data: GroupData, runner: ActionRunner) {
         await emailInvite(email);
         return;
       }
-      const notices: Record<Exclude<InviteResult, "invited">, string> = {
-        added: t("group.added", { email }),
+      if (result === "added") {
+        // They're in the group already; the email only tells them so.
+        await emailAdded(email);
+        await refetch();
+        return;
+      }
+      const notices: Record<Exclude<InviteResult, "invited" | "added">, string> = {
         already_invited: t("group.alreadyInvited", { email }),
         already_member: t("group.alreadyMember", { email }),
       };
