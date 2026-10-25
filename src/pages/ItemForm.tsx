@@ -28,7 +28,8 @@ import { Button } from "../components/Button.tsx";
 import { Card } from "../components/Card.tsx";
 import { Check } from "../components/Check.tsx";
 import styles from "./ItemForm.module.css";
-import { focusSoon, usePageTitle } from "../lib/a11y.ts";
+import { announce, focusSoon, usePageTitle } from "../lib/a11y.ts";
+import { ItemThumbnail } from "../components/ItemPicture.tsx";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {
@@ -65,6 +66,7 @@ export default function ItemForm() {
   const [error, setError] = createSignal<string>();
   const [savedName, setSavedName] = createSignal<string>();
   const [nameInput, setNameInput] = createSignal<HTMLInputElement>();
+  const [linkInput, setLinkInput] = createSignal<HTMLInputElement>();
 
   // Looking up the linked page, like quick add does: its picture, its price and (only
   // when no name was typed yet) its title. `lookedUp` is the last link looked up, so the
@@ -106,6 +108,14 @@ export default function ItemForm() {
     setLookup(page.isImage ? "image" : filled ? "filled" : "nothing");
   }
 
+  // Not the picture you want: saved without one. Changing the link looks up a new one.
+  function removePicture() {
+    setImageUrl(null);
+    announce(t("itemForm.pictureRemoved"));
+    // The button is gone; back to the link it came from.
+    focusSoon(linkInput);
+  }
+
   // Typing or pasting: look up once the link has stood still for a moment.
   function onUrlInput(text: string) {
     setUrl(text);
@@ -122,6 +132,7 @@ export default function ItemForm() {
       setUrl(loaded.url ?? "");
       // Opening an item to edit it doesn't look up its link again; changing the link does.
       lookedUp = lookupUrl(loaded.url ?? "");
+      setImageUrl(loaded.image_url);
       setCategory(loaded.category ?? "");
       setNotWanted(loaded.not_wanted);
       if (loaded.price !== null && loaded.price_currency) {
@@ -234,6 +245,7 @@ export default function ItemForm() {
           <label>
             {t("itemForm.link")}
             <input
+              ref={setLinkInput}
               type="url"
               inputmode="url"
               placeholder="https://"
@@ -248,6 +260,19 @@ export default function ItemForm() {
             <Show when={lookup() === "image"}>{t("itemForm.imageLink")}</Show>
             <Show when={lookup() === "nothing"}>{t("itemForm.nothingFromLink")}</Show>
           </p>
+          <Show when={url().trim() && imageUrl()}>
+            {(src) => (
+              <div class={styles.picture}>
+                <ItemThumbnail src={src()} />
+                <div class={`${u.stack} ${u.smallGap} ${styles.pictureText}`}>
+                  <span class={`${u.muted} ${u.small}`}>{t("itemForm.pictureFromLink")}</span>
+                  <Button variant="link" danger onClick={removePicture}>
+                    {t("itemForm.removePicture")}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </Show>
           <label>
             {t("itemForm.category")}
             <input
