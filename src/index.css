@@ -55,9 +55,10 @@
 }
 
 /*
- * Themes (lib/theme.ts) swap the surface and accent tokens; text and the warning and danger
- * colours stay. Each keeps a light and a dark value, with white (or near-black) on the accent at
- * 4.5:1 or more. The Storybook toolbar has a brush to preview them.
+ * Seasonal themes (lib/theme.ts) swap the surface and accent tokens; text and the warning and
+ * danger colours stay. Each keeps a light and a dark value, with white (or near-black) on the
+ * accent at 4.5:1 or more; Halloween is dark only. Try one with ?theme=halloween on the dev
+ * server, or the brush in the Storybook toolbar.
  */
 :root[data-theme="christmas"] {
   --bg: light-dark(#f6f3ee, #10120f);
@@ -73,16 +74,17 @@
   --positive-ink: light-dark(#0f3d22, #a9e3bf);
 }
 
-:root[data-theme="sinterklaas"] {
-  --bg: light-dark(#f8f3e8, #14110b);
-  --surface: light-dark(#fffcf5, #1e1a12);
-  --raised: light-dark(#f1e9d8, #29231a);
-  --border: light-dark(#eadfc8, #352d20);
-  --control: light-dark(#d9cbb0, #4a3f2c);
-  --accent: light-dark(#b5172f, #f2c14e);
+/* Midnight blue and champagne gold. */
+:root[data-theme="newYear"] {
+  --bg: light-dark(#f2f3f8, #0b0d18);
+  --surface: light-dark(#ffffff, #151826);
+  --raised: light-dark(#e9ebf3, #1f2333);
+  --border: light-dark(#e1e4ee, #2a2e40);
+  --control: light-dark(#cfd3e1, #3d4258);
+  --accent: light-dark(#1f2a6b, #f2c14e);
   --accent-contrast: light-dark(#ffffff, #1f1500);
-  --accent-soft: light-dark(#fbeec8, #3b2e12);
-  --accent-ink: light-dark(#5c3d00, #ffe3a3);
+  --accent-soft: light-dark(#fbf0d0, #2f2a17);
+  --accent-ink: light-dark(#5c4300, #ffe3a3);
 }
 
 :root[data-theme="birthday"] {
@@ -95,6 +97,40 @@
   --accent-contrast: light-dark(#ffffff, #1a0b2e);
   --accent-soft: light-dark(#f1e4ff, #2e2142);
   --accent-ink: light-dark(#44107a, #e6d2ff);
+}
+
+/* Always dark: pumpkin on near-black. */
+:root[data-theme="halloween"] {
+  color-scheme: dark;
+  --bg: #0f0d0b;
+  --surface: #1a1714;
+  --raised: #25211c;
+  --border: #332d26;
+  --control: #4a4137;
+  --accent: #f28c28;
+  --accent-contrast: #1c0d00;
+  --accent-soft: #3a2410;
+  --accent-ink: #ffcf9e;
+  --positive-bg: #1f2a12;
+  --positive-ink: #c7e89a;
+}
+
+/* Spring pastels with a leafy green accent. */
+:root[data-theme="easter"] {
+  --bg: light-dark(#f6f8f1, #0e110c);
+  --surface: light-dark(#ffffff, #181c15);
+  --raised: light-dark(#edf2e4, #22281d);
+  --border: light-dark(#e3e9d8, #2d3426);
+  --control: light-dark(#cfd8c0, #414a37);
+  --accent: light-dark(#3b7a1e, #9fdc7c);
+  --accent-contrast: light-dark(#ffffff, #0d1f04);
+  --accent-soft: light-dark(#fff1c2, #2f2a12);
+  --accent-ink: light-dark(#5c4600, #ffe9a3);
+}
+
+/* Room at the top for the theme's garland (ThemeDecorations.tsx). */
+:root[data-theme] body {
+  padding-top: 20px;
 }
 
 /* Phones: tighter page margins, gaps and card padding. */

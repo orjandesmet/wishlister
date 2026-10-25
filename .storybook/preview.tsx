@@ -3,7 +3,7 @@ import type { Preview } from "storybook-solidjs-vite";
 import { sb } from "storybook/test";
 import { isLocale } from "../src/i18n/locale.ts";
 import { setLocale } from "../src/lib/i18n.ts";
-import { isTheme } from "../src/lib/theme.ts";
+import { isTheme, setThemePreview } from "../src/lib/theme.ts";
 import "../src/index.css";
 
 // The Screens stories render the real pages. Their data comes from these mocks instead of
@@ -50,16 +50,18 @@ export default {
         dynamicTitle: true,
       },
     },
-    // A palette in the toolbar puts every story in one of the app's themes.
+    // A brush in the toolbar puts every story in one of the seasonal themes.
     appTheme: {
       description: "App theme",
       toolbar: {
         icon: "paintbrush",
         items: [
-          { value: "default", title: "Default" },
+          { value: "none", title: "No theme" },
           { value: "christmas", title: "Christmas" },
-          { value: "sinterklaas", title: "Sinterklaas" },
-          { value: "birthday", title: "Birthday" },
+          { value: "newYear", title: "New Year" },
+          { value: "birthday", title: "Birthday (1 March)" },
+          { value: "halloween", title: "Halloween" },
+          { value: "easter", title: "Easter" },
         ],
         dynamicTitle: true,
       },
@@ -90,12 +92,14 @@ export default {
       context.parameters.router === false ? <Story /> : <MemoryRouter root={() => <Story />} />,
     (Story, context) => {
       const theme: unknown = context.globals.theme;
+      // Left to the stylesheet when "System", so Halloween can still force dark.
       document.documentElement.style.colorScheme =
-        theme === "light" || theme === "dark" ? theme : "light dark";
+        theme === "light" || theme === "dark" ? theme : "";
+      // The Screens stories show the theme's decorations and hats from this preview.
       const appTheme: unknown = context.globals.appTheme;
-      if (isTheme(appTheme) && appTheme !== "default") {
-        document.documentElement.dataset.theme = appTheme;
-      } else delete document.documentElement.dataset.theme;
+      setThemePreview({ theme: isTheme(appTheme) ? appTheme : "none" });
+      if (isTheme(appTheme)) document.documentElement.dataset.theme = appTheme;
+      else delete document.documentElement.dataset.theme;
       return <Story />;
     },
     (Story, context) => {

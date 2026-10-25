@@ -8,7 +8,6 @@ import {
   type OccasionInput,
 } from "./api/occasions.ts";
 import { announce, focusHeading } from "./a11y.ts";
-import { refreshOccasionTheme } from "./accountTheme.ts";
 import type { ActionRunner } from "./createActionRunner.ts";
 import type { GroupId, OccasionId } from "./ids.ts";
 import { t } from "./i18n.ts";
@@ -24,8 +23,6 @@ export function createGroupOccasions(groupId: () => GroupId, runner: ActionRunne
       await action();
       saved = true;
       await refetch();
-      // The change can switch the app's theme on or off.
-      void refreshOccasionTheme();
     });
     return saved;
   }

@@ -28,7 +28,6 @@ import {
 } from "../lib/api/items.ts";
 import {
   getNextSharedOccasion,
-  getThemedOccasions,
   getOccasions,
   getUpcomingOccasions,
   type Occasion,
@@ -38,6 +37,7 @@ import {
   getManagedProfiles,
   getMyProfile,
   getProfileDetails,
+  type MyProfile,
   type Profile,
   type ProfileDetails,
 } from "../lib/api/profiles.ts";
@@ -78,7 +78,6 @@ const meta = {
     mocked(getUpcomingOccasions).mockImplementation(async () => data.occasions);
     mocked(getOccasions).mockImplementation(async () => data.occasions);
     mocked(getNextSharedOccasion).mockImplementation(async () => data.occasions[0] ?? null);
-    mocked(getThemedOccasions).mockImplementation(async () => []);
     mocked(getItems).mockImplementation((id) => data.items(id));
     mocked(getItem).mockImplementation(async (id) => {
       const found = Object.values(data.lists)
@@ -123,7 +122,7 @@ const profile = (id: string, child = false): Profile => ({
   account_id: child ? null : (`account-${id}` as AccountId),
 });
 // Your own profile is "Orjan", the rest are named after their id.
-const orjan: Profile = { ...profile("me"), display_name: "Orjan" };
+const orjan: MyProfile = { ...profile("me"), display_name: "Orjan", seasonal_themes: true };
 
 const member = (p: Profile, role: Member["role"]): Member => ({
   profile_id: p.id,
@@ -156,7 +155,6 @@ const occasion = (id: string, name: string, date: string): Occasion => ({
   group_id: family.id,
   name,
   date,
-  theme: null,
 });
 const annasBirthday = occasion("o1", "Anna's birthday", "2026-11-02");
 

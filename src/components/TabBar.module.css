@@ -83,7 +83,7 @@
     color: var(--text-strong);
   }
 
-  .brand img {
+  .brandMark {
     width: 28px;
     height: 28px;
     transform: rotate(-6deg);

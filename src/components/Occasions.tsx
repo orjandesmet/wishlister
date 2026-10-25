@@ -6,12 +6,10 @@ import type { Occasion, OccasionInput } from "../lib/api/occasions.ts";
 import { compareNames, locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
 import { formatOccasionDate, splitOccasions, type IsoDate } from "../lib/occasions.ts";
-import { occasionThemes, type OccasionTheme } from "../lib/theme.ts";
 import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import styles from "./Occasions.module.css";
-import { Select } from "./Select.tsx";
 
 export type OccasionsProps = {
   occasions: Occasion[];
@@ -32,14 +30,12 @@ export function Occasions(props: OccasionsProps) {
   const [editing, setEditing] = createSignal<OccasionId>();
   const [name, setName] = createSignal("");
   const [date, setDate] = createSignal("");
-  const [theme, setTheme] = createSignal<OccasionTheme | null>(null);
 
   const onAdd = async (event: SubmitEvent) => {
     event.preventDefault();
-    if (!(await props.onAdd({ name: name(), date: date(), theme: theme() }))) return;
+    if (!(await props.onAdd({ name: name(), date: date() }))) return;
     setName("");
     setDate("");
-    setTheme(null);
   };
 
   // Editing swaps a row for a form and back, so focus is moved by hand: the form focuses its
@@ -60,9 +56,6 @@ export function Occasions(props: OccasionsProps) {
             <span>{occasion.name}</span>
             <span class={`${u.muted} ${u.small}`}>
               {formatOccasionDate(occasion.date, locale())}
-              <Show when={occasion.theme}>
-                {(theme) => <> · {t("themes.occasionBadge", { theme: t(`themes.${theme()}`) })}</>}
-              </Show>
             </span>
           </span>
           <Show when={props.canEdit}>
@@ -129,7 +122,6 @@ export function Occasions(props: OccasionsProps) {
               onInput={(e) => setDate(e.currentTarget.value)}
             />
           </label>
-          <ThemeField value={theme()} onChange={setTheme} />
           <button type="submit">{t("occasions.add")}</button>
         </form>
       </Show>
@@ -149,7 +141,6 @@ function OccasionForm(props: OccasionFormProps) {
   // Only the starting values: reading props once here, outside JSX, is on purpose.
   const [name, setName] = createSignal(props.initial.name);
   const [date, setDate] = createSignal(props.initial.date);
-  const [theme, setTheme] = createSignal(props.initial.theme);
   // It opens from an Edit button that's gone now, so it starts in the first field.
   // oxlint-disable-next-line no-unassigned-vars
   let nameInput: HTMLInputElement | undefined;
@@ -157,7 +148,7 @@ function OccasionForm(props: OccasionFormProps) {
 
   const onSubmit = (event: SubmitEvent) => {
     event.preventDefault();
-    void props.onSubmit({ name: name(), date: date(), theme: theme() });
+    void props.onSubmit({ name: name(), date: date() });
   };
 
   return (
@@ -180,7 +171,6 @@ function OccasionForm(props: OccasionFormProps) {
           onInput={(e) => setDate(e.currentTarget.value)}
         />
       </label>
-      <ThemeField value={theme()} onChange={setTheme} />
       <div class={u.row}>
         <button type="submit">{props.submitLabel}</button>
         <Button variant="secondary" onClick={() => props.onCancel()}>
@@ -188,33 +178,5 @@ function OccasionForm(props: OccasionFormProps) {
         </Button>
       </div>
     </form>
-  );
-}
-
-/** The theme the group's members see around an occasion, or none. */
-function ThemeField(props: {
-  value: OccasionTheme | null;
-  onChange: (theme: OccasionTheme | null) => void;
-}) {
-  return (
-    <label>
-      {t("themes.occasionLabel")}
-      <Select
-        value={props.value ?? ""}
-        onChange={(e) => props.onChange((e.currentTarget.value || null) as OccasionTheme | null)}
-      >
-        <option value="" selected={props.value === null}>
-          {t("themes.none")}
-        </option>
-        <For each={occasionThemes}>
-          {(theme) => (
-            <option value={theme} selected={theme === props.value}>
-              {t(`themes.${theme}`)}
-            </option>
-          )}
-        </For>
-      </Select>
-      <span class={`${u.muted} ${u.small}`}>{t("themes.occasionHint")}</span>
-    </label>
   );
 }

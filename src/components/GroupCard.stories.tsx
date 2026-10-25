@@ -82,7 +82,6 @@ export const WithNextOccasion: Story = {
       group_id: "group-1" as GroupId,
       name: "Christmas 2026",
       date: "2026-12-25",
-      theme: null,
     },
   },
 };
@@ -94,7 +93,6 @@ export const OccasionToday: Story = {
       group_id: "group-1" as GroupId,
       name: "Birthday Anna",
       date: "2026-10-21",
-      theme: null,
     },
   },
 };

@@ -1,0 +1,113 @@
+/*
+ * Along the very top of the page, above the frame's own padding (index.css makes room with
+ * --decoration-room). It scrolls away with the page and lets every tap through.
+ */
+.decorations {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 32px;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 1;
+  /* The sidebar layout centres everything in #root at 720px (TabBar.module.css); the garland spans the window. */
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+.garland {
+  display: flex;
+  width: max-content;
+}
+
+.piece {
+  flex: none;
+  display: block;
+  overflow: visible;
+}
+
+.string {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+.spider {
+  position: absolute;
+  top: 0;
+  left: 58%;
+  height: 120px;
+  overflow: visible;
+}
+
+/* The spider hangs lower than the garland. */
+.decorations:has(.spider) {
+  overflow: visible;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bulb {
+    animation: twinkle 2.4s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.6s);
+  }
+
+  .sparkle {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: sparkle 1.8s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.45s);
+  }
+
+  .flag,
+  .egg {
+    transform-box: fill-box;
+    transform-origin: top center;
+    animation: sway 3.2s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.4s);
+  }
+
+  .bat {
+    animation: flap 0.9s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.23s);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .spider {
+    animation: dangle 5s var(--ease-out) infinite alternate;
+  }
+}
+
+@keyframes twinkle {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes sparkle {
+  50% {
+    transform: scale(0.5) rotate(45deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes sway {
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes flap {
+  50% {
+    transform: scaleY(0.6);
+  }
+}
+
+@keyframes dangle {
+  from {
+    transform: translateY(-40px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

@@ -4,17 +4,16 @@ import { createResource, createSignal, For, Show } from "solid-js";
 import { NotificationSettings } from "../components/NotificationSettings.tsx";
 import { CurrencySelect } from "../components/CurrencySelect.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
-import { ThemeSelect } from "../components/ThemeSelect.tsx";
+import { SeasonalThemes } from "../components/SeasonalThemes.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
-import { chooseKeepMyTheme, chooseTheme } from "../lib/accountTheme.ts";
-import { renameProfile } from "../lib/api/profiles.ts";
+import { renameProfile, setProfileSeasonalThemes } from "../lib/api/profiles.ts";
 import { createChild } from "../lib/api/children.ts";
 import { followList, getMyFollows, unfollowAll, unfollowList } from "../lib/api/follows.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { today } from "../lib/occasions.ts";
 import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
-import { chosenTheme, keepMyTheme, occasionNow } from "../lib/theme.ts";
+import { seasonalThemes, setSeasonalThemes, themeToday } from "../lib/theme.ts";
 import { useMe } from "../lib/me.tsx";
 import { signOutHere } from "../lib/auth.tsx";
 import u from "../utilities.module.css";
@@ -23,7 +22,7 @@ import { Card } from "../components/Card.tsx";
 import { Person } from "../components/Person.tsx";
 import { usePageTitle } from "../lib/a11y.ts";
 
-/** Your name, language, currency and theme, the children you look after, and signing out. */
+/** Your name, language, currency and seasonal themes, the children you look after, and signing out. */
 export default function Settings() {
   const me = useMe();
   const [name, setName] = createSignal(me().profile.display_name);
@@ -53,6 +52,18 @@ export default function Settings() {
       setChildName("");
       me().refetchManaged();
     } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
+  async function onSeasonalThemes(on: boolean) {
+    setError(undefined);
+    setSeasonalThemes(on);
+    try {
+      await setProfileSeasonalThemes(me().profile.id, on);
+      me().refetchProfile();
+    } catch (e) {
+      setSeasonalThemes(!on);
       setError((e as Error).message);
     }
   }
@@ -87,14 +98,10 @@ export default function Settings() {
           onChange={(next) => chooseLocale(next).catch((e: Error) => setError(e.message))}
         />
         <CurrencySelect value={displayCurrency()} onChange={setDisplayCurrency} />
-        <ThemeSelect
-          value={chosenTheme()}
-          keepMine={keepMyTheme()}
-          occasion={occasionNow()}
-          onChange={(next) => chooseTheme(next).catch((e: Error) => setError(e.message))}
-          onKeepMineChange={(next) =>
-            chooseKeepMyTheme(next).catch((e: Error) => setError(e.message))
-          }
+        <SeasonalThemes
+          on={seasonalThemes()}
+          today={themeToday()}
+          onChange={(on) => void onSeasonalThemes(on)}
         />
       </Card>
       <Card>

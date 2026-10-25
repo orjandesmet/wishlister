@@ -1,58 +1,73 @@
 import { describe, expect, test } from "vite-plus/test";
-import { activeOccasion, isTheme, themeWindow, type ThemedOccasion } from "./theme.ts";
+import { easterSunday, readThemePreview, themeOn } from "./theme.ts";
 
-const compare = (a: string, b: string) => a.localeCompare(b);
-const occasion = (name: string, date: string, theme: ThemedOccasion["theme"] = "christmas") => ({
-  name,
-  date,
-  theme,
-});
-
-describe("activeOccasion", () => {
-  test("shows a theme from two weeks before until the day after", () => {
-    const christmas = [occasion("Christmas", "2026-12-25")];
-    expect(activeOccasion(christmas, "2026-12-10", compare)).toBeUndefined();
-    expect(activeOccasion(christmas, "2026-12-11", compare)?.name).toBe("Christmas");
-    expect(activeOccasion(christmas, "2026-12-25", compare)?.name).toBe("Christmas");
-    expect(activeOccasion(christmas, "2026-12-26", compare)?.name).toBe("Christmas");
-    expect(activeOccasion(christmas, "2026-12-27", compare)).toBeUndefined();
+describe("themeOn", () => {
+  test("Christmas from 1 to 25 December", () => {
+    expect(themeOn("2026-11-30")).toBeUndefined();
+    expect(themeOn("2026-12-01")).toBe("christmas");
+    expect(themeOn("2026-12-25")).toBe("christmas");
   });
 
-  test("skips occasions without a theme", () => {
-    const occasions = [occasion("Christmas", "2026-12-25", null)];
-    expect(activeOccasion(occasions, "2026-12-20", compare)).toBeUndefined();
+  test("New Year from 26 December to 7 January", () => {
+    expect(themeOn("2026-12-26")).toBe("newYear");
+    expect(themeOn("2027-01-01")).toBe("newYear");
+    expect(themeOn("2027-01-07")).toBe("newYear");
+    expect(themeOn("2027-01-08")).toBeUndefined();
   });
 
-  test("the closest date wins across groups", () => {
-    const occasions = [
-      occasion("Christmas", "2026-12-25"),
-      occasion("Sinterklaas", "2026-12-06", "sinterklaas"),
-    ];
-    expect(activeOccasion(occasions, "2026-12-01", compare)?.name).toBe("Sinterklaas");
-    expect(activeOccasion(occasions, "2026-12-07", compare)?.name).toBe("Sinterklaas");
-    expect(activeOccasion(occasions, "2026-12-12", compare)?.name).toBe("Christmas");
+  test("birthday and Halloween only on their day", () => {
+    expect(themeOn("2027-02-28")).toBeUndefined();
+    expect(themeOn("2027-03-01")).toBe("birthday");
+    expect(themeOn("2027-03-02")).toBeUndefined();
+    expect(themeOn("2026-10-30")).toBeUndefined();
+    expect(themeOn("2026-10-31")).toBe("halloween");
+    expect(themeOn("2026-11-01")).toBeUndefined();
   });
 
-  test("an upcoming occasion beats one that just passed at the same distance", () => {
-    const occasions = [
-      occasion("Anna's birthday", "2026-11-09", "birthday"),
-      occasion("Bert's birthday", "2026-11-11", "birthday"),
-    ];
-    expect(activeOccasion(occasions, "2026-11-10", compare)?.name).toBe("Bert's birthday");
+  test("Easter from Good Friday to Easter Monday", () => {
+    // Easter 2027 is on 28 March.
+    expect(themeOn("2027-03-25")).toBeUndefined();
+    expect(themeOn("2027-03-26")).toBe("easter");
+    expect(themeOn("2027-03-28")).toBe("easter");
+    expect(themeOn("2027-03-29")).toBe("easter");
+    expect(themeOn("2027-03-30")).toBeUndefined();
   });
 
-  test("same day picks the first by name", () => {
-    const occasions = [occasion("Zoo party", "2026-12-25"), occasion("Christmas", "2026-12-25")];
-    expect(activeOccasion(occasions, "2026-12-20", compare)?.name).toBe("Christmas");
+  test("an ordinary day has none", () => {
+    expect(themeOn("2026-07-14")).toBeUndefined();
   });
 });
 
-test("themeWindow covers the dates whose theme can show on a day", () => {
-  expect(themeWindow("2026-12-31")).toEqual({ from: "2026-12-30", to: "2027-01-14" });
+test("easterSunday", () => {
+  expect(easterSunday(2026)).toBe("2026-04-05");
+  expect(easterSunday(2027)).toBe("2027-03-28");
+  expect(easterSunday(2028)).toBe("2028-04-16");
+  expect(easterSunday(2038)).toBe("2038-04-25");
+  expect(easterSunday(2285)).toBe("2285-03-22");
 });
 
-test("isTheme", () => {
-  expect(isTheme("christmas")).toBe(true);
-  expect(isTheme("halloween")).toBe(false);
-  expect(isTheme(undefined)).toBe(false);
+describe("readThemePreview", () => {
+  const url = (query: string) => new URL(`http://localhost:5173/${query}`);
+
+  test("only where previews are allowed", () => {
+    sessionStorage.clear();
+    expect(readThemePreview(url("?theme=halloween"), false)).toEqual({});
+  });
+
+  test("reads ?theme= and ?date=, and keeps them for the tab", () => {
+    sessionStorage.clear();
+    expect(readThemePreview(url("?theme=halloween"), true)).toEqual({ theme: "halloween" });
+    expect(readThemePreview(url("?date=2026-12-24"), true)).toEqual({
+      theme: "halloween",
+      date: "2026-12-24",
+    });
+    expect(readThemePreview(url(""), true)).toEqual({ theme: "halloween", date: "2026-12-24" });
+  });
+
+  test("an empty ?theme= clears it, an unknown one is ignored", () => {
+    sessionStorage.clear();
+    readThemePreview(url("?theme=easter&date=2026-12-24"), true);
+    expect(readThemePreview(url("?theme="), true)).toEqual({});
+    expect(readThemePreview(url("?theme=sinterklaas"), true)).toEqual({});
+  });
 });
