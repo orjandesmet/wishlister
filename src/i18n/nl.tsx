@@ -71,6 +71,11 @@ export const nl: Dictionary = {
     signIn: "Aanmelden",
     checking: "Controleren…",
     otherEmail: "Een ander e-mailadres gebruiken",
+    signupsClosed:
+      "Nieuwe registraties zijn momenteel gesloten. Vraag iemand uit je groep om je uit te nodigen.",
+    demoIntro:
+      "Dit is een demo. Kies als wie je wilt aanmelden. Alles wordt om de paar dagen teruggezet.",
+    demoAs: (p) => `Aanmelden als ${p.name}`,
   },
   home: {
     title: "Mijn groepen",

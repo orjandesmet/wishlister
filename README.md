@@ -228,3 +228,40 @@ Add `REEFAPI_API_KEY` in Netlify and redeploy. Each product costs 2 credits (the
 1000); failed calls are free. A product is remembered for a day while the function stays warm,
 and the remaining credits show in the function log when ReefAPI sends them. Without the key,
 or when the credits run out, bol.com links just get the name from the link.
+
+### 6. Demo site
+
+The demo is a separate copy of the app with made-up people, on its own Supabase project, so
+visitors never see or touch real data. It's a Netlify branch deploy of the `demo` branch
+(branch deploys cost no credits). With `VITE_DEMO=true` the login screen offers "Sign in as
+Alice / Bob / Carol" (the people from `supabase/seed.sql`, password `wishlister-demo`) instead
+of an email code, and inviting by email is hidden.
+
+The **Demo** workflow (`.github/workflows/demo.yml`) runs every three days, and from the
+_Actions_ tab by hand. It applies new migrations to the demo database, then
+`supabase/demo/reset.sql` wipes it and loads the seed again. That script stops if the database
+has any account outside `@example.com`, as a safety net against the real database. Pushing a
+release tag (`v*`) also moves the `demo` branch to that tag, so the demo shows the latest
+release.
+
+1. **Supabase**: create a second project (the free plan allows two), e.g. `wishlister-demo`.
+   Under _Authentication > Sign In / Providers_, turn off **Allow new users to sign up**. Under
+   _URL Configuration_, set the _Site URL_ to the demo URL (`https://demo--<site>.netlify.app`).
+   No email setup is needed.
+2. **GitHub**: in the demo project, _Connect > Session pooler_, copy the connection string with
+   the database password filled in (percent-encode special characters). Add it as the repository
+   secret `DEMO_DATABASE_URL` (_Settings > Secrets and variables > Actions_).
+3. **Actions**: run the **Demo** workflow by hand once. It builds the database and the seed.
+4. **Netlify**, _Site configuration > Environment variables_: give `VITE_SUPABASE_URL` and
+   `VITE_SUPABASE_PUBLISHABLE_KEY` a branch value for `demo` (the demo project's), and add
+   `VITE_DEMO` = `true` for the `demo` branch only.
+5. **Netlify**, _Build & deploy > Branches and deploy contexts_: under _Branch deploys_, add the
+   branch `demo`. It appears after the first release tag, or push it once by hand.
+
+## Closing registrations
+
+To stop new people from signing up, turn off **Allow new users to sign up** in Supabase
+(_Authentication > Sign In / Providers_). It works at once, with no redeploy. Anyone with an
+account can still sign in; someone new who tries gets "New registrations are closed right now",
+and invite links can't create accounts either. Group managers can still invite people by email,
+because those invites create the account on the server.

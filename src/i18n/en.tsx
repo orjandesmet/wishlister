@@ -77,6 +77,10 @@ export const en = {
     signIn: "Sign in",
     checking: "Checking…",
     otherEmail: "Use a different email",
+    signupsClosed:
+      "New registrations are closed right now. Ask someone in your group to invite you.",
+    demoIntro: "This is a demo. Pick someone to sign in as. Everything resets every few days.",
+    demoAs: (p: { name: string }) => `Sign in as ${p.name}`,
   },
   home: {
     title: "My groups",

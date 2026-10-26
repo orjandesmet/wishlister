@@ -1,11 +1,13 @@
 import { ThemedMark } from "../components/ThemedMark.tsx";
 import { useNavigate, useSearchParams } from "@solidjs/router";
-import { createEffect, createSignal, Match, Show, Switch } from "solid-js";
+import { createEffect, createSignal, For, Match, Show, Switch } from "solid-js";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { useAuth } from "../lib/auth.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
+import { demoAccounts, demoPassword, isDemo } from "../lib/demo.ts";
 import { locale, t } from "../lib/i18n.ts";
+import { isSignupClosed } from "../lib/signups.ts";
 import { supabase } from "../lib/supabase.ts";
 import u from "../utilities.module.css";
 import { Button } from "../components/Button.tsx";
@@ -16,6 +18,7 @@ import styles from "./Login.module.css";
  * Passwordless login. Supabase emails a link and a one-time code.
  * The code matters on phones: a link opens in the default browser, while the
  * app may be installed on the home screen, which keeps its own login.
+ * On the demo site, visitors pick a seed person instead.
  */
 export default function Login() {
   const { session } = useAuth();
@@ -60,7 +63,7 @@ export default function Login() {
       },
     });
     setBusy(false);
-    if (error) setError(error.message);
+    if (error) setError(isSignupClosed(error) ? t("login.signupsClosed") : error.message);
     else goTo("code");
   }
 
@@ -78,11 +81,31 @@ export default function Login() {
     if (error) setError(error.message);
   }
 
+  async function signInAsDemo(email: string) {
+    setBusy(true);
+    setError(undefined);
+    const { error } = await supabase.auth.signInWithPassword({ email, password: demoPassword });
+    setBusy(false);
+    if (error) setError(error.message);
+  }
+
   return (
     <Card as="main" class={`${u.center} ${styles.login}`}>
       <ThemedMark class={styles.mark} />
       <h1>Wishlister</h1>
       <Switch>
+        <Match when={isDemo}>
+          <p class={u.muted}>{t("login.demoIntro")}</p>
+          <div class={u.stack}>
+            <For each={demoAccounts}>
+              {(account) => (
+                <button type="button" disabled={busy()} onClick={() => signInAsDemo(account.email)}>
+                  {t("login.demoAs", { name: account.name })}
+                </button>
+              )}
+            </For>
+          </div>
+        </Match>
         <Match when={step() === "email"}>
           <p class={u.muted}>{t("login.intro")}</p>
           <form onSubmit={sendEmail}>
