@@ -55,6 +55,19 @@
   gap: 16px;
 }
 
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -10px -10px -10px 0;
+  font-size: 28px;
+  line-height: 1;
+  text-decoration: none;
+}
+
 .viewerTitle {
   margin: 0;
   font-size: 18px;
