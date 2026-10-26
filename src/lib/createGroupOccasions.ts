@@ -1,20 +1,20 @@
-import { createResource } from "solid-js";
 import {
   addOccasion,
   deleteOccasion,
-  getOccasions,
   updateOccasion,
   type Occasion,
   type OccasionInput,
 } from "./api/occasions.ts";
 import { announce, focusHeading } from "./a11y.ts";
+import { createCachedResource } from "./cache.ts";
+import { loadGroupOccasions } from "./loaders.ts";
 import type { ActionRunner } from "./createActionRunner.ts";
 import type { GroupId, OccasionId } from "./ids.ts";
 import { t } from "./i18n.ts";
 
 /** A group's occasions, and changing them. */
 export function createGroupOccasions(groupId: () => GroupId, runner: ActionRunner) {
-  const [occasions, { refetch }] = createResource(groupId, getOccasions);
+  const [occasions, { refetch }] = createCachedResource(groupId, loadGroupOccasions);
 
   /** Runs a change to the occasions and reloads them. True when it worked. */
   async function change(action: () => Promise<unknown>) {
