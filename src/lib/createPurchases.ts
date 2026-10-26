@@ -1,11 +1,13 @@
-import { createMemo, createResource, createSignal } from "solid-js";
+import { createMemo, createSignal } from "solid-js";
 import type { PurchaseState } from "../components/ItemCard.tsx";
 import { announce } from "./a11y.ts";
 import type { Item } from "./api/items.ts";
 import type { Occasion } from "./api/occasions.ts";
-import { getPurchaseOccasions, getPurchases, markBought, undoBought } from "./api/purchases.ts";
+import { getPurchaseOccasions, markBought, undoBought } from "./api/purchases.ts";
+import { createCachedResource } from "./cache.ts";
 import type { ActionRunner } from "./createActionRunner.ts";
 import { t } from "./i18n.ts";
+import { loadPurchases } from "./loaders.ts";
 import type { ItemId, OccasionId, ProfileId } from "./ids.ts";
 import { burstMoneyForTap } from "./moneyBurst.ts";
 
@@ -19,9 +21,12 @@ export function createPurchases(
   onBought: () => unknown,
 ) {
   // Runs again whenever the items change. The database leaves out purchases on your own list.
-  const [purchases, { refetch: refetchPurchases }] = createResource(
+  // What was bought last time shows at once, but always loads again. Your own buying clears the
+  // cache; someone else's shows once the reload is done, and the database allows one purchase
+  // per item, so a stale "available" can never lead to buying it twice.
+  const [purchases, { refetch: refetchPurchases }] = createCachedResource(
     () => items()?.map((item) => item.id),
-    getPurchases,
+    loadPurchases,
   );
   const purchaseOf = createMemo(
     () => new Map((purchases() ?? []).map((p) => [p.item_id, p] as const)),

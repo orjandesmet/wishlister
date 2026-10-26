@@ -7,6 +7,7 @@ import {
   type Accessor,
   type ParentComponent,
 } from "solid-js";
+import { clearCache } from "./cache.ts";
 import { isStandalone } from "./install.ts";
 import { supabase } from "./supabase.ts";
 
@@ -25,6 +26,8 @@ export const AuthProvider: ParentComponent = (props) => {
 
   // Fires once with the restored session (INITIAL_SESSION), then on every sign-in or sign-out.
   const { data } = supabase.auth.onAuthStateChange((_event, next) => {
+    // What one account loaded must never show up for another on a shared device.
+    if (next?.user.id !== session()?.user.id) clearCache();
     setSession(next);
     setLoading(false);
     if (next) keepStorage();

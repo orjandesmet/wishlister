@@ -1,5 +1,13 @@
 import { Navigate, Route, Router, useLocation, useParams } from "@solidjs/router";
-import { createEffect, on, Show, type Component, type ParentComponent } from "solid-js";
+import {
+  createEffect,
+  on,
+  onCleanup,
+  onMount,
+  Show,
+  type Component,
+  type ParentComponent,
+} from "solid-js";
 import { TabBar } from "./components/TabBar.tsx";
 import { InstallBanner } from "./components/InstallBanner.tsx";
 import { ThemeDecorations } from "./components/ThemeDecorations.tsx";
@@ -9,6 +17,7 @@ import { syncLocaleWithAccount } from "./lib/accountLocale.ts";
 import { t } from "./lib/i18n.ts";
 import { dismiss, install, installOffer } from "./lib/install.ts";
 import { MeProvider, useMe } from "./lib/me.tsx";
+import { prefetchOnIntent, warmUp } from "./lib/prefetch.ts";
 import { activeTheme } from "./lib/theme.ts";
 import ChildSettings from "./pages/ChildSettings.tsx";
 import GroupSettings from "./pages/GroupSettings.tsx";
@@ -25,6 +34,20 @@ import u from "./utilities.module.css";
 function Tabs() {
   const me = useMe();
   return <TabBar myProfileId={me().profile.id} />;
+}
+
+/**
+ * Loads pages ahead so switching between them is instant: every list and group you can open
+ * in quiet moments after the app starts, and any page as soon as you point at a link to it.
+ */
+function Prefetch() {
+  const me = useMe();
+  onMount(() => {
+    const children = me().managed.error ? [] : (me().managed() ?? []);
+    void warmUp(me().profile.id, [me().profile.id, ...children.map((child) => child.id)]);
+  });
+  onCleanup(prefetchOnIntent(() => me().profile.id));
+  return null;
 }
 
 /** Layout route for signed-in pages: guards them and adds the bottom navigation. */
@@ -51,6 +74,7 @@ const SignedIn: ParentComponent = (props) => {
         <MeProvider>
           <main class="page">{props.children}</main>
           <Tabs />
+          <Prefetch />
         </MeProvider>
       </Show>
     </Show>

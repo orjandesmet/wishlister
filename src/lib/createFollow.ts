@@ -1,5 +1,7 @@
 import { createResource } from "solid-js";
-import { followList, getFollowUntil, unfollowList } from "./api/follows.ts";
+import { followList, unfollowList } from "./api/follows.ts";
+import { createCachedResource } from "./cache.ts";
+import { loadFollowUntil } from "./loaders.ts";
 import { getNextSharedOccasion } from "./api/occasions.ts";
 import type { ProfileId } from "./ids.ts";
 import type { ActionRunner } from "./createActionRunner.ts";
@@ -11,7 +13,10 @@ export function createFollow(
   otherList: () => ProfileId | undefined,
   runner: ActionRunner,
 ) {
-  const [followUntil, { refetch: refetchFollow }] = createResource(otherList, getFollowUntil);
+  const [followUntil, { refetch: refetchFollow }] = createCachedResource(
+    otherList,
+    loadFollowUntil,
+  );
   // Only the starting point for the date picker, so a failure just means no suggestion.
   const [nextOccasion] = createResource(otherList, (id) =>
     getNextSharedOccasion(id).catch(() => null),

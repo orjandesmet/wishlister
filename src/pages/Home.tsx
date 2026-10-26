@@ -1,16 +1,16 @@
 import { A } from "@solidjs/router";
-import { createMemo, createResource, For, Show } from "solid-js";
+import { createMemo, For, Show } from "solid-js";
 import { GroupCard } from "../components/GroupCard.tsx";
 import { LinkButton } from "../components/Button.tsx";
 import { EmptyState } from "../components/EmptyState.tsx";
 import { NewGroupForm } from "../components/NewGroupForm.tsx";
 import { Popover } from "../components/Popover.tsx";
-import { getMyGroups } from "../lib/api/groups.ts";
-import { getUpcomingOccasions } from "../lib/api/occasions.ts";
+import { createCachedResource } from "../lib/cache.ts";
 import { useCreateGroupAndOpen } from "../lib/createGroupAndOpen.ts";
 import { compareNames, t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
 import { isReady } from "../lib/resource.ts";
+import { loadMyGroups, loadUpcomingOccasions } from "../lib/loaders.ts";
 import { nextOccasionPerGroup, today } from "../lib/occasions.ts";
 import u from "../utilities.module.css";
 import styles from "./Home.module.css";
@@ -19,10 +19,11 @@ import { usePageTitle } from "../lib/a11y.ts";
 export default function Home() {
   const me = useMe();
   const onCreate = useCreateGroupAndOpen();
-  const [groups] = createResource(getMyGroups);
+  // Both show what they loaded last time at once, while they load again.
+  const [groups] = createCachedResource(() => true, loadMyGroups);
   const day = today();
   // Occasions are a nice extra here: if they fail to load, the groups still show.
-  const [occasions] = createResource(() => getUpcomingOccasions(day).catch(() => []));
+  const [occasions] = createCachedResource(() => day, loadUpcomingOccasions);
   const nextOccasions = createMemo(() =>
     nextOccasionPerGroup(occasions() ?? [], day, compareNames),
   );

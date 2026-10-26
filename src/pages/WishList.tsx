@@ -11,15 +11,12 @@ import {
   deleteItem,
   deleteItems,
   getCategories,
-  getItems,
   setItemsCategory,
   setItemsGroups,
   type GroupSelection,
   type Item,
 } from "../lib/api/items.ts";
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
-import { getMyGroups } from "../lib/api/groups.ts";
-import { getProfileDetails } from "../lib/api/profiles.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createBulkSelect } from "../lib/createBulkSelect.ts";
@@ -32,6 +29,8 @@ import { addDays, formatOccasionDate, today, type IsoDate } from "../lib/occasio
 import { useMe } from "../lib/me.tsx";
 import { listMenuSections } from "../lib/listMenu.ts";
 import { isReady } from "../lib/resource.ts";
+import { createCachedResource } from "../lib/cache.ts";
+import { loadItems, loadMyGroups, loadProfileDetails } from "../lib/loaders.ts";
 import { useQuickAdd } from "../lib/quickAdd.ts";
 import u from "../utilities.module.css";
 import { Button } from "../components/Button.tsx";
@@ -50,7 +49,7 @@ export default function WishList() {
   const me = useMe();
   // A menu beside the title opens your own list, your children's, or anyone's from your groups.
   // The groups are an extra: if they fail to load, the menu still has your own lists.
-  const [groups] = createResource(() => getMyGroups().catch(() => []));
+  const [groups] = createCachedResource(() => true, loadMyGroups);
   const menuSections = () =>
     listMenuSections(
       [
@@ -61,7 +60,7 @@ export default function WishList() {
           person: child.display_name,
         })),
       ],
-      groups() ?? [],
+      (groups.error ? undefined : groups()) ?? [],
       compareNames,
     );
   const showMenu = () => menuSections().flatMap((section) => section.options).length > 1;
@@ -69,10 +68,12 @@ export default function WishList() {
   const runner = createActionRunner();
   const { error, run } = runner;
 
-  const [profile] = createResource(() => params.profileId, getProfileDetails);
-  const [items, { refetch: refetchItems, mutate: setItems }] = createResource(
+  // A list you opened before (or that was loaded ahead, see prefetch.ts) shows at once,
+  // and loads again in the background.
+  const [profile] = createCachedResource(() => params.profileId, loadProfileDetails);
+  const [items, { refetch: refetchItems, mutate: setItems }] = createCachedResource(
     () => params.profileId,
-    getItems,
+    loadItems,
   );
   // A memo, so moving to another list switches queues (and flushes the old one).
   const quickAdd = createMemo(() =>

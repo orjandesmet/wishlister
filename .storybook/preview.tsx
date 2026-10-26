@@ -2,6 +2,7 @@ import { MemoryRouter } from "@solidjs/router";
 import type { Preview } from "storybook-solidjs-vite";
 import { sb } from "storybook/test";
 import { isLocale } from "../src/i18n/locale.ts";
+import { clearCache } from "../src/lib/cache.ts";
 import { setLocale } from "../src/lib/i18n.ts";
 import { isTheme, setThemePreview } from "../src/lib/theme.ts";
 import "../src/index.css";
@@ -24,6 +25,8 @@ sb.mock(import("../src/lib/occasions.ts"), { spy: true });
 sb.mock(import("../src/lib/install.ts"), { spy: true });
 
 export default {
+  // The pages remember what they loaded (src/lib/cache.ts): start every story without.
+  beforeEach: () => clearCache(),
   // Every component gets a Docs page with its props and all its stories.
   tags: ["autodocs"],
   parameters: {
