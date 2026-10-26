@@ -13,3 +13,14 @@
   width: 100%;
   min-width: 0;
 }
+
+/* The link's picture, as the card shows it, with a way to leave it out. */
+.picture {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pictureText {
+  align-items: flex-start;
+}

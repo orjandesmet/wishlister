@@ -16,6 +16,8 @@ export type Item = {
   /** Both set or both null. */
   price: number | null;
   price_currency: string | null;
+  /** The linked page's picture, shown as the item's thumbnail. */
+  image_url: string | null;
   /**
    * Removed by the list's editors after someone bought it. Only the others see
    * it: the item stays, shown as bought, until the buyer undoes the purchase.
@@ -35,7 +37,7 @@ export type ItemInput = {
 };
 
 const ITEM_COLUMNS =
-  "id, profile_id, name, url, category, visible_in_all_groups, not_wanted, item_groups(group_id), price, price_currency, removed_at";
+  "id, profile_id, name, url, category, visible_in_all_groups, not_wanted, item_groups(group_id), price, price_currency, image_url, removed_at";
 
 export async function getItems(profileId: ProfileId): Promise<Item[]> {
   return must(
@@ -118,7 +120,7 @@ export type QuickItem = {
   url?: string | null;
   /** Typed with a leading "!": a "please don't buy" entry. */
   notWanted?: boolean;
-  /** The linked page's picture, stored for later (not shown yet). */
+  /** The linked page's picture. */
   imageUrl?: string | null;
   /** The price found on the linked page. */
   price?: Price | null;

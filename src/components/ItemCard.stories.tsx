@@ -1,9 +1,10 @@
 import { createSignal } from "solid-js";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
-import { fn } from "storybook/test";
+import { expect, fn, userEvent, within } from "storybook/test";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { ItemCard } from "./ItemCard.tsx";
+import { bonsaiPicture, brokenPicture, scarfPicture } from "../stories/samplePictures.ts";
 import u from "../utilities.module.css";
 
 const meta = {
@@ -29,6 +30,7 @@ const meta = {
       item_groups: [],
       price: 49.99,
       price_currency: "EUR",
+      image_url: null,
       removed_at: null,
     },
     purchase: "available",
@@ -149,6 +151,47 @@ export const NameOnly: Story = {
 /** A price in another currency also shows roughly what it is in yours (EUR by default). */
 export const ForeignPrice: Story = {
   args: { item: { ...meta.args.item, price: 59.99, price_currency: "USD" } },
+};
+
+/** The linked page's picture, beside the name. Screen readers skip it: the name says it all. */
+export const WithPicture: Story = {
+  args: { item: { ...meta.args.item, image_url: bonsaiPicture } },
+};
+
+/** Tapping the picture opens it bigger; Close (or Escape, or tapping outside) brings you back. */
+export const PictureOpened: Story = {
+  args: WithPicture.args,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: /bonsai/i }));
+    await expect(canvas.getByRole("dialog")).toBeVisible();
+  },
+};
+
+/** A picture that isn't square is shown whole. */
+export const WithWidePicture: Story = {
+  args: {
+    item: { ...meta.args.item, name: "Merino scarf, grey", price: 35, image_url: scarfPicture },
+  },
+};
+
+/** A picture that can't be loaded is left out, instead of a broken-image icon. */
+export const PictureCantLoad: Story = {
+  args: { item: { ...meta.args.item, image_url: brokenPicture } },
+};
+
+export const PictureOnYourOwnList: Story = {
+  args: { ...WithPicture.args, purchase: "hidden", canEdit: true },
+};
+
+export const LongNameWithPicture: Story = {
+  args: {
+    item: {
+      ...meta.args.item,
+      name: "A very long wish name that keeps going to see how the card wraps on a small phone",
+      image_url: bonsaiPicture,
+    },
+  },
 };
 
 export const LongNameAndUrl: Story = {

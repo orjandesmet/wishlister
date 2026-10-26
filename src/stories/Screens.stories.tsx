@@ -1,6 +1,6 @@
 import { createMemoryHistory, MemoryRouter } from "@solidjs/router";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
-import { mocked, userEvent, waitFor, within } from "storybook/test";
+import { expect, mocked, userEvent, waitFor, within } from "storybook/test";
 import { AppRoot, AppRoutes } from "../App.tsx";
 import { getParents } from "../lib/api/children.ts";
 import {
@@ -46,6 +46,7 @@ import { t } from "../lib/i18n.ts";
 import type { AccountId, GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { installOffer } from "../lib/install.ts";
 import { today } from "../lib/occasions.ts";
+import { bonsaiPicture, scarfPicture } from "./samplePictures.ts";
 
 /**
  * The real app at a given address, with sample data: the phone width with its bottom tabs, and
@@ -174,6 +175,7 @@ const item = (
   item_groups: [],
   price,
   price_currency: price === null ? null : n % 3 === 0 ? "EUR" : n % 3 === 1 ? "USD" : "GBP",
+  image_url: null,
   removed_at: null,
   ...extra,
 });
@@ -201,8 +203,8 @@ function sampleData() {
       anna: [
         item(1, "anna", "Cast iron pan", 62.5, "Kitchen"),
         item(2, "anna", "Pour-over coffee set", 38, "Kitchen"),
-        item(3, "anna", "LEGO Botanical bonsai tree", 49.99, "Toys"),
-        item(4, "anna", "Merino scarf, grey", 35, "Toys"),
+        item(3, "anna", "LEGO Botanical bonsai tree", 49.99, "Toys", { image_url: bonsaiPicture }),
+        item(4, "anna", "Merino scarf, grey", 35, "Toys", { image_url: scarfPicture }),
       ],
     } as Record<string, Item[]>,
     items: (id: ProfileId): Promise<Item[]> => Promise.resolve(data.lists[id] ?? []),
@@ -268,6 +270,21 @@ export const OtherList: Story = {
 export const OwnList: Story = {
   render: app("/lists/me"),
   play: () => openPopover("quick-add-popover", quickAddIsPopover),
+};
+
+/** The list menu with many groups: it scrolls on its own and sits above the quick add button. */
+export const ListMenuLong: Story = {
+  beforeEach: () => {
+    const names = ["anna", "bert", "carla", "dirk", "eva", "fien", "gust", "hanne", "ines"];
+    const club = (n: number, name: string): Group => ({
+      id: `group-${n}` as GroupId,
+      name,
+      group_members: [member(orjan, "member"), ...names.map((id) => member(profile(id), "member"))],
+    });
+    data.groups = async () => [family, club(3, "Colleagues"), club(4, "Football"), bookClub];
+  },
+  render: app("/lists/me"),
+  play: () => openPopover("list-menu"),
 };
 
 export const Settings: Story = { render: app("/settings") };
@@ -377,12 +394,25 @@ export const ItemFormEditSelectedGroups: Story = {
     data.lists.me = [
       item(3, "me", "LEGO Botanical bonsai tree", 49.99, "Toys", {
         url: "https://www.lego.com/bonsai",
+        image_url: bonsaiPicture,
         visible_in_all_groups: false,
         item_groups: [{ group_id: family.id }],
       }),
     ];
   },
   render: app("/items/item-3/edit"),
+};
+
+/** Removing the link's picture: focus goes back to the link, and the item saves without it. */
+export const ItemFormRemovePicture: Story = {
+  beforeEach: ItemFormEditSelectedGroups.beforeEach,
+  render: app("/items/item-3/edit"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: t("itemForm.removePicture") }));
+    await waitFor(() => expect(canvas.getByLabelText(t("itemForm.link"))).toHaveFocus());
+    await expect(canvas.queryByRole("button", { name: t("itemForm.removePicture") })).toBeNull();
+  },
 };
 
 export const ItemFormError: Story = {

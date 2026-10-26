@@ -16,6 +16,7 @@ export const en = {
     cancel: "Cancel",
     edit: "Edit",
     remove: "Remove",
+    close: "Close",
     delete: "Delete",
     someone: "someone",
   },
@@ -101,6 +102,10 @@ export const en = {
     inviteByEmail: "Invite by email",
     invite: "Invite",
     added: (p: { email: string }) => `${p.email} was added to the group.`,
+    addedEmailed: (p: { email: string }) =>
+      `${p.email} was added to the group. We emailed them to let them know.`,
+    addedEmailFailed: (p: { email: string; message: string }) =>
+      `${p.email} was added to the group, but the email to let them know didn't go out: ${p.message}`,
     alreadyInvited: (p: { email: string }) => `${p.email} is already invited.`,
     alreadyMember: (p: { email: string }) => `${p.email} is already in the group.`,
     inviteSent: (p: { email: string }) =>
@@ -173,6 +178,8 @@ export const en = {
       `Delete ${p.name}'s profile and wishlist for everyone? This can't be undone.`,
   },
   item: {
+    viewPicture: (p: { name: string }) => `View picture: ${p.name}`,
+    pictureOf: (p: { name: string }) => `Picture of ${p.name}`,
     onlyVisibleIn: (p: { groups: JSX.Element }) => <>Only visible in {p.groups}</>,
     private: "Not shared with any group",
     youBought: "You bought this",
@@ -250,6 +257,9 @@ export const en = {
     filledFromLink: "Filled in from the link's page.",
     imageLink: "This link is a picture: it's used as the item's picture.",
     nothingFromLink: "Couldn't read anything from this link.",
+    pictureFromLink: "The picture from the link, shown on the item.",
+    removePicture: "Remove picture",
+    pictureRemoved: "Picture removed.",
     category: "Category (optional)",
     visibility: "Who can see it",
     allGroups: "All my groups",
