@@ -28,7 +28,7 @@ function Piece(props: { index: number; children: JSX.Element }) {
 const Cord = () => <path class={styles.string} d="M0 4 Q20 14 40 4" />;
 
 const bulbColours = ["#e5383b", "#2a9d5c", "#f2b705", "#3a86ff"];
-const flagColours = ["#ff6b9a", "#ffd23f", "#3ec1d3", "#9b5de5", "#61d095"];
+const flagColours = ["#ff6b9a", "#ffd23f", "#3ec1d3", "#ff8c5a", "#61d095"];
 const eggColours = ["#ffc8dd", "#bde0fe", "#caffbf", "#fdffb6", "#e4c1f9"];
 
 function Garland(props: { theme: ThemeId }) {
