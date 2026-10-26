@@ -191,6 +191,9 @@ export const en = {
   item: {
     viewPicture: (p: { name: string }) => `View picture: ${p.name}`,
     pictureOf: (p: { name: string }) => `Picture of ${p.name}`,
+    viewPictures: (p: { name: string; count: number }) => `View ${p.count} pictures: ${p.name}`,
+    pictureNumberOf: (p: { name: string; number: number; count: number }) =>
+      `Picture ${p.number} of ${p.count} of ${p.name}`,
     onlyVisibleIn: (p: { groups: JSX.Element }) => <>Only visible in {p.groups}</>,
     private: "Not shared with any group",
     youBought: "You bought this",
@@ -258,6 +261,25 @@ export const en = {
         Start with <strong>!</strong> for something you don't want, like <strong>!socks</strong>.
       </>
     ),
+  },
+  pictures: {
+    legend: "Your pictures (optional)",
+    hint: (p: { max: number }) =>
+      `Up to ${p.max}, from your phone or a link. They're shown before the link's picture.`,
+    add: "Add pictures",
+    link: "Or a link to a picture",
+    addLink: "Add",
+    badLink: "That isn't a link to a picture. It starts with https://",
+    remove: "Remove",
+    number: (p: { number: number }) => `picture ${p.number}`,
+    full: (p: { max: number }) => `That's ${p.max} pictures, the most an item can have.`,
+    added: (p: { count: number }) =>
+      p.count === 1 ? "Picture added." : `${p.count} pictures added.`,
+    tooMany: (p: { added: number; max: number }) =>
+      `Added ${p.added}: an item can have at most ${p.max} pictures.`,
+    uploading: (p: { number: number; of: number }) => `Uploading picture ${p.number} of ${p.of}…`,
+    uploadFailed: (p: { message: string }) =>
+      `Couldn't upload a picture, so nothing was saved: ${p.message}`,
   },
   itemForm: {
     addTitle: "Add item",

@@ -115,6 +115,7 @@ register it in `src/lib/i18n.ts`, and add a branch for it to the email templates
 |                             | `send-added-email`: tells people with an account they were added    |
 |                             | `page-info`: title and picture of a link pasted into quick add      |
 |                             | `send-digests`: evening email to followers of lists that changed    |
+|                             | `clean-pictures`: daily, deletes uploaded pictures no item uses     |
 | `netlify/lib/mail.ts`       | `sendEmail()`: app emails (not sign-in emails) through Resend       |
 | `netlify/lib/digest.ts`     | Builds the daily "what changed on lists you follow" emails          |
 | `netlify/lib/addedEmail.ts` | Builds the "you were added to a group" email                        |
@@ -204,6 +205,11 @@ day.
 The `send-added-email` function tells someone who already has an account that a manager added
 them to a group. It also needs `SUPABASE_SECRET_KEY`. Until Resend is set up, people are still
 added, just without the email.
+
+The `clean-pictures` function deletes uploaded item pictures that no item uses anymore (the
+picture or its item was removed), once a day. It needs `SUPABASE_SECRET_KEY` too. Uploads go
+to the public Storage bucket `item-pictures`, which the migration creates; the app shrinks
+them to about 100-200 KB first, so the free plan's 1 GB holds thousands.
 
 ### 4. Microlink (link titles in quick add)
 

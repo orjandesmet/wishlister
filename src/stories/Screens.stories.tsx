@@ -26,6 +26,7 @@ import {
   getItems,
   type Item,
 } from "../lib/api/items.ts";
+import { uploadPictures } from "../lib/api/pictures.ts";
 import {
   getNextSharedOccasion,
   getOccasions,
@@ -89,6 +90,7 @@ const meta = {
     mocked(getCategories).mockImplementation(async () => ["Books", "Kitchen", "Sport", "Toys"]);
     mocked(addItem).mockImplementation(() => data.addItem());
     mocked(addQuickItems).mockImplementation(() => data.addQuickItems());
+    mocked(uploadPictures).mockImplementation(async () => new Map());
     mocked(getPurchases).mockImplementation(async () => data.purchases);
     mocked(getPurchaseOccasions).mockImplementation(async () => data.occasions.slice(0, 1));
     mocked(getFollowUntil).mockImplementation(async () => null);
@@ -178,6 +180,7 @@ const item = (
   price,
   price_currency: price === null ? null : n % 3 === 0 ? "EUR" : n % 3 === 1 ? "USD" : "GBP",
   image_url: null,
+  item_pictures: [],
   removed_at: null,
   ...extra,
 });
@@ -222,7 +225,7 @@ function sampleData() {
       },
     ] as Purchase[],
     follows: [] as FollowedList[],
-    addItem: async (): Promise<void> => {},
+    addItem: async (): Promise<ItemId> => "new-item" as ItemId,
     addQuickItems: async (): Promise<Item[]> => [],
   };
 }
@@ -420,6 +423,23 @@ export const ItemFormRemovePicture: Story = {
     await waitFor(() => expect(canvas.getByLabelText(t("itemForm.link"))).toHaveFocus());
     await expect(canvas.queryByRole("button", { name: t("itemForm.removePicture") })).toBeNull();
   },
+};
+
+/** Own pictures (#95): up to 5, before the link's picture. */
+export const ItemFormOwnPictures: Story = {
+  beforeEach: () => {
+    data.lists.me = [
+      item(3, "me", "Merino scarf, grey", 35, "Clothes", {
+        url: "https://www.example.com/scarf",
+        image_url: bonsaiPicture,
+        item_pictures: [
+          { id: "pic-1", path: null, url: scarfPicture, position: 0 },
+          { id: "pic-2", path: null, url: bonsaiPicture, position: 1 },
+        ],
+      }),
+    ];
+  },
+  render: app("/items/item-3/edit"),
 };
 
 export const ItemFormError: Story = {
