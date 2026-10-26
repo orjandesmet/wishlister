@@ -5,6 +5,8 @@
 --   alice@example.com  manager of "Family", parent of Sam
 --   bob@example.com    member of "Family", bought Alice's headphones
 --   carol@example.com  member of "Family" and manager of "Friends"
+-- or, with VITE_DEMO=true, with the demo buttons (password `wishlister-demo`, same as
+-- demoPassword in src/lib/demo.ts). The demo site uses this seed too, via supabase/demo/reset.sql.
 
 -- Accounts. The on_auth_account_created trigger gives each one a profile.
 insert into auth.users (
@@ -13,7 +15,8 @@ insert into auth.users (
   confirmation_token, recovery_token, email_change, email_change_token_new
 )
 select
-  '00000000-0000-0000-0000-000000000000', id, 'authenticated', 'authenticated', email, '', now(),
+  '00000000-0000-0000-0000-000000000000', id, 'authenticated', 'authenticated', email,
+  extensions.crypt('wishlister-demo', extensions.gen_salt('bf')), now(),
   '{"provider":"email","providers":["email"]}', jsonb_build_object('display_name', name, 'locale', locale),
   now(), now(), '', '', '', ''
 from (values
