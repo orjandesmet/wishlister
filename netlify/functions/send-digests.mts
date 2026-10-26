@@ -11,6 +11,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { buildDigestEmails, type DigestRow } from "../lib/digest.ts";
 import { mailConfigured, sendEmails } from "../lib/mail.ts";
+import { sendRemovalNotices } from "../lib/removalNotices.ts";
 
 export default async () => {
   const url = process.env.VITE_SUPABASE_URL;
@@ -35,6 +36,14 @@ export default async () => {
     // A failed batch isn't retried tomorrow: those changes would arrive a day late
     // and next to newer ones. The error is in the function log.
     for (const message of errors) console.error(`Sending digests failed: ${message}`);
+
+    // Buyers of removed items normally hear right away (notify-removed); this
+    // catches what that missed.
+    const notices = await sendRemovalNotices(admin, siteUrl);
+    if (notices.sent > 0) console.log(`Removal notices sent: ${notices.sent}`);
+    for (const message of notices.errors) {
+      console.error(`Sending removal notices failed: ${message}`);
+    }
   } else {
     console.warn("Digests skipped: RESEND_API_KEY or MAIL_FROM isn't set.");
   }

@@ -176,6 +176,7 @@ const item = (
   price,
   price_currency: price === null ? null : n % 3 === 0 ? "EUR" : n % 3 === 1 ? "USD" : "GBP",
   image_url: null,
+  removed_at: null,
   ...extra,
 });
 

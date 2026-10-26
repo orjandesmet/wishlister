@@ -191,6 +191,9 @@ export const en = {
     noOccasion: "Not for an occasion",
     notWanted: "Please don't buy",
     convertedPrice: (p: { price: string }) => `≈ ${p.price}`,
+    removed: "Taken off the list after it was bought",
+    removedMine:
+      "Taken off the list after you bought it. Can you still cancel your order? Then undo, and it's gone for good.",
   },
   unfollow: {
     title: "Stop following",

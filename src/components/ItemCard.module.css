@@ -74,7 +74,8 @@
   color: var(--text-strong);
 }
 
-/* An item nobody but the editors can see: worth noticing, so it gets a warning sign. */
+/* An item nobody but the editors can see, or one taken off the list after it was bought:
+   worth noticing, so it gets a warning sign. */
 .warning {
   display: flex;
   align-items: center;
