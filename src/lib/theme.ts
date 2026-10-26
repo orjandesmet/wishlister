@@ -61,8 +61,8 @@ const calendar: Record<ThemeId, (date: IsoDate) => boolean> = {
   newYear: (date) => monthDay(date) >= "12-26" || monthDay(date) <= "01-07",
   // Only on 1 March.
   birthday: (date) => monthDay(date) === "03-01",
-  // Only on 31 October.
-  halloween: (date) => monthDay(date) === "10-31",
+  // 28 to 31 October.
+  halloween: (date) => monthDay(date) >= "10-28" && monthDay(date) <= "10-31",
   // Good Friday to Easter Monday: Easter moves every year.
   easter: (date) => {
     const sunday = easterSunday(Number(date.slice(0, 4)));

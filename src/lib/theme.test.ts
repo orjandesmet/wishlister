@@ -21,11 +21,15 @@ describe("themeOn", () => {
     expect(themeOn("2027-01-08")).toBeUndefined();
   });
 
-  test("birthday and Halloween only on their day", () => {
+  test("birthday only on 1 March", () => {
     expect(themeOn("2027-02-28")).toBeUndefined();
     expect(themeOn("2027-03-01")).toBe("birthday");
     expect(themeOn("2027-03-02")).toBeUndefined();
-    expect(themeOn("2026-10-30")).toBeUndefined();
+  });
+
+  test("Halloween from 28 to 31 October", () => {
+    expect(themeOn("2026-10-27")).toBeUndefined();
+    expect(themeOn("2026-10-28")).toBe("halloween");
     expect(themeOn("2026-10-31")).toBe("halloween");
     expect(themeOn("2026-11-01")).toBeUndefined();
   });
