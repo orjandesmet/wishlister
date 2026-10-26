@@ -176,7 +176,8 @@ maskable 192 and 512).
    Also add `SUPABASE_SECRET_KEY` (a secret key, `sb_secret_…`) for `send-invite`. It has no
    `VITE_` prefix on purpose, so it never ends up in the app's JavaScript.
    For app emails (see _3. Resend_ below), also add `RESEND_API_KEY` and `MAIL_FROM`.
-   Optionally add `MICROLINK_API_KEY` (see _4. Microlink_ below).
+   Optionally add `MICROLINK_API_KEY` (see _4. Microlink_ below) and `REEFAPI_API_KEY`
+   (see _5. ReefAPI_ below).
 3. Deploy, then put the site URL into Supabase's _Site URL_ (step 1.3).
 
 ### 3. Resend (app emails)
@@ -215,3 +216,15 @@ when our own lookup finds no title. If it fails too, the item is named after the
 Without a key, the free endpoint is used. To use your Microlink account's plan instead, add
 `MICROLINK_API_KEY` in Netlify and redeploy. Keep an eye on the plan's monthly limit; when it
 runs out, blocked shops just get the name from the link.
+
+### 5. ReefAPI (bol.com links)
+
+bol.com blocks both our own lookup and Microlink. So when a bol.com product link is pasted,
+`page-info` asks [ReefAPI](https://reefapi.com)'s bol.com product endpoint instead, with the
+product id and storefront (`/nl/nl/`, `/be/nl/`, `/be/fr/`) taken from the link. It fills in
+the name, picture and price.
+
+Add `REEFAPI_API_KEY` in Netlify and redeploy. Each product costs 2 credits (the free plan has
+1000); failed calls are free. A product is remembered for a day while the function stays warm,
+and the remaining credits show in the function log when ReefAPI sends them. Without the key,
+or when the credits run out, bol.com links just get the name from the link.
