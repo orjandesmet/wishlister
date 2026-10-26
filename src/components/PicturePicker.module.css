@@ -1,0 +1,44 @@
+.picker {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.hint {
+  margin: 0;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A thumbnail with its remove button under it. */
+.picture {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+/* The field takes the room; the add button sits beside it, or below on a narrow phone. */
+.linkRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.linkLabel {
+  flex: 1 1 12em;
+  min-width: 0;
+}
+
+.linkLabel input {
+  width: 100%;
+  min-width: 0;
+}

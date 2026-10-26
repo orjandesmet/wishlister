@@ -12,6 +12,7 @@ import {
 } from "solid-js";
 import { CategoryChips } from "../components/CategoryChips.tsx";
 import { addItem, getCategories, getItem, updateItem } from "../lib/api/items.ts";
+import { savePictures, uploadPictures } from "../lib/api/pictures.ts";
 import { getPageInfo } from "../lib/api/pageInfo.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
@@ -31,6 +32,13 @@ import { Check } from "../components/Check.tsx";
 import styles from "./ItemForm.module.css";
 import { announce, focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { ItemThumbnail } from "../components/ItemPicture.tsx";
+import { PicturePicker } from "../components/PicturePicker.tsx";
+import {
+  MAX_PICTURES,
+  savedPictures,
+  type FormPicture,
+  type PictureRow,
+} from "../lib/itemPictures.ts";
 
 /** Add an item (/lists/:profileId/items/new) or edit one (/items/:itemId/edit). */
 export default function ItemForm() {
@@ -65,6 +73,52 @@ export default function ItemForm() {
   const chips = createMemo(() =>
     suggestCategories(categories() ?? [], starterCategories(), category()),
   );
+  // The item's own pictures (#95): saved ones, and new ones uploaded when it's saved.
+  // `savedRows` is what the database has, to work out what changed.
+  const [pictures, setPictures] = createSignal<FormPicture[]>([]);
+  let savedRows: PictureRow[] = [];
+  // A new item that saved while its pictures didn't: trying again updates it instead.
+  let createdId: ItemId | undefined;
+  let pictureKeys = 0;
+  const [uploading, setUploading] = createSignal<{ number: number; of: number }>();
+  // Pictures from the phone are shown from memory until they're uploaded.
+  const forgetPreview = (picture: FormPicture) =>
+    picture.kind === "file" && URL.revokeObjectURL(picture.src);
+  onCleanup(() => pictures().forEach(forgetPreview));
+
+  function addPictureFiles(files: File[]) {
+    const room = MAX_PICTURES - pictures().length;
+    const images = files.filter((file) => file.type.startsWith("image/"));
+    const added = images.slice(0, room).map((file): FormPicture => ({
+      kind: "file",
+      key: `new-${pictureKeys++}`,
+      file,
+      src: URL.createObjectURL(file),
+    }));
+    setPictures((list) => [...list, ...added]);
+    announce(
+      images.length > room
+        ? t("pictures.tooMany", { added: added.length, max: MAX_PICTURES })
+        : t("pictures.added", { count: added.length }),
+    );
+  }
+
+  function addPictureLink(src: string) {
+    if (pictures().length >= MAX_PICTURES) return;
+    setPictures((list) => [...list, { kind: "url", key: `new-${pictureKeys++}`, src }]);
+    announce(t("pictures.added", { count: 1 }));
+  }
+
+  const pictureKey = (picture: FormPicture) =>
+    picture.kind === "saved" ? picture.id : picture.key;
+
+  function removeOwnPicture(key: string) {
+    const picture = pictures().find((p) => pictureKey(p) === key);
+    if (picture) forgetPreview(picture);
+    setPictures((list) => list.filter((p) => pictureKey(p) !== key));
+    announce(t("itemForm.pictureRemoved"));
+  }
+
   const [busy, setBusy] = createSignal(false);
   const [error, setError] = createSignal<string>();
   const [savedName, setSavedName] = createSignal<string>();
@@ -136,6 +190,12 @@ export default function ItemForm() {
       // Opening an item to edit it doesn't look up its link again; changing the link does.
       lookedUp = lookupUrl(loaded.url ?? "");
       setImageUrl(loaded.image_url);
+      savedRows = loaded.item_pictures;
+      setPictures(
+        savedPictures(loaded.item_pictures, import.meta.env.VITE_SUPABASE_URL ?? "").map(
+          (picture): FormPicture => ({ kind: "saved", ...picture }),
+        ),
+      );
       setCategory(loaded.category ?? "");
       setDescription(loaded.description ?? "");
       setNotWanted(loaded.not_wanted);
@@ -193,9 +253,20 @@ export default function ItemForm() {
       // The picture belongs to the link: no link, no picture.
       imageUrl: url().trim() ? imageUrl() : null,
     };
+    const ownPictures = pictures();
     try {
-      if (params.itemId) await updateItem(params.itemId, input);
-      else await addItem(profileId()!, input);
+      // Uploaded first: if that fails, nothing is saved and trying again is safe.
+      const ready = await uploadPictures(profileId()!, ownPictures, (number, of) => {
+        setUploading({ number, of });
+        announce(t("pictures.uploading", { number, of }));
+      }).catch((e: Error) => {
+        throw new Error(t("pictures.uploadFailed", { message: e.message }));
+      });
+      setUploading(undefined);
+      let itemId = params.itemId ?? createdId;
+      if (itemId) await updateItem(itemId, input);
+      else itemId = createdId = await addItem(profileId()!, input);
+      await savePictures(itemId, savedRows, ownPictures, ready);
       if (another) {
         // Starts the next item; the category, groups and currency tend to stay the same.
         setSavedName(input.name);
@@ -204,6 +275,10 @@ export default function ItemForm() {
         setPrice("");
         setDescription("");
         setImageUrl(undefined);
+        ownPictures.forEach(forgetPreview);
+        setPictures([]);
+        savedRows = [];
+        createdId = undefined;
         setLookup("idle");
         lookedUp = null;
         filledPrice = null;
@@ -215,6 +290,7 @@ export default function ItemForm() {
       navigate(`/lists/${profileId()}`, { replace: true });
     } catch (e) {
       setError((e as Error).message);
+      setUploading(undefined);
       setBusy(false);
     }
   }
@@ -248,6 +324,14 @@ export default function ItemForm() {
               onInput={(e) => setName(e.currentTarget.value)}
             />
           </label>
+          <Check>
+            <input
+              type="checkbox"
+              checked={notWanted()}
+              onChange={(e) => setNotWanted(e.currentTarget.checked)}
+            />
+            {t("itemForm.notWanted")}
+          </Check>
           <label>
             {t("itemForm.link")}
             <input
@@ -280,6 +364,19 @@ export default function ItemForm() {
             )}
           </Show>
           <label>
+            {t("itemForm.description")}
+            <textarea
+              rows={4}
+              maxLength={1000}
+              aria-describedby={descriptionHint}
+              value={description()}
+              onInput={(e) => setDescription(e.currentTarget.value)}
+            />
+          </label>
+          <p id={descriptionHint} class={`${u.muted} ${u.small} ${styles.hint}`}>
+            {t("itemForm.descriptionHint")}
+          </p>
+          <label>
             {t("itemForm.category")}
             <input
               list="category-suggestions"
@@ -300,27 +397,6 @@ export default function ItemForm() {
               );
             }}
           />
-          <label>
-            {t("itemForm.description")}
-            <textarea
-              rows={4}
-              maxLength={1000}
-              aria-describedby={descriptionHint}
-              value={description()}
-              onInput={(e) => setDescription(e.currentTarget.value)}
-            />
-          </label>
-          <p id={descriptionHint} class={`${u.muted} ${u.small} ${styles.hint}`}>
-            {t("itemForm.descriptionHint")}
-          </p>
-          <Check>
-            <input
-              type="checkbox"
-              checked={notWanted()}
-              onChange={(e) => setNotWanted(e.currentTarget.checked)}
-            />
-            {t("itemForm.notWanted")}
-          </Check>
           <div class={`${u.row} ${styles.priceFields}`}>
             <label>
               {t("itemForm.price")}
@@ -345,6 +421,13 @@ export default function ItemForm() {
               </Select>
             </label>
           </div>
+          <PicturePicker
+            pictures={pictures().map((p) => ({ key: pictureKey(p), src: p.src }))}
+            max={MAX_PICTURES}
+            onAddFiles={addPictureFiles}
+            onAddLink={addPictureLink}
+            onRemove={removeOwnPicture}
+          />
           <fieldset>
             <legend>{t("itemForm.visibility")}</legend>
             <Check>
@@ -398,8 +481,17 @@ export default function ItemForm() {
               {t("itemForm.noGroupsOption")}
             </Check>
           </fieldset>
+          <Show when={error()}>
+            <p class={u.error} role="alert">
+              {error()}
+            </p>
+          </Show>
           <button type="submit" disabled={busy()}>
-            {busy() ? t("common.saving") : t("common.save")}
+            {uploading()
+              ? t("pictures.uploading", uploading()!)
+              : busy()
+                ? t("common.saving")
+                : t("common.save")}
           </button>
           <Show when={!params.itemId}>
             <Button variant="secondary" type="submit" data-another disabled={busy()}>
@@ -409,11 +501,6 @@ export default function ItemForm() {
           <Button variant="secondary" onClick={() => history.back()}>
             {t("common.cancel")}
           </Button>
-          <Show when={error()}>
-            <p class={u.error} role="alert">
-              {error()}
-            </p>
-          </Show>
           <Show when={savedName()}>
             <p class={u.muted} role="status">
               {t("itemForm.savedAnother", { name: savedName()! })}

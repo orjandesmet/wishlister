@@ -4,7 +4,14 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { ItemCard } from "./ItemCard.tsx";
-import { bonsaiPicture, brokenPicture, scarfPicture } from "../stories/samplePictures.ts";
+import {
+  bellPicture,
+  bikePicture,
+  bonsaiPicture,
+  brokenPicture,
+  helmetPicture,
+  scarfPicture,
+} from "../stories/samplePictures.ts";
 import u from "../utilities.module.css";
 
 const meta = {
@@ -32,6 +39,7 @@ const meta = {
       price: 49.99,
       price_currency: "EUR",
       image_url: null,
+      item_pictures: [],
       removed_at: null,
     },
     purchase: "available",
@@ -179,6 +187,52 @@ export const WithWidePicture: Story = {
 /** A picture that can't be loaded is left out, instead of a broken-image icon. */
 export const PictureCantLoad: Story = {
   args: { item: { ...meta.args.item, image_url: brokenPicture } },
+};
+
+/** Own pictures (#95) come first; the number on the thumbnail says how many there are. */
+export const WithSeveralPictures: Story = {
+  args: {
+    item: {
+      ...meta.args.item,
+      image_url: bonsaiPicture,
+      item_pictures: [{ id: "p1", path: null, url: scarfPicture, position: 0 }],
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: /view 2 pictures/i }));
+    await expect(canvas.getAllByRole("img", { name: /picture \d of 2/i })).toHaveLength(2);
+  },
+};
+
+/**
+ * The most an item can have: 5 own pictures (uploaded or linked) and the link's picture
+ * after them. Opened, the dialog shows all 6 in order.
+ */
+export const WithManyPictures: Story = {
+  args: {
+    item: {
+      ...meta.args.item,
+      name: "Kids' bike, 20 inch",
+      price: 229,
+      category: "Sports",
+      url: "https://www.example.com/kids-bike",
+      image_url: bonsaiPicture,
+      item_pictures: [bikePicture, bellPicture, helmetPicture, scarfPicture, bikePicture].map(
+        (url, position) => ({
+          id: `p${position}`,
+          path: null,
+          url: `${url}#${position}`,
+          position,
+        }),
+      ),
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: /view 6 pictures/i }));
+    await expect(canvas.getAllByRole("img", { name: /picture \d of 6/i })).toHaveLength(6);
+  },
 };
 
 export const PictureOnYourOwnList: Story = {

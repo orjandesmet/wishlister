@@ -27,6 +27,7 @@ import { Card } from "./Card.tsx";
 import { Check } from "./Check.tsx";
 import { Chip } from "./Chip.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
+import { itemPictureSources } from "../lib/itemPictures.ts";
 import { Markdown } from "./Markdown.tsx";
 import styles from "./ItemCard.module.css";
 
@@ -177,9 +178,11 @@ export function ItemCard(props: ItemCardProps) {
         </p>
       </Show>
       <div class={styles.top}>
-        <Show when={props.item.image_url}>
-          {(src) => <ItemPicture src={src()} name={props.item.name} zoomable={!props.selecting} />}
-        </Show>
+        <ItemPicture
+          srcs={itemPictureSources(props.item)}
+          name={props.item.name}
+          zoomable={!props.selecting}
+        />
         <div class={styles.topText}>
           <div class={styles.head}>
             <Show

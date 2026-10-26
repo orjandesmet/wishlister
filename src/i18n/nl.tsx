@@ -187,6 +187,8 @@ export const nl: Dictionary = {
   item: {
     viewPicture: (p) => `Afbeelding bekijken: ${p.name}`,
     pictureOf: (p) => `Afbeelding van ${p.name}`,
+    viewPictures: (p) => `${p.count} afbeeldingen bekijken: ${p.name}`,
+    pictureNumberOf: (p) => `Afbeelding ${p.number} van ${p.count} van ${p.name}`,
     onlyVisibleIn: (p) => <>Alleen zichtbaar in {p.groups}</>,
     private: "Met geen enkele groep gedeeld",
     youBought: "Jij hebt dit gekocht",
@@ -254,6 +256,23 @@ export const nl: Dictionary = {
         Begin met <strong>!</strong> voor iets wat je niet wilt, zoals <strong>!kousen</strong>.
       </>
     ),
+  },
+  pictures: {
+    legend: "Je eigen afbeeldingen (optioneel)",
+    hint: (p) =>
+      `Tot ${p.max}, van je gsm of via een link. Ze komen vóór de afbeelding van de link.`,
+    add: "Afbeeldingen toevoegen",
+    link: "Of een link naar een afbeelding",
+    addLink: "Toevoegen",
+    badLink: "Dat is geen link naar een afbeelding. Die begint met https://",
+    remove: "Verwijderen",
+    number: (p) => `afbeelding ${p.number}`,
+    full: (p) => `Dat zijn ${p.max} afbeeldingen, het maximum voor een item.`,
+    added: (p) =>
+      p.count === 1 ? "Afbeelding toegevoegd." : `${p.count} afbeeldingen toegevoegd.`,
+    tooMany: (p) => `${p.added} toegevoegd: een item kan maximaal ${p.max} afbeeldingen hebben.`,
+    uploading: (p) => `Afbeelding ${p.number} van ${p.of} uploaden…`,
+    uploadFailed: (p) => `Kon een afbeelding niet uploaden, dus er is niets bewaard: ${p.message}`,
   },
   itemForm: {
     addTitle: "Item toevoegen",

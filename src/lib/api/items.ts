@@ -1,5 +1,6 @@
 import { supabase } from "../supabase.ts";
 import type { GroupId, ItemId, ProfileId } from "../ids.ts";
+import type { PictureRow } from "../itemPictures.ts";
 import { must } from "./must.ts";
 import type { Price } from "./pageInfo.ts";
 
@@ -18,8 +19,10 @@ export type Item = {
   /** Both set or both null. */
   price: number | null;
   price_currency: string | null;
-  /** The linked page's picture, shown as the item's thumbnail. */
+  /** The linked page's picture, shown after the item's own pictures. */
   image_url: string | null;
+  /** Up to 5 own pictures: uploaded, or links to pictures. See lib/itemPictures.ts. */
+  item_pictures: PictureRow[];
   /**
    * Removed by the list's editors after someone bought it. Only the others see
    * it: the item stays, shown as bought, until the buyer undoes the purchase.
@@ -41,7 +44,7 @@ export type ItemInput = {
 };
 
 const ITEM_COLUMNS =
-  "id, profile_id, name, url, category, description, visible_in_all_groups, not_wanted, item_groups(group_id), price, price_currency, image_url, removed_at";
+  "id, profile_id, name, url, category, description, visible_in_all_groups, not_wanted, item_groups(group_id), price, price_currency, image_url, item_pictures(id, path, url, position), removed_at";
 
 export async function getItems(profileId: ProfileId): Promise<Item[]> {
   return must(
@@ -90,7 +93,7 @@ function itemColumns(input: ItemInput) {
   };
 }
 
-export async function addItem(profileId: ProfileId, input: ItemInput) {
+export async function addItem(profileId: ProfileId, input: ItemInput): Promise<ItemId> {
   const { id } = must(
     await supabase
       .from("items")
@@ -99,6 +102,7 @@ export async function addItem(profileId: ProfileId, input: ItemInput) {
       .single(),
   ) as { id: ItemId };
   await setItemGroups(id, input);
+  return id;
 }
 
 export async function updateItem(itemId: ItemId, input: ItemInput) {

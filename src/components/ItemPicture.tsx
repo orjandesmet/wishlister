@@ -1,4 +1,4 @@
-import { createSignal, createUniqueId, Show } from "solid-js";
+import { createMemo, createSignal, createUniqueId, For, Show } from "solid-js";
 import { t } from "../lib/i18n.ts";
 import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
@@ -26,26 +26,30 @@ function Thumb(props: { src: string; onError: () => void }) {
 }
 
 /**
- * Remembers which picture failed to load (moved, or the shop blocks hotlinking), so it
- * is left out instead of showing a broken icon. A new src gets another try.
+ * Remembers which pictures failed to load (moved, or the shop blocks hotlinking), so
+ * they are left out instead of showing a broken icon.
  */
-function createLoadFailure(src: () => string) {
-  const [failed, setFailed] = createSignal<string>();
-  return { ok: () => failed() !== src(), fail: () => setFailed(src()) };
+function createLoadFailures() {
+  const [failed, setFailed] = createSignal<ReadonlySet<string>>(new Set());
+  return {
+    ok: (src: string) => !failed().has(src),
+    fail: (src: string) => setFailed((set) => new Set(set).add(src)),
+  };
 }
 
 /** Just the thumbnail, as in the item form's preview. */
 export function ItemThumbnail(props: { src: string }) {
-  const load = createLoadFailure(() => props.src);
+  const load = createLoadFailures();
   return (
-    <Show when={load.ok()}>
-      <Thumb src={props.src} onError={load.fail} />
+    <Show when={load.ok(props.src)}>
+      <Thumb src={props.src} onError={() => load.fail(props.src)} />
     </Show>
   );
 }
 
 export type ItemPictureProps = {
-  src: string;
+  /** The item's pictures, in order (see itemPictureSources). The first is the thumbnail. */
+  srcs: string[];
   /** The item's name: the button's label and the bigger view's title. */
   name: string;
   /** Tapping the thumbnail opens the picture bigger. Off while picking items. */
@@ -53,55 +57,83 @@ export type ItemPictureProps = {
 };
 
 /**
- * The item's picture beside its name. Tapping it opens the picture bigger in a modal
- * dialog: Escape, the close button or tapping outside closes it, and focus goes back
- * to the thumbnail.
+ * The item's picture beside its name. Tapping it opens all its pictures bigger in a
+ * modal dialog: Escape, the close button or tapping outside closes it, and focus goes
+ * back to the thumbnail. Pictures that don't load are left out.
  */
 export function ItemPicture(props: ItemPictureProps) {
-  const load = createLoadFailure(() => props.src);
+  const load = createLoadFailures();
+  const shown = createMemo(() => props.srcs.filter(load.ok));
   const titleId = createUniqueId();
   // oxlint-disable-next-line no-unassigned-vars
   let dialog: HTMLDialogElement | undefined;
   return (
-    <Show when={load.ok()}>
-      <Show when={props.zoomable} fallback={<Thumb src={props.src} onError={load.fail} />}>
-        <button type="button" class={styles.zoom} onClick={() => dialog?.showModal()}>
-          <Thumb src={props.src} onError={load.fail} />
-          <span class={u.visuallyHidden}>{t("item.viewPicture", { name: props.name })}</span>
-        </button>
-        <dialog
-          ref={dialog}
-          class={styles.viewer}
-          aria-labelledby={titleId}
-          // The dialog itself has no padding, so only a tap on the backdrop lands on it.
-          onClick={(event) => event.target === event.currentTarget && dialog?.close()}
+    <Show when={shown()[0]}>
+      {(first) => (
+        <Show
+          when={props.zoomable}
+          fallback={<Thumb src={first()} onError={() => load.fail(first())} />}
         >
-          <div class={styles.viewerBody}>
-            <div class={styles.viewerHead}>
-              <h2 id={titleId} class={styles.viewerTitle}>
-                {props.name}
-              </h2>
-              <Button
-                variant="link"
-                size="small"
-                class={styles.close}
-                aria-label={t("common.close")}
-                onClick={() => dialog?.close()}
-              >
-                ×
-              </Button>
+          <button type="button" class={styles.zoom} onClick={() => dialog?.showModal()}>
+            <Thumb src={first()} onError={() => load.fail(first())} />
+            <Show when={shown().length > 1}>
+              <span class={styles.count} aria-hidden="true">
+                {shown().length}
+              </span>
+            </Show>
+            <span class={u.visuallyHidden}>
+              {shown().length > 1
+                ? t("item.viewPictures", { name: props.name, count: shown().length })
+                : t("item.viewPicture", { name: props.name })}
+            </span>
+          </button>
+          <dialog
+            ref={dialog}
+            class={styles.viewer}
+            aria-labelledby={titleId}
+            // The dialog itself has no padding, so only a tap on the backdrop lands on it.
+            onClick={(event) => event.target === event.currentTarget && dialog?.close()}
+          >
+            <div class={styles.viewerBody}>
+              <div class={styles.viewerHead}>
+                <h2 id={titleId} class={styles.viewerTitle}>
+                  {props.name}
+                </h2>
+                <Button
+                  variant="link"
+                  size="small"
+                  class={styles.close}
+                  aria-label={t("common.close")}
+                  onClick={() => dialog?.close()}
+                >
+                  ×
+                </Button>
+              </div>
+              <For each={shown()}>
+                {(src, index) => (
+                  <img
+                    class={styles.large}
+                    src={src}
+                    alt={
+                      shown().length > 1
+                        ? t("item.pictureNumberOf", {
+                            name: props.name,
+                            number: index() + 1,
+                            count: shown().length,
+                          })
+                        : t("item.pictureOf", { name: props.name })
+                    }
+                    loading="lazy"
+                    decoding="async"
+                    referrerpolicy="no-referrer"
+                    onError={() => load.fail(src)}
+                  />
+                )}
+              </For>
             </div>
-            <img
-              class={styles.large}
-              src={props.src}
-              alt={t("item.pictureOf", { name: props.name })}
-              loading="lazy"
-              decoding="async"
-              referrerpolicy="no-referrer"
-            />
-          </div>
-        </dialog>
-      </Show>
+          </dialog>
+        </Show>
+      )}
     </Show>
   );
 }
