@@ -37,6 +37,7 @@ import {
   getManagedProfiles,
   getMyProfile,
   getProfileDetails,
+  type MyProfile,
   type Profile,
   type ProfileDetails,
 } from "../lib/api/profiles.ts";
@@ -121,7 +122,7 @@ const profile = (id: string, child = false): Profile => ({
   account_id: child ? null : (`account-${id}` as AccountId),
 });
 // Your own profile is "Orjan", the rest are named after their id.
-const orjan: Profile = { ...profile("me"), display_name: "Orjan" };
+const orjan: MyProfile = { ...profile("me"), display_name: "Orjan", seasonal_themes: true };
 
 const member = (p: Profile, role: Member["role"]): Member => ({
   profile_id: p.id,

@@ -28,6 +28,17 @@ export const en = {
   language: {
     label: "Language",
   },
+  themes: {
+    label: "Seasonal themes",
+    hint: "The app dresses up for Sinterklaas, Christmas, New Year, Easter, Halloween and 1 March.",
+    now: (p: { theme: string }) => `Today it's dressed up for ${p.theme}.`,
+    sinterklaas: "Sinterklaas",
+    christmas: "Christmas",
+    newYear: "New Year",
+    birthday: "a birthday",
+    halloween: "Halloween",
+    easter: "Easter",
+  },
   currency: {
     label: "Show prices in",
     hint: "Prices in another currency also show roughly what they are in this one.",

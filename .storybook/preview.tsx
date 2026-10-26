@@ -3,6 +3,7 @@ import type { Preview } from "storybook-solidjs-vite";
 import { sb } from "storybook/test";
 import { isLocale } from "../src/i18n/locale.ts";
 import { setLocale } from "../src/lib/i18n.ts";
+import { isTheme, setThemePreview } from "../src/lib/theme.ts";
 import "../src/index.css";
 
 // The Screens stories render the real pages. Their data comes from these mocks instead of
@@ -49,6 +50,23 @@ export default {
         dynamicTitle: true,
       },
     },
+    // A brush in the toolbar puts every story in one of the seasonal themes.
+    appTheme: {
+      description: "App theme",
+      toolbar: {
+        icon: "paintbrush",
+        items: [
+          { value: "none", title: "No theme" },
+          { value: "sinterklaas", title: "Sinterklaas" },
+          { value: "christmas", title: "Christmas" },
+          { value: "newYear", title: "New Year" },
+          { value: "birthday", title: "Birthday (1 March)" },
+          { value: "halloween", title: "Halloween" },
+          { value: "easter", title: "Easter" },
+        ],
+        dynamicTitle: true,
+      },
+    },
     locale: {
       description: "Language",
       toolbar: {
@@ -62,7 +80,12 @@ export default {
     },
   },
   // Phone-sized canvas by default: the app is mobile first.
-  initialGlobals: { viewport: { value: "mobile2", isRotated: false }, locale: "en", theme: "auto" },
+  initialGlobals: {
+    viewport: { value: "mobile2", isRotated: false },
+    locale: "en",
+    theme: "auto",
+    appTheme: "default",
+  },
   decorators: [
     // Components use <A> links, which need a router around them. Stories that bring their
     // own router (the Screens stories render the app's) set parameters.router to false.
@@ -70,8 +93,14 @@ export default {
       context.parameters.router === false ? <Story /> : <MemoryRouter root={() => <Story />} />,
     (Story, context) => {
       const theme: unknown = context.globals.theme;
+      // Left to the stylesheet when "System", so Halloween can still force dark.
       document.documentElement.style.colorScheme =
-        theme === "light" || theme === "dark" ? theme : "light dark";
+        theme === "light" || theme === "dark" ? theme : "";
+      // The Screens stories show the theme's decorations and hats from this preview.
+      const appTheme: unknown = context.globals.appTheme;
+      setThemePreview({ theme: isTheme(appTheme) ? appTheme : "none" });
+      if (isTheme(appTheme)) document.documentElement.dataset.theme = appTheme;
+      else delete document.documentElement.dataset.theme;
       return <Story />;
     },
     (Story, context) => {
