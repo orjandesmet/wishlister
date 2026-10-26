@@ -324,6 +324,14 @@ export default function ItemForm() {
               onInput={(e) => setName(e.currentTarget.value)}
             />
           </label>
+          <Check>
+            <input
+              type="checkbox"
+              checked={notWanted()}
+              onChange={(e) => setNotWanted(e.currentTarget.checked)}
+            />
+            {t("itemForm.notWanted")}
+          </Check>
           <label>
             {t("itemForm.link")}
             <input
@@ -355,13 +363,19 @@ export default function ItemForm() {
               </div>
             )}
           </Show>
-          <PicturePicker
-            pictures={pictures().map((p) => ({ key: pictureKey(p), src: p.src }))}
-            max={MAX_PICTURES}
-            onAddFiles={addPictureFiles}
-            onAddLink={addPictureLink}
-            onRemove={removeOwnPicture}
-          />
+          <label>
+            {t("itemForm.description")}
+            <textarea
+              rows={4}
+              maxLength={1000}
+              aria-describedby={descriptionHint}
+              value={description()}
+              onInput={(e) => setDescription(e.currentTarget.value)}
+            />
+          </label>
+          <p id={descriptionHint} class={`${u.muted} ${u.small} ${styles.hint}`}>
+            {t("itemForm.descriptionHint")}
+          </p>
           <label>
             {t("itemForm.category")}
             <input
@@ -383,27 +397,6 @@ export default function ItemForm() {
               );
             }}
           />
-          <label>
-            {t("itemForm.description")}
-            <textarea
-              rows={4}
-              maxLength={1000}
-              aria-describedby={descriptionHint}
-              value={description()}
-              onInput={(e) => setDescription(e.currentTarget.value)}
-            />
-          </label>
-          <p id={descriptionHint} class={`${u.muted} ${u.small} ${styles.hint}`}>
-            {t("itemForm.descriptionHint")}
-          </p>
-          <Check>
-            <input
-              type="checkbox"
-              checked={notWanted()}
-              onChange={(e) => setNotWanted(e.currentTarget.checked)}
-            />
-            {t("itemForm.notWanted")}
-          </Check>
           <div class={`${u.row} ${styles.priceFields}`}>
             <label>
               {t("itemForm.price")}
@@ -428,6 +421,13 @@ export default function ItemForm() {
               </Select>
             </label>
           </div>
+          <PicturePicker
+            pictures={pictures().map((p) => ({ key: pictureKey(p), src: p.src }))}
+            max={MAX_PICTURES}
+            onAddFiles={addPictureFiles}
+            onAddLink={addPictureLink}
+            onRemove={removeOwnPicture}
+          />
           <fieldset>
             <legend>{t("itemForm.visibility")}</legend>
             <Check>
@@ -481,6 +481,11 @@ export default function ItemForm() {
               {t("itemForm.noGroupsOption")}
             </Check>
           </fieldset>
+          <Show when={error()}>
+            <p class={u.error} role="alert">
+              {error()}
+            </p>
+          </Show>
           <button type="submit" disabled={busy()}>
             {uploading()
               ? t("pictures.uploading", uploading()!)
@@ -496,11 +501,6 @@ export default function ItemForm() {
           <Button variant="secondary" onClick={() => history.back()}>
             {t("common.cancel")}
           </Button>
-          <Show when={error()}>
-            <p class={u.error} role="alert">
-              {error()}
-            </p>
-          </Show>
           <Show when={savedName()}>
             <p class={u.muted} role="status">
               {t("itemForm.savedAnother", { name: savedName()! })}

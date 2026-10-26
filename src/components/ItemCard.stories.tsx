@@ -4,7 +4,14 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { ItemCard } from "./ItemCard.tsx";
-import { bonsaiPicture, brokenPicture, scarfPicture } from "../stories/samplePictures.ts";
+import {
+  bellPicture,
+  bikePicture,
+  bonsaiPicture,
+  brokenPicture,
+  helmetPicture,
+  scarfPicture,
+} from "../stories/samplePictures.ts";
 import u from "../utilities.module.css";
 
 const meta = {
@@ -195,6 +202,36 @@ export const WithSeveralPictures: Story = {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole("button", { name: /view 2 pictures/i }));
     await expect(canvas.getAllByRole("img", { name: /picture \d of 2/i })).toHaveLength(2);
+  },
+};
+
+/**
+ * The most an item can have: 5 own pictures (uploaded or linked) and the link's picture
+ * after them. Opened, the dialog shows all 6 in order.
+ */
+export const WithManyPictures: Story = {
+  args: {
+    item: {
+      ...meta.args.item,
+      name: "Kids' bike, 20 inch",
+      price: 229,
+      category: "Sports",
+      url: "https://www.example.com/kids-bike",
+      image_url: bonsaiPicture,
+      item_pictures: [bikePicture, bellPicture, helmetPicture, scarfPicture, bikePicture].map(
+        (url, position) => ({
+          id: `p${position}`,
+          path: null,
+          url: `${url}#${position}`,
+          position,
+        }),
+      ),
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("button", { name: /view 6 pictures/i }));
+    await expect(canvas.getAllByRole("img", { name: /picture \d of 6/i })).toHaveLength(6);
   },
 };
 

@@ -28,3 +28,31 @@ export const scarfPicture = svg(
 
 /** Never loads: a picture that moved, or a shop that blocks it. */
 export const brokenPicture = "https://picture.invalid/gone.jpg";
+
+/** A red bike, for an item with several pictures. */
+export const bikePicture = svg(
+  120,
+  80,
+  `<rect width="120" height="80" fill="#fff"/>
+  <circle cx="30" cy="52" r="18" fill="none" stroke="#2b2b2b" stroke-width="5"/>
+  <circle cx="90" cy="52" r="18" fill="none" stroke="#2b2b2b" stroke-width="5"/>
+  <path d="M30 52 L50 26 L78 26 L90 52 M50 26 L62 52 L78 26" stroke="#c0392b" stroke-width="5" fill="none"/>`,
+);
+
+/** The bike's bell, close up. */
+export const bellPicture = svg(
+  100,
+  100,
+  `<rect width="100" height="100" fill="#fff"/>
+  <circle cx="50" cy="55" r="28" fill="#d4ac0d"/>
+  <rect x="44" y="20" width="12" height="10" rx="3" fill="#7f6a0b"/>`,
+);
+
+/** A blue helmet that goes with the bike. */
+export const helmetPicture = svg(
+  100,
+  100,
+  `<rect width="100" height="100" fill="#fff"/>
+  <path d="M15 65 A35 35 0 0 1 85 65 Z" fill="#2e6fb5"/>
+  <rect x="15" y="63" width="70" height="8" rx="4" fill="#1d4f86"/>`,
+);
