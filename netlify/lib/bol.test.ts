@@ -2,15 +2,27 @@ import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 import { clearBolCache, fetchBolProduct, parseBolLink, readProduct } from "./bol.ts";
 import { lookUpPage } from "./pageInfo.ts";
 
-// Trimmed from ReefAPI's playground answer for this book (2026-10-25).
-const product = {
-  product_id: "9300000179591316",
-  title: "Wat vooraf ging",
-  url: "https://www.bol.com/be/nl/p/wat-vooraf-ging/9300000179591316/",
-  price: 32,
-  currency: "EUR",
-  ean: "9789492672810",
-  images: ["https://media.s-bol.com/YAxKyB4AmZ8K/587mgVR/111x155.jpg"],
+// Trimmed from a ReefAPI answer (2026-10-26).
+const answer = {
+  ok: true,
+  meta: { api: "bol", endpoint: "product/detail", record_count: 1, cache_hit: false },
+  data: {
+    product: {
+      product_id: "9300000166374057",
+      title: "PlayStation 5 Disc Edition - Slim",
+      url: "https://www.bol.com/be/nl/p/sony-playstation-5-bia-y/9300000166374057/",
+      brand: { id: "606580693", name: "Sony PlayStation" },
+      price: 759,
+      currency: "EUR",
+      image: null,
+      ean: "0711719577171",
+      images: [
+        "https://media.s-bol.com/R7vApBR8W3jR/oDzmzX/1122x1200.jpg",
+        "https://media.s-bol.com/4POv8pXvoNvx/n55oNo4/1200x998.jpg",
+      ],
+      video: "https://media.s-bol.com/xXwLQEK6l9Jz/4QK579x/550x309.jpg",
+    },
+  },
 };
 
 beforeEach(() => clearBolCache());
@@ -48,27 +60,25 @@ describe("parseBolLink", () => {
 
 describe("readProduct", () => {
   it("reads the name, first picture and price", () => {
-    expect(readProduct(product)).toEqual({
-      title: "Wat vooraf ging",
-      image: "https://media.s-bol.com/YAxKyB4AmZ8K/587mgVR/111x155.jpg",
-      price: { amount: 32, currency: "EUR" },
+    expect(readProduct(answer)).toEqual({
+      title: "PlayStation 5 Disc Edition - Slim",
+      image: "https://media.s-bol.com/R7vApBR8W3jR/oDzmzX/1122x1200.jpg",
+      price: { amount: 759, currency: "EUR" },
     });
   });
 
-  it("finds the product inside a wrapper", () => {
-    expect(readProduct({ data: [product] }).title).toBe("Wat vooraf ging");
-    expect(
-      readProduct({ records: [{ ...product, images: [{ url: "https://m/x.jpg" }] }] }),
-    ).toEqual({
-      title: "Wat vooraf ging",
-      image: "https://m/x.jpg",
-      price: { amount: 32, currency: "EUR" },
-    });
+  it("uses image when there are no images", () => {
+    const product = { ...answer.data.product, images: [], image: "https://media.s-bol.com/a.jpg" };
+    expect(readProduct({ data: { product } }).image).toBe("https://media.s-bol.com/a.jpg");
   });
 
   it("gives nulls for anything else", () => {
     expect(readProduct(null)).toEqual({ title: null, image: null, price: null });
-    expect(readProduct({ error: "not found" })).toEqual({ title: null, image: null, price: null });
+    expect(readProduct({ ok: false, error: "not found" })).toEqual({
+      title: null,
+      image: null,
+      price: null,
+    });
   });
 });
 
@@ -76,9 +86,9 @@ describe("fetchBolProduct", () => {
   const link = { productId: "9300000179591316", market: "be" };
 
   it("asks ReefAPI with the key and remembers the answer", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json(product));
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json(answer));
     const info = await fetchBolProduct(link, "reef_1", fetch);
-    expect(info.title).toBe("Wat vooraf ging");
+    expect(info.title).toBe("PlayStation 5 Disc Edition - Slim");
     const [endpoint, init] = fetch.mock.calls[0] as [string, RequestInit];
     expect(endpoint).toBe("https://api.reefapi.com/bol/v1/product/detail");
     expect(init.method).toBe("POST");
@@ -93,7 +103,7 @@ describe("fetchBolProduct", () => {
   });
 
   it("asks again after a day", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json(product));
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json(answer));
     await fetchBolProduct(link, "reef_1", fetch, 0);
     await fetchBolProduct(link, "reef_1", fetch, 25 * 60 * 60 * 1000);
     expect(fetch).toHaveBeenCalledTimes(2);
@@ -129,14 +139,14 @@ describe("fetchBolProduct", () => {
 
 describe("lookUpPage with a bol.com link", () => {
   it("goes to ReefAPI, not to the page or Microlink", async () => {
-    const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json(product));
+    const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json(answer));
     expect(
       await lookUpPage(
         "https://www.bol.com/be/nl/p/wat-vooraf-ging/9300000179591316/",
         { microlink: "ml_1", reefapi: "reef_1" },
         fetch,
       ),
-    ).toEqual(readProduct(product));
+    ).toEqual(readProduct(answer));
     expect(fetch).toHaveBeenCalledTimes(1);
     expect(fetch.mock.calls[0][0]).toContain("api.reefapi.com");
   });

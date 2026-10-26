@@ -111,48 +111,26 @@ export async function fetchBolProduct(
 }
 
 /**
- * Reads ReefAPI's product: the record itself, or the first one in a data,
- * records or results wrapper. Prices on bol.com are in euros.
+ * Reads ReefAPI's answer, { ok, meta, data: { product } }: the title, the first
+ * of `images` (`image` is usually null) and the price. Prices on bol.com are in euros.
  */
 export function readProduct(body: unknown): PageInfo {
-  const product = findRecord(body);
-  if (!product) return { title: null, image: null, price: null };
-  const title = typeof product.title === "string" ? product.title.replace(/\s+/g, " ").trim() : "";
+  const product = (body as { data?: { product?: unknown } } | null)?.data?.product;
+  if (!product || typeof product !== "object") return { title: null, image: null, price: null };
+  const { title, images, image, price, currency } = product as Record<string, unknown>;
+  const name = typeof title === "string" ? title.replace(/\s+/g, " ").trim() : "";
   return {
-    title: title ? truncate(title, MAX_TITLE) : null,
-    image: firstImage(product.images) ?? firstImage([product.image]),
-    price: toPrice(
-      product.price,
-      typeof product.currency === "string" && product.currency ? product.currency : "EUR",
-    ),
+    title: name ? truncate(name, MAX_TITLE) : null,
+    image: firstImage(images) ?? firstImage([image]),
+    price: toPrice(price, typeof currency === "string" && currency ? currency : "EUR"),
   };
 }
 
-function findRecord(node: unknown, depth = 0): Record<string, unknown> | undefined {
-  if (depth > 3 || !node || typeof node !== "object") return undefined;
-  if (Array.isArray(node)) return findRecord(node[0], depth + 1);
-  const record = node as Record<string, unknown>;
-  if (typeof record.title === "string") return record;
-  for (const wrapper of ["data", "records", "results", "result", "product"]) {
-    const found = findRecord(record[wrapper], depth + 1);
-    if (found) return found;
-  }
-  return undefined;
-}
-
-/** The first https picture in a list of URLs or { url } objects. */
+/** The first http(s) picture in a list of URLs. */
 function firstImage(images: unknown): string | null {
   if (!Array.isArray(images)) return null;
-  for (const image of images) {
-    const url =
-      typeof image === "string"
-        ? image
-        : image && typeof image === "object"
-          ? (image as { url?: unknown }).url
-          : undefined;
-    if (typeof url === "string" && /^https?:\/\//i.test(url)) return url;
-  }
-  return null;
+  const url = images.find((image) => typeof image === "string" && /^https?:\/\//i.test(image));
+  return typeof url === "string" ? url : null;
 }
 
 /** Any credit or rate-limit headers, so Netlify's log shows how many credits are left. */
