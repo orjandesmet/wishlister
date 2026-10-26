@@ -111,3 +111,43 @@ describe("createCachedResource", () => {
     });
   });
 });
+
+describe("createCachedResource refreshes", () => {
+  it("keeps unchanged items as they were, so their cards aren't built again", async () => {
+    const lists = [
+      [
+        { id: "a", name: "Pan" },
+        { id: "b", name: "Scarf" },
+      ],
+      [
+        { id: "a", name: "Pan" },
+        { id: "b", name: "Grey scarf" },
+        { id: "c", name: "Bonsai" },
+      ],
+    ];
+    const load = cached<string, { id: string; name: string }[]>("test", async () =>
+      structuredClone(lists.shift()!),
+    );
+    await load("list");
+    const { data, dispose } = createRoot((dispose) => {
+      const [data] = createCachedResource(() => "list", load);
+      return { data, dispose };
+    });
+    const before = data()!;
+    const pan = before[0];
+    await tick();
+    expect(data()!.map((item) => item.name)).toEqual(["Pan", "Grey scarf", "Bonsai"]);
+    expect(data()![0]).toBe(pan);
+    dispose();
+  });
+
+  it("doesn't let a page's changes leak into what's remembered", async () => {
+    const load = cached<string, { id: string; name: string }[]>("test", async () => [
+      { id: "a", name: "Pan" },
+    ]);
+    await load("list");
+    const remembered = load.peek("list")!;
+    remembered[0].name = "Changed";
+    expect(load.peek("list")![0].name).toBe("Pan");
+  });
+});

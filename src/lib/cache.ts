@@ -1,4 +1,5 @@
-import { createResource, untrack, type ResourceReturn } from "solid-js";
+import { createResource, untrack, type ResourceReturn, type Signal } from "solid-js";
+import { createStore, reconcile, unwrap } from "solid-js/store";
 
 /**
  * A small in-memory cache for what pages load, so going back to a page shows what it showed
@@ -24,9 +25,10 @@ export function clearCache() {
   inFlight.clear();
 }
 
+// Pages get their own copies (see deepSignal, which updates what it holds in place).
 function store(key: string, value: unknown) {
   entries.delete(key);
-  entries.set(key, { value, at: Date.now() });
+  entries.set(key, { value: structuredClone(value), at: Date.now() });
   if (entries.size > MAX_ENTRIES) entries.delete(entries.keys().next().value!);
 }
 
@@ -58,15 +60,35 @@ export function cached<A, T>(name: string, fetcher: (arg: A) => Promise<T>): Loa
     inFlight.set(key, promise);
     return promise;
   };
-  load.peek = (arg: A) => entries.get(keyOf(arg))?.value as T | undefined;
+  load.peek = (arg: A) => {
+    const entry = entries.get(keyOf(arg));
+    return entry && (structuredClone(entry.value) as T);
+  };
   load.prefetch = async (arg: A, maxAgeMs = 30_000) => {
     const key = keyOf(arg);
     const entry = entries.get(key);
-    if (entry && Date.now() - entry.at < maxAgeMs) return entry.value as T;
+    if (entry && Date.now() - entry.at < maxAgeMs) return structuredClone(entry.value) as T;
     // A background load that fails just leaves the page to load (and show the error) itself.
     return load(arg).catch(() => undefined);
   };
   return load;
+}
+
+/**
+ * Resource storage that merges a new value into the old one (by `id`) instead of replacing it.
+ * A refresh that brings the same items then changes nothing on screen: the list's cards and
+ * pictures stay as they are, rather than all being built again (which flickers).
+ */
+function deepSignal<T>(initial: T | undefined): Signal<T | undefined> {
+  const [state, setState] = createStore<{ value: T | undefined }>({ value: initial });
+  const get = () => state.value;
+  const set = (next: unknown) => {
+    const value =
+      typeof next === "function" ? (next as (prev: unknown) => unknown)(unwrap(state).value) : next;
+    setState("value", reconcile(value as T | undefined, { key: "id" }));
+    return state.value;
+  };
+  return [get, set] as Signal<T | undefined>;
 }
 
 /**
@@ -84,6 +106,8 @@ export function createCachedResource<S, T>(
   return createResource(
     source,
     loader,
-    remembered === undefined ? {} : { initialValue: remembered },
+    remembered === undefined
+      ? { storage: deepSignal }
+      : { initialValue: remembered, storage: deepSignal },
   ) as ResourceReturn<T, S>;
 }
