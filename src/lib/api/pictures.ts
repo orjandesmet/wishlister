@@ -16,7 +16,7 @@ export type ReadyPicture = { path: string } | { url: string };
  * Shrinks and uploads the pictures chosen in the item form, into the list's folder.
  * Links typed in need nothing yet. `progress` hears which upload starts (from 1).
  * Done before the item is saved, so a failed upload doesn't leave half an item;
- * uploads whose item then fails to save are cleaned up the next day.
+ * uploads whose item then fails to save are cleaned up within a week.
  */
 export async function uploadPictures(
   profileId: ProfileId,
@@ -45,7 +45,7 @@ export async function uploadPictures(
 /**
  * Makes the item's pictures what the form shows: the removed ones go, the new ones
  * (uploaded already, see uploadPictures) come after the kept ones. The files of
- * removed uploads are deleted by the daily cleanup.
+ * removed uploads are deleted by the weekly cleanup.
  */
 export async function savePictures(
   itemId: ItemId,

@@ -9,7 +9,7 @@
 -- can see the item.
 --
 -- Files are never deleted here: a database can't remove them from Storage. The
--- daily Netlify function clean-pictures deletes the uploads no row points to
+-- weekly Netlify function clean-pictures deletes the uploads no row points to
 -- anymore (see orphaned_item_pictures()).
 --
 -- Backwards compatible: a new table and bucket the deployed app doesn't use.

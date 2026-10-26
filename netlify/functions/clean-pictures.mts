@@ -1,5 +1,5 @@
 /// <reference types="node" />
-// Netlify Scheduled Function: once a day, deletes uploaded item pictures (#95)
+// Netlify Scheduled Function: once a week, deletes uploaded item pictures (#95)
 // that no item uses anymore: the picture or its item was removed, or the item
 // form uploaded it and then failed to save. The database can't delete files from
 // Storage itself, so it only lists them (orphaned_item_pictures()).
@@ -19,7 +19,7 @@ export default async () => {
   if (error) throw new Error(`Couldn't list unused pictures: ${error.message}`);
 
   const paths = data as string[];
-  // At most 1000 a day (the function's limit); whatever's left goes tomorrow.
+  // At most 1000 a run (the database function's limit); whatever's left goes next week.
   for (let start = 0; start < paths.length; start += 100) {
     const batch = paths.slice(start, start + 100);
     const { error: removeError } = await admin.storage.from(BUCKET).remove(batch);
@@ -28,4 +28,4 @@ export default async () => {
   console.log(`Unused pictures deleted: ${paths.length}`);
 };
 
-export const config = { schedule: "@daily" };
+export const config = { schedule: "@weekly" };
