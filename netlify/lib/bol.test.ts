@@ -19,16 +19,20 @@ describe("parseBolLink", () => {
   it("reads the product id and the storefront", () => {
     expect(
       parseBolLink("https://www.bol.com/be/nl/p/wat-vooraf-ging/9300000179591316/?bltgh=x"),
-    ).toEqual({ productId: "9300000179591316", market: "be-nl" });
+    ).toEqual({ productId: "9300000179591316", market: "be" });
     expect(parseBolLink("https://www.bol.com/nl/nl/p/x/9200000012345678/")).toEqual({
       productId: "9200000012345678",
-      market: "nl-nl",
+      market: "nl",
     });
     expect(parseBolLink("https://bol.com/be/fr/p/x/9300000179591316")?.market).toBe("be-fr");
   });
 
-  it("leaves the market out for old links without a country", () => {
-    expect(parseBolLink("https://www.bol.com/nl/p/x/9200000012345678/")).toEqual({
+  it("reads old links without a country as the Dutch store", () => {
+    expect(parseBolLink("https://www.bol.com/nl/p/x/9200000012345678/")?.market).toBe("nl");
+  });
+
+  it("leaves an unknown storefront to ReefAPI's default", () => {
+    expect(parseBolLink("https://www.bol.com/de/de/p/x/9200000012345678/")).toEqual({
       productId: "9200000012345678",
       market: undefined,
     });
@@ -69,7 +73,7 @@ describe("readProduct", () => {
 });
 
 describe("fetchBolProduct", () => {
-  const link = { productId: "9300000179591316", market: "be-nl" };
+  const link = { productId: "9300000179591316", market: "be" };
 
   it("asks ReefAPI with the key and remembers the answer", async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async () => Response.json(product));
@@ -81,7 +85,7 @@ describe("fetchBolProduct", () => {
     expect(init.headers).toMatchObject({ "x-api-key": "reef_1" });
     expect(JSON.parse(init.body as string)).toEqual({
       product_id: "9300000179591316",
-      market: "be-nl",
+      market: "be",
     });
 
     expect(await fetchBolProduct(link, "reef_1", fetch)).toEqual(info);

@@ -17,18 +17,20 @@ const MAX_TITLE = 150;
 
 /** bol.com's storefronts, as the link's /<country>/<language>/ and ReefAPI's market. */
 const MARKETS: Record<string, string> = {
-  "nl/nl": "nl-nl",
-  "be/nl": "be-nl",
+  "nl/nl": "nl",
+  "be/nl": "be",
   "be/fr": "be-fr",
+  // Older links without a country are from the Dutch store.
+  nl: "nl",
 };
 
 export type BolLink = { productId: string; market: string | undefined };
 
 /**
  * The product id and storefront of a bol.com product link, e.g.
- * bol.com/be/nl/p/wat-vooraf-ging/9300000179591316/ → 9300000179591316 on be/nl.
- * The slug doesn't matter. Old links without a country (bol.com/nl/p/…) leave the
- * market to ReefAPI's default. Null for anything that isn't a product page.
+ * bol.com/be/nl/p/wat-vooraf-ging/9300000179591316/ → 9300000179591316 on market "be".
+ * The slug doesn't matter; an unknown storefront leaves the market to ReefAPI's
+ * default (be). Null for anything that isn't a product page.
  */
 export function parseBolLink(raw: string): BolLink | null {
   let url: URL;
