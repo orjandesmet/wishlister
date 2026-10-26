@@ -4,7 +4,6 @@ import { sb } from "storybook/test";
 import { isLocale } from "../src/i18n/locale.ts";
 import { setLocale } from "../src/lib/i18n.ts";
 import { isTheme, setThemePreview } from "../src/lib/theme.ts";
-import { startThemeTaps } from "../src/lib/themeExtras.ts";
 import "../src/index.css";
 
 // The Screens stories render the real pages. Their data comes from these mocks instead of
@@ -22,9 +21,6 @@ sb.mock(import("../src/lib/api/purchases.ts"));
 // Real code, but a story can fix the date or show the install banner.
 sb.mock(import("../src/lib/occasions.ts"), { spy: true });
 sb.mock(import("../src/lib/install.ts"), { spy: true });
-
-// Pressing a button sprinkles the theme's snow or confetti in stories too.
-startThemeTaps();
 
 export default {
   // Every component gets a Docs page with its props and all its stories.

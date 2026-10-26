@@ -1,4 +1,4 @@
-/* What a pressed button does during a seasonal theme (themeExtras.ts). Never drawn with reduced motion. */
+/* What "I bought this" sets off during a seasonal theme (themeExtras.ts). Never drawn with reduced motion. */
 .pop,
 .float {
   position: fixed;
@@ -8,7 +8,7 @@
   pointer-events: none;
 }
 
-/* Laid exactly over the pressed button, clipped to its shape. */
+/* Laid exactly over the item's card, clipped to its shape. */
 .inside {
   position: fixed;
   z-index: 10;
@@ -16,7 +16,7 @@
   pointer-events: none;
 }
 
-/* Christmas: a few flakes fall from the top of the button to the bottom. */
+/* Christmas: snow falls from the top of the card to the bottom. */
 .snow span {
   position: absolute;
   top: -6px;
@@ -40,30 +40,7 @@
   }
 }
 
-/* Sinterklaas: a gold sheen sweeps across the button once. */
-.shimmer span {
-  position: absolute;
-  inset: -50% auto -50% -60%;
-  width: 45%;
-  background: linear-gradient(
-    100deg,
-    transparent,
-    rgb(255 226 140 / 0.65),
-    rgb(255 255 255 / 0.8),
-    rgb(255 226 140 / 0.65),
-    transparent
-  );
-  transform: skewX(-18deg);
-  animation: sheen 900ms ease-in-out forwards;
-}
-
-@keyframes sheen {
-  to {
-    left: 120%;
-  }
-}
-
-/* New Year and birthday: a little confetti pops out around the finger. */
+/* New Year and birthday: a little confetti pops out of the button. */
 .pop span {
   position: absolute;
   left: 0;
@@ -125,7 +102,7 @@
   }
 }
 
-/* Easter: one chick hops out to the side, twice. */
+/* Easter: a chick hops in from the card's right edge, twice. */
 .hop span {
   animation: hop 1s ease-in-out forwards;
 }
@@ -139,21 +116,21 @@
     opacity: 1;
   }
   30% {
-    transform: translate(14px, -26px);
+    transform: translate(-14px, -26px);
   }
   50% {
-    transform: translate(28px, 0);
+    transform: translate(-28px, 0);
   }
   70% {
-    transform: translate(40px, -16px);
+    transform: translate(-40px, -16px);
   }
   85% {
     opacity: 1;
-    transform: translate(50px, 0);
+    transform: translate(-50px, 0);
   }
   100% {
     opacity: 0;
-    transform: translate(54px, 0);
+    transform: translate(-54px, 0);
   }
 }
 

@@ -1,6 +1,6 @@
 import { convertAmount, exchangeRates, type Rates } from "./currency.ts";
 import type { ItemId } from "./ids.ts";
-import { burstGuest } from "./themeExtras.ts";
+import { activeExtras, playPurchaseEffect, type BuyTap } from "./themeExtras.ts";
 import styles from "./moneyBurst.module.css";
 
 /** One flying 💸, 🪙 or seasonal guest: where it ends up, relative to where it starts, and how it moves. */
@@ -51,14 +51,14 @@ function prefersReducedMotion() {
  * as soon as the purchase is saved. It ignores taps and screen readers, and cleans up
  * after itself, so it never gets in the way of the update.
  */
-export function burstMoney(from: DOMRect) {
+export function burstMoney(from: DOMRect, guest?: string) {
   if (prefersReducedMotion()) return;
   const burst = document.createElement("div");
   burst.className = styles.burst;
   burst.setAttribute("aria-hidden", "true");
   burst.style.left = `${from.left + from.width / 2}px`;
   burst.style.top = `${from.top + from.height / 2}px`;
-  for (const particle of makeParticles(Math.random, burstGuest())) {
+  for (const particle of makeParticles(Math.random, guest)) {
     const span = document.createElement("span");
     span.textContent = particle.emoji;
     span.style.setProperty("--dx", `${particle.dx}px`);
@@ -72,14 +72,21 @@ export function burstMoney(from: DOMRect) {
 }
 
 /** Where "I bought this" was last tapped, until that purchase is saved. */
-let lastTap: { itemId: ItemId; rect: DOMRect } | undefined;
+let lastTap: (BuyTap & { itemId: ItemId }) | undefined;
 
 /**
  * Call when a buy button is tapped. Saving the purchase refetches the list, which can
- * rebuild the card, so the tap is kept here rather than in the card.
+ * rebuild the card, so the tap (and the card around it, for a seasonal theme's
+ * effect) is kept here rather than in the card.
  */
 export function rememberBuyTap(itemId: ItemId, button: Element) {
-  lastTap = { itemId, rect: button.getBoundingClientRect() };
+  const card = button.closest("li, article") ?? button;
+  lastTap = {
+    itemId,
+    button: button.getBoundingClientRect(),
+    card: card.getBoundingClientRect(),
+    cardRadius: getComputedStyle(card).borderRadius,
+  };
 }
 
 /** Bursting on every purchase gets old fast, so only gifts of this much or more get one. */
@@ -100,13 +107,16 @@ export function isBigPurchase(
 }
 
 /**
- * Call once the purchase is saved: bursts from the remembered tap, if it was on this
- * item and the item costs €50 or more.
+ * Call once the purchase is saved, if the remembered tap was on this item: plays the
+ * seasonal theme's purchase effect, and bursts 💸 when the item costs €50 or more
+ * (unless the theme has its own celebration instead).
  */
 export function burstMoneyForTap(itemId: ItemId, price: number | null, currency: string | null) {
   const tap = lastTap;
   lastTap = undefined;
-  if (tap?.itemId === itemId && isBigPurchase(price, currency, exchangeRates())) {
-    burstMoney(tap.rect);
-  }
+  if (tap?.itemId !== itemId) return;
+  const extras = activeExtras();
+  if (extras?.purchase) playPurchaseEffect(extras.purchase, tap);
+  if (extras && !extras.moneyBurst) return;
+  if (isBigPurchase(price, currency, exchangeRates())) burstMoney(tap.button, extras?.guest);
 }
