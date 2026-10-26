@@ -1,5 +1,5 @@
--- Demo database only: wipes every account and row, then loads seed.sql with a shared
--- password on the seed accounts, so demo visitors can sign in without an email.
+-- Demo database only: wipes every account and row, then loads seed.sql, whose accounts
+-- have a shared password, so demo visitors can sign in without an email.
 -- The Demo workflow runs it in one transaction after applying the migrations:
 --   psql "$DEMO_DATABASE_URL" -v ON_ERROR_STOP=1 --single-transaction -f supabase/demo/reset.sql
 
@@ -27,9 +27,5 @@ $$;
 
 delete from auth.users;
 
+-- The seed also gives its accounts the demo password.
 \ir ../seed.sql
-
--- Same password as demoPassword in src/lib/demo.ts.
-update auth.users
-set encrypted_password = extensions.crypt('wishlister-demo', extensions.gen_salt('bf'))
-where email like '%@example.com';
