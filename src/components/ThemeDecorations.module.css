@@ -47,7 +47,56 @@
   overflow: visible;
 }
 
+/*
+ * Behind everything on the page, in front of the window's background. Cards are opaque, so it
+ * only shows in the gaps between them.
+ */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.backdrop span {
+  position: absolute;
+  line-height: 1;
+  color: var(--muted);
+  opacity: 0.22;
+}
+
+/* Halloween's moon, a bit brighter than the rest. */
+.backdrop .moon {
+  top: 64px;
+  right: 8%;
+  left: auto;
+  font-size: 3rem;
+  opacity: 0.35;
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .fall span:not(.moon) {
+    animation: fall 18s linear infinite;
+    animation-delay: calc(var(--i) * -1.7s);
+  }
+
+  .rise span {
+    animation: rise-up 24s linear infinite;
+    animation-delay: calc(var(--i) * -2.3s);
+  }
+
+  .twinkle span:not(.moon) {
+    animation: glimmer 3.6s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.7s);
+  }
+
+  .sway span {
+    transform-origin: bottom center;
+    animation: sway 4s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.5s);
+  }
+
   .bulb {
     animation: twinkle 2.4s ease-in-out infinite;
     animation-delay: calc(var(--i) * -0.6s);
@@ -78,6 +127,31 @@
 
   .spider {
     animation: dangle 5s var(--ease-out) infinite alternate;
+  }
+}
+
+/* Down past the bottom of the window, starting above the top, so the snow keeps coming. */
+@keyframes fall {
+  from {
+    transform: translateY(-110vh) rotate(0);
+  }
+  to {
+    transform: translateY(110vh) rotate(180deg);
+  }
+}
+
+@keyframes rise-up {
+  from {
+    transform: translateY(110vh);
+  }
+  to {
+    transform: translateY(-110vh);
+  }
+}
+
+@keyframes glimmer {
+  50% {
+    opacity: 0.04;
   }
 }
 

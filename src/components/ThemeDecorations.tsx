@@ -123,31 +123,89 @@ function Garland(props: { theme: ThemeId }) {
   );
 }
 
+/** What's scattered faintly behind the page, per theme, and whether it falls, rises, twinkles or sways. */
+const backdrops: Record<
+  ThemeId,
+  { symbols: string[]; motion: "fall" | "rise" | "twinkle" | "sway" }
+> = {
+  sinterklaas: { symbols: ["⭐", "🍪"], motion: "fall" },
+  christmas: { symbols: ["❄"], motion: "fall" },
+  newYear: { symbols: ["✦", "✧"], motion: "twinkle" },
+  birthday: { symbols: ["🎈"], motion: "rise" },
+  halloween: { symbols: ["✦", "🕸️"], motion: "twinkle" },
+  easter: { symbols: ["🌸", "🌼"], motion: "sway" },
+};
+
+/** Fixed spots (in % of the window), so the scatter looks random but never jumps between renders. */
+const spots = [
+  [6, 12, 1.1],
+  [22, 64, 0.8],
+  [38, 28, 1.3],
+  [54, 82, 0.9],
+  [71, 18, 1],
+  [88, 52, 1.2],
+  [14, 88, 1],
+  [46, 6, 0.8],
+  [63, 46, 1.1],
+  [80, 74, 0.9],
+  [30, 44, 1],
+  [94, 8, 0.8],
+];
+
+/** Faint symbols behind the cards: snow falling at Christmas, balloons rising on the birthday… */
+function Backdrop(props: { theme: ThemeId }) {
+  const backdrop = () => backdrops[props.theme];
+  return (
+    <div class={`${styles.backdrop} ${styles[backdrop().motion]}`} aria-hidden="true">
+      <For each={spots}>
+        {([left, top, size], i) => (
+          <span
+            style={{
+              left: `${left}%`,
+              top: `${top}%`,
+              "font-size": `${size * 1.4}rem`,
+              "--i": i(),
+            }}
+          >
+            {backdrop().symbols[i() % backdrop().symbols.length]}
+          </span>
+        )}
+      </For>
+      {props.theme === "halloween" && <span class={styles.moon}>🌙</span>}
+    </div>
+  );
+}
+
 /**
- * The extras a theme adds along the top of the page: mitres and pepernoten, Christmas lights, confetti,
- * birthday bunting, bats and a spider, Easter eggs. Pure decoration, so hidden from
- * screen readers and never in the way of a tap. It only moves when the system
- * allows motion (see ThemeDecorations.module.css).
+ * The extras a theme adds: a garland along the top of the page (mitres and pepernoten,
+ * Christmas lights, confetti, birthday bunting, bats and a spider, Easter eggs) and
+ * faint symbols behind it. Pure decoration, so hidden from screen readers and never
+ * in the way of a tap. It only moves when the system allows motion (see
+ * ThemeDecorations.module.css).
  */
 export function ThemeDecorations(props: { theme: ThemeId | undefined }) {
   return (
     <Switch>
       <Match when={props.theme}>
         {(theme) => (
-          <div class={styles.decorations} aria-hidden="true" data-theme-decorations={theme()}>
-            <Garland theme={theme()} />
-            {theme() === "halloween" && (
-              <svg class={styles.spider} viewBox="0 40 24 80" width="24" height="80">
-                <line x1="12" y1="40" x2="12" y2="100" stroke="#9a9ea4" stroke-width="0.8" />
-                <g stroke="#e8e9eb" stroke-width="1.2" fill="none">
-                  <path d="M8 102 L2 98 M8 105 L1 105 M8 108 L2 113 M16 102 L22 98 M16 105 L23 105 M16 108 L22 113" />
-                </g>
-                <ellipse cx="12" cy="106" rx="5" ry="6" fill="#1b1d1f" stroke="#e8e9eb" />
-                <circle cx="10" cy="104" r="1" fill="#f28c28" />
-                <circle cx="14" cy="104" r="1" fill="#f28c28" />
-              </svg>
-            )}
-          </div>
+          <>
+            {/* Outside the garland's box: that one stacks above the page, this one below it. */}
+            <Backdrop theme={theme()} />
+            <div class={styles.decorations} aria-hidden="true" data-theme-decorations={theme()}>
+              <Garland theme={theme()} />
+              {theme() === "halloween" && (
+                <svg class={styles.spider} viewBox="0 40 24 80" width="24" height="80">
+                  <line x1="12" y1="40" x2="12" y2="100" stroke="#9a9ea4" stroke-width="0.8" />
+                  <g stroke="#e8e9eb" stroke-width="1.2" fill="none">
+                    <path d="M8 102 L2 98 M8 105 L1 105 M8 108 L2 113 M16 102 L22 98 M16 105 L23 105 M16 108 L22 113" />
+                  </g>
+                  <ellipse cx="12" cy="106" rx="5" ry="6" fill="#1b1d1f" stroke="#e8e9eb" />
+                  <circle cx="10" cy="104" r="1" fill="#f28c28" />
+                  <circle cx="14" cy="104" r="1" fill="#f28c28" />
+                </svg>
+              )}
+            </div>
+          </>
         )}
       </Match>
     </Switch>

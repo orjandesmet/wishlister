@@ -1,8 +1,9 @@
 import { convertAmount, exchangeRates, type Rates } from "./currency.ts";
 import type { ItemId } from "./ids.ts";
+import { burstGuest } from "./themeExtras.ts";
 import styles from "./moneyBurst.module.css";
 
-/** One flying 💸 or 🪙: where it ends up, relative to where it starts, and how it moves. */
+/** One flying 💸, 🪙 or seasonal guest: where it ends up, relative to where it starts, and how it moves. */
 export type Particle = {
   emoji: string;
   /** Horizontal travel in px. */
@@ -21,14 +22,15 @@ const lifetimeMs = 1100;
 
 /**
  * Fans the particles out upwards, between 30° left and right of straight up, and
- * mostly money with a few coins. `random` is a parameter so tests get a fixed spread.
+ * mostly money with a few coins. During a seasonal theme, its guest (🎅 at Christmas)
+ * flies along twice. `random` is a parameter so tests get a fixed spread.
  */
-export function makeParticles(random: () => number = Math.random): Particle[] {
+export function makeParticles(random: () => number = Math.random, guest?: string): Particle[] {
   return Array.from({ length: count }, (_, i) => {
     const angle = ((-30 + (60 * i) / (count - 1)) * Math.PI) / 180;
     const distance = 70 + random() * 50;
     return {
-      emoji: i % 3 === 1 ? "🪙" : "💸",
+      emoji: guest && (i === 2 || i === 7) ? guest : i % 3 === 1 ? "🪙" : "💸",
       dx: Math.round(Math.sin(angle) * distance),
       dy: Math.round(-Math.cos(angle) * distance),
       rotate: Math.round((random() - 0.5) * 90),
@@ -56,7 +58,7 @@ export function burstMoney(from: DOMRect) {
   burst.setAttribute("aria-hidden", "true");
   burst.style.left = `${from.left + from.width / 2}px`;
   burst.style.top = `${from.top + from.height / 2}px`;
-  for (const particle of makeParticles()) {
+  for (const particle of makeParticles(Math.random, burstGuest())) {
     const span = document.createElement("span");
     span.textContent = particle.emoji;
     span.style.setProperty("--dx", `${particle.dx}px`);

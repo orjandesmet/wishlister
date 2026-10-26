@@ -16,6 +16,12 @@ describe("makeParticles", () => {
     expect(particles.at(-1)!.dx).toBeGreaterThan(0);
   });
 
+  test("bring the theme's guest along twice", () => {
+    const withSanta = makeParticles(() => 0.5, "🎅");
+    expect(withSanta.filter((p) => p.emoji === "🎅")).toHaveLength(2);
+    expect(particles.some((p) => p.emoji === "🎅")).toBe(false);
+  });
+
   test("are mostly money, with some coins", () => {
     const money = particles.filter((p) => p.emoji === "💸").length;
     expect(money).toBeGreaterThan(particles.length / 2);
