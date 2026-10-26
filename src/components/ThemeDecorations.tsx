@@ -132,7 +132,7 @@ const backdrops: Record<
   christmas: { symbols: ["❄"], motion: "fall" },
   newYear: { symbols: ["✦", "✧"], motion: "twinkle" },
   birthday: { symbols: ["🎈"], motion: "rise" },
-  halloween: { symbols: ["✦", "🕸️"], motion: "twinkle" },
+  halloween: { symbols: ["💀", "👻", "🎃", "🧙", "🕸️"], motion: "twinkle" },
   easter: { symbols: ["🌸", "🌼"], motion: "sway" },
 };
 
