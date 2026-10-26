@@ -1,3 +1,4 @@
+import { ThemedMark } from "./ThemedMark.tsx";
 import { A } from "@solidjs/router";
 import type { JSX } from "solid-js";
 import { t } from "../lib/i18n.ts";
@@ -63,7 +64,7 @@ export function TabBar(props: TabBarProps) {
   return (
     <nav class={styles.tabs} aria-label={t("a11y.mainNav")}>
       <span class={styles.brand}>
-        <img src="/favicon.svg" alt="" />
+        <ThemedMark class={styles.brandMark} />
         Wishlister
       </span>
       <A href="/" end>

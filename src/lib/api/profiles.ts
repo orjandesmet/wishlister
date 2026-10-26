@@ -5,11 +5,17 @@ import { must } from "./must.ts";
 
 export type Profile = { id: ProfileId; display_name: string; account_id: AccountId | null };
 
-export async function getMyProfile(accountId: AccountId): Promise<Profile> {
+/** Your own profile, with your settings. */
+export type MyProfile = Profile & {
+  /** False when you switched the seasonal themes off. */
+  seasonal_themes: boolean;
+};
+
+export async function getMyProfile(accountId: AccountId): Promise<MyProfile> {
   return must(
     await supabase
       .from("profiles")
-      .select("id, display_name, account_id")
+      .select("id, display_name, account_id, seasonal_themes")
       .eq("account_id", accountId)
       .single(),
   );
@@ -65,6 +71,17 @@ export async function renameProfile(profileId: ProfileId, displayName: string) {
     await supabase
       .from("profiles")
       .update({ display_name: displayName.trim() })
+      .eq("id", profileId)
+      .select("id"),
+  );
+}
+
+/** Switches the seasonal themes on or off for your account. */
+export async function setProfileSeasonalThemes(profileId: ProfileId, on: boolean) {
+  must(
+    await supabase
+      .from("profiles")
+      .update({ seasonal_themes: on })
       .eq("id", profileId)
       .select("id"),
   );

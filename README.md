@@ -96,28 +96,30 @@ register it in `src/lib/i18n.ts`, and add a branch for it to the email templates
 
 ## Project layout
 
-| Path                       | What it is                                                          |
-| -------------------------- | ------------------------------------------------------------------- |
-| `src/lib/supabase.ts`      | The Supabase client                                                 |
-| `src/lib/auth.tsx`         | `AuthProvider` and `useAuth()`: the signed-in session as a signal   |
-| `src/pages/`               | One component per screen                                            |
-| `src/components/`          | Presentational components and their Storybook stories               |
-| `.storybook/`              | Storybook config                                                    |
-| `src/index.css`            | Theme tokens (colours, spacing) and base styles                     |
-| `src/utilities.module.css` | Shared text and layout classes (see Styles)                         |
-| `src/i18n/`                | UI text in English and Dutch, and language detection                |
-| `supabase/templates/`      | Sign-in and invite email bodies, to paste into Supabase             |
-| `supabase/migrations/`     | Database schema and row-level security policies                     |
-| `supabase/seed.sql`        | Made-up accounts, groups and items for the local Supabase           |
-| `supabase/config.toml`     | Settings for the local Supabase (`vp run db:start`)                 |
-| `netlify/functions/`       | `keepalive`: daily ping so the free Supabase project never pauses   |
-|                            | `send-invite`: emails people invited to a group who have no account |
-|                            | `page-info`: title and picture of a link pasted into quick add      |
-|                            | `send-digests`: evening email to followers of lists that changed    |
-| `netlify/lib/mail.ts`      | `sendEmail()`: app emails (not sign-in emails) through Resend       |
-| `netlify/lib/digest.ts`    | Builds the daily "what changed on lists you follow" emails          |
-| `netlify/lib/pageInfo.ts`  | Reads a page's `og:` tags, with Microlink as fallback               |
-| `public/icon.svg`          | Source of the home-screen icons (`icon-*.png`)                      |
+| Path                        | What it is                                                          |
+| --------------------------- | ------------------------------------------------------------------- |
+| `src/lib/supabase.ts`       | The Supabase client                                                 |
+| `src/lib/auth.tsx`          | `AuthProvider` and `useAuth()`: the signed-in session as a signal   |
+| `src/pages/`                | One component per screen                                            |
+| `src/components/`           | Presentational components and their Storybook stories               |
+| `.storybook/`               | Storybook config                                                    |
+| `src/index.css`             | Theme tokens (colours, spacing) and base styles                     |
+| `src/utilities.module.css`  | Shared text and layout classes (see Styles)                         |
+| `src/i18n/`                 | UI text in English and Dutch, and language detection                |
+| `supabase/templates/`       | Sign-in and invite email bodies, to paste into Supabase             |
+| `supabase/migrations/`      | Database schema and row-level security policies                     |
+| `supabase/seed.sql`         | Made-up accounts, groups and items for the local Supabase           |
+| `supabase/config.toml`      | Settings for the local Supabase (`vp run db:start`)                 |
+| `netlify/functions/`        | `keepalive`: daily ping so the free Supabase project never pauses   |
+|                             | `send-invite`: emails people invited to a group who have no account |
+|                             | `send-added-email`: tells people with an account they were added    |
+|                             | `page-info`: title and picture of a link pasted into quick add      |
+|                             | `send-digests`: evening email to followers of lists that changed    |
+| `netlify/lib/mail.ts`       | `sendEmail()`: app emails (not sign-in emails) through Resend       |
+| `netlify/lib/digest.ts`     | Builds the daily "what changed on lists you follow" emails          |
+| `netlify/lib/addedEmail.ts` | Builds the "you were added to a group" email                        |
+| `netlify/lib/pageInfo.ts`   | Reads a page's `og:` tags, with Microlink as fallback               |
+| `public/icon.svg`           | Source of the home-screen icons (`icon-*.png`)                      |
 
 ## Installing on a phone
 
@@ -174,7 +176,8 @@ maskable 192 and 512).
    Also add `SUPABASE_SECRET_KEY` (a secret key, `sb_secret_…`) for `send-invite`. It has no
    `VITE_` prefix on purpose, so it never ends up in the app's JavaScript.
    For app emails (see _3. Resend_ below), also add `RESEND_API_KEY` and `MAIL_FROM`.
-   Optionally add `MICROLINK_API_KEY` (see _4. Microlink_ below).
+   Optionally add `MICROLINK_API_KEY` (see _4. Microlink_ below) and `REEFAPI_API_KEY`
+   (see _5. ReefAPI_ below).
 3. Deploy, then put the site URL into Supabase's _Site URL_ (step 1.3).
 
 ### 3. Resend (app emails)
@@ -198,6 +201,10 @@ nothing, and changes from that time are never mailed. One digest goes to each fo
 day, so the 100-a-day limit holds as long as fewer than 100 people follow a list on the same
 day.
 
+The `send-added-email` function tells someone who already has an account that a manager added
+them to a group. It also needs `SUPABASE_SECRET_KEY`. Until Resend is set up, people are still
+added, just without the email.
+
 ### 4. Microlink (link titles in quick add)
 
 When a link is pasted into quick add, the `page-info` function reads the page's `og:title`
@@ -210,7 +217,19 @@ Without a key, the free endpoint is used. To use your Microlink account's plan i
 `MICROLINK_API_KEY` in Netlify and redeploy. Keep an eye on the plan's monthly limit; when it
 runs out, blocked shops just get the name from the link.
 
-### 5. Demo site
+### 5. ReefAPI (bol.com links)
+
+bol.com blocks both our own lookup and Microlink. So when a bol.com product link is pasted,
+`page-info` asks [ReefAPI](https://reefapi.com)'s bol.com product endpoint instead, with the
+product id and storefront (`/nl/nl/`, `/be/nl/`, `/be/fr/`) taken from the link. It fills in
+the name, picture and price.
+
+Add `REEFAPI_API_KEY` in Netlify and redeploy. Each product costs 2 credits (the free plan has
+1000); failed calls are free. A product is remembered for a day while the function stays warm,
+and the remaining credits show in the function log when ReefAPI sends them. Without the key,
+or when the credits run out, bol.com links just get the name from the link.
+
+### 6. Demo site
 
 The demo is a separate copy of the app with made-up people, on its own Supabase project, so
 visitors never see or touch real data. It's a Netlify branch deploy of the `demo` branch

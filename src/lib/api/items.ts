@@ -16,6 +16,13 @@ export type Item = {
   /** Both set or both null. */
   price: number | null;
   price_currency: string | null;
+  /** The linked page's picture, shown as the item's thumbnail. */
+  image_url: string | null;
+  /**
+   * Removed by the list's editors after someone bought it. Only the others see
+   * it: the item stays, shown as bought, until the buyer undoes the purchase.
+   */
+  removed_at: string | null;
 };
 export type ItemInput = {
   name: string;
@@ -25,10 +32,12 @@ export type ItemInput = {
   not_wanted: boolean;
   groupIds: GroupId[];
   price: Price | null;
+  /** The linked page's picture. Left out, the saved picture stays as it is. */
+  imageUrl?: string | null;
 };
 
 const ITEM_COLUMNS =
-  "id, profile_id, name, url, category, visible_in_all_groups, not_wanted, item_groups(group_id), price, price_currency";
+  "id, profile_id, name, url, category, visible_in_all_groups, not_wanted, item_groups(group_id), price, price_currency, image_url, removed_at";
 
 export async function getItems(profileId: ProfileId): Promise<Item[]> {
   return must(
@@ -72,6 +81,7 @@ function itemColumns(input: ItemInput) {
     not_wanted: input.not_wanted,
     price: input.price?.amount ?? null,
     price_currency: input.price?.currency ?? null,
+    ...(input.imageUrl !== undefined ? { image_url: input.imageUrl } : {}),
   };
 }
 
@@ -91,8 +101,13 @@ export async function updateItem(itemId: ItemId, input: ItemInput) {
   await setItemGroups(itemId, input);
 }
 
+/**
+ * An item someone already bought isn't deleted but hidden from you (the database
+ * decides, so you don't learn it was bought), and its buyer gets an email.
+ */
 export async function deleteItem(itemId: ItemId) {
   must(await supabase.from("items").delete().eq("id", itemId));
+  void notifyBuyers();
 }
 
 /** Which groups see an item: all of them, or only these (none at all when empty). */
@@ -105,7 +120,7 @@ export type QuickItem = {
   url?: string | null;
   /** Typed with a leading "!": a "please don't buy" entry. */
   notWanted?: boolean;
-  /** The linked page's picture, stored for later (not shown yet). */
+  /** The linked page's picture. */
   imageUrl?: string | null;
   /** The price found on the linked page. */
   price?: Price | null;
@@ -191,6 +206,25 @@ export async function setItemsGroups(itemIds: ItemId[], groups: GroupSelection) 
   );
 }
 
+/** Like deleteItem, for several items. */
 export async function deleteItems(itemIds: ItemId[]) {
   must(await supabase.from("items").delete().in("id", itemIds));
+  void notifyBuyers();
+}
+
+/**
+ * Emails the buyers of what was just removed. Runs in a Netlify function because
+ * it needs Supabase's secret key. Not waited for, and failures only end up in the
+ * function's log: the evening digest run sends whatever this missed.
+ */
+async function notifyBuyers() {
+  try {
+    const { data } = await supabase.auth.getSession();
+    await fetch("/.netlify/functions/notify-removed", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${data.session?.access_token ?? ""}` },
+    });
+  } catch {
+    // Offline, or running without Netlify (vp dev): the digest catches up.
+  }
 }

@@ -1,3 +1,4 @@
+import { ThemedMark } from "../components/ThemedMark.tsx";
 import { useNavigate, useSearchParams } from "@solidjs/router";
 import { createEffect, createSignal, For, Match, Show, Switch } from "solid-js";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
@@ -90,7 +91,7 @@ export default function Login() {
 
   return (
     <Card as="main" class={`${u.center} ${styles.login}`}>
-      <img class={styles.mark} src="/favicon.svg" alt="" />
+      <ThemedMark class={styles.mark} />
       <h1>Wishlister</h1>
       <Switch>
         <Match when={isDemo}>

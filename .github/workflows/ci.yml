@@ -26,5 +26,18 @@ jobs:
           cache: true
       # Format, lint and type check.
       - run: vp check
+      # The Storybook tests run in a real Chromium. The browser download is cached per
+      # Playwright version; the system libraries it needs are installed on every run.
+      - id: playwright
+        run: echo "version=$(pnpm exec playwright --version | awk '{print $2}')" >> "$GITHUB_OUTPUT"
+      - id: playwright-cache
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+      - if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install --with-deps chromium
+      - if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: pnpm exec playwright install-deps chromium
       - run: vp test
       - run: pnpm run build

@@ -10,6 +10,7 @@ export const nl: Dictionary = {
     cancel: "Annuleren",
     edit: "Bewerken",
     remove: "Verwijderen",
+    close: "Sluiten",
     delete: "Wissen",
     someone: "iemand",
   },
@@ -20,6 +21,17 @@ export const nl: Dictionary = {
   },
   language: {
     label: "Taal",
+  },
+  themes: {
+    label: "Seizoensthema's",
+    hint: "De app kleedt zich aan voor Sinterklaas, Kerstmis, Nieuwjaar, Pasen, Halloween en 1 maart.",
+    now: (p) => `Vandaag aangekleed voor ${p.theme}.`,
+    sinterklaas: "Sinterklaas",
+    christmas: "Kerstmis",
+    newYear: "Nieuwjaar",
+    birthday: "een verjaardag",
+    halloween: "Halloween",
+    easter: "Pasen",
   },
   currency: {
     label: "Toon prijzen in",
@@ -100,6 +112,10 @@ export const nl: Dictionary = {
     inviteByEmail: "Uitnodigen via e-mail",
     invite: "Uitnodigen",
     added: (p) => `${p.email} is aan de groep toegevoegd.`,
+    addedEmailed: (p) =>
+      `${p.email} is aan de groep toegevoegd. We hebben een e-mail gestuurd om het te laten weten.`,
+    addedEmailFailed: (p) =>
+      `${p.email} is aan de groep toegevoegd, maar de e-mail om het te laten weten is niet verstuurd: ${p.message}`,
     alreadyInvited: (p) => `${p.email} is al uitgenodigd.`,
     alreadyMember: (p) => `${p.email} zit al in de groep.`,
     inviteSent: (p) =>
@@ -169,6 +185,8 @@ export const nl: Dictionary = {
       `Het profiel en verlanglijstje van ${p.name} voor iedereen wissen? Dit kan niet ongedaan gemaakt worden.`,
   },
   item: {
+    viewPicture: (p) => `Afbeelding bekijken: ${p.name}`,
+    pictureOf: (p) => `Afbeelding van ${p.name}`,
     onlyVisibleIn: (p) => <>Alleen zichtbaar in {p.groups}</>,
     private: "Met geen enkele groep gedeeld",
     youBought: "Jij hebt dit gekocht",
@@ -180,6 +198,9 @@ export const nl: Dictionary = {
     noOccasion: "Niet voor een gelegenheid",
     notWanted: "Liever niet",
     convertedPrice: (p) => `≈ ${p.price}`,
+    removed: "Van het lijstje gehaald nadat het gekocht was",
+    removedMine:
+      "Van het lijstje gehaald nadat jij het kocht. Kun je je bestelling nog annuleren? Maak het dan ongedaan, dan verdwijnt het voorgoed.",
   },
   unfollow: {
     title: "Niet meer volgen",
@@ -239,6 +260,13 @@ export const nl: Dictionary = {
     editTitle: "Item bewerken",
     name: "Naam",
     link: "Link (optioneel)",
+    lookingUp: "Link opzoeken…",
+    filledFromLink: "Aangevuld met info van de pagina.",
+    imageLink: "Deze link is een afbeelding: die wordt de afbeelding van het item.",
+    nothingFromLink: "Kon niets lezen van deze link.",
+    pictureFromLink: "De afbeelding van de link, getoond bij het item.",
+    removePicture: "Afbeelding verwijderen",
+    pictureRemoved: "Afbeelding verwijderd.",
     category: "Categorie (optioneel)",
     visibility: "Wie kan het zien",
     allGroups: "Al mijn groepen",

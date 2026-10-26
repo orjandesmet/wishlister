@@ -1,0 +1,190 @@
+/*
+ * Along the very top of the page, above the frame's own padding (index.css adds room for it on
+ * phones). It scrolls away with the page and lets every tap through.
+ */
+.decorations {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 32px;
+  pointer-events: none;
+  z-index: 1;
+  /* The sidebar layout centres everything in #root at 720px (TabBar.module.css); the garland spans the window. */
+  width: auto !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* Wider than any screen, cut off at the window's edge so the page never scrolls sideways. */
+.garland {
+  height: 100%;
+  overflow: hidden;
+}
+
+.row {
+  display: flex;
+  width: max-content;
+}
+
+.piece {
+  flex: none;
+  display: block;
+  overflow: visible;
+}
+
+.string {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
+.spider {
+  position: absolute;
+  top: 0;
+  left: 58%;
+  height: 80px;
+  /* Hangs over the page's top padding and heading, never wider than the window. */
+  max-width: 24px;
+  overflow: visible;
+}
+
+/*
+ * Behind everything on the page, in front of the window's background. Cards are opaque, so it
+ * only shows in the gaps between them.
+ */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.backdrop span {
+  position: absolute;
+  line-height: 1;
+  color: var(--muted);
+  opacity: 0.22;
+}
+
+/* Halloween's moon, a bit brighter than the rest. */
+.backdrop .moon {
+  top: 64px;
+  right: 8%;
+  left: auto;
+  font-size: 3rem;
+  opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fall span:not(.moon) {
+    animation: fall 18s linear infinite;
+    animation-delay: calc(var(--i) * -1.7s);
+  }
+
+  .rise span {
+    animation: rise-up 24s linear infinite;
+    animation-delay: calc(var(--i) * -2.3s);
+  }
+
+  .twinkle span:not(.moon) {
+    animation: glimmer 3.6s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.7s);
+  }
+
+  .sway span {
+    transform-origin: bottom center;
+    animation: sway 4s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.5s);
+  }
+
+  .bulb {
+    animation: twinkle 2.4s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.6s);
+  }
+
+  .sparkle {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: sparkle 1.8s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.45s);
+  }
+
+  .flag,
+  .egg,
+  .mitre {
+    transform-box: fill-box;
+    transform-origin: top center;
+    animation: sway 3.2s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.4s);
+  }
+
+  .bat {
+    animation: flap 0.9s ease-in-out infinite;
+    animation-delay: calc(var(--i) * -0.23s);
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
+  .spider {
+    animation: dangle 5s var(--ease-out) infinite alternate;
+  }
+}
+
+/* Down past the bottom of the window, starting above the top, so the snow keeps coming. */
+@keyframes fall {
+  from {
+    transform: translateY(-110vh) rotate(0);
+  }
+  to {
+    transform: translateY(110vh) rotate(180deg);
+  }
+}
+
+@keyframes rise-up {
+  from {
+    transform: translateY(110vh);
+  }
+  to {
+    transform: translateY(-110vh);
+  }
+}
+
+@keyframes glimmer {
+  50% {
+    opacity: 0.04;
+  }
+}
+
+@keyframes twinkle {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes sparkle {
+  50% {
+    transform: scale(0.5) rotate(45deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes sway {
+  50% {
+    transform: rotate(6deg);
+  }
+}
+
+@keyframes flap {
+  50% {
+    transform: scaleY(0.6);
+  }
+}
+
+@keyframes dangle {
+  from {
+    transform: translateY(-30px);
+  }
+  to {
+    transform: translateY(0);
+  }
+}

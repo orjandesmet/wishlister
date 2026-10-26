@@ -188,6 +188,23 @@ describe("fetchPageInfo", () => {
     });
   });
 
+  it("takes a link to a picture as the picture", async () => {
+    const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
+      url === "https://cdn.example/i/123"
+        ? new Response(null, {
+            status: 302,
+            headers: { location: "https://cdn.example/i/123.webp" },
+          })
+        : new Response("not really an image", { headers: { "content-type": "image/webp" } }),
+    );
+    expect(await fetchPageInfo("https://cdn.example/i/123", fetch)).toEqual({
+      title: null,
+      image: "https://cdn.example/i/123.webp",
+      price: null,
+      isImage: true,
+    });
+  });
+
   it("follows redirects and reads the final page", async () => {
     const fetch = vi.fn<typeof globalThis.fetch>(async (url) =>
       url === "https://short.example/x"
@@ -255,9 +272,7 @@ describe("Microlink fallback", () => {
         ? microlinkOk.clone()
         : new Response("Access denied", { status: 403, headers: { "content-type": "text/html" } }),
     );
-    expect(
-      await lookUpPage("https://www.lego.com/nl-nl/product/x-77244", undefined, fetch),
-    ).toEqual({
+    expect(await lookUpPage("https://www.lego.com/nl-nl/product/x-77244", {}, fetch)).toEqual({
       title: "Mercedes-AMG F1 W15",
       image: "https://cdn.example/car.jpg",
       price: null,
@@ -267,9 +282,15 @@ describe("Microlink fallback", () => {
     expect(endpoint.searchParams.get("url")).toBe("https://www.lego.com/nl-nl/product/x-77244");
   });
 
-  it("doesn't look up sites that block lookups", async () => {
+  it("doesn't look up other pages on sites that block lookups", async () => {
     const fetch = vi.fn<typeof globalThis.fetch>();
-    expect(await lookUpPage("https://www.bol.com/be/nl/p/x/930/", "key_1", fetch)).toEqual({
+    expect(
+      await lookUpPage(
+        "https://www.bol.com/be/nl/l/speelgoed/7934/",
+        { microlink: "key_1" },
+        fetch,
+      ),
+    ).toEqual({
       title: null,
       image: null,
       price: null,
@@ -293,7 +314,7 @@ describe("Microlink fallback", () => {
           })
         : block(),
     );
-    expect(await lookUpPage("https://www.blokker.nl/p/stofzuiger/930/", undefined, fetch)).toEqual({
+    expect(await lookUpPage("https://www.blokker.nl/p/stofzuiger/930/", {}, fetch)).toEqual({
       title: null,
       image: null,
       price: null,
@@ -305,7 +326,7 @@ describe("Microlink fallback", () => {
     const fetch = vi.fn<typeof globalThis.fetch>(
       async () => new Response("<title>Mine</title>", { headers: { "content-type": "text/html" } }),
     );
-    expect((await lookUpPage("https://x.example", undefined, fetch)).title).toBe("Mine");
+    expect((await lookUpPage("https://x.example", {}, fetch)).title).toBe("Mine");
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 

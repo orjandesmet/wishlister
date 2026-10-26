@@ -4,10 +4,18 @@
 // Netlify functions import it as "../lib/pageInfo.ts". Plain functions with an
 // injectable fetch, so they can be tested without the network.
 
+import { fetchBolProduct, parseBolLink } from "./bol.ts";
+
 /** An amount in a currency, as an ISO 4217 code ("EUR"). */
 export type Price = { amount: number; currency: string };
 
-export type PageInfo = { title: string | null; image: string | null; price: Price | null };
+export type PageInfo = {
+  title: string | null;
+  image: string | null;
+  price: Price | null;
+  /** The link is a picture itself (an image/* answer): it's the item's picture, nothing more. */
+  isImage?: true;
+};
 
 /** Stop reading the page after this much: some shops put megabytes of inline CSS in the <head>. */
 const MAX_BYTES = 2 * 1024 * 1024;
@@ -18,7 +26,8 @@ const MICROLINK_TIMEOUT_MS = 3500;
 /**
  * Shops that block both us and Microlink (bol.com: "Your access to bol has been
  * temporarily blocked"), so looking them up only spends Microlink requests.
- * Matches the domain and its subdomains. bol.com data needs its API (#72).
+ * Matches the domain and its subdomains. bol.com products go through ReefAPI
+ * instead (bol.ts, #72).
  */
 const BLOCKING_SITES = ["bol.com"];
 /** Longer titles are cut, so a name still fits on a card. */
@@ -125,20 +134,23 @@ function parseAmount(raw: unknown): number | null {
  * refuse that, so then Microlink, which opens the page in a real browser, is
  * asked instead. A page titled only with the shop's name is a block page, not
  * the product (bol.com answers both with one titled "bol"), so it counts as
- * nothing found and the app keeps the name it made from the link. Never throws.
+ * nothing found and the app keeps the name it made from the link. bol.com
+ * product links are asked from ReefAPI (see bol.ts). Never throws.
  */
 export async function lookUpPage(
   url: string,
-  microlinkKey: string | undefined,
+  keys: { microlink?: string; reefapi?: string },
   fetchImpl: typeof fetch = fetch,
 ): Promise<PageInfo> {
+  const bolLink = parseBolLink(url);
+  if (bolLink) return fetchBolProduct(bolLink, keys.reefapi, fetchImpl);
   if (isBlockingSite(url)) {
     console.log(`page-info: skipping ${url}, the site blocks lookups`);
     return { title: null, image: null, price: null };
   }
   const direct = withoutBlockPage(await fetchPageInfo(url, fetchImpl), url);
-  if (direct.title) return direct;
-  const microlink = withoutBlockPage(await fetchMicrolink(url, microlinkKey, fetchImpl), url);
+  if (direct.title || direct.isImage) return direct;
+  const microlink = withoutBlockPage(await fetchMicrolink(url, keys.microlink, fetchImpl), url);
   return {
     title: microlink.title,
     image: direct.image ?? microlink.image,
@@ -273,6 +285,10 @@ export async function fetchPageInfo(
         continue;
       }
       const type = response.headers.get("content-type") ?? "";
+      if (response.ok && /^image\//i.test(type)) {
+        await response.body?.cancel();
+        return { title: null, image: url, price: null, isImage: true };
+      }
       if (!response.ok || !/html/i.test(type)) {
         await response.body?.cancel();
         return failed(rawUrl, `status ${response.status}, ${type || "no content type"}`, url);

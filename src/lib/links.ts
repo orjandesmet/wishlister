@@ -48,3 +48,12 @@ export function linkLabel(url: string): string {
     return url;
   }
 }
+
+/** Whether a link points straight at a picture, going by its file extension. */
+export function isImageLink(url: string): boolean {
+  try {
+    return /\.(?:jpe?g|png|gif|webp|avif|svg|heic|bmp)$/i.test(new URL(url).pathname);
+  } catch {
+    return false;
+  }
+}

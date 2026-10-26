@@ -2,12 +2,14 @@ import { Navigate, Route, Router, useLocation, useParams } from "@solidjs/router
 import { createEffect, on, Show, type Component, type ParentComponent } from "solid-js";
 import { TabBar } from "./components/TabBar.tsx";
 import { InstallBanner } from "./components/InstallBanner.tsx";
+import { ThemeDecorations } from "./components/ThemeDecorations.tsx";
 import { focusHeading } from "./lib/a11y.ts";
 import { AuthProvider, useAuth } from "./lib/auth.tsx";
 import { syncLocaleWithAccount } from "./lib/accountLocale.ts";
 import { t } from "./lib/i18n.ts";
 import { dismiss, install, installOffer } from "./lib/install.ts";
 import { MeProvider, useMe } from "./lib/me.tsx";
+import { activeTheme } from "./lib/theme.ts";
 import ChildSettings from "./pages/ChildSettings.tsx";
 import GroupSettings from "./pages/GroupSettings.tsx";
 import Home from "./pages/Home.tsx";
@@ -87,9 +89,10 @@ function InstallOffer() {
   );
 }
 
-/** Around every page: the session, the account's language and the install banner. */
+/** Around every page: the session, the account's language, the install banner and the theme's decorations. */
 export const AppRoot: ParentComponent = (props) => (
   <AuthProvider>
+    <ThemeDecorations theme={activeTheme()} />
     <LocaleSync />
     <InstallOffer />
     {props.children}

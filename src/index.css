@@ -54,6 +54,104 @@
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * Seasonal themes (lib/theme.ts) swap the surface and accent tokens; text and the warning and
+ * danger colours stay. Each keeps a light and a dark value, with white (or near-black) on the
+ * accent at 4.5:1 or more; Halloween is dark only. Try one with ?theme=halloween on the dev
+ * server, or the brush in the Storybook toolbar.
+ */
+/* The Sint's red and gold. */
+:root[data-theme="sinterklaas"] {
+  --bg: light-dark(#f8f3e8, #14110b);
+  --surface: light-dark(#fffcf5, #1e1a12);
+  --raised: light-dark(#f1e9d8, #29231a);
+  --border: light-dark(#eadfc8, #352d20);
+  --control: light-dark(#d9cbb0, #4a3f2c);
+  --accent: light-dark(#b5172f, #f2c14e);
+  --accent-contrast: light-dark(#ffffff, #1f1500);
+  --accent-soft: light-dark(#fbeec8, #3b2e12);
+  --accent-ink: light-dark(#5c3d00, #ffe3a3);
+}
+
+:root[data-theme="christmas"] {
+  --bg: light-dark(#f6f3ee, #10120f);
+  --surface: light-dark(#fffdfa, #1a1c18);
+  --raised: light-dark(#efe9e1, #24271f);
+  --border: light-dark(#e8e0d6, #2f3229);
+  --control: light-dark(#d8cfc4, #42463b);
+  --accent: light-dark(#b3202f, #f07a84);
+  --accent-contrast: light-dark(#ffffff, #1d0a0d);
+  --accent-soft: light-dark(#fbe3e5, #3d1a1f);
+  --accent-ink: light-dark(#6e0f19, #ffc9ce);
+  --positive-bg: light-dark(#dcefe2, #13301f);
+  --positive-ink: light-dark(#0f3d22, #a9e3bf);
+}
+
+/* Midnight blue and champagne gold. */
+:root[data-theme="newYear"] {
+  --bg: light-dark(#f2f3f8, #0b0d18);
+  --surface: light-dark(#ffffff, #151826);
+  --raised: light-dark(#e9ebf3, #1f2333);
+  --border: light-dark(#e1e4ee, #2a2e40);
+  --control: light-dark(#cfd3e1, #3d4258);
+  --accent: light-dark(#1f2a6b, #f2c14e);
+  --accent-contrast: light-dark(#ffffff, #1f1500);
+  --accent-soft: light-dark(#fbf0d0, #2f2a17);
+  --accent-ink: light-dark(#5c4300, #ffe3a3);
+}
+
+/* Party teal with sunny yellow. */
+:root[data-theme="birthday"] {
+  --bg: light-dark(#f3f8f8, #0b1212);
+  --surface: light-dark(#ffffff, #141c1c);
+  --raised: light-dark(#e8f1f1, #1d2727);
+  --border: light-dark(#dde9e9, #283434);
+  --control: light-dark(#c6d7d7, #3a4848);
+  --accent: light-dark(#0b7a75, #5eead4);
+  --accent-contrast: light-dark(#ffffff, #042f2e);
+  --accent-soft: light-dark(#fff1c2, #2f2a12);
+  --accent-ink: light-dark(#5c4600, #ffe9a3);
+}
+
+/* Always dark: pumpkin on near-black. */
+:root[data-theme="halloween"] {
+  color-scheme: dark;
+  --bg: #0f0d0b;
+  --surface: #1a1714;
+  --raised: #25211c;
+  --border: #332d26;
+  --control: #4a4137;
+  --accent: #f28c28;
+  --accent-contrast: #1c0d00;
+  --accent-soft: #3a2410;
+  --accent-ink: #ffcf9e;
+  --positive-bg: #1f2a12;
+  --positive-ink: #c7e89a;
+}
+
+/* Spring pastels with a leafy green accent. */
+:root[data-theme="easter"] {
+  --bg: light-dark(#f6f8f1, #0e110c);
+  --surface: light-dark(#ffffff, #181c15);
+  --raised: light-dark(#edf2e4, #22281d);
+  --border: light-dark(#e3e9d8, #2d3426);
+  --control: light-dark(#cfd8c0, #414a37);
+  --accent: light-dark(#3b7a1e, #9fdc7c);
+  --accent-contrast: light-dark(#ffffff, #0d1f04);
+  --accent-soft: light-dark(#fff1c2, #2f2a12);
+  --accent-ink: light-dark(#5c4600, #ffe9a3);
+}
+
+/*
+ * Room at the top for the theme's garland (ThemeDecorations.tsx) on phones. The sidebar layout from
+ * 900px already has 40px above the page (TabBar.module.css), so it needs none.
+ */
+@media (max-width: 899px) {
+  :root[data-theme] body {
+    padding-top: 20px;
+  }
+}
+
 /* Phones: tighter page margins, gaps and card padding. */
 @media (max-width: 599px) {
   :root {
