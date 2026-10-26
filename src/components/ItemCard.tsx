@@ -1,13 +1,24 @@
 import { EditLabel } from "./EditLabel.tsx";
 import { A } from "@solidjs/router";
 import { RemoveLabel } from "./RemoveLabel.tsx";
-import { createEffect, createUniqueId, For, Match, on, Show, Switch } from "solid-js";
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  createUniqueId,
+  For,
+  Match,
+  on,
+  Show,
+  Switch,
+} from "solid-js";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
 import { convertAmount, displayCurrency, exchangeRates, formatPrice } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
 import { hueFor } from "../lib/hues.ts";
+import { isShort, parseMarkdown, plainText } from "../lib/markdown.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
 import { formatOccasionDate } from "../lib/occasions.ts";
 import u from "../utilities.module.css";
@@ -16,6 +27,7 @@ import { Card } from "./Card.tsx";
 import { Check } from "./Check.tsx";
 import { Chip } from "./Chip.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
+import { Markdown } from "./Markdown.tsx";
 import styles from "./ItemCard.module.css";
 
 /**
@@ -127,6 +139,13 @@ export function ItemCard(props: ItemCardProps) {
   );
   const occasionLabel = createUniqueId();
 
+  // A long description starts as one or two lines of plain text, so the list stays easy
+  // to scan; "Show more" opens the real thing, links and lists included.
+  const description = createMemo(() => parseMarkdown(props.item.description ?? ""));
+  const foldable = () => !isShort(description());
+  const [expanded, setExpanded] = createSignal(false);
+  const descriptionId = createUniqueId();
+
   return (
     <Card
       ref={card}
@@ -195,6 +214,32 @@ export function ItemCard(props: ItemCardProps) {
           </Show>
         </div>
       </div>
+      <Show when={description().length > 0}>
+        <div class={styles.description}>
+          <Show
+            when={!foldable() || (expanded() && !props.selecting)}
+            fallback={
+              <p id={descriptionId} class={styles.excerpt}>
+                {plainText(description())}
+              </p>
+            }
+          >
+            <Markdown id={descriptionId} blocks={description()} />
+          </Show>
+          <Show when={foldable() && !props.selecting}>
+            <Button
+              variant="link"
+              class={styles.more}
+              aria-expanded={expanded()}
+              aria-controls={descriptionId}
+              onClick={() => setExpanded((open) => !open)}
+            >
+              {expanded() ? t("item.showLess") : t("item.showMore")}
+              <span class={u.visuallyHidden}>: {props.item.name}</span>
+            </Button>
+          </Show>
+        </div>
+      </Show>
       <Show when={props.item.category || showUrl()}>
         <div class={styles.meta}>
           <Show when={props.item.category}>

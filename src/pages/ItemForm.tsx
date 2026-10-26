@@ -4,6 +4,7 @@ import {
   createMemo,
   createResource,
   createSignal,
+  createUniqueId,
   For,
   on,
   onCleanup,
@@ -45,6 +46,8 @@ export default function ItemForm() {
   const [name, setName] = createSignal("");
   const [url, setUrl] = createSignal("");
   const [category, setCategory] = createSignal("");
+  const [description, setDescription] = createSignal("");
+  const descriptionHint = createUniqueId();
   const [notWanted, setNotWanted] = createSignal(false);
   const [price, setPrice] = createSignal("");
   const [currency, setCurrency] = createSignal(displayCurrency());
@@ -134,6 +137,7 @@ export default function ItemForm() {
       lookedUp = lookupUrl(loaded.url ?? "");
       setImageUrl(loaded.image_url);
       setCategory(loaded.category ?? "");
+      setDescription(loaded.description ?? "");
       setNotWanted(loaded.not_wanted);
       if (loaded.price !== null && loaded.price_currency) {
         // Typed back the way the language writes it ("12,50" in Dutch).
@@ -181,6 +185,7 @@ export default function ItemForm() {
       name: name(),
       url: url(),
       category: category(),
+      description: description(),
       visible_in_all_groups: visibility() === "all",
       not_wanted: notWanted(),
       groupIds: visibility() === "some" ? groupIds() : [],
@@ -197,6 +202,7 @@ export default function ItemForm() {
         setName("");
         setUrl("");
         setPrice("");
+        setDescription("");
         setImageUrl(undefined);
         setLookup("idle");
         lookedUp = null;
@@ -294,6 +300,19 @@ export default function ItemForm() {
               );
             }}
           />
+          <label>
+            {t("itemForm.description")}
+            <textarea
+              rows={4}
+              maxLength={1000}
+              aria-describedby={descriptionHint}
+              value={description()}
+              onInput={(e) => setDescription(e.currentTarget.value)}
+            />
+          </label>
+          <p id={descriptionHint} class={`${u.muted} ${u.small} ${styles.hint}`}>
+            {t("itemForm.descriptionHint")}
+          </p>
           <Check>
             <input
               type="checkbox"

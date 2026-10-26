@@ -91,6 +91,30 @@
   color: var(--warning);
 }
 
+/* The description, under the name: quieter than the name, roomy enough to read. */
+.description {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Folded: the first two lines, without formatting. */
+.excerpt {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.description .more {
+  font-size: 14px;
+}
+
 /* Edit and remove stay quiet, tucked under the main action. */
 .manage {
   display: flex;
