@@ -248,9 +248,21 @@ release.
    Under _Authentication > Sign In / Providers_, turn off **Allow new users to sign up**. Under
    _URL Configuration_, set the _Site URL_ to the demo URL (`https://demo--<site>.netlify.app`).
    No email setup is needed.
-2. **GitHub**: in the demo project, _Connect > Session pooler_, copy the connection string with
-   the database password filled in (percent-encode special characters). Add it as the repository
-   secret `DEMO_DATABASE_URL` (_Settings > Secrets and variables > Actions_).
+2. **GitHub**: in the demo project, click _Connect_ and under _Connection string_ pick
+   **Session pooler**. Add that string as the repository secret `DEMO_DATABASE_URL`
+   (_Settings > Secrets and variables > Actions_). It looks like
+   `postgresql://postgres.<ref>:<password>@aws-0-<region>.pooler.supabase.com:5432/postgres`.
+   Watch out for:
+   - **Not the project URL** (`https://<ref>.supabase.co`): that gives
+     `failed to parse connection string`. So does a leftover `[YOUR-PASSWORD]` placeholder, the
+     brackets around it, or quotes, spaces or a newline around the value.
+   - **Not the direct connection** (`db.<ref>.supabase.co`): on the free plan it only has an
+     IPv6 address, which GitHub's runners can't reach (`dial error (connect ECONNREFUSED …)`).
+     The session pooler also works over IPv4. Its user is `postgres.<ref>`, not `postgres`.
+   - **Not the transaction pooler** (port 6543): migrations need a session.
+   - **Special characters in the password** (`@ # / ? : % &`) must be percent-encoded, e.g.
+     `@` → `%40`. Easiest is a database password of only letters and digits
+     (_Database > Settings_).
 3. **Actions**: run the **Demo** workflow by hand once. It builds the database and the seed.
 4. **Netlify**, _Site configuration > Environment variables_: give `VITE_SUPABASE_URL` and
    `VITE_SUPABASE_PUBLISHABLE_KEY` a branch value for `demo` (the demo project's), and add
