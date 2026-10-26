@@ -46,8 +46,8 @@ export function easterSunday(year: number): IsoDate {
 
 /** When each theme shows. Checked in this order; the first match wins. */
 const calendar: Record<ThemeId, (date: IsoDate) => boolean> = {
-  // 1 to 25 December.
-  christmas: (date) => monthDay(date) >= "12-01" && monthDay(date) <= "12-25",
+  // 7 to 25 December.
+  christmas: (date) => monthDay(date) >= "12-07" && monthDay(date) <= "12-25",
   // 26 December to 7 January, across the new year.
   newYear: (date) => monthDay(date) >= "12-26" || monthDay(date) <= "01-07",
   // Only on 1 March.

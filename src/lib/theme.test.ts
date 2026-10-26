@@ -2,9 +2,9 @@ import { describe, expect, test } from "vite-plus/test";
 import { easterSunday, readThemePreview, themeOn } from "./theme.ts";
 
 describe("themeOn", () => {
-  test("Christmas from 1 to 25 December", () => {
-    expect(themeOn("2026-11-30")).toBeUndefined();
-    expect(themeOn("2026-12-01")).toBe("christmas");
+  test("Christmas from 7 to 25 December", () => {
+    expect(themeOn("2026-12-06")).not.toBe("christmas");
+    expect(themeOn("2026-12-07")).toBe("christmas");
     expect(themeOn("2026-12-25")).toBe("christmas");
   });
 
