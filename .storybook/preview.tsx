@@ -57,6 +57,7 @@ export default {
         icon: "paintbrush",
         items: [
           { value: "none", title: "No theme" },
+          { value: "sinterklaas", title: "Sinterklaas" },
           { value: "christmas", title: "Christmas" },
           { value: "newYear", title: "New Year" },
           { value: "birthday", title: "Birthday (1 March)" },

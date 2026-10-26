@@ -61,7 +61,8 @@
   }
 
   .flag,
-  .egg {
+  .egg,
+  .mitre {
     transform-box: fill-box;
     transform-origin: top center;
     animation: sway 3.2s ease-in-out infinite;

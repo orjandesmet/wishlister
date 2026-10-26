@@ -12,7 +12,14 @@ import { today, type IsoDate } from "./occasions.ts";
  * without a provider and Storybook works.
  */
 
-export const themes = ["christmas", "newYear", "birthday", "halloween", "easter"] as const;
+export const themes = [
+  "sinterklaas",
+  "christmas",
+  "newYear",
+  "birthday",
+  "halloween",
+  "easter",
+] as const;
 export type ThemeId = (typeof themes)[number];
 
 export function isTheme(value: unknown): value is ThemeId {
@@ -46,6 +53,8 @@ export function easterSunday(year: number): IsoDate {
 
 /** When each theme shows. Checked in this order; the first match wins. */
 const calendar: Record<ThemeId, (date: IsoDate) => boolean> = {
+  // 1 to 6 December, ending on the Sint's own day.
+  sinterklaas: (date) => monthDay(date) >= "12-01" && monthDay(date) <= "12-06",
   // 7 to 25 December.
   christmas: (date) => monthDay(date) >= "12-07" && monthDay(date) <= "12-25",
   // 26 December to 7 January, across the new year.

@@ -2,6 +2,12 @@ import { describe, expect, test } from "vite-plus/test";
 import { easterSunday, readThemePreview, themeOn } from "./theme.ts";
 
 describe("themeOn", () => {
+  test("Sinterklaas from 1 to 6 December", () => {
+    expect(themeOn("2026-11-30")).toBeUndefined();
+    expect(themeOn("2026-12-01")).toBe("sinterklaas");
+    expect(themeOn("2026-12-06")).toBe("sinterklaas");
+  });
+
   test("Christmas from 7 to 25 December", () => {
     expect(themeOn("2026-12-06")).not.toBe("christmas");
     expect(themeOn("2026-12-07")).toBe("christmas");
@@ -68,6 +74,6 @@ describe("readThemePreview", () => {
     sessionStorage.clear();
     readThemePreview(url("?theme=easter&date=2026-12-24"), true);
     expect(readThemePreview(url("?theme="), true)).toEqual({});
-    expect(readThemePreview(url("?theme=sinterklaas"), true)).toEqual({});
+    expect(readThemePreview(url("?theme=valentine"), true)).toEqual({});
   });
 });

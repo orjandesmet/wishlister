@@ -60,6 +60,19 @@
  * accent at 4.5:1 or more; Halloween is dark only. Try one with ?theme=halloween on the dev
  * server, or the brush in the Storybook toolbar.
  */
+/* The Sint's red and gold. */
+:root[data-theme="sinterklaas"] {
+  --bg: light-dark(#f8f3e8, #14110b);
+  --surface: light-dark(#fffcf5, #1e1a12);
+  --raised: light-dark(#f1e9d8, #29231a);
+  --border: light-dark(#eadfc8, #352d20);
+  --control: light-dark(#d9cbb0, #4a3f2c);
+  --accent: light-dark(#b5172f, #f2c14e);
+  --accent-contrast: light-dark(#ffffff, #1f1500);
+  --accent-soft: light-dark(#fbeec8, #3b2e12);
+  --accent-ink: light-dark(#5c3d00, #ffe3a3);
+}
+
 :root[data-theme="christmas"] {
   --bg: light-dark(#f6f3ee, #10120f);
   --surface: light-dark(#fffdfa, #1a1c18);

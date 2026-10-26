@@ -11,6 +11,13 @@ export function ThemedMark(props: { class?: string }) {
     <span class={props.class ? `${styles.mark} ${props.class}` : styles.mark}>
       <img src="/favicon.svg" alt="" />
       <Switch>
+        <Match when={activeTheme() === "sinterklaas"}>
+          <svg class={styles.hat} viewBox="0 0 40 40" aria-hidden="true">
+            <path d="M9 36 L9 18 Q20 0 31 18 L31 36 Z" fill="#c8102e" />
+            <path d="M9 33 L31 33" stroke="#f2c14e" stroke-width="3" />
+            <path d="M20 10 L20 27 M14 17 L26 17" stroke="#f2c14e" stroke-width="2.6" />
+          </svg>
+        </Match>
         <Match when={activeTheme() === "christmas"}>
           <svg class={styles.hat} viewBox="0 0 40 40" aria-hidden="true">
             <path

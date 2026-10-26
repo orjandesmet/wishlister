@@ -1,4 +1,4 @@
-import { For, Match, Switch, type JSX } from "solid-js";
+import { For, Match, Show, Switch, type JSX } from "solid-js";
 import type { ThemeId } from "../lib/theme.ts";
 import styles from "./ThemeDecorations.module.css";
 
@@ -39,6 +39,24 @@ function Garland(props: { theme: ThemeId }) {
           {(i) => (
             <Piece index={i}>
               <Switch>
+                <Match when={props.theme === "sinterklaas"}>
+                  <Show
+                    when={i % 2 === 0}
+                    fallback={
+                      <g class={styles.pepernoot}>
+                        <circle cx="14" cy="14" r="3.2" fill="#a0612b" />
+                        <circle cx="25" cy="20" r="2.8" fill="#8a4f1f" />
+                        <circle cx="21" cy="9" r="2.4" fill="#b8763b" />
+                      </g>
+                    }
+                  >
+                    <g class={styles.mitre}>
+                      <path d="M12 28 L12 14 Q20 2 28 14 L28 28 Z" fill="#c8102e" />
+                      <path d="M12 26 L28 26" stroke="#f2c14e" stroke-width="2.5" />
+                      <path d="M20 9 L20 22 M15.5 15 L24.5 15" stroke="#f2c14e" stroke-width="2" />
+                    </g>
+                  </Show>
+                </Match>
                 <Match when={props.theme === "christmas"}>
                   <Cord />
                   <g class={styles.bulb}>
@@ -106,7 +124,7 @@ function Garland(props: { theme: ThemeId }) {
 }
 
 /**
- * The extras a theme adds along the top of the page: Christmas lights, confetti,
+ * The extras a theme adds along the top of the page: mitres and pepernoten, Christmas lights, confetti,
  * birthday bunting, bats and a spider, Easter eggs. Pure decoration, so hidden from
  * screen readers and never in the way of a tap. It only moves when the system
  * allows motion (see ThemeDecorations.module.css).

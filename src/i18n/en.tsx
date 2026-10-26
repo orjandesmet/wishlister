@@ -30,8 +30,9 @@ export const en = {
   },
   themes: {
     label: "Seasonal themes",
-    hint: "The app dresses up for Christmas, New Year, Easter, Halloween and 1 March.",
+    hint: "The app dresses up for Sinterklaas, Christmas, New Year, Easter, Halloween and 1 March.",
     now: (p: { theme: string }) => `Today it's dressed up for ${p.theme}.`,
+    sinterklaas: "Sinterklaas",
     christmas: "Christmas",
     newYear: "New Year",
     birthday: "a birthday",

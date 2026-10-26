@@ -24,8 +24,9 @@ export const nl: Dictionary = {
   },
   themes: {
     label: "Seizoensthema's",
-    hint: "De app kleedt zich aan voor Kerstmis, Nieuwjaar, Pasen, Halloween en 1 maart.",
+    hint: "De app kleedt zich aan voor Sinterklaas, Kerstmis, Nieuwjaar, Pasen, Halloween en 1 maart.",
     now: (p) => `Vandaag aangekleed voor ${p.theme}.`,
+    sinterklaas: "Sinterklaas",
     christmas: "Kerstmis",
     newYear: "Nieuwjaar",
     birthday: "een verjaardag",
