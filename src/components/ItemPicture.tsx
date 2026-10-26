@@ -81,8 +81,14 @@ export function ItemPicture(props: ItemPictureProps) {
               <h2 id={titleId} class={styles.viewerTitle}>
                 {props.name}
               </h2>
-              <Button variant="secondary" size="small" onClick={() => dialog?.close()}>
-                {t("common.close")}
+              <Button
+                variant="link"
+                size="small"
+                class={styles.close}
+                aria-label={t("common.close")}
+                onClick={() => dialog?.close()}
+              >
+                ×
               </Button>
             </div>
             <img

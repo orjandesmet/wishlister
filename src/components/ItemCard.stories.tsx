@@ -163,7 +163,7 @@ export const PictureOpened: Story = {
   args: WithPicture.args,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("button", { name: /bonsai/i }));
+    await userEvent.click(canvas.getByRole("button", { name: /view picture/i }));
     await expect(canvas.getByRole("dialog")).toBeVisible();
   },
 };
