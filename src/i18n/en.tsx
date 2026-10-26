@@ -215,6 +215,29 @@ export const en = {
     showMore: "Show more",
     showLess: "Show less",
   },
+  questions: {
+    ask: "Ask a question",
+    count: (p: { count: number }) => (p.count === 1 ? "1 question" : `${p.count} questions`),
+    countToAnswer: (p: { count: number; open: number }) =>
+      `${p.count === 1 ? "1 question" : `${p.count} questions`}, ${p.open} to answer`,
+    title: (p: { name: string }) => `Questions about ${p.name}`,
+    anonymous: "Questions are anonymous: nobody sees who asked, not even the others.",
+    anonymousOwner: "Nobody sees who asked. Your answer shows with your name.",
+    none: "No questions yet.",
+    questionLabel: "Question",
+    answerLabel: "Answer",
+    answerFrom: (p: { name: string }) => `Answer from ${p.name}`,
+    notAnswered: "Not answered yet.",
+    yours: "You asked this.",
+    yourAnswer: "Your answer",
+    editAnswer: "Change your answer",
+    saveAnswer: "Save answer",
+    change: "Change answer",
+    yourQuestion: "Your question",
+    askHint: "The list's owner gets an email, and you get one when they answer.",
+    send: "Ask anonymously",
+    closed: "It's bought, so nobody can ask anything new.",
+  },
   unfollow: {
     title: "Stop following",
     done: (p: { name: string }) =>
@@ -393,6 +416,8 @@ export const en = {
     deleted: (p: { count: number }) =>
       p.count === 1 ? "1 item removed." : `${p.count} items removed.`,
     unfollowed: "You stopped following this list.",
+    asked: "Your question was sent.",
+    answered: "Your answer was saved.",
   },
   wishlist: {
     fallbackTitle: "Wishlist",

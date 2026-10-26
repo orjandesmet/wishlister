@@ -11,6 +11,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { buildDigestEmails, type DigestRow } from "../lib/digest.ts";
 import { mailConfigured, sendEmails } from "../lib/mail.ts";
+import { sendQuestionNotices } from "../lib/questionNotices.ts";
 import { sendRemovalNotices } from "../lib/removalNotices.ts";
 
 export default async () => {
@@ -43,6 +44,13 @@ export default async () => {
     if (notices.sent > 0) console.log(`Removal notices sent: ${notices.sent}`);
     for (const message of notices.errors) {
       console.error(`Sending removal notices failed: ${message}`);
+    }
+
+    // The same for questions and answers on items (notify-questions).
+    const questions = await sendQuestionNotices(admin, siteUrl);
+    if (questions.sent > 0) console.log(`Question emails sent: ${questions.sent}`);
+    for (const message of questions.errors) {
+      console.error(`Sending question emails failed: ${message}`);
     }
   } else {
     console.warn("Digests skipped: RESEND_API_KEY or MAIL_FROM isn't set.");

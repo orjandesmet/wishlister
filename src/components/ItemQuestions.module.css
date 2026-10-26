@@ -1,0 +1,141 @@
+/* The button on the card: small and quiet, unless questions wait for your answer. */
+.open {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  min-height: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.open svg {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.open:hover {
+  color: var(--text-strong);
+}
+
+.open.attention {
+  color: var(--accent);
+}
+
+.dialog {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -10px -10px -10px 0;
+  font-size: 28px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  background: var(--raised);
+  border-radius: var(--radius-small);
+}
+
+.question {
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-strong);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.answer {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding-left: 12px;
+  border-left: 3px solid var(--accent);
+}
+
+.answerBy {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.change {
+  min-height: 32px;
+  font-size: 14px;
+}
+
+.answerText {
+  margin: 0;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* Label and field are siblings here (the field needs its own id for the hint). */
+.answerForm,
+.askForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.label {
+  font-weight: 500;
+  color: var(--text-strong);
+}

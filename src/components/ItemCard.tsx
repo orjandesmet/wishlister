@@ -11,6 +11,7 @@ import {
   on,
   Show,
   Switch,
+  type JSX,
 } from "solid-js";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
@@ -61,6 +62,8 @@ export type ItemCardProps = {
   selecting?: boolean;
   selected?: boolean;
   onToggleSelect?: () => void;
+  /** The item's questions button and dialog (ItemQuestions), left out while picking items. */
+  questions?: JSX.Element;
 };
 
 /**
@@ -320,6 +323,7 @@ export function ItemCard(props: ItemCardProps) {
           {props.purchase === "mine" ? t("item.removedMine") : t("item.removed")}
         </p>
       </Show>
+      <Show when={!props.selecting && props.questions}>{props.questions}</Show>
       <Switch>
         <Match when={props.selecting}>{null}</Match>
         <Match when={props.purchase === "mine"}>
