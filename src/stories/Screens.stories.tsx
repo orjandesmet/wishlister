@@ -171,6 +171,7 @@ const item = (
   name,
   url: null,
   category,
+  description: null,
   visible_in_all_groups: true,
   not_wanted: false,
   item_groups: [],
@@ -205,7 +206,10 @@ function sampleData() {
         item(1, "anna", "Cast iron pan", 62.5, "Kitchen"),
         item(2, "anna", "Pour-over coffee set", 38, "Kitchen"),
         item(3, "anna", "LEGO Botanical bonsai tree", 49.99, "Toys", { image_url: bonsaiPicture }),
-        item(4, "anna", "Merino scarf, grey", 35, "Toys", { image_url: scarfPicture }),
+        item(4, "anna", "Merino scarf, grey", 35, "Toys", {
+          image_url: scarfPicture,
+          description: "Long enough to wrap twice. *Not* the itchy kind!",
+        }),
       ],
     } as Record<string, Item[]>,
     items: (id: ProfileId): Promise<Item[]> => Promise.resolve(data.lists[id] ?? []),
@@ -396,6 +400,8 @@ export const ItemFormEditSelectedGroups: Story = {
       item(3, "me", "LEGO Botanical bonsai tree", 49.99, "Toys", {
         url: "https://www.lego.com/bonsai",
         image_url: bonsaiPicture,
+        description:
+          "The **small** one, for the windowsill.\n\n- with the pink blossoms\n- or the green leaves",
         visible_in_all_groups: false,
         item_groups: [{ group_id: family.id }],
       }),

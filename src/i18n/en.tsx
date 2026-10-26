@@ -205,6 +205,8 @@ export const en = {
     removed: "Taken off the list after it was bought",
     removedMine:
       "Taken off the list after you bought it. Can you still cancel your order? Then undo, and it's gone for good.",
+    showMore: "Show more",
+    showLess: "Show less",
   },
   unfollow: {
     title: "Stop following",
@@ -272,6 +274,13 @@ export const en = {
     removePicture: "Remove picture",
     pictureRemoved: "Picture removed.",
     category: "Category (optional)",
+    description: "Description (optional)",
+    descriptionHint: () => (
+      <>
+        Like the size or colour. <strong>**bold**</strong>, <em>*italic*</em>, lines starting with
+        "- " for a list, and links work.
+      </>
+    ),
     visibility: "Who can see it",
     allGroups: "All my groups",
     selectedGroups: "Only selected groups",

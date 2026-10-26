@@ -25,6 +25,7 @@ const meta = {
       name: "LEGO Botanical bonsai tree",
       url: "https://www.lego.com/en-be/product/bonsai-tree-10281",
       category: "Toys",
+      description: null,
       visible_in_all_groups: true,
       not_wanted: false,
       item_groups: [],
@@ -229,4 +230,66 @@ export const NotWanted: Story = {
 
 export const NotWantedOnYourOwnList: Story = {
   args: { ...NotWanted.args, canEdit: true },
+};
+
+/** A short description shows as it is, under the name. */
+export const WithShortDescription: Story = {
+  args: {
+    item: { ...meta.args.item, description: "The **small** one, for on the windowsill." },
+  },
+};
+
+const longDescription = `Any of these is fine:
+
+- the *cherry blossom* one
+- the **classic** green one, see https://www.lego.com/en-be/product/bonsai-tree-10281
+- [the orchid](https://www.lego.com/en-be/product/orchid-10311), if the bonsai is sold out
+
+Not the big one, that won't fit.`;
+
+/**
+ * A longer one starts as two lines of plain text. "Show more" opens the real thing,
+ * with its list and links; screen readers hear whether it's open.
+ */
+export const WithLongDescription: Story = {
+  args: { item: { ...meta.args.item, description: longDescription } },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const more = canvas.getByRole("button", { name: /show more/i });
+    await expect(more).toHaveAttribute("aria-expanded", "false");
+    await expect(canvas.queryByRole("link", { name: "the orchid" })).toBeNull();
+    await userEvent.click(more);
+    await expect(more).toHaveAttribute("aria-expanded", "true");
+    await expect(canvas.getByRole("link", { name: "the orchid" })).toBeVisible();
+  },
+};
+
+/** Typed HTML is shown as text, and unsafe links stay text too. */
+export const DescriptionWithHtml: Story = {
+  args: {
+    item: {
+      ...meta.args.item,
+      description: '<img src=x onerror="alert(1)"> and [a trick](javascript:alert(1))',
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByText(/<img src=x/)).toBeVisible();
+    await expect(canvas.queryByRole("link", { name: "a trick" })).toBeNull();
+  },
+};
+
+/** "Please don't buy" entries can say why. */
+export const NotWantedWithDescription: Story = {
+  args: {
+    purchase: "hidden",
+    item: {
+      ...meta.args.item,
+      name: "More mugs",
+      url: null,
+      category: null,
+      not_wanted: true,
+      description: "We have *more than enough* already.",
+    },
+  },
 };

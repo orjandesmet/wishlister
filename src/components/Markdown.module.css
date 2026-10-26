@@ -1,0 +1,22 @@
+/* A description: reads like the rest of the card, with room between its paragraphs. */
+.markdown {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-wrap: anywhere;
+}
+
+.markdown ul,
+.markdown ol {
+  margin: 0;
+  padding-inline-start: 1.4em;
+}
+
+.markdown li + li {
+  margin-top: 2px;
+}
+
+.markdown a {
+  color: var(--accent);
+  text-underline-offset: 2px;
+}

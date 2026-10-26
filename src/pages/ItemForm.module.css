@@ -24,3 +24,8 @@
 .pictureText {
   align-items: flex-start;
 }
+
+/* Sits right under the field it explains. */
+.hint {
+  margin-top: -8px;
+}

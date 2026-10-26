@@ -196,6 +196,8 @@ export const nl: Dictionary = {
     removed: "Van het lijstje gehaald nadat het gekocht was",
     removedMine:
       "Van het lijstje gehaald nadat jij het kocht. Kun je je bestelling nog annuleren? Maak het dan ongedaan, dan verdwijnt het voorgoed.",
+    showMore: "Toon meer",
+    showLess: "Toon minder",
   },
   unfollow: {
     title: "Niet meer volgen",
@@ -263,6 +265,13 @@ export const nl: Dictionary = {
     removePicture: "Afbeelding verwijderen",
     pictureRemoved: "Afbeelding verwijderd.",
     category: "Categorie (optioneel)",
+    description: "Beschrijving (optioneel)",
+    descriptionHint: () => (
+      <>
+        Zoals de maat of kleur. <strong>**vet**</strong>, <em>*schuin*</em>, regels die beginnen met
+        "- " voor een lijstje, en links werken.
+      </>
+    ),
     visibility: "Wie kan het zien",
     allGroups: "Al mijn groepen",
     selectedGroups: "Alleen gekozen groepen",

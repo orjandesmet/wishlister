@@ -9,6 +9,8 @@ export type Item = {
   name: string;
   url: string | null;
   category: string | null;
+  /** Markdown (see lib/markdown.ts), at most 1000 characters. */
+  description: string | null;
   visible_in_all_groups: boolean;
   /** A "please don't buy" entry instead of a wish. Nobody can buy it. */
   not_wanted: boolean;
@@ -34,10 +36,12 @@ export type ItemInput = {
   price: Price | null;
   /** The linked page's picture. Left out, the saved picture stays as it is. */
   imageUrl?: string | null;
+  /** Markdown. Left out, the saved description stays as it is. */
+  description?: string | null;
 };
 
 const ITEM_COLUMNS =
-  "id, profile_id, name, url, category, visible_in_all_groups, not_wanted, item_groups(group_id), price, price_currency, image_url, removed_at";
+  "id, profile_id, name, url, category, description, visible_in_all_groups, not_wanted, item_groups(group_id), price, price_currency, image_url, removed_at";
 
 export async function getItems(profileId: ProfileId): Promise<Item[]> {
   return must(
@@ -82,6 +86,7 @@ function itemColumns(input: ItemInput) {
     price: input.price?.amount ?? null,
     price_currency: input.price?.currency ?? null,
     ...(input.imageUrl !== undefined ? { image_url: input.imageUrl } : {}),
+    ...(input.description !== undefined ? { description: input.description?.trim() || null } : {}),
   };
 }
 
