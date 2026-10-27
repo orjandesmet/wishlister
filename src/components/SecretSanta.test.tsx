@@ -115,7 +115,7 @@ describe("SecretSantaRibbon", () => {
     expect(host.textContent).toContain(text);
   });
 
-  it("can be just the gift, with the words kept for screen readers", () => {
+  it("can be just the Santa, with the words kept for screen readers", () => {
     const host = document.createElement("div");
     render(() => <SecretSantaRibbon iconOnly />, host);
     const badge = host.firstElementChild!;

@@ -15,5 +15,5 @@ export const Default: Story = {};
 /** Says which occasion it's for on hover, and to screen readers. */
 export const ForAnOccasion: Story = { args: { occasion: "Christmas 2026" } };
 
-/** In the list menu: just the gift. Screen readers still hear "Your Secret Santa". */
+/** In the list menu and on the group card: just a red Santa, no backdrop. Screen readers still hear "Your Secret Santa". */
 export const IconOnly: Story = { args: { iconOnly: true } };
