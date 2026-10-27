@@ -88,3 +88,28 @@ describe("escapeHtml", () => {
     );
   });
 });
+
+describe("Mailpit (local development)", () => {
+  const local = { NETLIFY_DEV: "true", MAILPIT_URL: "http://127.0.0.1:54324/" };
+
+  it("sends to Mailpit under netlify dev", async () => {
+    const fetch = fakeFetch(200, { ID: "m1" });
+    expect(await sendEmail(email, local, fetch)).toEqual({ ok: true, id: "m1" });
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, RequestInit];
+    expect(url).toBe("http://127.0.0.1:54324/api/v1/send");
+    expect(JSON.parse(init.body as string).To).toEqual([{ Email: "ann@example.com" }]);
+  });
+
+  it("ignores MAILPIT_URL outside netlify dev", async () => {
+    const fetch = fakeFetch(200, { id: "email_1" });
+    const prod = { ...env, MAILPIT_URL: local.MAILPIT_URL };
+    await sendEmail(email, prod, fetch);
+    expect((fetch.mock.calls[0] as unknown as [string])[0]).toBe("https://api.resend.com/emails");
+    expect(mailConfigured({ MAILPIT_URL: local.MAILPIT_URL })).toBe(false);
+  });
+
+  it("sends each email of a batch", async () => {
+    const fetch = fakeFetch(200, { ID: "m1" });
+    expect(await sendEmails([email, email], local, fetch)).toEqual({ sent: 2, errors: [] });
+  });
+});

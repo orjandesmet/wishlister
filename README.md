@@ -35,8 +35,9 @@ Then use the local lines from `.env.example` in `.env.local` and restart `vp dev
 - Studio (tables, SQL editor, auth users) is at http://127.0.0.1:54323.
 - `supabase/config.toml` only configures this local stack; production settings are still
   made in the dashboard (see _One-time setup_).
-- App emails from Netlify functions still go through Resend. Leave `RESEND_API_KEY` out of
-  `.env.local` to send none.
+- App emails from Netlify functions go through Resend. To see them in Mailpit too, add
+  `MAILPIT_URL=http://127.0.0.1:54324` to `.env.local` and restart `netlify dev`; with it set
+  (and only under `netlify dev`), `RESEND_API_KEY` isn't used. Leave both out to send none.
 
 ## Storybook
 
