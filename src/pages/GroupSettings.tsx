@@ -80,6 +80,8 @@ export default function GroupSettings() {
                     candidates: santa.candidates() ?? [],
                     participants: santa.participants() ?? new Map(),
                     busy: santa.busy(),
+                    error: santa.startError(),
+                    onClearError: santa.clearStartError,
                     onStart: santa.onStart,
                     onRemove: santa.onRemove,
                   }

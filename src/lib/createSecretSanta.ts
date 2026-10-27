@@ -1,4 +1,4 @@
-import { createResource } from "solid-js";
+import { createResource, createSignal } from "solid-js";
 import {
   getSecretSantaCandidates,
   getSecretSantaParticipants,
@@ -46,7 +46,9 @@ export function createSecretSanta(
         ),
       ),
   );
-  const [busy, runBusy] = runner.busyRunner();
+  const [busy, setBusy] = createSignal(false);
+  // Why a draw couldn't start, shown by the form's button instead of at the top of the page.
+  const [startError, setStartError] = createSignal<string>();
 
   const reload = () => Promise.all([refetchDraws(), refetchParticipants()]);
   const occasionName = (draw: SecretSanta) =>
@@ -72,6 +74,8 @@ export function createSecretSanta(
     candidates,
     participants,
     busy,
+    startError,
+    clearStartError: () => setStartError(undefined),
     drawsTakingPart,
     /** Resolves to true once the draw is made; the form keeps what was set otherwise. */
     onStart: async (input: SecretSantaInput) => {
@@ -85,9 +89,12 @@ export function createSecretSanta(
         return false;
       }
       let started = false;
-      await runBusy(async () => {
+      setStartError(undefined);
+      setBusy(true);
+      try {
         const mail = await startSecretSanta(input);
         started = true;
+        runner.setError(undefined);
         runner.setNotice(
           t(
             mail === "sent"
@@ -97,9 +104,13 @@ export function createSecretSanta(
                 : "secretSanta.startedMailFailed",
           ),
         );
-        await reload();
         announce(t("a11y.secretSantaStarted", { occasion: name }));
-      });
+      } catch (e) {
+        setStartError((e as Error).message);
+      }
+      setBusy(false);
+      // The draw is made either way; a failed refresh is the page's to report.
+      if (started) await runner.run(reload);
       return started;
     },
     onRemove: (draw: SecretSanta, person: SecretSantaCandidate) => {

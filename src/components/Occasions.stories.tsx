@@ -142,3 +142,21 @@ export const SecretSantaDrawing: Story = {
     ).toBeDisabled();
   },
 };
+
+/** No draw was possible: the reason shows by the button, so the manager can change the exclusions. */
+export const SecretSantaCouldNotStart: Story = {
+  args: {
+    canEdit: true,
+    secretSanta: {
+      ...secretSanta,
+      isManager: true,
+      error:
+        "No draw is possible: too many exclusions for Cleo. Remove some exclusions and try again.",
+    },
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getAllByRole("button", { name: /Start Secret Santa/ })[0]);
+    await expect(await canvas.findByText(/too many exclusions for Cleo/)).toBeInTheDocument();
+  },
+};

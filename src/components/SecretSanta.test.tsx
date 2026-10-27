@@ -297,6 +297,30 @@ describe("Secret Santa in the occasions list", () => {
         expect(host.textContent).not.toContain(t("secretSanta.exclusions"));
       });
 
+      it("says why the draw couldn't start, right by the button", () => {
+        const host = open({ error: "No draw is possible: too many exclusions for Cleo." });
+        const form = startForm(host)!;
+        const alert = form.querySelector('[role="alert"]')!;
+        expect(alert.textContent).toBe("No draw is possible: too many exclusions for Cleo.");
+        // Between the fields and the buttons, not at the top of the page.
+        const submit = buttonNamed(host, t("secretSanta.draw"));
+        expect(
+          alert.compareDocumentPosition(submit) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+      });
+
+      it("keeps the message area empty when nothing went wrong", () => {
+        const host = open();
+        expect(startForm(host)!.querySelector('[role="alert"]')!.textContent).toBe("");
+      });
+
+      it("forgets the message when the form is closed", () => {
+        const onClearError = vi.fn();
+        const host = open({ error: "Nope", onClearError });
+        click(buttonNamed(host, t("common.cancel")));
+        expect(onClearError).toHaveBeenCalled();
+      });
+
       it("disables the button while drawing", () => {
         const host = open({ busy: true });
         const submit = buttonNamed(host, t("secretSanta.drawing"));

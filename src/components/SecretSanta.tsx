@@ -26,6 +26,10 @@ export type SecretSantaProps = {
   participants: Map<SecretSantaId, SecretSantaCandidate[]>;
   /** True while a draw is being made. */
   busy: boolean;
+  /** Why the last draw couldn't start, shown by the form's button. */
+  error?: string;
+  /** Forget `error`, when the form is closed. */
+  onClearError?: () => void;
   /** Resolves to true once the draw is made; the form keeps what was set otherwise. */
   onStart: (input: SecretSantaInput) => Promise<boolean>;
   onRemove: (draw: Draw, person: SecretSantaCandidate) => void;
@@ -46,6 +50,7 @@ export function OccasionSecretSanta(props: SecretSantaProps & { occasion: Occasi
   let box: HTMLDivElement | undefined;
   const stopStarting = () => {
     setStarting(false);
+    props.onClearError?.();
     focusSoon(() => box?.querySelector<HTMLElement>("button"));
   };
 
@@ -68,6 +73,7 @@ export function OccasionSecretSanta(props: SecretSantaProps & { occasion: Occasi
                 occasion={props.occasion}
                 candidates={props.candidates}
                 busy={props.busy}
+                error={props.error}
                 onSubmit={async (input) => {
                   if (await props.onStart(input)) setStarting(false);
                 }}
@@ -127,6 +133,7 @@ type StartFormProps = {
   occasion: Occasion;
   candidates: SecretSantaCandidate[];
   busy: boolean;
+  error?: string;
   onSubmit: (input: SecretSantaInput) => Promise<void>;
   onCancel: () => void;
 };
@@ -249,6 +256,12 @@ function StartForm(props: StartFormProps) {
           {t("secretSanta.needTwo")}
         </p>
       </Show>
+      {/* Always there, so screen readers notice when a message appears in it. */}
+      <div role="alert" id={`start-error-${props.occasion.id}`}>
+        <Show when={props.error}>
+          <p class={u.error}>{props.error}</p>
+        </Show>
+      </div>
       <div class={u.row}>
         <button
           type="submit"
