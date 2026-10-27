@@ -99,6 +99,7 @@ export const nl: Dictionary = {
     inDays: (p) => `over ${p.days} dagen`,
     occasionLine: (p) => `${p.name} · ${p.date}`,
     daysUnit: "dagen",
+    secretSanta: "Secret Santa loopt",
   },
   group: {
     back: "‹ Groepen",

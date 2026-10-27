@@ -103,6 +103,7 @@ export const en = {
     inDays: (p: { days: number }) => `in ${p.days} days`,
     occasionLine: (p: { name: string; date: string }) => `${p.name} · ${p.date}`,
     daysUnit: "days",
+    secretSanta: "Secret Santa is running",
   },
   group: {
     back: "‹ Groups",

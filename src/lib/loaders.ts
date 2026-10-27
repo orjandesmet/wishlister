@@ -5,9 +5,9 @@ import { getOccasions, getUpcomingOccasions } from "./api/occasions.ts";
 import { getProfileDetails } from "./api/profiles.ts";
 import { getPurchases } from "./api/purchases.ts";
 import { getQuestions } from "./api/questions.ts";
-import { getDrawnPeople, getSecretSantas } from "./api/secretSanta.ts";
+import { getDrawnPeople, getSecretSantaOccasionIds, getSecretSantas } from "./api/secretSanta.ts";
 import { cached } from "./cache.ts";
-import type { GroupId, ProfileId } from "./ids.ts";
+import type { GroupId, OccasionId, ProfileId } from "./ids.ts";
 import type { IsoDate } from "./occasions.ts";
 
 // The API calls behind the pages people switch between, remembered (see cache.ts).
@@ -39,4 +39,8 @@ export const loadSecretSantas = cached("secretSantas", (groupId: GroupId) =>
 export const loadDrawnPeople = cached<true, Awaited<ReturnType<typeof getDrawnPeople>>>(
   "drawnPeople",
   () => getDrawnPeople(),
+);
+/** The occasions of your groups that have a Secret Santa. Takes `true`, like loadMyGroups. */
+export const loadSecretSantaOccasionIds = cached<true, OccasionId[]>("secretSantaOccasions", () =>
+  getSecretSantaOccasionIds(),
 );

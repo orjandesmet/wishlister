@@ -10,6 +10,8 @@ import u from "../utilities.module.css";
 import { Card } from "./Card.tsx";
 import { Chip } from "./Chip.tsx";
 import { Person } from "./Person.tsx";
+import { SecretSantaRibbon } from "./SecretSantaRibbon.tsx";
+import { secretSantaPath } from "./SecretSanta.tsx";
 import styles from "./GroupCard.module.css";
 
 export type GroupCardProps = {
@@ -18,6 +20,10 @@ export type GroupCardProps = {
   myProfileId: ProfileId;
   /** The group's next occasion from today on, if it has one. */
   nextOccasion?: Occasion;
+  /** The next occasion has a Secret Santa running. */
+  secretSanta?: boolean;
+  /** The member you drew in that Secret Santa, who gets the badge. */
+  drawnProfileId?: ProfileId;
   /** Today, to say how far away the next occasion is. */
   today: IsoDate;
 };
@@ -90,6 +96,16 @@ export function GroupCard(props: GroupCardProps) {
           </div>
         )}
       </Show>
+      <Show when={props.secretSanta && props.nextOccasion}>
+        {(occasion) => (
+          <p>
+            <A class={u.link} href={secretSantaPath(occasion())}>
+              {t("groupCard.secretSanta")}
+              <span class={u.visuallyHidden}> {occasion().name}</span>
+            </A>
+          </p>
+        )}
+      </Show>
       <ul class={u.list}>
         <For each={members()}>
           {(member) => (
@@ -115,6 +131,9 @@ export function GroupCard(props: GroupCardProps) {
                   <Person id={member.profile_id} name={member.profiles.display_name}>
                     {member.profiles.display_name}
                     {member.profile_id === props.myProfileId ? t("common.you") : ""}
+                    <Show when={member.profile_id === props.drawnProfileId}>
+                      <SecretSantaRibbon iconOnly occasion={props.nextOccasion?.name} />
+                    </Show>
                   </Person>
                   <Show when={!member.profiles.account_id}>
                     <Chip>{t("groupCard.child")}</Chip>

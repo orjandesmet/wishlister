@@ -10,7 +10,12 @@ import { useCreateGroupAndOpen } from "../lib/createGroupAndOpen.ts";
 import { compareNames, t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
 import { isReady } from "../lib/resource.ts";
-import { loadMyGroups, loadUpcomingOccasions } from "../lib/loaders.ts";
+import {
+  loadDrawnPeople,
+  loadMyGroups,
+  loadSecretSantaOccasionIds,
+  loadUpcomingOccasions,
+} from "../lib/loaders.ts";
 import { nextOccasionPerGroup, today } from "../lib/occasions.ts";
 import u from "../utilities.module.css";
 import styles from "./Home.module.css";
@@ -27,6 +32,16 @@ export default function Home() {
   const nextOccasions = createMemo(() =>
     nextOccasionPerGroup(occasions() ?? [], day, compareNames),
   );
+  // Another extra: which of those occasions have a Secret Santa, and who you drew. If they fail
+  // to load, the cards just don't mention it.
+  const [secretSantas] = createCachedResource(() => true, loadSecretSantaOccasionIds);
+  const [drawnPeople] = createCachedResource(() => true, loadDrawnPeople);
+  const hasSecretSanta = (occasionId?: string) =>
+    !secretSantas.error && !!occasionId && (secretSantas() ?? []).some((id) => id === occasionId);
+  const drawnFor = (occasionId?: string) =>
+    drawnPeople.error
+      ? undefined
+      : (drawnPeople() ?? []).find((d) => d.occasion_id === occasionId)?.recipient_profile_id;
   // Reading a failed resource throws, so go through here: the error message is shown instead.
   const loadedGroups = () => (groups.error ? [] : groups());
   const hasGroups = () => (loadedGroups()?.length ?? 0) > 0;
@@ -70,6 +85,8 @@ export default function Home() {
             group={group}
             myProfileId={me().profile.id}
             nextOccasion={nextOccasions().get(group.id)}
+            secretSanta={hasSecretSanta(nextOccasions().get(group.id)?.id)}
+            drawnProfileId={drawnFor(nextOccasions().get(group.id)?.id)}
             today={day}
           />
         )}

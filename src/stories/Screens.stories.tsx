@@ -46,6 +46,7 @@ import { getPurchaseOccasions, getPurchases, type Purchase } from "../lib/api/pu
 import { answerQuestion, askQuestion, getQuestions, type Question } from "../lib/api/questions.ts";
 import {
   getDrawnPeople,
+  getSecretSantaOccasionIds,
   getSecretSantaCandidates,
   getSecretSantaParticipants,
   getSecretSantas,
@@ -122,6 +123,9 @@ const meta = {
     mocked(getSecretSantaCandidates).mockImplementation(async () => data.santaCandidates);
     mocked(getSecretSantaParticipants).mockImplementation(async () => data.santaCandidates);
     mocked(getDrawnPeople).mockImplementation(async () => data.drawn);
+    mocked(getSecretSantaOccasionIds).mockImplementation(async () =>
+      data.santas.map((santa) => santa.occasion_id),
+    );
     mocked(startSecretSanta).mockImplementation(async () => "sent");
     mocked(removeFromSecretSanta).mockImplementation(async () => "removed");
     mocked(getFollowUntil).mockImplementation(async () => null);
@@ -328,6 +332,39 @@ const openPopover = (id: string, when = "all") =>
 const quickAddIsPopover = "(max-width: 1199px)";
 
 export const Home: Story = { render: app("/") };
+
+/** The next occasion of Family has a Secret Santa: a link on its card, and a badge on who you drew. */
+export const HomeSecretSanta: Story = {
+  beforeEach: () => {
+    data.santas = [
+      {
+        id: "draw-1" as SecretSantaId,
+        occasion_id: annasBirthday.id,
+        taking_part: true,
+        recipient_profile_id: "anna" as ProfileId,
+        recipient_name: "Anna",
+      },
+    ];
+    data.drawn = [
+      {
+        recipient_profile_id: "anna" as ProfileId,
+        occasion_id: annasBirthday.id,
+        occasion_name: annasBirthday.name,
+        occasion_date: annasBirthday.date,
+      },
+    ];
+  },
+  render: app("/"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      await canvas.findByRole("link", { name: /Secret Santa is running/ }),
+    ).toHaveAttribute("href", "/groups/group-1/occasions/o1/secret-santa");
+    await expect(
+      canvas.getByTitle(t("secretSanta.ribbonFor", { occasion: annasBirthday.name })),
+    ).toBeInTheDocument();
+  },
+};
 
 export const HomeEmpty: Story = {
   beforeEach: () => {

@@ -53,6 +53,17 @@ export async function getSecretSantas(groupId: GroupId): Promise<SecretSanta[]> 
   return must(await supabase.rpc("get_secret_santas", { target_group: groupId })) as SecretSanta[];
 }
 
+/**
+ * The occasions, in your groups, that have a Secret Santa. Anyone in the group may read that
+ * a draw exists, not who takes part.
+ */
+export async function getSecretSantaOccasionIds(): Promise<OccasionId[]> {
+  const rows = must(await supabase.from("secret_santas").select("occasion_id")) as {
+    occasion_id: OccasionId;
+  }[];
+  return rows.map((row) => row.occasion_id);
+}
+
 /** The people you drew, across your groups, from today on. For the ribbon on their lists. */
 export async function getDrawnPeople(): Promise<DrawnPerson[]> {
   return must(

@@ -96,3 +96,20 @@ export const OccasionToday: Story = {
     },
   },
 };
+
+const christmas = {
+  id: "o1" as OccasionId,
+  group_id: "group-1" as GroupId,
+  name: "Christmas 2026",
+  date: "2026-12-25",
+};
+
+/** The next occasion has a Secret Santa: a link to its page, and the member you drew gets a badge. */
+export const SecretSantaRunning: Story = {
+  args: { nextOccasion: christmas, secretSanta: true, drawnProfileId: "bert" as ProfileId },
+};
+
+/** Running, but you don't take part (or aren't picked): the link, no badge. */
+export const SecretSantaNotTakingPart: Story = {
+  args: { nextOccasion: christmas, secretSanta: true },
+};
