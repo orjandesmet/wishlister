@@ -20,6 +20,7 @@ sb.mock(import("../src/lib/api/pageInfo.ts"));
 sb.mock(import("../src/lib/api/pictures.ts"));
 sb.mock(import("../src/lib/api/profiles.ts"));
 sb.mock(import("../src/lib/api/purchases.ts"));
+sb.mock(import("../src/lib/api/questions.ts"));
 // Real code, but a story can fix the date or show the install banner.
 sb.mock(import("../src/lib/occasions.ts"), { spy: true });
 sb.mock(import("../src/lib/install.ts"), { spy: true });

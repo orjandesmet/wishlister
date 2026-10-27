@@ -43,9 +43,10 @@ import {
   type ProfileDetails,
 } from "../lib/api/profiles.ts";
 import { getPurchaseOccasions, getPurchases, type Purchase } from "../lib/api/purchases.ts";
+import { answerQuestion, askQuestion, getQuestions, type Question } from "../lib/api/questions.ts";
 import { setMockOtpError, setMockSession } from "../lib/__mocks__/supabase.ts";
 import { t } from "../lib/i18n.ts";
-import type { AccountId, GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
+import type { AccountId, GroupId, ItemId, OccasionId, ProfileId, QuestionId } from "../lib/ids.ts";
 import { installOffer } from "../lib/install.ts";
 import { today } from "../lib/occasions.ts";
 import { bonsaiPicture, scarfPicture } from "./samplePictures.ts";
@@ -93,6 +94,11 @@ const meta = {
     mocked(uploadPictures).mockImplementation(async () => new Map());
     mocked(getPurchases).mockImplementation(async () => data.purchases);
     mocked(getPurchaseOccasions).mockImplementation(async () => data.occasions.slice(0, 1));
+    mocked(getQuestions).mockImplementation(async (ids) =>
+      data.questions.filter((q) => ids.includes(q.item_id)),
+    );
+    mocked(askQuestion).mockImplementation(async () => {});
+    mocked(answerQuestion).mockImplementation(async () => {});
     mocked(getFollowUntil).mockImplementation(async () => null);
     mocked(getMyFollows).mockImplementation(async () => data.follows);
     mocked(unfollowByToken).mockImplementation(async () => "Anna");
@@ -185,6 +191,23 @@ const item = (
   ...extra,
 });
 
+const question = (
+  n: number,
+  itemNumber: number,
+  text: string,
+  extra: Partial<Question> = {},
+): Question => ({
+  id: `question-${n}` as QuestionId,
+  item_id: `item-${itemNumber}` as ItemId,
+  question: text,
+  answer: null,
+  answerer_name: null,
+  answered_at: null,
+  created_at: "2026-10-19T12:00:00Z",
+  mine: false,
+  ...extra,
+});
+
 const never = <T,>() => new Promise<T>(() => {});
 
 /** What the mocked API answers. Each story starts from this and changes what it needs. */
@@ -224,6 +247,15 @@ function sampleData() {
         occasion: { name: annasBirthday.name },
       },
     ] as Purchase[],
+    questions: [
+      question(1, 2, "Paper filters or a metal one?", {
+        answer: "Metal, please: less waste.",
+        answerer_name: "Anna",
+        answered_at: "2026-10-20T09:00:00Z",
+      }),
+      question(2, 3, "The big one or the small one?", { mine: true }),
+      question(3, 5, "Which shoe size?"),
+    ] as Question[],
     follows: [] as FollowedList[],
     addItem: async (): Promise<ItemId> => "new-item" as ItemId,
     addQuickItems: async (): Promise<Item[]> => [],
@@ -560,6 +592,12 @@ export const OwnListAsParent: Story = {
   },
   render: app("/lists/me"),
 };
+
+/** The link in a question's email opens the list with that item's questions. */
+export const OtherListQuestions: Story = { render: app("/lists/anna?questions=item-2") };
+
+/** Your own list: a question waits for your answer. */
+export const OwnListQuestions: Story = { render: app("/lists/me?questions=item-5") };
 
 /** The smallest phones: the tab bar still fits all three tabs. */
 export const HomeSmallestPhone: Story = {

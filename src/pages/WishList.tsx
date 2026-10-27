@@ -1,10 +1,11 @@
-import { useNavigate, useParams } from "@solidjs/router";
+import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
 import { ListMenu } from "../components/ListMenu.tsx";
 import { FollowList } from "../components/FollowList.tsx";
 import { ItemCard } from "../components/ItemCard.tsx";
+import { ItemQuestions } from "../components/ItemQuestions.tsx";
 import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
 import { QuickAdd, QuickAddButton } from "../components/QuickAdd.tsx";
 import {
@@ -23,6 +24,7 @@ import { createBulkSelect } from "../lib/createBulkSelect.ts";
 import { createFollow } from "../lib/createFollow.ts";
 import { createListSections } from "../lib/createListSections.ts";
 import { createPurchases } from "../lib/createPurchases.ts";
+import { createQuestions } from "../lib/createQuestions.ts";
 import { compareNames, formatList, locale, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
 import { addDays, formatOccasionDate, today, type IsoDate } from "../lib/occasions.ts";
@@ -139,6 +141,15 @@ export default function WishList() {
       focusHeading();
     },
   );
+  // Anonymous questions about items. The link in their emails opens one item's
+  // questions straight away (?questions=<item id>).
+  const questions = createQuestions(loadedItems);
+  const [search, setSearch] = useSearchParams<{ questions?: string }>();
+  const closeQuestions = (item: Item) => {
+    questions.clearError();
+    if (search.questions === item.id) setSearch({ questions: undefined }, { replace: true });
+  };
+
   const listSections = createListSections(loadedItems, () =>
     purchases.showBought() ? (item) => purchases.purchaseOf().has(item.id) : undefined,
   );
@@ -219,6 +230,26 @@ export default function WishList() {
       selecting={select.selecting()}
       selected={select.selected().has(item.id)}
       onToggleSelect={() => select.toggle(item.id)}
+      questions={
+        <ItemQuestions
+          itemName={item.name}
+          questions={questions.of(item.id)}
+          // Not once it's bought. Nobody buys a "please don't buy" entry, so it stays open.
+          canAsk={
+            !canEdit() &&
+            !item.removed_at &&
+            (item.not_wanted || purchases.purchase(item) === "available")
+          }
+          canAnswer={canEdit()}
+          bought={purchases.purchase(item) === "mine" || purchases.purchase(item) === "someone"}
+          open={search.questions === item.id}
+          onClose={() => closeQuestions(item)}
+          busy={questions.busy()}
+          error={questions.error()}
+          onAsk={(question) => questions.ask(item.id, question)}
+          onAnswer={questions.answer}
+        />
+      }
     />
   );
 

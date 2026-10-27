@@ -206,6 +206,30 @@ export const nl: Dictionary = {
     showMore: "Toon meer",
     showLess: "Toon minder",
   },
+  questions: {
+    ask: "Stel een vraag",
+    count: (p: { count: number }) => (p.count === 1 ? "1 vraag" : `${p.count} vragen`),
+    countToAnswer: (p: { count: number; open: number }) =>
+      `${p.count === 1 ? "1 vraag" : `${p.count} vragen`}, ${p.open} te beantwoorden`,
+    title: (p: { name: string }) => `Vragen over ${p.name}`,
+    anonymous: "Vragen zijn anoniem: niemand ziet wie ze stelde, ook de anderen niet.",
+    anonymousOwner: "Niemand ziet wie de vraag stelde. Je antwoord staat er met je naam bij.",
+    none: "Nog geen vragen.",
+    questionLabel: "Vraag",
+    answerLabel: "Antwoord",
+    answerFrom: (p: { name: string }) => `Antwoord van ${p.name}`,
+    notAnswered: "Nog niet beantwoord.",
+    yours: "Jij stelde deze vraag.",
+    yourAnswer: "Je antwoord",
+    editAnswer: "Je antwoord aanpassen",
+    saveAnswer: "Antwoord bewaren",
+    change: "Antwoord aanpassen",
+    yourQuestion: "Je vraag",
+    askHint:
+      "De eigenaar van het lijstje krijgt een e-mail, en jij krijgt er een als ze antwoorden.",
+    send: "Anoniem vragen",
+    closed: "Het is al gekocht, dus er kunnen geen nieuwe vragen meer bij.",
+  },
   unfollow: {
     title: "Niet meer volgen",
     done: (p) =>
@@ -382,6 +406,8 @@ export const nl: Dictionary = {
     changed: (p) => (p.count === 1 ? "1 item gewijzigd." : `${p.count} items gewijzigd.`),
     deleted: (p) => (p.count === 1 ? "1 item verwijderd." : `${p.count} items verwijderd.`),
     unfollowed: "Je volgt dit lijstje niet meer.",
+    asked: "Je vraag is verstuurd.",
+    answered: "Je antwoord is bewaard.",
   },
   wishlist: {
     fallbackTitle: "Verlanglijstje",
