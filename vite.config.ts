@@ -98,7 +98,10 @@ export default defineConfig({
         test: {
           name: "unit",
           environment: "jsdom",
-          include: ["src/**/*.{test,spec}.?(c|m)[jt]s?(x)"],
+          include: [
+            "src/**/*.{test,spec}.?(c|m)[jt]s?(x)",
+            "netlify/**/*.{test,spec}.?(c|m)[jt]s?(x)",
+          ],
         },
       },
       {
