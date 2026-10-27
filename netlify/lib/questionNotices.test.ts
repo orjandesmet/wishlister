@@ -58,6 +58,18 @@ describe("buildQuestionEmails", () => {
     expect(email.text).toContain("Answer: Red, please");
   });
 
+  it("says when an answer they heard about before changed", () => {
+    const [email] = buildQuestionEmails(
+      [row({ kind: "changed", answer: "Blue after all", answerer_name: "Anna" })],
+      "https://wishlister.example",
+    );
+    expect(email.subject).toBe('The answer to your question about "Scarf" changed');
+    expect(email.text).toContain(
+      `Anna changed the answer to your question about "Scarf" on Anna's wishlist.`,
+    );
+    expect(email.text).toContain("Answer: Blue after all");
+  });
+
   it("writes in the recipient's language", () => {
     const [question, answer] = buildQuestionEmails(
       [

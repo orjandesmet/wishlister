@@ -11,7 +11,8 @@ import { escapeHtml, sendEmails, type Email } from "./mail.ts";
 
 /** One row of claim_question_notices(): one email. */
 export type QuestionRow = {
-  kind: "question" | "answer";
+  /** "changed": the answer was emailed before and has changed since. */
+  kind: "question" | "answer" | "changed";
   question_id: string;
   item_id: string;
   item_name: string;
@@ -32,6 +33,8 @@ type Texts = {
   asked: (item: string, list: string, ownList: boolean) => string;
   answerSubject: (item: string) => string;
   answered: (item: string, list: string, answerer: string | null) => string;
+  changedSubject: (item: string) => string;
+  changed: (item: string, list: string, answerer: string | null) => string;
   question: string;
   answer: string;
   openToAnswer: string;
@@ -50,6 +53,9 @@ const texts: Record<"en" | "nl", Texts> = {
     answerSubject: (item) => `Your question about "${item}" was answered`,
     answered: (item, list, answerer) =>
       `${answerer ?? list} answered your question about ${item} on ${list}'s wishlist.`,
+    changedSubject: (item) => `The answer to your question about "${item}" changed`,
+    changed: (item, list, answerer) =>
+      `${answerer ?? list} changed the answer to your question about ${item} on ${list}'s wishlist.`,
     question: "Question",
     answer: "Answer",
     openToAnswer: "Answer in Wishlister",
@@ -67,6 +73,9 @@ const texts: Record<"en" | "nl", Texts> = {
     answerSubject: (item) => `Je vraag over "${item}" is beantwoord`,
     answered: (item, list, answerer) =>
       `${answerer ?? list} heeft je vraag over ${item} op het verlanglijstje van ${list} beantwoord.`,
+    changedSubject: (item) => `Het antwoord op je vraag over "${item}" is aangepast`,
+    changed: (item, list, answerer) =>
+      `${answerer ?? list} heeft het antwoord op je vraag over ${item} op het verlanglijstje van ${list} aangepast.`,
     question: "Vraag",
     answer: "Antwoord",
     openToAnswer: "Antwoorden in Wishlister",
@@ -111,18 +120,20 @@ export function buildQuestionEmails(rows: QuestionRow[], siteUrl: string): Email
       };
     }
     const answerer = row.answerer_name ? escapeHtml(row.answerer_name) : null;
+    const changed = row.kind === "changed";
+    const intro = changed ? t.changed : t.answered;
     return {
       to: row.email,
-      subject: t.answerSubject(row.item_name),
+      subject: changed ? t.changedSubject(row.item_name) : t.answerSubject(row.item_name),
       html: [
-        `<p>${t.answered(item, list, answerer)}</p>`,
+        `<p>${intro(item, list, answerer)}</p>`,
         quoteHtml(t.question, row.question),
         quoteHtml(t.answer, row.answer ?? ""),
         `<p><a href="${link}">${t.open}</a></p>`,
         `<p style="color:#666;font-size:13px">${t.answerFooter}</p>`,
       ].join("\n"),
       text: [
-        t.answered(`"${row.item_name}"`, row.list_name, row.answerer_name),
+        intro(`"${row.item_name}"`, row.list_name, row.answerer_name),
         `${t.question}: ${row.question}`,
         `${t.answer}: ${row.answer ?? ""}`,
         `${t.open}: ${link}`,
@@ -150,12 +161,14 @@ export async function sendQuestionNotices(
   if (result.errors.length > 0) {
     // Which emails of a failed batch went out isn't known; with fewer than 100
     // (one batch), nothing did.
-    const ids = (kind: QuestionRow["kind"]) => [
-      ...new Set(rows.filter((row) => row.kind === kind).map((row) => row.question_id)),
+    const ids = (answers: boolean) => [
+      ...new Set(
+        rows.filter((row) => (row.kind !== "question") === answers).map((row) => row.question_id),
+      ),
     ];
     const { error: releaseError } = await admin.rpc("release_question_notices", {
-      question_ids: ids("question"),
-      answer_ids: ids("answer"),
+      question_ids: ids(false),
+      answer_ids: ids(true),
     });
     if (releaseError) result.errors.push(`Couldn't release them: ${releaseError.message}`);
   }
