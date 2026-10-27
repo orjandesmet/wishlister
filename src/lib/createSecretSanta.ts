@@ -43,6 +43,16 @@ export function createSecretSanta(
   const occasionName = (draw: SecretSanta) =>
     occasions()?.find((o) => o.id === draw.occasion_id)?.name ?? "";
 
+  /**
+   * The group's running Secret Santa: the draw of an occasion that hasn't passed. A group has
+   * one at a time; older draws are only history.
+   */
+  const runningOccasion = () =>
+    (occasions() ?? []).find(
+      (o) => o.date >= today() && (draws() ?? []).some((d) => d.occasion_id === o.id),
+    );
+  const runningDraw = () => draws()?.find((d) => d.occasion_id === runningOccasion()?.id);
+
   /** The names of the running draws a member takes part in, as far as you can see. */
   const drawsTakingPart = (profileId: ProfileId) =>
     (draws() ?? [])
@@ -60,6 +70,8 @@ export function createSecretSanta(
 
   return {
     draws,
+    runningOccasion,
+    runningDraw,
     participants,
     reload,
     drawsTakingPart,

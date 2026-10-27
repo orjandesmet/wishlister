@@ -8,6 +8,7 @@ import { Popover } from "../components/Popover.tsx";
 import { createCachedResource } from "../lib/cache.ts";
 import { useCreateGroupAndOpen } from "../lib/createGroupAndOpen.ts";
 import { compareNames, t } from "../lib/i18n.ts";
+import type { GroupId, OccasionId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
 import { isReady } from "../lib/resource.ts";
 import {
@@ -36,10 +37,15 @@ export default function Home() {
   // to load, the cards just don't mention it.
   const [secretSantas] = createCachedResource(() => true, loadSecretSantaOccasionIds);
   const [drawnPeople] = createCachedResource(() => true, loadDrawnPeople);
-  const hasSecretSanta = (occasionId?: string) =>
-    !secretSantas.error && !!occasionId && (secretSantas() ?? []).some((id) => id === occasionId);
-  const drawnFor = (occasionId?: string) =>
-    drawnPeople.error
+  /** The occasion of the group's running Secret Santa: an upcoming one that has a draw. */
+  const secretSantaOf = (groupId: GroupId) =>
+    secretSantas.error
+      ? undefined
+      : (occasions() ?? []).find(
+          (o) => o.group_id === groupId && (secretSantas() ?? []).some((id) => id === o.id),
+        );
+  const drawnFor = (occasionId?: OccasionId) =>
+    drawnPeople.error || !occasionId
       ? undefined
       : (drawnPeople() ?? []).find((d) => d.occasion_id === occasionId)?.recipient_profile_id;
   // Reading a failed resource throws, so go through here: the error message is shown instead.
@@ -85,8 +91,8 @@ export default function Home() {
             group={group}
             myProfileId={me().profile.id}
             nextOccasion={nextOccasions().get(group.id)}
-            secretSanta={hasSecretSanta(nextOccasions().get(group.id)?.id)}
-            drawnProfileId={drawnFor(nextOccasions().get(group.id)?.id)}
+            secretSanta={secretSantaOf(group.id)}
+            drawnProfileId={drawnFor(secretSantaOf(group.id)?.id)}
             today={day}
           />
         )}

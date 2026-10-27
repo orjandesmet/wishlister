@@ -10,7 +10,7 @@ import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import styles from "./Occasions.module.css";
-import { hasSecretSantaLink, OccasionSecretSanta, type SecretSantaProps } from "./SecretSanta.tsx";
+import { SecretSantaLink, type SecretSantaLinkProps } from "./SecretSanta.tsx";
 
 export type OccasionsProps = {
   occasions: Occasion[];
@@ -23,8 +23,8 @@ export type OccasionsProps = {
   /** Resolves to true once saved; the form stays open otherwise. */
   onUpdate: (id: OccasionId, input: OccasionInput) => Promise<boolean>;
   onDelete: (occasion: Occasion) => void;
-  /** Shows each upcoming occasion's Secret Santa under it. Left out where there is none. */
-  secretSanta?: SecretSantaProps;
+  /** The group's one Secret Santa button, under the upcoming occasions. Left out where there is none. */
+  secretSanta?: SecretSantaLinkProps;
 };
 
 /** A group's occasions: upcoming ones soonest first, past ones folded away below. */
@@ -50,14 +50,6 @@ export function Occasions(props: OccasionsProps) {
     focusSoon(() => list?.querySelector<HTMLElement>(`[data-occasion="${id}"] button`));
   };
 
-  /** The Secret Santa link's props, for an upcoming occasion that has such a link. */
-  const secretSantaOf = (occasion: Occasion) =>
-    props.secretSanta &&
-    occasion.date >= props.today &&
-    hasSecretSantaLink(props.secretSanta, occasion)
-      ? props.secretSanta
-      : undefined;
-
   const row = (occasion: Occasion) => (
     <Show
       when={editing() === occasion.id}
@@ -78,13 +70,6 @@ export function Occasions(props: OccasionsProps) {
                 <RemoveLabel label={t("common.delete")} of={occasion.name} />
               </Button>
             </span>
-          </Show>
-          <Show when={secretSantaOf(occasion)}>
-            {(secretSanta) => (
-              <div class={styles.secretSanta}>
-                <OccasionSecretSanta occasion={occasion} {...secretSanta()} />
-              </div>
-            )}
           </Show>
         </li>
       }
@@ -111,6 +96,13 @@ export function Occasions(props: OccasionsProps) {
           {row}
         </For>
       </ul>
+      <Show when={props.secretSanta}>
+        {(secretSanta) => (
+          <div class={styles.secretSanta}>
+            <SecretSantaLink {...secretSanta()} />
+          </div>
+        )}
+      </Show>
       <Show when={split().past.length > 0}>
         <details class={styles.past}>
           <summary class={u.muted}>{t("occasions.past", { count: split().past.length })}</summary>

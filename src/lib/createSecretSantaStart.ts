@@ -1,5 +1,6 @@
 import { createResource, createSignal } from "solid-js";
 import { announce } from "./a11y.ts";
+import type { Occasion } from "./api/occasions.ts";
 import {
   getSecretSantaCandidates,
   startSecretSanta,
@@ -13,7 +14,7 @@ import type { GroupId } from "./ids.ts";
 /** Starting a group's Secret Santa for an occasion: who can take part, and making the draw. */
 export function createSecretSantaStart(
   groupId: () => GroupId,
-  occasionName: () => string,
+  occasions: () => Occasion[] | undefined,
   /** Runs once the draw is made, to load it. */
   onStarted: () => Promise<unknown>,
 ) {
@@ -32,7 +33,7 @@ export function createSecretSantaStart(
     started,
     /** Asks first; the draw is only made when they agree. */
     onStart: async (input: SecretSantaInput) => {
-      const name = occasionName();
+      const name = occasions()?.find((o) => o.id === input.occasionId)?.name ?? "";
       if (
         !confirm(
           t("secretSanta.confirmStart", { occasion: name, count: input.participants.length }),

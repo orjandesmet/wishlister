@@ -1,11 +1,10 @@
 .occasion {
   padding: 8px 0;
-  flex-wrap: wrap;
 }
 
-/* Under the occasion, across the whole row. */
+/* Once, under the upcoming occasions. */
 .secretSanta {
-  flex-basis: 100%;
+  margin-top: 4px;
 }
 
 .occasion .dates {

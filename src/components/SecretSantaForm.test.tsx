@@ -21,6 +21,13 @@ const christmas: Occasion = {
   date: "2026-12-25",
 };
 
+const newYear: Occasion = {
+  id: "ny" as OccasionId,
+  group_id: "group-1" as GroupId,
+  name: "New Year",
+  date: "2027-01-01",
+};
+
 const hosts: HTMLElement[] = [];
 afterEach(() => {
   for (const host of hosts.splice(0)) host.remove();
@@ -31,7 +38,7 @@ function open(overrides: Partial<SecretSantaFormProps> = {}) {
   document.body.append(host);
   hosts.push(host);
   const props: SecretSantaFormProps = {
-    occasion: christmas,
+    occasions: [christmas, newYear],
     candidates: [ann, bo, cleo],
     busy: false,
     cancelHref: "/groups/group-1",
@@ -63,6 +70,25 @@ describe("SecretSantaForm", () => {
     const host = open();
     for (const name of ["Ann", "Bo", "Cleo"]) expect(checkbox(host, name).checked).toBe(true);
     expect(host.querySelector("fieldset legend")?.textContent).toBe(t("secretSanta.who"));
+  });
+
+  it("offers the occasions, with the first chosen", () => {
+    const host = open();
+    const options = [...host.querySelectorAll("select option")].map((o) => o.textContent);
+    expect(options).toHaveLength(2);
+    expect(options[0]).toContain("Christmas");
+    expect(options[1]).toContain("New Year");
+    expect(host.querySelector("select")!.value).toBe("xmas");
+  });
+
+  it("sends the chosen occasion", () => {
+    const onSubmit = vi.fn<(input: SecretSantaInput) => void>();
+    const host = open({ onSubmit });
+    const select = host.querySelector("select")!;
+    select.value = "ny";
+    select.dispatchEvent(new Event("change", { bubbles: true }));
+    form(host).requestSubmit();
+    expect(onSubmit.mock.calls[0][0].occasionId).toBe("ny");
   });
 
   it("sends the participants and no exclusions by default", () => {
@@ -153,6 +179,13 @@ describe("SecretSantaForm", () => {
       (a) => a.textContent === t("common.cancel"),
     )!;
     expect(cancel.getAttribute("href")).toBe("/groups/group-1");
+  });
+
+  it("can't start without an occasion", () => {
+    const onSubmit = vi.fn();
+    const host = open({ occasions: [], onSubmit });
+    form(host).requestSubmit();
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 
   it("is disabled when nobody can take part", () => {

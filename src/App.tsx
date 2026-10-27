@@ -137,8 +137,8 @@ export const AppRoutes = () => (
       <Route path="/groups/new" component={NewGroup} />
       <Route path="/groups/:groupId" component={freshPer("groupId", GroupSettings)} />
       <Route
-        path="/groups/:groupId/occasions/:occasionId/secret-santa"
-        component={freshPer("occasionId", SecretSantaPage)}
+        path="/groups/:groupId/secret-santa"
+        component={freshPer("groupId", SecretSantaPage)}
       />
       <Route path="/children/:profileId" component={freshPer("profileId", ChildSettings)} />
       <Route path="/lists/:profileId" component={freshPer("profileId", WishList)} />

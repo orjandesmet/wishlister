@@ -3,7 +3,7 @@ import { expect, fn, userEvent, within } from "storybook/test";
 import type { Occasion } from "../lib/api/occasions.ts";
 import type { SecretSantaCandidate } from "../lib/api/secretSanta.ts";
 import { t } from "../lib/i18n.ts";
-import type { GroupId, OccasionId, ProfileId } from "../lib/ids.ts";
+import type { ProfileId } from "../lib/ids.ts";
 import { SecretSantaForm } from "./SecretSantaForm.tsx";
 
 const person = (id: string, name: string): SecretSantaCandidate => ({
@@ -16,12 +16,10 @@ const meta = {
   title: "Groups/SecretSantaForm",
   component: SecretSantaForm,
   args: {
-    occasion: {
-      id: "1" as OccasionId,
-      group_id: "group-1" as GroupId,
-      name: "Christmas 2026",
-      date: "2026-12-25",
-    } satisfies Occasion,
+    occasions: [
+      { id: "1", group_id: "group-1", name: "Christmas 2026", date: "2026-12-25" },
+      { id: "2", group_id: "group-1", name: "New Year 2027", date: "2027-01-01" },
+    ] as Occasion[],
     candidates: people,
     busy: false,
     cancelHref: "/groups/group-1",
@@ -32,7 +30,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Everyone who can take part is ticked. Exclusions are optional, one way, per person. */
+/** The occasion is chosen first (the soonest to start with). Everyone who can take part is ticked. Exclusions are optional, one way, per person. */
 export const Default: Story = {};
 
 /** Open one person's exclusions: who they must not draw. */

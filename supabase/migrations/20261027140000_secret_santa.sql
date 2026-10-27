@@ -6,7 +6,8 @@
 -- a ribbon on it. Nobody sees anyone else's pair, the manager included (they take
 -- part too).
 --
--- * One draw per occasion.
+-- * One draw per occasion, and one running draw per group: the next one can only start once
+--   the occasion of the running one has passed.
 -- * Only members with an account and their own list in the group take part: no
 --   managed children and no guardians.
 -- * The draw itself runs in a Netlify function (netlify/lib/secretSanta.ts), which
@@ -229,6 +230,15 @@ begin
   end if;
   if exists (select 1 from public.secret_santas where occasion_id = target_occasion) then
     raise exception 'There is already a Secret Santa for this occasion'
+      using errcode = 'unique_violation';
+  end if;
+  if exists (
+    select 1
+    from public.secret_santas s
+    join public.occasions o on o.id = s.occasion_id
+    where s.group_id = occasion.group_id and o.date >= current_date - 1
+  ) then
+    raise exception 'There is already a Secret Santa running in this group'
       using errcode = 'unique_violation';
   end if;
 

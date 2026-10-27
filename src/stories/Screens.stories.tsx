@@ -359,7 +359,7 @@ export const HomeSecretSanta: Story = {
     const canvas = within(canvasElement);
     await expect(
       await canvas.findByRole("link", { name: /Secret Santa is running/ }),
-    ).toHaveAttribute("href", "/groups/group-1/occasions/o1/secret-santa");
+    ).toHaveAttribute("href", "/groups/group-1/secret-santa");
     await expect(
       canvas.getByTitle(t("secretSanta.ribbonFor", { occasion: annasBirthday.name })),
     ).toBeInTheDocument();
@@ -590,20 +590,21 @@ const managerOfFamily = (): Group => ({
 });
 const christmas = occasion("o3", "Christmas 2026", "2026-12-25");
 
-/** A manager starts a Secret Santa for an occasion, on a page of its own. */
+/** A manager starts the group's Secret Santa on a page of its own, picking the occasion there. */
 export const SecretSantaStart: Story = {
   beforeEach: () => {
     data.group = managerOfFamily;
-    data.occasions = [christmas];
+    data.occasions = [christmas, occasion("o4", "New Year 2027", "2027-01-01")];
   },
-  render: app("/groups/group-1/occasions/o3/secret-santa"),
+  render: app("/groups/group-1/secret-santa"),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    await expect(await canvas.findByLabelText(t("secretSanta.occasion"))).toBeInTheDocument();
     await expect(await canvas.findByRole("button", { name: t("secretSanta.draw") })).toBeEnabled();
   },
 };
 
-/** The link under the occasion on the group page leads there. */
+/** The one button under the occasions on the group page leads there. */
 export const SecretSantaStartLink: Story = {
   beforeEach: () => {
     data.group = managerOfFamily;
@@ -634,7 +635,7 @@ export const SecretSantaRunning: Story = {
     data.occasions = [christmas];
     data.santas = runningDraw();
   },
-  render: app("/groups/group-1/occasions/o3/secret-santa"),
+  render: app("/groups/group-1/secret-santa"),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(await canvas.findByRole("link", { name: "Anna" })).toBeInTheDocument();
@@ -648,7 +649,7 @@ export const SecretSantaRunningAsMember: Story = {
     data.occasions = [christmas];
     data.santas = runningDraw();
   },
-  render: app("/groups/group-1/occasions/o3/secret-santa"),
+  render: app("/groups/group-1/secret-santa"),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(await canvas.findByRole("link", { name: "Anna" })).toBeInTheDocument();
@@ -656,7 +657,7 @@ export const SecretSantaRunningAsMember: Story = {
   },
 };
 
-/** On the group page, a running draw is just a link under its occasion. */
+/** On the group page, a running draw is just the one button under the occasions. */
 export const SecretSantaRunningLink: Story = {
   beforeEach: () => {
     data.group = managerOfFamily;
@@ -666,7 +667,7 @@ export const SecretSantaRunningLink: Story = {
   render: app("/groups/group-1"),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(await canvas.findByRole("link", { name: /^Secret Santa/ }));
+    await userEvent.click(await canvas.findByRole("link", { name: /Secret Santa for/ }));
     await expect(await canvas.findByRole("link", { name: "Anna" })).toBeInTheDocument();
   },
 };

@@ -20,8 +20,8 @@ export type GroupCardProps = {
   myProfileId: ProfileId;
   /** The group's next occasion from today on, if it has one. */
   nextOccasion?: Occasion;
-  /** The next occasion has a Secret Santa running. */
-  secretSanta?: boolean;
+  /** The occasion of the group's running Secret Santa, if it has one. */
+  secretSanta?: Occasion;
   /** The member you drew in that Secret Santa, who gets the badge. */
   drawnProfileId?: ProfileId;
   /** Today, to say how far away the next occasion is. */
@@ -96,10 +96,10 @@ export function GroupCard(props: GroupCardProps) {
           </div>
         )}
       </Show>
-      <Show when={props.secretSanta && props.nextOccasion}>
+      <Show when={props.secretSanta}>
         {(occasion) => (
           <p>
-            <A class={u.link} href={secretSantaPath(occasion())}>
+            <A class={u.link} href={secretSantaPath(props.group.id)}>
               {t("groupCard.secretSanta")}
               <span class={u.visuallyHidden}> {occasion().name}</span>
             </A>
@@ -132,7 +132,7 @@ export function GroupCard(props: GroupCardProps) {
                     {member.profiles.display_name}
                     {member.profile_id === props.myProfileId ? t("common.you") : ""}
                     <Show when={member.profile_id === props.drawnProfileId}>
-                      <SecretSantaRibbon iconOnly occasion={props.nextOccasion?.name} />
+                      <SecretSantaRibbon iconOnly occasion={props.secretSanta?.name} />
                     </Show>
                   </Person>
                   <Show when={!member.profiles.account_id}>

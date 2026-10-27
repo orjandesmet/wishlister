@@ -57,15 +57,15 @@ describe("GroupCard and Secret Santa", () => {
   });
 
   it("links to the Secret Santa of the next occasion", () => {
-    const host = mount({ secretSanta: true });
+    const host = mount({ secretSanta: christmas });
     const link = secretSantaLink(host)!;
-    expect(link.getAttribute("href")).toBe("/groups/group-1/occasions/xmas/secret-santa");
+    expect(link.getAttribute("href")).toBe("/groups/group-1/secret-santa");
     // Told apart for screen readers, where the card repeats per group.
     expect(link.textContent).toContain("Christmas");
   });
 
   it("gives only the member you drew the badge, next to their name", () => {
-    const host = mount({ secretSanta: true, drawnProfileId: "bert" as ProfileId });
+    const host = mount({ secretSanta: christmas, drawnProfileId: "bert" as ProfileId });
     expect(badges(host)).toHaveLength(1);
     const row = badges(host)[0].closest("li")!;
     expect(row.textContent).toContain("Bert");
@@ -74,8 +74,9 @@ describe("GroupCard and Secret Santa", () => {
     expect(badges(host)[0].className).toMatch(/iconOnly/);
   });
 
-  it("has no link without a next occasion", () => {
-    const host = mount({ secretSanta: true, nextOccasion: undefined });
-    expect(secretSantaLink(host)).toBeUndefined();
+  it("links even when the running one isn't the next occasion", () => {
+    const later = { ...christmas, id: "later" as OccasionId, name: "Easter" };
+    const host = mount({ secretSanta: later });
+    expect(secretSantaLink(host)!.textContent).toContain("Easter");
   });
 });

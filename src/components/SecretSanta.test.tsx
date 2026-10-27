@@ -1,12 +1,11 @@
 import { MemoryRouter } from "@solidjs/router";
 import { render } from "solid-js/web";
-import { afterEach, describe, expect, it, vi } from "vite-plus/test";
+import { afterEach, describe, expect, it } from "vite-plus/test";
 import type { Occasion } from "../lib/api/occasions.ts";
-import type { SecretSanta as Draw } from "../lib/api/secretSanta.ts";
 import { t } from "../lib/i18n.ts";
-import type { GroupId, OccasionId, ProfileId, SecretSantaId } from "../lib/ids.ts";
+import type { GroupId, OccasionId } from "../lib/ids.ts";
 import { Occasions } from "./Occasions.tsx";
-import type { SecretSantaProps } from "./SecretSanta.tsx";
+import type { SecretSantaLinkProps } from "./SecretSanta.tsx";
 import { SecretSantaRibbon } from "./SecretSantaRibbon.tsx";
 
 const occasion = (id: string, name: string, date: string): Occasion => ({
@@ -15,30 +14,19 @@ const occasion = (id: string, name: string, date: string): Occasion => ({
   name,
   date,
 });
-const draw = (occasionId: string, extra: Partial<Draw> = {}): Draw => ({
-  id: `draw-${occasionId}` as SecretSantaId,
-  occasion_id: occasionId as OccasionId,
-  taking_part: false,
-  recipient_profile_id: null,
-  recipient_name: null,
-  ...extra,
-});
 
 const christmas = occasion("xmas", "Christmas", "2026-12-25");
 const easter = occasion("easter", "Easter", "2027-03-28");
 const lastYear = occasion("old", "Christmas 2025", "2025-12-25");
 
-type Setup = SecretSantaProps & { occasions: Occasion[] };
-
-const props = (overrides: Partial<Setup> = {}): Setup => ({
-  occasions: [christmas, easter, lastYear],
-  draws: [],
-  isManager: false,
+const props = (overrides: Partial<SecretSantaLinkProps> = {}): SecretSantaLinkProps => ({
+  group: "group-1" as GroupId,
+  canStart: false,
   ...overrides,
 });
 
 const hosts: HTMLElement[] = [];
-function mount({ occasions, ...secretSanta }: Setup) {
+function mount(secretSanta?: SecretSantaLinkProps) {
   const host = document.createElement("div");
   document.body.append(host);
   hosts.push(host);
@@ -47,9 +35,9 @@ function mount({ occasions, ...secretSanta }: Setup) {
       <MemoryRouter
         root={() => (
           <Occasions
-            occasions={occasions}
+            occasions={[christmas, easter, lastYear]}
             today="2026-10-21"
-            canEdit={secretSanta.isManager}
+            canEdit={secretSanta?.canStart ?? false}
             onAdd={async () => true}
             onUpdate={async () => true}
             onDelete={() => {}}
@@ -64,86 +52,46 @@ function mount({ occasions, ...secretSanta }: Setup) {
 }
 afterEach(() => {
   for (const host of hosts.splice(0)) host.remove();
-  vi.restoreAllMocks();
 });
 
-const secretSantaLinks = (host: HTMLElement) =>
+const links = (host: HTMLElement) =>
   [...host.querySelectorAll("a")].filter((a) => a.getAttribute("href")?.endsWith("/secret-santa"));
 
-describe("Secret Santa in the occasions list", () => {
-  describe("for members", () => {
-    it("shows nothing when no occasion has a draw", () => {
-      const host = mount(props());
-      expect(secretSantaLinks(host)).toHaveLength(0);
-    });
-
-    it("links to the page of an occasion that has a draw, and no other", () => {
-      const host = mount(props({ draws: [draw("xmas")] }));
-      const links = secretSantaLinks(host);
-      expect(links).toHaveLength(1);
-      expect(links[0].getAttribute("href")).toBe("/groups/group-1/occasions/xmas/secret-santa");
-      expect(links[0].textContent).toContain(t("secretSanta.view"));
-      // Told apart for screen readers, where the same link repeats.
-      expect(links[0].textContent).toContain("Christmas");
-    });
-
-    it("keeps everything else for the page: no pair, no participants", () => {
-      const host = mount(
-        props({
-          draws: [
-            draw("xmas", {
-              taking_part: true,
-              recipient_profile_id: "bo" as ProfileId,
-              recipient_name: "Bo",
-            }),
-          ],
-        }),
-      );
-      expect(host.textContent).not.toContain(t("secretSanta.running"));
-      expect(host.textContent).not.toContain("Bo");
-      expect(host.querySelector("details[open], summary")?.textContent ?? "").not.toContain(
-        t("secretSanta.participants", { count: 1 }),
-      );
-    });
-
-    it("has no link for a draw of a passed occasion", () => {
-      const host = mount(props({ draws: [draw("old")] }));
-      expect(secretSantaLinks(host)).toHaveLength(0);
-    });
+describe("The Secret Santa button in the occasions list", () => {
+  it("is left out when the page gives none", () => {
+    expect(links(mount())).toHaveLength(0);
   });
 
-  describe("for managers", () => {
-    it("links to the start page for every upcoming occasion without a draw", () => {
-      const host = mount(props({ isManager: true, draws: [draw("easter")] }));
-      const starts = secretSantaLinks(host).filter((a) =>
-        a.textContent?.includes(t("secretSanta.start")),
-      );
-      expect(starts).toHaveLength(1);
-      expect(starts[0].getAttribute("href")).toBe("/groups/group-1/occasions/xmas/secret-santa");
-      expect(starts[0].textContent).toContain("Christmas");
-    });
+  it("shows nothing to a member while nothing runs", () => {
+    expect(links(mount(props()))).toHaveLength(0);
+  });
 
-    it("links to the page of a running one without offering to start", () => {
-      const host = mount(props({ isManager: true, draws: [draw("xmas"), draw("easter")] }));
-      const texts = secretSantaLinks(host).map((a) => a.textContent ?? "");
-      expect(texts).toHaveLength(2);
-      expect(texts.every((text) => text.includes(t("secretSanta.view")))).toBe(true);
-    });
+  it("is one button for the whole group, whatever the number of occasions", () => {
+    const host = mount(props({ canStart: true }));
+    expect(links(host)).toHaveLength(1);
+  });
 
-    it("puts the link under the occasion, apart from Edit and Delete, with Santa and words", () => {
-      const host = mount(props({ isManager: true }));
-      const link = secretSantaLinks(host)[0];
-      expect(link.parentElement!.querySelectorAll("button")).toHaveLength(0);
-      expect(link.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
-      expect(link.textContent).toContain(t("secretSanta.start"));
-    });
+  it("offers a manager to start one, on the group's Secret Santa page", () => {
+    const [link] = links(mount(props({ canStart: true })));
+    expect(link.getAttribute("href")).toBe("/groups/group-1/secret-santa");
+    expect(link.textContent).toBe(t("secretSanta.start"));
+  });
 
-    it("leaves out occasions that have passed", () => {
-      const host = mount(props({ isManager: true }));
-      const links = secretSantaLinks(host);
-      expect(links).toHaveLength(2);
-      expect(links.map((a) => a.textContent).join()).not.toContain("Christmas 2025");
-    });
+  it("names the occasion of the running one, for members and managers alike", () => {
+    for (const canStart of [false, true]) {
+      const [link] = links(mount(props({ running: christmas, canStart })));
+      expect(link.textContent).toBe(t("secretSanta.viewFor", { occasion: "Christmas" }));
+    }
+  });
+
+  it("has Santa beside the words, hidden from screen readers", () => {
+    const [link] = links(mount(props({ canStart: true })));
+    expect(link.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+  });
+
+  it("sits under the occasions, not beside Edit and Delete", () => {
+    const [link] = links(mount(props({ canStart: true })));
+    expect(link.closest("li")).toBeNull();
   });
 });
 

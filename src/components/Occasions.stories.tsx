@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { fn } from "storybook/test";
 import type { Occasion } from "../lib/api/occasions.ts";
-import type { SecretSanta } from "../lib/api/secretSanta.ts";
-import type { GroupId, OccasionId, SecretSantaId } from "../lib/ids.ts";
+import type { GroupId, OccasionId } from "../lib/ids.ts";
 import { Occasions } from "./Occasions.tsx";
 
 const makeOccasion = (id: string, name: string, date: string): Occasion => ({
@@ -41,30 +40,19 @@ export const AsManager: Story = { args: { canEdit: true } };
 
 export const NoneYet: Story = { args: { canEdit: true, occasions: [] } };
 
-const draw = (occasionId: string, extra: Partial<SecretSanta> = {}): SecretSanta => ({
-  id: `draw-${occasionId}` as SecretSantaId,
-  occasion_id: occasionId as OccasionId,
-  taking_part: false,
-  recipient_profile_id: null,
-  recipient_name: null,
-  ...extra,
-});
-const secretSanta = { draws: [], isManager: false };
+const secretSanta = { group: "group-1" as GroupId, canStart: false };
 
-/** With a Secret Santa running, a member gets a link to its page: who they drew is there. */
+/** With a Secret Santa running, everyone gets the one button, naming its occasion. */
 export const SecretSantaRunning: Story = {
-  args: { secretSanta: { ...secretSanta, draws: [draw("1")] } },
+  args: {
+    secretSanta: { ...secretSanta, running: makeOccasion("1", "Christmas 2026", "2026-12-25") },
+  },
 };
 
-/** Members see nothing about an occasion that has no draw. */
+/** Members get no button when nothing runs. */
 export const SecretSantaNoneForMembers: Story = { args: { secretSanta } };
 
-/** Managers get a "Start Secret Santa" link under every upcoming occasion without a draw. */
+/** Managers get one "Start Secret Santa" button: the occasion is picked on its page. */
 export const SecretSantaAsManager: Story = {
-  args: { canEdit: true, secretSanta: { ...secretSanta, isManager: true } },
-};
-
-/** Where one runs, the link leads to its page instead, where they can remove people. */
-export const SecretSantaManagerWithRunningDraw: Story = {
-  args: { canEdit: true, secretSanta: { ...secretSanta, isManager: true, draws: [draw("1")] } },
+  args: { canEdit: true, secretSanta: { ...secretSanta, canStart: true } },
 };

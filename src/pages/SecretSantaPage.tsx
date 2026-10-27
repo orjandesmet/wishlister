@@ -8,21 +8,21 @@ import { createCachedResource } from "../lib/cache.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createSecretSanta } from "../lib/createSecretSanta.ts";
 import { createSecretSantaStart } from "../lib/createSecretSantaStart.ts";
-import { t } from "../lib/i18n.ts";
-import type { GroupId, OccasionId } from "../lib/ids.ts";
+import { compareNames, t } from "../lib/i18n.ts";
+import type { GroupId } from "../lib/ids.ts";
 import { loadGroup, loadGroupOccasions } from "../lib/loaders.ts";
 import { useMe } from "../lib/me.tsx";
-import { today } from "../lib/occasions.ts";
+import { splitOccasions, today } from "../lib/occasions.ts";
 import { isReady } from "../lib/resource.ts";
 import u from "../utilities.module.css";
 
 /**
- * The Secret Santa of one occasion (/groups/:groupId/occasions/:occasionId/secret-santa):
- * the form that starts it, or, once it runs, whether you take part and who you drew, and for
- * managers who takes part, with the option to remove people.
+ * A group's Secret Santa (/groups/:groupId/secret-santa). A group has one running at a time:
+ * managers start it here, picking the occasion; once it runs, this shows whether you take part
+ * and who you drew, and for managers who takes part, with the option to remove people.
  */
 export default function SecretSantaPage() {
-  const params = useParams<{ groupId: GroupId; occasionId: OccasionId }>();
+  const params = useParams<{ groupId: GroupId }>();
   const me = useMe();
   const runner = createActionRunner();
   const [group] = createCachedResource(() => params.groupId, loadGroup);
@@ -31,23 +31,17 @@ export default function SecretSantaPage() {
   const isManager = () =>
     group()?.group_members.some((m) => m.profile_id === me().profile.id && m.role === "manager") ??
     false;
-  const occasion = () => occasions()?.find((o) => o.id === params.occasionId);
   const santa = createSecretSanta(() => params.groupId, isManager, occasions, runner);
-  const draw = () => santa.draws()?.find((d) => d.occasion_id === params.occasionId);
+  const upcoming = () => splitOccasions(occasions() ?? [], today(), compareNames).upcoming;
 
   const ready = () => isReady(group) && isReady(occasions) && isReady(santa.draws);
   const failed = () => group.error || occasions.error || santa.draws.error;
-  const passed = () => (occasion()?.date ?? "") < today();
 
-  const start = createSecretSantaStart(
-    () => params.groupId,
-    () => occasion()?.name ?? "",
-    santa.reload,
-  );
+  const start = createSecretSantaStart(() => params.groupId, occasions, santa.reload);
   const groupPath = () => `/groups/${params.groupId}`;
   const title = () =>
-    occasion()
-      ? t("secretSanta.pageTitle", { occasion: occasion()!.name })
+    santa.runningOccasion()
+      ? t("secretSanta.viewFor", { occasion: santa.runningOccasion()!.name })
       : t("secretSanta.title");
   usePageTitle(title);
 
@@ -91,38 +85,32 @@ export default function SecretSantaPage() {
       </Show>
       <Show when={ready() && !failed()}>
         <Show
-          when={draw()}
+          when={santa.runningDraw()}
           fallback={
-            <Show
-              when={isManager() && occasion() && !passed()}
-              fallback={
-                <p class={u.muted}>
-                  {!occasion() || passed()
-                    ? t("secretSanta.occasionGone")
-                    : isManager()
-                      ? ""
-                      : t("secretSanta.none")}
-                </p>
-              }
-            >
-              <Card>
-                <SecretSantaForm
-                  occasion={occasion()!}
-                  candidates={start.candidates() ?? []}
-                  busy={start.busy()}
-                  error={start.error()}
-                  cancelHref={groupPath()}
-                  onSubmit={start.onStart}
-                />
-              </Card>
+            <Show when={isManager()} fallback={<p class={u.muted}>{t("secretSanta.none")}</p>}>
+              <Show
+                when={upcoming().length > 0}
+                fallback={<p class={u.muted}>{t("secretSanta.noUpcoming")}</p>}
+              >
+                <Card>
+                  <SecretSantaForm
+                    occasions={upcoming()}
+                    candidates={start.candidates() ?? []}
+                    busy={start.busy()}
+                    error={start.error()}
+                    cancelHref={groupPath()}
+                    onSubmit={start.onStart}
+                  />
+                </Card>
+              </Show>
             </Show>
           }
         >
-          {(d) => (
+          {(draw) => (
             <SecretSantaStatus
-              draw={d()}
+              draw={draw()}
               isManager={isManager()}
-              participants={santa.participants()?.get(d().id) ?? []}
+              participants={santa.participants()?.get(draw().id) ?? []}
               onRemove={santa.onRemove}
             />
           )}

@@ -1,15 +1,18 @@
 import { A } from "@solidjs/router";
-import { createSignal, For, Show } from "solid-js";
+import { createSignal, createUniqueId, For, Show } from "solid-js";
 import type { Occasion } from "../lib/api/occasions.ts";
 import type { SecretSantaCandidate, SecretSantaInput } from "../lib/api/secretSanta.ts";
-import { t } from "../lib/i18n.ts";
-import type { ProfileId } from "../lib/ids.ts";
+import { locale, t } from "../lib/i18n.ts";
+import type { OccasionId, ProfileId } from "../lib/ids.ts";
+import { formatOccasionDate } from "../lib/occasions.ts";
 import u from "../utilities.module.css";
 import { Check } from "./Check.tsx";
+import { Select } from "./Select.tsx";
 import styles from "./SecretSantaForm.module.css";
 
 export type SecretSantaFormProps = {
-  occasion: Occasion;
+  /** The upcoming occasions to choose from, soonest first. The first is chosen to start with. */
+  occasions: Occasion[];
   candidates: SecretSantaCandidate[];
   busy: boolean;
   error?: string;
@@ -26,6 +29,10 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
   const [unticked, setUnticked] = createSignal(new Set<ProfileId>());
   const [excluded, setExcluded] = createSignal(new Set<string>());
 
+  const id = createUniqueId();
+  const [chosen, setChosen] = createSignal<OccasionId>();
+  const occasionId = () => chosen() ?? props.occasions[0]?.id;
+
   const taking = () => props.candidates.filter((c) => !unticked().has(c.profile_id));
   const toggle = <T,>(set: Set<T>, value: T, on: boolean) => {
     const next = new Set(set);
@@ -36,7 +43,8 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
 
   const onSubmit = (event: SubmitEvent) => {
     event.preventDefault();
-    if (taking().length < 2) return;
+    const occasion = occasionId();
+    if (!occasion || taking().length < 2) return;
     const participants = taking().map((c) => c.profile_id);
     // Exclusions of someone who was unticked after setting them don't count.
     const exclusions = participants.flatMap((profile) =>
@@ -44,19 +52,35 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
         .filter((other) => excluded().has(keyOf(profile, other)))
         .map((other) => ({ profile, excluded: other })),
     );
-    props.onSubmit({ occasionId: props.occasion.id, participants, exclusions });
+    props.onSubmit({ occasionId: occasion, participants, exclusions });
   };
 
   return (
     <form onSubmit={onSubmit} class={styles.form}>
       <p class={`${u.muted} ${u.small}`}>{t("secretSanta.help")}</p>
+      <label>
+        {t("secretSanta.occasion")}
+        <Select
+          required
+          value={occasionId() ?? ""}
+          onChange={(e) => setChosen(e.currentTarget.value as OccasionId)}
+        >
+          <For each={props.occasions}>
+            {(occasion) => (
+              <option value={occasion.id}>
+                {occasion.name} · {formatOccasionDate(occasion.date, locale())}
+              </option>
+            )}
+          </For>
+        </Select>
+      </label>
       <Show
         when={props.candidates.length > 0}
         fallback={<p class={u.muted}>{t("secretSanta.nobodyToDraw")}</p>}
       >
-        <fieldset aria-describedby={`who-help-${props.occasion.id}`}>
+        <fieldset aria-describedby={`who-help-${id}`}>
           <legend>{t("secretSanta.who")}</legend>
-          <p id={`who-help-${props.occasion.id}`} class={`${u.muted} ${u.small}`}>
+          <p id={`who-help-${id}`} class={`${u.muted} ${u.small}`}>
             {t("secretSanta.whoHelp")}
           </p>
           <For each={props.candidates}>
@@ -76,9 +100,9 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
         </fieldset>
 
         <Show when={taking().length >= 2}>
-          <fieldset aria-describedby={`exclusions-help-${props.occasion.id}`}>
+          <fieldset aria-describedby={`exclusions-help-${id}`}>
             <legend>{t("secretSanta.exclusions")}</legend>
-            <p id={`exclusions-help-${props.occasion.id}`} class={`${u.muted} ${u.small}`}>
+            <p id={`exclusions-help-${id}`} class={`${u.muted} ${u.small}`}>
               {t("secretSanta.exclusionsHelp")}
             </p>
             <For each={taking()}>
@@ -124,12 +148,12 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
       </Show>
 
       <Show when={taking().length < 2}>
-        <p class={u.muted} id={`need-two-${props.occasion.id}`}>
+        <p class={u.muted} id={`need-two-${id}`}>
           {t("secretSanta.needTwo")}
         </p>
       </Show>
       {/* Always there, so screen readers notice when a message appears in it. */}
-      <div role="alert" id={`start-error-${props.occasion.id}`}>
+      <div role="alert" id={`start-error-${id}`}>
         <Show when={props.error}>
           <p class={u.error}>{props.error}</p>
         </Show>
@@ -138,7 +162,7 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
         <button
           type="submit"
           disabled={props.busy || taking().length < 2}
-          aria-describedby={taking().length < 2 ? `need-two-${props.occasion.id}` : undefined}
+          aria-describedby={taking().length < 2 ? `need-two-${id}` : undefined}
         >
           {props.busy ? t("secretSanta.drawing") : t("secretSanta.draw")}
         </button>

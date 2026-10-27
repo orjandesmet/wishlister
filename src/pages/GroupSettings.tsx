@@ -79,7 +79,13 @@ export default function GroupSettings() {
             onDelete={occasions.onDelete}
             secretSanta={
               isReady(santa.draws) && !santa.draws.error
-                ? { draws: santa.draws() ?? [], isManager: data.isManager() }
+                ? {
+                    group: params.groupId,
+                    running: santa.runningOccasion(),
+                    canStart:
+                      data.isManager() &&
+                      (occasions.occasions() ?? []).some((o) => o.date >= today()),
+                  }
                 : undefined
             }
           />
