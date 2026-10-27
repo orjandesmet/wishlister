@@ -4,7 +4,7 @@
 -- Sign in as any of these with the one-time code from Mailpit (http://127.0.0.1:54324):
 --   alice@example.com  manager of "Family", parent of Sam
 --   bob@example.com    member of "Family", bought Alice's headphones
---   carol@example.com  member of "Family" and manager of "Friends"
+--   carol@example.com  member of "Family" and manager of "Friends", in a running Secret Santa with Bob
 -- or, with VITE_DEMO=true, with the demo buttons (password `wishlister-demo`, same as
 -- demoPassword in src/lib/demo.ts). The demo site uses this seed too, via supabase/demo/reset.sql.
 
@@ -91,3 +91,49 @@ values ('e0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-0000000
 insert into public.purchases (item_id, bought_by, occasion_id)
 select 'e0000000-0000-0000-0000-000000000001', id, 'd0000000-0000-0000-0000-000000000001'
 from public.profiles where account_id = 'a0000000-0000-0000-0000-000000000002';
+
+-- Secret Santa (#102). Last Christmas, Alice drew Bob, Bob drew Carol and Carol drew Alice, so
+-- Alice (manager of "Family") can start one for this Christmas and sees nobody draw the same
+-- person again. "Friends" has one running: Carol and Bob drew each other, so each sees a ribbon on
+-- the other's list and follows it.
+insert into public.occasions (id, group_id, name, date)
+values
+  ('d0000000-0000-0000-0000-000000000002', 'c0000000-0000-0000-0000-000000000001',
+    'Christmas ' || (extract(year from current_date)::int - 1),
+    make_date(extract(year from current_date)::int - 1, 12, 25)),
+  ('d0000000-0000-0000-0000-000000000003', 'c0000000-0000-0000-0000-000000000002',
+    'Secret Santa night', current_date + 30);
+
+insert into public.secret_santas (id, group_id, occasion_id, created_by, created_at)
+select draw.id, draw.group_id, draw.occasion_id, p.id, draw.created_at
+from (values
+  ('f0000000-0000-0000-0000-000000000001'::uuid, 'c0000000-0000-0000-0000-000000000001'::uuid,
+    'd0000000-0000-0000-0000-000000000002'::uuid, 'a0000000-0000-0000-0000-000000000001'::uuid,
+    now() - interval '1 year'),
+  ('f0000000-0000-0000-0000-000000000002'::uuid, 'c0000000-0000-0000-0000-000000000002'::uuid,
+    'd0000000-0000-0000-0000-000000000003'::uuid, 'a0000000-0000-0000-0000-000000000003'::uuid,
+    now())
+) as draw (id, group_id, occasion_id, account, created_at)
+join public.profiles p on p.account_id = draw.account;
+
+-- Past draws are mailed already; the running one is too (the seed sends no emails).
+insert into public.secret_santa_pairs (secret_santa_id, giver_profile_id, recipient_profile_id, mailed_at)
+select pair.draw, giver.id, recipient.id, now()
+from (values
+  ('f0000000-0000-0000-0000-000000000001'::uuid, 'a0000000-0000-0000-0000-000000000001'::uuid, 'a0000000-0000-0000-0000-000000000002'::uuid),
+  ('f0000000-0000-0000-0000-000000000001'::uuid, 'a0000000-0000-0000-0000-000000000002'::uuid, 'a0000000-0000-0000-0000-000000000003'::uuid),
+  ('f0000000-0000-0000-0000-000000000001'::uuid, 'a0000000-0000-0000-0000-000000000003'::uuid, 'a0000000-0000-0000-0000-000000000001'::uuid),
+  ('f0000000-0000-0000-0000-000000000002'::uuid, 'a0000000-0000-0000-0000-000000000003'::uuid, 'a0000000-0000-0000-0000-000000000002'::uuid),
+  ('f0000000-0000-0000-0000-000000000002'::uuid, 'a0000000-0000-0000-0000-000000000002'::uuid, 'a0000000-0000-0000-0000-000000000003'::uuid)
+) as pair (draw, giver_account, recipient_account)
+join public.profiles giver on giver.account_id = pair.giver_account
+join public.profiles recipient on recipient.account_id = pair.recipient_account;
+
+-- Everyone follows the person they drew in the running draw until its occasion.
+insert into public.list_follows (follower_id, list_id, until)
+select pr.giver_profile_id, pr.recipient_profile_id, o.date
+from public.secret_santa_pairs pr
+join public.secret_santas s on s.id = pr.secret_santa_id
+join public.occasions o on o.id = s.occasion_id
+where s.id = 'f0000000-0000-0000-0000-000000000002'
+on conflict (follower_id, list_id) do nothing;
