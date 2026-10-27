@@ -77,12 +77,7 @@ export default function GroupSettings() {
                 ? {
                     draws: santa.draws() ?? [],
                     isManager: data.isManager(),
-                    candidates: santa.candidates() ?? [],
                     participants: santa.participants() ?? new Map(),
-                    busy: santa.busy(),
-                    error: santa.startError(),
-                    onClearError: santa.clearStartError,
-                    onStart: santa.onStart,
                     onRemove: santa.onRemove,
                   }
                 : undefined

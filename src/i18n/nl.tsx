@@ -176,6 +176,12 @@ export const nl: Dictionary = {
     confirmDelete: (p: { name: string }) => `${p.name} wissen voor de hele groep?`,
   },
   secretSanta: {
+    title: "Secret Santa",
+    pageTitle: (p: { occasion: string }) => `Secret Santa voor ${p.occasion}`,
+    backTo: (p: { group: string }) => `‹ ${p.group}`,
+    managersOnly: "Alleen beheerders van de groep kunnen een Secret Santa starten.",
+    occasionGone: "Deze gelegenheid bestaat niet meer, of is voorbij.",
+    alreadyStarted: "Er is al een Secret Santa voor deze gelegenheid.",
     help: "Trek wie voor wie een cadeau koopt. Wie meedoet krijgt een e-mail met de ene persoon die hij of zij trok en volgt het lijstje van die persoon. Niemand ziet wie wie trok, ook beheerders niet.",
     start: "Secret Santa starten",
     running: "Er loopt een Secret Santa.",

@@ -58,10 +58,7 @@ const draw = (occasionId: string, extra: Partial<SecretSanta> = {}): SecretSanta
 const secretSanta = {
   draws: [],
   isManager: false,
-  candidates: people,
   participants: new Map(),
-  busy: false,
-  onStart: fn(async () => true),
   onRemove: fn(),
 };
 const youDrewBo = draw("1", {
@@ -83,7 +80,7 @@ export const SecretSantaNotTakingPart: Story = {
 /** Members see nothing about an occasion that has no draw. */
 export const SecretSantaNoneForMembers: Story = { args: { secretSanta } };
 
-/** Managers get a "Start Secret Santa" link button under every upcoming occasion without a draw. */
+/** Managers get a "Start Secret Santa" link under every upcoming occasion without a draw. It opens a page of its own. */
 export const SecretSantaAsManager: Story = {
   args: { canEdit: true, secretSanta: { ...secretSanta, isManager: true } },
 };
@@ -104,59 +101,5 @@ export const SecretSantaManagerWithRunningDraw: Story = {
     await userEvent.click(canvas.getByText(t("secretSanta.participants", { count: 3 })));
     await userEvent.click(canvas.getByRole("button", { name: /Remove\s*Cleo/ }));
     await expect(args.secretSanta?.onRemove).toHaveBeenCalledWith(youDrewBo, people[2]);
-  },
-};
-
-/** The link button opens the form: everyone who can take part is ticked, exclusions are optional. */
-export const SecretSantaStarting: Story = {
-  args: { canEdit: true, secretSanta: { ...secretSanta, isManager: true } },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getAllByRole("button", { name: /Start Secret Santa/ })[0]);
-    await expect(await canvas.findByRole("button", { name: t("secretSanta.draw") })).toBeEnabled();
-  },
-};
-
-/** Fewer than 2 people ticked: the draw can't start, and the form says why. */
-export const SecretSantaTooFewPeople: Story = {
-  args: {
-    canEdit: true,
-    secretSanta: { ...secretSanta, isManager: true, candidates: [person("ann", "Ann")] },
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getAllByRole("button", { name: /Start Secret Santa/ })[0]);
-    await expect(await canvas.findByRole("button", { name: t("secretSanta.draw") })).toBeDisabled();
-    await expect(canvas.getByText(t("secretSanta.needTwo"))).toBeVisible();
-  },
-};
-
-/** The draw is on its way. */
-export const SecretSantaDrawing: Story = {
-  args: { canEdit: true, secretSanta: { ...secretSanta, isManager: true, busy: true } },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getAllByRole("button", { name: /Start Secret Santa/ })[0]);
-    await expect(
-      await canvas.findByRole("button", { name: t("secretSanta.drawing") }),
-    ).toBeDisabled();
-  },
-};
-
-/** No draw was possible: the reason shows by the button, so the manager can change the exclusions. */
-export const SecretSantaCouldNotStart: Story = {
-  args: {
-    canEdit: true,
-    secretSanta: {
-      ...secretSanta,
-      isManager: true,
-      error:
-        "No draw is possible: too many exclusions for Cleo. Remove some exclusions and try again.",
-    },
-  },
-  play: async ({ canvasElement }) => {
-    const canvas = within(canvasElement);
-    await userEvent.click(canvas.getAllByRole("button", { name: /Start Secret Santa/ })[0]);
-    await expect(await canvas.findByText(/too many exclusions for Cleo/)).toBeInTheDocument();
   },
 };

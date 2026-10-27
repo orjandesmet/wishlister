@@ -183,6 +183,12 @@ export const en = {
     confirmDelete: (p: { name: string }) => `Delete ${p.name} for the whole group?`,
   },
   secretSanta: {
+    title: "Secret Santa",
+    pageTitle: (p: { occasion: string }) => `Secret Santa for ${p.occasion}`,
+    backTo: (p: { group: string }) => `‹ ${p.group}`,
+    managersOnly: "Only group managers can start a Secret Santa.",
+    occasionGone: "This occasion doesn't exist anymore, or it has passed.",
+    alreadyStarted: "There is already a Secret Santa for this occasion.",
     help: "Draw who buys a present for whom. Everyone who takes part gets an email with the one person they drew, and follows that person's list. Nobody sees who drew whom, not even managers.",
     start: "Start Secret Santa",
     running: "A Secret Santa is running.",

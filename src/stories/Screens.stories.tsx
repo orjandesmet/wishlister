@@ -553,8 +553,21 @@ const managerOfFamily = (): Group => ({
 });
 const christmas = occasion("o3", "Christmas 2026", "2026-12-25");
 
-/** A manager opens the form to start a Secret Santa for an occasion. */
+/** A manager starts a Secret Santa for an occasion, on a page of its own. */
 export const SecretSantaStart: Story = {
+  beforeEach: () => {
+    data.group = managerOfFamily;
+    data.occasions = [christmas];
+  },
+  render: app("/groups/group-1/occasions/o3/secret-santa"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByRole("button", { name: t("secretSanta.draw") })).toBeEnabled();
+  },
+};
+
+/** The link under the occasion on the group page leads there. */
+export const SecretSantaStartLink: Story = {
   beforeEach: () => {
     data.group = managerOfFamily;
     data.occasions = [christmas];
@@ -562,7 +575,7 @@ export const SecretSantaStart: Story = {
   render: app("/groups/group-1"),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(await canvas.findByRole("button", { name: /Start Secret Santa/ }));
+    await userEvent.click(await canvas.findByRole("link", { name: /Start Secret Santa/ }));
     await expect(await canvas.findByRole("button", { name: t("secretSanta.draw") })).toBeEnabled();
   },
 };
