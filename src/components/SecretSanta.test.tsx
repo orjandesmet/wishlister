@@ -377,4 +377,14 @@ describe("SecretSantaRibbon", () => {
     expect(host.firstElementChild?.getAttribute("title")).toBe(text);
     expect(host.textContent).toContain(text);
   });
+
+  it("can be just the gift, with the words kept for screen readers", () => {
+    const host = document.createElement("div");
+    render(() => <SecretSantaRibbon iconOnly />, host);
+    const badge = host.firstElementChild!;
+    expect(badge.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+    expect(badge.textContent).toBe(t("secretSanta.ribbon"));
+    expect(badge.getAttribute("title")).toBe(t("secretSanta.ribbon"));
+    expect(badge.className).toMatch(/iconOnly/);
+  });
 });

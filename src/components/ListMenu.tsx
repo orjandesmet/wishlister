@@ -54,7 +54,7 @@ export function ListMenu(props: ListMenuProps) {
                     >
                       {option.name}
                       <Show when={option.ribbon}>
-                        <SecretSantaRibbon />
+                        <SecretSantaRibbon iconOnly />
                       </Show>
                     </Person>
                   )}

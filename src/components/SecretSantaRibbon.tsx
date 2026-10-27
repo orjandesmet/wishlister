@@ -5,6 +5,8 @@ import styles from "./SecretSantaRibbon.module.css";
 export type SecretSantaRibbonProps = {
   /** The occasion it's for, said on hover and to screen readers after the label. */
   occasion?: string;
+  /** Just the gift, for tight places like a menu. The words stay for screen readers. */
+  iconOnly?: boolean;
 };
 
 /**
@@ -14,8 +16,14 @@ export type SecretSantaRibbonProps = {
 export function SecretSantaRibbon(props: SecretSantaRibbonProps) {
   return (
     <span
-      class={styles.ribbon}
-      title={props.occasion ? t("secretSanta.ribbonFor", { occasion: props.occasion }) : undefined}
+      class={props.iconOnly ? `${styles.ribbon} ${styles.iconOnly}` : styles.ribbon}
+      title={
+        props.occasion
+          ? t("secretSanta.ribbonFor", { occasion: props.occasion })
+          : props.iconOnly
+            ? t("secretSanta.ribbon")
+            : undefined
+      }
     >
       {/* Lucide "gift" (ISC licence). */}
       <svg
@@ -33,7 +41,9 @@ export function SecretSantaRibbon(props: SecretSantaRibbonProps) {
         <path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7" />
         <path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5" />
       </svg>
-      {t("secretSanta.ribbon")}
+      <Show when={props.iconOnly} fallback={t("secretSanta.ribbon")}>
+        <span class={styles.hidden}>{t("secretSanta.ribbon")}</span>
+      </Show>
       <Show when={props.occasion}>
         <span class={styles.hidden}>
           {" "}
