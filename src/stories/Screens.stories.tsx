@@ -44,9 +44,28 @@ import {
 } from "../lib/api/profiles.ts";
 import { getPurchaseOccasions, getPurchases, type Purchase } from "../lib/api/purchases.ts";
 import { answerQuestion, askQuestion, getQuestions, type Question } from "../lib/api/questions.ts";
+import {
+  getDrawnPeople,
+  getSecretSantaCandidates,
+  getSecretSantaParticipants,
+  getSecretSantas,
+  removeFromSecretSanta,
+  startSecretSanta,
+  type DrawnPerson,
+  type SecretSanta,
+  type SecretSantaCandidate,
+} from "../lib/api/secretSanta.ts";
 import { setMockOtpError, setMockSession } from "../lib/__mocks__/supabase.ts";
 import { t } from "../lib/i18n.ts";
-import type { AccountId, GroupId, ItemId, OccasionId, ProfileId, QuestionId } from "../lib/ids.ts";
+import type {
+  AccountId,
+  GroupId,
+  ItemId,
+  OccasionId,
+  ProfileId,
+  QuestionId,
+  SecretSantaId,
+} from "../lib/ids.ts";
 import { installOffer } from "../lib/install.ts";
 import { today } from "../lib/occasions.ts";
 import { bonsaiPicture, scarfPicture } from "./samplePictures.ts";
@@ -99,6 +118,12 @@ const meta = {
     );
     mocked(askQuestion).mockImplementation(async () => {});
     mocked(answerQuestion).mockImplementation(async () => {});
+    mocked(getSecretSantas).mockImplementation(async () => data.santas);
+    mocked(getSecretSantaCandidates).mockImplementation(async () => data.santaCandidates);
+    mocked(getSecretSantaParticipants).mockImplementation(async () => data.santaCandidates);
+    mocked(getDrawnPeople).mockImplementation(async () => data.drawn);
+    mocked(startSecretSanta).mockImplementation(async () => "sent");
+    mocked(removeFromSecretSanta).mockImplementation(async () => "removed");
     mocked(getFollowUntil).mockImplementation(async () => null);
     mocked(getMyFollows).mockImplementation(async () => data.follows);
     mocked(unfollowByToken).mockImplementation(async () => "Anna");
@@ -257,6 +282,16 @@ function sampleData() {
       question(3, 5, "Which shoe size?"),
     ] as Question[],
     follows: [] as FollowedList[],
+    /** The group's Secret Santa draws, as you see them. */
+    santas: [] as SecretSanta[],
+    /** Who can take part in a draw (and does, in a running one). */
+    santaCandidates: [
+      { profile_id: me, display_name: "Orjan" },
+      { profile_id: "anna" as ProfileId, display_name: "Anna" },
+      { profile_id: "bert" as ProfileId, display_name: "Bert" },
+    ] as SecretSantaCandidate[],
+    /** The people you drew, for the ribbon. */
+    drawn: [] as DrawnPerson[],
     addItem: async (): Promise<ItemId> => "new-item" as ItemId,
     addQuickItems: async (): Promise<Item[]> => [],
   };
@@ -506,6 +541,101 @@ export const GroupSettingsAsManager: Story = {
     ];
   },
   render: app("/groups/group-1"),
+};
+
+const managerOfFamily = (): Group => ({
+  ...family,
+  group_members: [
+    member(orjan, "manager"),
+    member(profile("anna"), "member"),
+    member(profile("bert"), "member"),
+  ],
+});
+const christmas = occasion("o3", "Christmas 2026", "2026-12-25");
+
+/** A manager opens the form to start a Secret Santa for an occasion. */
+export const SecretSantaStart: Story = {
+  beforeEach: () => {
+    data.group = managerOfFamily;
+    data.occasions = [christmas];
+  },
+  render: app("/groups/group-1"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: /Start Secret Santa/ }));
+    await expect(await canvas.findByRole("button", { name: t("secretSanta.draw") })).toBeEnabled();
+  },
+};
+
+/** A draw is running: you see who you drew, and as a manager who takes part, not the pairs. */
+export const SecretSantaRunning: Story = {
+  beforeEach: () => {
+    data.group = managerOfFamily;
+    data.occasions = [christmas];
+    data.santas = [
+      {
+        id: "draw-1" as SecretSantaId,
+        occasion_id: christmas.id,
+        taking_part: true,
+        recipient_profile_id: "anna" as ProfileId,
+        recipient_name: "Anna",
+      },
+    ];
+  },
+  render: app("/groups/group-1"),
+};
+
+/** Nobody leaves while taking part in a running draw: the message says what to do. */
+export const SecretSantaLeaveBlocked: Story = {
+  beforeEach: () => {
+    data.group = () => ({
+      ...managerOfFamily(),
+      group_members: [member(profile("anna"), "manager"), member(orjan, "member")],
+    });
+    data.occasions = [christmas];
+    data.santas = [
+      {
+        id: "draw-1" as SecretSantaId,
+        occasion_id: christmas.id,
+        taking_part: true,
+        recipient_profile_id: "anna" as ProfileId,
+        recipient_name: "Anna",
+      },
+    ];
+  },
+  render: app("/groups/group-1"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: t("group.leave") }));
+    await expect(
+      await canvas.findByText(t("secretSanta.leaveBlocked", { occasions: "Christmas 2026" })),
+    ).toBeInTheDocument();
+  },
+};
+
+/** The list of the person you drew has the ribbon, and the list menu too. */
+export const SecretSantaRibbonOnList: Story = {
+  beforeEach: () => {
+    data.drawn = [
+      {
+        recipient_profile_id: "anna" as ProfileId,
+        occasion_id: christmas.id,
+        occasion_name: christmas.name,
+        occasion_date: christmas.date,
+      },
+    ];
+  },
+  render: app("/lists/anna"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // One in the page, one in the list menu (closed). The page's comes last.
+    const ribbons = await canvas.findAllByText(t("secretSanta.ribbon"));
+    await expect(ribbons).toHaveLength(2);
+    await expect(ribbons.at(-1)).toHaveAttribute(
+      "title",
+      t("secretSanta.ribbonFor", { occasion: christmas.name }),
+    );
+  },
 };
 
 export const GroupSettingsAsMember: Story = { render: app("/groups/group-1") };
