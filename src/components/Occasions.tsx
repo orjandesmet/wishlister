@@ -10,7 +10,7 @@ import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import styles from "./Occasions.module.css";
-import { OccasionSecretSanta, type SecretSantaProps } from "./SecretSanta.tsx";
+import { hasSecretSantaLink, OccasionSecretSanta, type SecretSantaProps } from "./SecretSanta.tsx";
 
 export type OccasionsProps = {
   occasions: Occasion[];
@@ -50,6 +50,14 @@ export function Occasions(props: OccasionsProps) {
     focusSoon(() => list?.querySelector<HTMLElement>(`[data-occasion="${id}"] button`));
   };
 
+  /** The Secret Santa link's props, for an upcoming occasion that has such a link. */
+  const secretSantaOf = (occasion: Occasion) =>
+    props.secretSanta &&
+    occasion.date >= props.today &&
+    hasSecretSantaLink(props.secretSanta, occasion)
+      ? props.secretSanta
+      : undefined;
+
   const row = (occasion: Occasion) => (
     <Show
       when={editing() === occasion.id}
@@ -61,24 +69,20 @@ export function Occasions(props: OccasionsProps) {
               {formatOccasionDate(occasion.date, locale())}
             </span>
           </span>
-          <Show when={props.canEdit}>
+          <Show when={props.canEdit || secretSantaOf(occasion)}>
             <span class={u.row}>
-              <Button variant="link" onClick={() => setEditing(occasion.id)}>
-                <EditLabel label={t("common.edit")} of={occasion.name} />
-              </Button>
-              <Button variant="link" danger onClick={() => props.onDelete(occasion)}>
-                <RemoveLabel label={t("common.delete")} of={occasion.name} />
-              </Button>
+              <Show when={secretSantaOf(occasion)}>
+                {(secretSanta) => <OccasionSecretSanta occasion={occasion} {...secretSanta()} />}
+              </Show>
+              <Show when={props.canEdit}>
+                <Button variant="link" onClick={() => setEditing(occasion.id)}>
+                  <EditLabel label={t("common.edit")} of={occasion.name} />
+                </Button>
+                <Button variant="link" danger onClick={() => props.onDelete(occasion)}>
+                  <RemoveLabel label={t("common.delete")} of={occasion.name} />
+                </Button>
+              </Show>
             </span>
-          </Show>
-          <Show
-            when={props.secretSanta && occasion.date >= props.today ? props.secretSanta : undefined}
-          >
-            {(secretSanta) => (
-              <div class={styles.secretSanta}>
-                <OccasionSecretSanta occasion={occasion} {...secretSanta()} />
-              </div>
-            )}
           </Show>
         </li>
       }
