@@ -9,6 +9,10 @@
 // - RESEND_API_KEY: a Resend API key with "Sending access".
 // - MAIL_FROM: the sender, on the domain verified in Resend, e.g.
 //   "Wishlister <wishlister@example.com>".
+//
+// Under `netlify dev`, set MAILPIT_URL (e.g. http://127.0.0.1:54324, the Mailpit
+// of `vp run db:start`) and emails go there instead (see mailpit.ts);
+// RESEND_API_KEY isn't needed.
 
 export type Email = {
   to: string | string[];
@@ -26,7 +30,15 @@ const RESEND_BATCH_URL = "https://api.resend.com/emails/batch";
 const BATCH_SIZE = 100;
 
 export function mailConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
-  return Boolean(env.RESEND_API_KEY && env.MAIL_FROM);
+  return Boolean(mailpitUrl(env) || (env.RESEND_API_KEY && env.MAIL_FROM));
+}
+
+/**
+ * Local development only: `netlify dev` sets NETLIFY_DEV, production never does,
+ * so a stray MAILPIT_URL can't redirect real emails.
+ */
+function mailpitUrl(env: NodeJS.ProcessEnv): string | undefined {
+  return env.NETLIFY_DEV === "true" ? env.MAILPIT_URL : undefined;
 }
 
 export async function sendEmail(
@@ -34,6 +46,11 @@ export async function sendEmail(
   env: NodeJS.ProcessEnv = process.env,
   fetchImpl: typeof fetch = fetch,
 ): Promise<SendResult> {
+  const mailpit = mailpitUrl(env);
+  if (mailpit) {
+    const { sendToMailpit } = await import("./mailpit.ts");
+    return sendToMailpit(email, mailpit, env.MAIL_FROM, fetchImpl);
+  }
   const apiKey = env.RESEND_API_KEY;
   const from = env.MAIL_FROM;
   if (!apiKey || !from) {
@@ -67,6 +84,18 @@ export async function sendEmails(
   env: NodeJS.ProcessEnv = process.env,
   fetchImpl: typeof fetch = fetch,
 ): Promise<{ sent: number; errors: string[] }> {
+  const mailpit = mailpitUrl(env);
+  if (mailpit) {
+    const { sendToMailpit } = await import("./mailpit.ts");
+    let sent = 0;
+    const errors: string[] = [];
+    for (const email of emails) {
+      const result = await sendToMailpit(email, mailpit, env.MAIL_FROM, fetchImpl);
+      if (result.ok) sent++;
+      else errors.push(result.error);
+    }
+    return { sent, errors };
+  }
   const apiKey = env.RESEND_API_KEY;
   const from = env.MAIL_FROM;
   if (!apiKey || !from) {
