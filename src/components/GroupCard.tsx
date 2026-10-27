@@ -11,7 +11,7 @@ import { Card } from "./Card.tsx";
 import { Chip } from "./Chip.tsx";
 import { Person } from "./Person.tsx";
 import { SecretSantaRibbon } from "./SecretSantaRibbon.tsx";
-import { secretSantaPath } from "./SecretSanta.tsx";
+import { SecretSantaIcon } from "./SecretSantaIcon.tsx";
 import styles from "./GroupCard.module.css";
 
 export type GroupCardProps = {
@@ -98,11 +98,12 @@ export function GroupCard(props: GroupCardProps) {
       </Show>
       <Show when={props.secretSanta}>
         {(occasion) => (
-          <p>
-            <A class={u.link} href={secretSantaPath(props.group.id)}>
+          <p class={styles.secretSanta}>
+            <SecretSantaIcon class={styles.secretSantaIcon} />
+            <span>
               {t("groupCard.secretSanta")}
               <span class={u.visuallyHidden}> {occasion().name}</span>
-            </A>
+            </span>
           </p>
         )}
       </Show>

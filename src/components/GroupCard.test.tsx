@@ -42,8 +42,8 @@ function mount(overrides: Partial<GroupCardProps> = {}) {
   return host;
 }
 
-const secretSantaLink = (host: HTMLElement) =>
-  [...host.querySelectorAll("a")].find((a) => a.textContent?.includes(t("groupCard.secretSanta")));
+const secretSantaLine = (host: HTMLElement) =>
+  [...host.querySelectorAll("p")].find((p) => p.textContent?.includes(t("groupCard.secretSanta")));
 const badges = (host: HTMLElement) =>
   [...host.querySelectorAll("li [title]")].filter(
     (el) => el.getAttribute("title") === t("secretSanta.ribbonFor", { occasion: "Christmas" }),
@@ -52,16 +52,17 @@ const badges = (host: HTMLElement) =>
 describe("GroupCard and Secret Santa", () => {
   it("says nothing without a Secret Santa", () => {
     const host = mount();
-    expect(secretSantaLink(host)).toBeUndefined();
+    expect(secretSantaLine(host)).toBeUndefined();
     expect(badges(host)).toHaveLength(0);
   });
 
-  it("links to the Secret Santa of the next occasion", () => {
+  it("says a Secret Santa is running, as text rather than a link", () => {
     const host = mount({ secretSanta: christmas });
-    const link = secretSantaLink(host)!;
-    expect(link.getAttribute("href")).toBe("/groups/group-1/secret-santa");
+    const line = secretSantaLine(host)!;
+    expect(line.querySelector("a")).toBeNull();
     // Told apart for screen readers, where the card repeats per group.
-    expect(link.textContent).toContain("Christmas");
+    expect(line.textContent).toContain("Christmas");
+    expect(line.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
   });
 
   it("gives only the member you drew the badge, next to their name", () => {
@@ -74,9 +75,9 @@ describe("GroupCard and Secret Santa", () => {
     expect(badges(host)[0].className).toMatch(/iconOnly/);
   });
 
-  it("links even when the running one isn't the next occasion", () => {
+  it("says it even when the running one isn't the next occasion", () => {
     const later = { ...christmas, id: "later" as OccasionId, name: "Easter" };
     const host = mount({ secretSanta: later });
-    expect(secretSantaLink(host)!.textContent).toContain("Easter");
+    expect(secretSantaLine(host)!.textContent).toContain("Easter");
   });
 });

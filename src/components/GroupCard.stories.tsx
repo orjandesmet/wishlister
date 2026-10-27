@@ -104,12 +104,12 @@ const christmas = {
   date: "2026-12-25",
 };
 
-/** The group has a Secret Santa running: a link to its page, and the member you drew gets a badge. */
+/** The group has a Secret Santa running: an accent line says so, and the member you drew gets a badge. */
 export const SecretSantaRunning: Story = {
   args: { nextOccasion: christmas, secretSanta: christmas, drawnProfileId: "bert" as ProfileId },
 };
 
-/** Running, but you don't take part (or aren't picked): the link, no badge. */
+/** Running, but you don't take part (or aren't picked): the line, no badge. */
 export const SecretSantaNotTakingPart: Story = {
   args: { nextOccasion: christmas, secretSanta: christmas },
 };

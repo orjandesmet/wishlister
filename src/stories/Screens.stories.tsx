@@ -333,7 +333,7 @@ const quickAddIsPopover = "(max-width: 1199px)";
 
 export const Home: Story = { render: app("/") };
 
-/** The next occasion of Family has a Secret Santa: a link on its card, and a badge on who you drew. */
+/** The next occasion of Family has a Secret Santa: a line on its card, and a badge on who you drew. */
 export const HomeSecretSanta: Story = {
   beforeEach: () => {
     data.santas = [
@@ -357,9 +357,8 @@ export const HomeSecretSanta: Story = {
   render: app("/"),
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    await expect(
-      await canvas.findByRole("link", { name: /Secret Santa is running/ }),
-    ).toHaveAttribute("href", "/groups/group-1/secret-santa");
+    await expect(await canvas.findByText(/Secret Santa is running/)).toBeInTheDocument();
+    await expect(canvas.queryByRole("link", { name: /Secret Santa is running/ })).toBeNull();
     await expect(
       canvas.getByTitle(t("secretSanta.ribbonFor", { occasion: annasBirthday.name })),
     ).toBeInTheDocument();

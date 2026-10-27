@@ -111,3 +111,22 @@
       beat 2.4s ease-in-out 1.2s infinite;
   }
 }
+
+/* Not a link: just a soft accent line saying a Secret Santa is on. */
+.secretSanta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 8px 12px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  background: var(--accent-soft);
+  border-radius: var(--radius-control);
+}
+
+.secretSantaIcon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
