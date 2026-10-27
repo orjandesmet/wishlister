@@ -5,10 +5,12 @@ import { GroupMembers } from "../components/GroupMembers.tsx";
 import { LeaveGroup } from "../components/LeaveGroup.tsx";
 import { Occasions } from "../components/Occasions.tsx";
 import { RenameGroup } from "../components/RenameGroup.tsx";
+import { SecretSanta } from "../components/SecretSanta.tsx";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createGroupData } from "../lib/createGroupData.ts";
 import { createGroupOccasions } from "../lib/createGroupOccasions.ts";
 import { createMemberRemoval } from "../lib/createMemberRemoval.ts";
+import { createSecretSanta } from "../lib/createSecretSanta.ts";
 import { t } from "../lib/i18n.ts";
 import type { GroupId } from "../lib/ids.ts";
 import { today } from "../lib/occasions.ts";
@@ -21,7 +23,8 @@ export default function GroupSettings() {
   const runner = createActionRunner();
   const data = createGroupData(() => params.groupId);
   const occasions = createGroupOccasions(() => params.groupId, runner);
-  const onRemove = createMemberRemoval(data, runner);
+  const santa = createSecretSanta(() => params.groupId, data, occasions.occasions, runner);
+  const onRemove = createMemberRemoval(data, runner, santa.drawsTakingPart);
   const { group } = data;
 
   usePageTitle(() => group()?.name ?? t("group.fallbackTitle"));
@@ -70,6 +73,20 @@ export default function GroupSettings() {
             onAdd={occasions.onAdd}
             onUpdate={occasions.onUpdate}
             onDelete={occasions.onDelete}
+          />
+        </Show>
+
+        <Show when={isReady(occasions.occasions) && isReady(santa.draws)}>
+          <SecretSanta
+            occasions={occasions.occasions() ?? []}
+            draws={santa.draws() ?? []}
+            today={today()}
+            isManager={data.isManager()}
+            candidates={santa.candidates() ?? []}
+            participants={santa.participants() ?? new Map()}
+            busy={santa.busy()}
+            onStart={santa.onStart}
+            onRemove={santa.onRemove}
           />
         </Show>
 

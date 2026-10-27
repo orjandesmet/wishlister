@@ -4,10 +4,16 @@ import { removeMember, type Member } from "./api/groups.ts";
 import type { ActionRunner } from "./createActionRunner.ts";
 import type { GroupData } from "./createGroupData.ts";
 import { formatList, t } from "./i18n.ts";
+import type { ProfileId } from "./ids.ts";
 import { useMe } from "./me.tsx";
 
 /** Removing a member (or leaving), after confirming what it would leave behind. */
-export function createMemberRemoval(data: GroupData, runner: ActionRunner) {
+export function createMemberRemoval(
+  data: GroupData,
+  runner: ActionRunner,
+  /** The occasions of the running Secret Santa draws this member takes part in. */
+  secretSantasOf: (member: ProfileId) => string[] = () => [],
+) {
   const navigate = useNavigate();
   const me = useMe();
 
@@ -25,6 +31,17 @@ export function createMemberRemoval(data: GroupData, runner: ActionRunner) {
       const groupName = data.group()!.name;
       const leaving = member.profile_id === me().profile.id;
       const isAdult = !!member.profiles.account_id;
+      // Nobody leaves while taking part in a Secret Santa that hasn't ended: a manager
+      // removes them from it first (the database says so too).
+      const secretSantas = secretSantasOf(member.profile_id);
+      if (secretSantas.length > 0) {
+        const occasions = formatList(secretSantas);
+        throw new Error(
+          leaving
+            ? t("secretSanta.leaveBlocked", { occasions })
+            : t("secretSanta.removeBlocked", { name: member.profiles.display_name, occasions }),
+        );
+      }
       const lines = [
         leaving
           ? t("group.confirmLeave", { group: groupName })
