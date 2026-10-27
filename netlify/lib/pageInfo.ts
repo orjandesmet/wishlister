@@ -75,7 +75,7 @@ export function parsePageInfo(html: string, pageUrl: string): PageInfo {
   const titleTag = head.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1];
   const product = findProductData(html);
   const title = [headMeta.get("og:title"), headMeta.get("twitter:title"), product?.name, titleTag]
-    .map((value) => (value === undefined ? "" : cleanText(value)))
+    .map((value) => (value === undefined ? "" : beforePipe(cleanText(value))))
     .find((value) => value.length > 0);
   const image = [
     headMeta.get("og:image:secure_url"),
@@ -240,7 +240,8 @@ export async function fetchMicrolink(
       typeof body.data?.html === "string"
         ? parsePageInfo(body.data.html, url)
         : { title: null, image: null, price: null };
-    const title = typeof body.data?.title === "string" ? cleanText(body.data.title) : "";
+    const title =
+      typeof body.data?.title === "string" ? beforePipe(cleanText(body.data.title)) : "";
     const image = body.data?.image?.url;
     return {
       title: page.title ?? (title ? truncate(title, MAX_TITLE) : null),
@@ -442,6 +443,11 @@ function cleanText(value: string): string {
   return decodeEntities(value.replace(/<[^>]*>/g, ""))
     .replace(/\s+/g, " ")
     .trim();
+}
+
+/** "Lego Set | LEGO® Shop" becomes "Lego Set": the part after a "|" is usually the site's name. */
+function beforePipe(title: string): string {
+  return title.split("|")[0].trim();
 }
 
 const NAMED_ENTITIES: Record<string, string> = {

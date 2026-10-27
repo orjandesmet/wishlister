@@ -80,6 +80,18 @@ describe("parsePageInfo", () => {
     expect(parsePageInfo(html, "https://x.example").title).toBe("Race car");
   });
 
+  it("keeps only the part of the title before a |", () => {
+    const html = `<meta property="og:title" content="Lego Set  |  LEGO® Shop | Official">`;
+    expect(parsePageInfo(html, "https://x.example").title).toBe("Lego Set");
+    const fromTitleTag = `<title>Bonsai | Plant Shop</title>`;
+    expect(parsePageInfo(fromTitleTag, "https://x.example").title).toBe("Bonsai");
+  });
+
+  it("falls back to the next title when nothing is left before the |", () => {
+    const html = `<meta property="og:title" content="| Shop"><title>Bonsai</title>`;
+    expect(parsePageInfo(html, "https://x.example").title).toBe("Bonsai");
+  });
+
   it("reads the price from product meta tags", () => {
     const html = `<meta property="og:title" content="Bonsai">
       <meta property="product:price:amount" content="49.99">
@@ -119,7 +131,7 @@ describe("parsePageInfo", () => {
   it("takes the name from the head, not from titles in the body", () => {
     const html = `<html><head><title>LEGO BMW M3 | bol</title></head>
       <body><svg><title>bol</title></svg><meta property="og:title" content="Other"></body></html>`;
-    expect(parsePageInfo(html, "https://www.bol.com/x").title).toBe("LEGO BMW M3 | bol");
+    expect(parsePageInfo(html, "https://www.bol.com/x").title).toBe("LEGO BMW M3");
     // Without a title in the head, a body <title> doesn't count either.
     expect(
       parsePageInfo("<head></head><body><svg><title>bol</title></svg></body>", "https://x.example")
