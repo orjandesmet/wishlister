@@ -19,6 +19,11 @@ export function createPurchases(
   runner: ActionRunner,
   /** Buying follows the list, so its end date may have moved too. */
   onBought: () => unknown,
+  /**
+   * Undoing the purchase of an item its owner removed deletes it for good (#89):
+   * the page drops it from the list.
+   */
+  onRemovedItemGone: (item: Item) => unknown,
 ) {
   // Runs again whenever the items change. The database leaves out purchases on your own list.
   // What was bought last time shows at once, but always loads again. Your own buying clears the
@@ -34,7 +39,8 @@ export function createPurchases(
   const purchase = (item: Item): PurchaseState => {
     if (isOwnList() || item.not_wanted || !purchases()) return "hidden";
     const bought = purchaseOf().get(item.id);
-    if (bought === undefined) return "available";
+    // A removed item only stays while it's bought; once it isn't, it's gone (or about to be).
+    if (bought === undefined) return item.removed_at ? "hidden" : "available";
     return bought.bought_by === myId() ? "mine" : "someone";
   };
   // Owners never learn what was bought, so "not bought first" only exists on other lists.
@@ -61,6 +67,12 @@ export function createPurchases(
   const onUndo = (item: Item) =>
     runner.run(async () => {
       await undoBought(item.id);
+      if (item.removed_at) {
+        // The database deleted it along with the purchase.
+        onRemovedItemGone(item);
+        announce(t("a11y.unboughtRemoved", { item: item.name }));
+        return;
+      }
       await refetchPurchases();
       announce(t("a11y.unbought", { item: item.name }));
     });

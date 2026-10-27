@@ -377,6 +377,8 @@ export const nl: Dictionary = {
     removed: (p) => `${p.item} verwijderd.`,
     bought: (p) => `${p.item} gemarkeerd als gekocht.`,
     unbought: (p) => `${p.item} is niet meer gemarkeerd als gekocht.`,
+    unboughtRemoved: (p) =>
+      `${p.item} is niet meer gemarkeerd als gekocht en is van het lijstje verdwenen.`,
     changed: (p) => (p.count === 1 ? "1 item gewijzigd." : `${p.count} items gewijzigd.`),
     deleted: (p) => (p.count === 1 ? "1 item verwijderd." : `${p.count} items verwijderd.`),
     unfollowed: "Je volgt dit lijstje niet meer.",

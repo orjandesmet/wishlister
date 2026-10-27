@@ -133,6 +133,11 @@ export default function WishList() {
     () => me().profile.id,
     runner,
     onBought,
+    (gone) => {
+      setItems((prev) => prev?.filter((item) => item.id !== gone.id));
+      // Its card, and the Undo button just pressed, are gone.
+      focusHeading();
+    },
   );
   const listSections = createListSections(loadedItems, () =>
     purchases.showBought() ? (item) => purchases.purchaseOf().has(item.id) : undefined,
