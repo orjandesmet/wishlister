@@ -120,7 +120,11 @@
   gap: 6px;
 }
 
-/* Not a link: just a soft accent line saying a Secret Santa is on. */
+/*
+ * Not a link: just a soft line saying a Secret Santa is on. Santa's red, from the pill colours
+ * that the seasonal themes leave alone, so it stands apart from the blue (or themed) accent
+ * of the countdown whatever the season, and keeps its contrast in light and dark.
+ */
 .secretSanta {
   display: inline-flex;
   align-items: center;
@@ -129,8 +133,8 @@
   padding: 4px 10px;
   font-size: 14px;
   font-weight: 600;
-  color: var(--accent-ink);
-  background: var(--accent-soft);
+  color: var(--pill-negative-ink);
+  background: var(--pill-negative-bg);
   border-radius: var(--radius-control);
 }
 
