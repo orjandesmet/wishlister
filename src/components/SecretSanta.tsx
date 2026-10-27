@@ -7,22 +7,17 @@ import type {
   SecretSantaCandidate,
   SecretSantaInput,
 } from "../lib/api/secretSanta.ts";
-import { compareNames, locale, t } from "../lib/i18n.ts";
-import type { OccasionId, ProfileId, SecretSantaId } from "../lib/ids.ts";
-import { formatOccasionDate, splitOccasions, type IsoDate } from "../lib/occasions.ts";
+import { t } from "../lib/i18n.ts";
+import type { ProfileId, SecretSantaId } from "../lib/ids.ts";
 import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
-import { Card } from "./Card.tsx";
 import { Check } from "./Check.tsx";
 import { RemoveLabel } from "./RemoveLabel.tsx";
 import styles from "./SecretSanta.module.css";
 
 export type SecretSantaProps = {
-  occasions: Occasion[];
   /** The group's draws, as the signed-in person sees them: only their own pair. */
   draws: Draw[];
-  /** Today, so the card knows which occasions have passed. */
-  today: IsoDate;
   /** Managers start draws and remove people from them; everyone else only sees their own pair. */
   isManager: boolean;
   /** Managers only: the members who can take part (an account and their own list). */
@@ -37,81 +32,59 @@ export type SecretSantaProps = {
 };
 
 /**
- * A group's Secret Santa draws, one per upcoming occasion. Managers start them and remove
- * people from them; members see whether they take part and who they drew.
+ * The Secret Santa of one upcoming occasion, shown under it in the occasions list: managers
+ * start it (a link button opens the form) and remove people from it; members see whether they
+ * take part and who they drew. Nothing at all for a member when the occasion has no draw.
  */
-export function SecretSanta(props: SecretSantaProps) {
-  const upcoming = () => splitOccasions(props.occasions, props.today, compareNames).upcoming;
-  const drawOf = (occasion: Occasion) => props.draws.find((d) => d.occasion_id === occasion.id);
-  // Managers get every upcoming occasion, to start a draw for; members only those with one.
-  const shown = () => upcoming().filter((o) => props.isManager || drawOf(o));
-  const [starting, setStarting] = createSignal<OccasionId>();
+export function OccasionSecretSanta(props: SecretSantaProps & { occasion: Occasion }) {
+  const draw = () => props.draws.find((d) => d.occasion_id === props.occasion.id);
+  const [starting, setStarting] = createSignal(false);
 
-  // Starting swaps a button for a form and back, so focus is moved by hand: the form focuses
-  // its heading, and closing it goes back to that occasion's Start button.
+  // Starting swaps the link button for a form and back, so focus is moved by hand: the form
+  // focuses its heading, and closing it goes back to the button.
   // oxlint-disable-next-line no-unassigned-vars
-  let list: HTMLElement | undefined;
-  const stopStarting = (id: OccasionId) => {
-    setStarting(undefined);
-    focusSoon(() => list?.querySelector<HTMLElement>(`[data-occasion="${id}"] button`));
+  let box: HTMLDivElement | undefined;
+  const stopStarting = () => {
+    setStarting(false);
+    focusSoon(() => box?.querySelector<HTMLElement>("button"));
   };
 
-  const row = (occasion: Occasion) => (
-    <li class={`${styles.occasion} ${u.stack}`} data-occasion={occasion.id}>
-      <span class={`${u.stack} ${u.smallGap}`}>
-        <h3 class={styles.name}>{occasion.name}</h3>
-        <span class={`${u.muted} ${u.small}`}>{formatOccasionDate(occasion.date, locale())}</span>
-      </span>
-      <Show
-        when={drawOf(occasion)}
-        fallback={
-          <Show when={props.isManager}>
+  return (
+    <Show
+      when={draw()}
+      fallback={
+        <Show when={props.isManager}>
+          <div ref={box}>
             <Show
-              when={starting() === occasion.id}
+              when={starting()}
               fallback={
-                <div>
-                  <Button variant="secondary" onClick={() => setStarting(occasion.id)}>
-                    {t("secretSanta.start")}
-                    <span class={u.visuallyHidden}> {occasion.name}</span>
-                  </Button>
-                </div>
+                <Button variant="link" onClick={() => setStarting(true)}>
+                  {t("secretSanta.start")}
+                  <span class={u.visuallyHidden}> {props.occasion.name}</span>
+                </Button>
               }
             >
               <StartForm
-                occasion={occasion}
+                occasion={props.occasion}
                 candidates={props.candidates}
                 busy={props.busy}
                 onSubmit={async (input) => {
-                  if (await props.onStart(input)) setStarting(undefined);
+                  if (await props.onStart(input)) setStarting(false);
                 }}
-                onCancel={() => stopStarting(occasion.id)}
+                onCancel={stopStarting}
               />
             </Show>
-          </Show>
-        }
-      >
-        {(draw) => <Running draw={draw()} {...props} />}
-      </Show>
-    </li>
-  );
-
-  return (
-    <Show when={props.isManager || shown().length > 0}>
-      <Card ref={list}>
-        <h2>{t("secretSanta.title")}</h2>
-        <p class={`${u.muted} ${u.small}`}>{t("secretSanta.help")}</p>
-        <ul class={u.list}>
-          <For each={shown()} fallback={<li class={u.muted}>{t("secretSanta.noOccasions")}</li>}>
-            {row}
-          </For>
-        </ul>
-      </Card>
+          </div>
+        </Show>
+      }
+    >
+      {(d) => <Running draw={d()} {...props} />}
     </Show>
   );
 }
 
 /** A draw that has been made: your own pair, and for managers who takes part. */
-function Running(props: SecretSantaProps & { draw: Draw }) {
+function Running(props: SecretSantaProps & { occasion: Occasion; draw: Draw }) {
   const people = () => props.participants.get(props.draw.id) ?? [];
   return (
     <div class={u.stack}>
@@ -197,6 +170,7 @@ function StartForm(props: StartFormProps) {
         {t("secretSanta.start")}
         <span class={u.visuallyHidden}> {props.occasion.name}</span>
       </h4>
+      <p class={`${u.muted} ${u.small}`}>{t("secretSanta.help")}</p>
       <Show
         when={props.candidates.length > 0}
         fallback={<p class={u.muted}>{t("secretSanta.nobodyToDraw")}</p>}

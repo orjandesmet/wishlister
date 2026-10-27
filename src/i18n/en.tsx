@@ -183,9 +183,7 @@ export const en = {
     confirmDelete: (p: { name: string }) => `Delete ${p.name} for the whole group?`,
   },
   secretSanta: {
-    title: "Secret Santa",
     help: "Draw who buys a present for whom. Everyone who takes part gets an email with the one person they drew, and follows that person's list. Nobody sees who drew whom, not even managers.",
-    noOccasions: "Add an occasion to start a Secret Santa for it.",
     start: "Start Secret Santa",
     running: "A Secret Santa is running.",
     youDrew: (p: { name: JSX.Element }) => <>You drew {p.name}.</>,

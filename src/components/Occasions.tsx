@@ -10,6 +10,7 @@ import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import styles from "./Occasions.module.css";
+import { OccasionSecretSanta, type SecretSantaProps } from "./SecretSanta.tsx";
 
 export type OccasionsProps = {
   occasions: Occasion[];
@@ -22,6 +23,8 @@ export type OccasionsProps = {
   /** Resolves to true once saved; the form stays open otherwise. */
   onUpdate: (id: OccasionId, input: OccasionInput) => Promise<boolean>;
   onDelete: (occasion: Occasion) => void;
+  /** Shows each upcoming occasion's Secret Santa under it. Left out where there is none. */
+  secretSanta?: SecretSantaProps;
 };
 
 /** A group's occasions: upcoming ones soonest first, past ones folded away below. */
@@ -67,6 +70,15 @@ export function Occasions(props: OccasionsProps) {
                 <RemoveLabel label={t("common.delete")} of={occasion.name} />
               </Button>
             </span>
+          </Show>
+          <Show
+            when={props.secretSanta && occasion.date >= props.today ? props.secretSanta : undefined}
+          >
+            {(secretSanta) => (
+              <div class={styles.secretSanta}>
+                <OccasionSecretSanta occasion={occasion} {...secretSanta()} />
+              </div>
+            )}
           </Show>
         </li>
       }

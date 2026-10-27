@@ -9,7 +9,8 @@ import type {
 } from "../lib/api/secretSanta.ts";
 import { t } from "../lib/i18n.ts";
 import type { GroupId, OccasionId, ProfileId, SecretSantaId } from "../lib/ids.ts";
-import { SecretSanta, type SecretSantaProps } from "./SecretSanta.tsx";
+import { Occasions } from "./Occasions.tsx";
+import type { SecretSantaProps } from "./SecretSanta.tsx";
 import { SecretSantaRibbon } from "./SecretSantaRibbon.tsx";
 
 const occasion = (id: string, name: string, date: string): Occasion => ({
@@ -39,10 +40,11 @@ const christmas = occasion("xmas", "Christmas", "2026-12-25");
 const easter = occasion("easter", "Easter", "2027-03-28");
 const lastYear = occasion("old", "Christmas 2025", "2025-12-25");
 
-const props = (overrides: Partial<SecretSantaProps> = {}): SecretSantaProps => ({
+type Setup = SecretSantaProps & { occasions: Occasion[] };
+
+const props = (overrides: Partial<Setup> = {}): Setup => ({
   occasions: [christmas, easter, lastYear],
   draws: [],
-  today: "2026-10-21",
   isManager: false,
   candidates: [ann, bo, cleo],
   participants: new Map(),
@@ -53,11 +55,28 @@ const props = (overrides: Partial<SecretSantaProps> = {}): SecretSantaProps => (
 });
 
 const hosts: HTMLElement[] = [];
-function mount(p: SecretSantaProps) {
+function mount({ occasions, ...secretSanta }: Setup) {
   const host = document.createElement("div");
   document.body.append(host);
   hosts.push(host);
-  render(() => <MemoryRouter root={() => <SecretSanta {...p} />} />, host);
+  render(
+    () => (
+      <MemoryRouter
+        root={() => (
+          <Occasions
+            occasions={occasions}
+            today="2026-10-21"
+            canEdit={secretSanta.isManager}
+            onAdd={async () => true}
+            onUpdate={async () => true}
+            onDelete={() => {}}
+            secretSanta={secretSanta}
+          />
+        )}
+      />
+    ),
+    host,
+  );
   return host;
 }
 afterEach(() => {
@@ -75,13 +94,19 @@ const checkbox = (host: HTMLElement, label: string) =>
     .find((l) => l.textContent?.trim() === label)!
     .querySelector("input")!;
 const click = (el: HTMLElement) => el.click();
+/** The Secret Santa form, not the one that adds an occasion. */
+const startForm = (host: HTMLElement) =>
+  host.querySelector<HTMLFormElement>("form[aria-labelledby]");
+const startButtons = (host: HTMLElement) =>
+  buttons(host).filter((b) => b.textContent?.includes(t("secretSanta.start")));
 
-describe("SecretSanta", () => {
+describe("Secret Santa in the occasions list", () => {
   describe("for members", () => {
-    it("shows nothing when no upcoming occasion has a draw", () => {
+    it("shows nothing about Secret Santa when no upcoming occasion has a draw", () => {
       const host = mount(props({ draws: [draw("old")] }));
-      expect(host.querySelector("h2")).toBeNull();
-      expect(host.textContent).toBe("");
+      expect(host.textContent).not.toContain(t("secretSanta.running"));
+      expect(host.textContent).not.toContain(t("secretSanta.notTakingPart"));
+      expect(startButtons(host)).toHaveLength(0);
     });
 
     it("says who you drew, with a link to their list", () => {
@@ -96,7 +121,6 @@ describe("SecretSanta", () => {
           ],
         }),
       );
-      expect(host.querySelector("h2")?.textContent).toBe(t("secretSanta.title"));
       const link = host.querySelector("a")!;
       expect(link.textContent).toBe("Bo");
       expect(link.getAttribute("href")).toBe("/lists/bo");
@@ -109,11 +133,12 @@ describe("SecretSanta", () => {
       expect(host.querySelector("a")).toBeNull();
     });
 
-    it("only lists occasions that have a draw, and no start button", () => {
+    it("says it under the occasion that has a draw only, and offers no start button", () => {
       const host = mount(props({ draws: [draw("xmas")] }));
-      const headings = [...host.querySelectorAll("h3")].map((h) => h.textContent);
-      expect(headings).toEqual(["Christmas"]);
-      expect(buttons(host)).toHaveLength(0);
+      const under = (id: string) => host.querySelector(`[data-occasion="${id}"]`)!.textContent;
+      expect(under("xmas")).toContain(t("secretSanta.running"));
+      expect(under("easter")).not.toContain(t("secretSanta.running"));
+      expect(startButtons(host)).toHaveLength(0);
     });
 
     it("never shows participants or remove buttons", () => {
@@ -129,7 +154,7 @@ describe("SecretSanta", () => {
           participants: new Map([["draw-xmas" as SecretSantaId, [ann, bo]]]),
         }),
       );
-      expect(host.querySelector("details")).toBeNull();
+      expect(host.textContent).not.toContain(t("secretSanta.participantsHelp"));
       expect(host.textContent).not.toContain("Ann");
     });
   });
@@ -145,12 +170,14 @@ describe("SecretSanta", () => {
 
     it("leaves out occasions that have passed", () => {
       const host = mount(props({ isManager: true }));
-      expect(host.textContent).not.toContain("Christmas 2025");
+      const starts = startButtons(host).map((b) => b.textContent);
+      expect(starts).toHaveLength(2);
+      expect(starts.join()).not.toContain("Christmas 2025");
     });
 
-    it("says to add an occasion when there is none", () => {
-      const host = mount(props({ isManager: true, occasions: [lastYear] }));
-      expect(host.textContent).toContain(t("secretSanta.noOccasions"));
+    it("offers nothing for an occasion that has a draw already", () => {
+      const host = mount(props({ isManager: true, draws: [draw("xmas"), draw("easter")] }));
+      expect(startButtons(host)).toHaveLength(0);
     });
 
     it("lists who takes part, never a pair, and removes people", () => {
@@ -178,7 +205,7 @@ describe("SecretSanta", () => {
     });
 
     describe("the form", () => {
-      const open = (overrides: Partial<SecretSantaProps> = {}) => {
+      const open = (overrides: Partial<Setup> = {}) => {
         const host = mount(props({ isManager: true, ...overrides }));
         click(buttonNamed(host, new RegExp(`${t("secretSanta.start")}\\s*Christmas`)));
         return host;
@@ -192,7 +219,7 @@ describe("SecretSanta", () => {
 
       it("names the form after its occasion", () => {
         const host = open();
-        const form = host.querySelector("form")!;
+        const form = startForm(host)!;
         const label = document.getElementById(form.getAttribute("aria-labelledby")!)!;
         expect(label.textContent).toContain("Christmas");
       });
@@ -200,7 +227,7 @@ describe("SecretSanta", () => {
       it("sends the participants and no exclusions by default", async () => {
         const onStart = vi.fn(async (_input: SecretSantaInput) => true);
         const host = open({ onStart });
-        host.querySelector("form")!.requestSubmit();
+        startForm(host)!.requestSubmit();
         expect(onStart).toHaveBeenCalledWith({
           occasionId: "xmas",
           participants: ["ann", "bo", "cleo"],
@@ -212,7 +239,7 @@ describe("SecretSanta", () => {
         const onStart = vi.fn(async (_input: SecretSantaInput) => true);
         const host = open({ onStart });
         click(checkbox(host, "Cleo"));
-        host.querySelector("form")!.requestSubmit();
+        startForm(host)!.requestSubmit();
         expect(onStart.mock.calls[0][0].participants).toEqual(["ann", "bo"]);
       });
 
@@ -229,7 +256,7 @@ describe("SecretSanta", () => {
         expect(annsExclusions.querySelector("summary")?.textContent).toContain(
           t("secretSanta.excludedCount", { count: 1 }),
         );
-        host.querySelector("form")!.requestSubmit();
+        startForm(host)!.requestSubmit();
         expect(onStart.mock.calls[0][0].exclusions).toEqual([{ profile: "ann", excluded: "bo" }]);
       });
 
@@ -245,7 +272,7 @@ describe("SecretSanta", () => {
             .querySelector("input")!,
         );
         click(checkbox(host, "Cleo"));
-        host.querySelector("form")!.requestSubmit();
+        startForm(host)!.requestSubmit();
         expect(onStart.mock.calls[0][0].exclusions).toEqual([]);
       });
 
@@ -258,7 +285,7 @@ describe("SecretSanta", () => {
         expect(submit.disabled).toBe(true);
         const hint = document.getElementById(submit.getAttribute("aria-describedby")!)!;
         expect(hint.textContent).toBe(t("secretSanta.needTwo"));
-        host.querySelector("form")!.requestSubmit();
+        startForm(host)!.requestSubmit();
         expect(onStart).not.toHaveBeenCalled();
       });
 
@@ -280,20 +307,20 @@ describe("SecretSanta", () => {
         let result = false;
         const onStart = vi.fn(async () => result);
         const host = open({ onStart });
-        host.querySelector("form")!.requestSubmit();
+        startForm(host)!.requestSubmit();
         await Promise.resolve();
         await Promise.resolve();
-        expect(host.querySelector("form")).not.toBeNull();
+        expect(startForm(host)).not.toBeNull();
 
         result = true;
-        host.querySelector("form")!.requestSubmit();
-        await vi.waitFor(() => expect(host.querySelector("form")).toBeNull());
+        startForm(host)!.requestSubmit();
+        await vi.waitFor(() => expect(startForm(host)).toBeNull());
       });
 
       it("closes with Cancel and puts the Start button back", async () => {
         const host = open();
         click(buttonNamed(host, t("common.cancel")));
-        expect(host.querySelector("form")).toBeNull();
+        expect(startForm(host)).toBeNull();
         expect(buttonNamed(host, new RegExp(t("secretSanta.start")))).toBeTruthy();
       });
 

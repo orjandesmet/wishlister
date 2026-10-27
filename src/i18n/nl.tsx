@@ -176,9 +176,7 @@ export const nl: Dictionary = {
     confirmDelete: (p: { name: string }) => `${p.name} wissen voor de hele groep?`,
   },
   secretSanta: {
-    title: "Secret Santa",
     help: "Trek wie voor wie een cadeau koopt. Wie meedoet krijgt een e-mail met de ene persoon die hij of zij trok en volgt het lijstje van die persoon. Niemand ziet wie wie trok, ook beheerders niet.",
-    noOccasions: "Voeg een gelegenheid toe om er een Secret Santa voor te starten.",
     start: "Secret Santa starten",
     running: "Er loopt een Secret Santa.",
     youDrew: (p: { name: JSX.Element }) => <>Jij trok {p.name}.</>,

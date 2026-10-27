@@ -5,7 +5,6 @@ import { GroupMembers } from "../components/GroupMembers.tsx";
 import { LeaveGroup } from "../components/LeaveGroup.tsx";
 import { Occasions } from "../components/Occasions.tsx";
 import { RenameGroup } from "../components/RenameGroup.tsx";
-import { SecretSanta } from "../components/SecretSanta.tsx";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createGroupData } from "../lib/createGroupData.ts";
 import { createGroupOccasions } from "../lib/createGroupOccasions.ts";
@@ -73,20 +72,19 @@ export default function GroupSettings() {
             onAdd={occasions.onAdd}
             onUpdate={occasions.onUpdate}
             onDelete={occasions.onDelete}
-          />
-        </Show>
-
-        <Show when={isReady(occasions.occasions) && isReady(santa.draws)}>
-          <SecretSanta
-            occasions={occasions.occasions() ?? []}
-            draws={santa.draws() ?? []}
-            today={today()}
-            isManager={data.isManager()}
-            candidates={santa.candidates() ?? []}
-            participants={santa.participants() ?? new Map()}
-            busy={santa.busy()}
-            onStart={santa.onStart}
-            onRemove={santa.onRemove}
+            secretSanta={
+              isReady(santa.draws) && !santa.draws.error
+                ? {
+                    draws: santa.draws() ?? [],
+                    isManager: data.isManager(),
+                    candidates: santa.candidates() ?? [],
+                    participants: santa.participants() ?? new Map(),
+                    busy: santa.busy(),
+                    onStart: santa.onStart,
+                    onRemove: santa.onRemove,
+                  }
+                : undefined
+            }
           />
         </Show>
 
