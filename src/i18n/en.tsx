@@ -388,6 +388,8 @@ export const en = {
     removed: (p: { item: string }) => `Removed ${p.item}.`,
     bought: (p: { item: string }) => `Marked ${p.item} as bought.`,
     unbought: (p: { item: string }) => `${p.item} is no longer marked as bought.`,
+    unboughtRemoved: (p: { item: string }) =>
+      `${p.item} is no longer marked as bought, and is gone from the list.`,
     changed: (p: { count: number }) =>
       p.count === 1 ? "1 item changed." : `${p.count} items changed.`,
     deleted: (p: { count: number }) =>
