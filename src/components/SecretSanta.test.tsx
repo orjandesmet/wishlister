@@ -130,14 +130,12 @@ describe("Secret Santa in the occasions list", () => {
       expect(texts.every((text) => text.includes(t("secretSanta.view")))).toBe(true);
     });
 
-    it("puts the link beside Edit and Delete, with an icon for small screens", () => {
+    it("puts the link under the occasion, apart from Edit and Delete, with Santa and words", () => {
       const host = mount(props({ isManager: true }));
-      const actions = secretSantaLinks(host)[0].parentElement!;
-      expect(actions.querySelectorAll("button")).toHaveLength(2);
-      expect(actions.contains(secretSantaLinks(host)[0])).toBe(true);
-      expect(secretSantaLinks(host)[0].querySelector("svg")?.getAttribute("aria-hidden")).toBe(
-        "true",
-      );
+      const link = secretSantaLinks(host)[0];
+      expect(link.parentElement!.querySelectorAll("button")).toHaveLength(0);
+      expect(link.querySelector("svg")?.getAttribute("aria-hidden")).toBe("true");
+      expect(link.textContent).toContain(t("secretSanta.start"));
     });
 
     it("leaves out occasions that have passed", () => {

@@ -69,20 +69,22 @@ export function Occasions(props: OccasionsProps) {
               {formatOccasionDate(occasion.date, locale())}
             </span>
           </span>
-          <Show when={props.canEdit || secretSantaOf(occasion)}>
+          <Show when={props.canEdit}>
             <span class={u.row}>
-              <Show when={secretSantaOf(occasion)}>
-                {(secretSanta) => <OccasionSecretSanta occasion={occasion} {...secretSanta()} />}
-              </Show>
-              <Show when={props.canEdit}>
-                <Button variant="link" onClick={() => setEditing(occasion.id)}>
-                  <EditLabel label={t("common.edit")} of={occasion.name} />
-                </Button>
-                <Button variant="link" danger onClick={() => props.onDelete(occasion)}>
-                  <RemoveLabel label={t("common.delete")} of={occasion.name} />
-                </Button>
-              </Show>
+              <Button variant="link" onClick={() => setEditing(occasion.id)}>
+                <EditLabel label={t("common.edit")} of={occasion.name} />
+              </Button>
+              <Button variant="link" danger onClick={() => props.onDelete(occasion)}>
+                <RemoveLabel label={t("common.delete")} of={occasion.name} />
+              </Button>
             </span>
+          </Show>
+          <Show when={secretSantaOf(occasion)}>
+            {(secretSanta) => (
+              <div class={styles.secretSanta}>
+                <OccasionSecretSanta occasion={occasion} {...secretSanta()} />
+              </div>
+            )}
           </Show>
         </li>
       }
