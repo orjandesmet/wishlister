@@ -72,4 +72,29 @@ describe("listMenuSections", () => {
     const groups = [group("Just us", [member("me", "Orjan"), member("lucas", "Lucas")])];
     expect(ids(listMenuSections(own, groups, compare))).toEqual([[undefined, ["me", "lucas"]]]);
   });
+
+  it("gives the people you drew in a Secret Santa a ribbon, wherever they are listed", () => {
+    const groups = [
+      group("Family", [member("me", "Orjan"), member("ann", "Ann"), member("bo", "Bo")]),
+      group("Friends", [member("me", "Orjan"), member("ann", "Ann")]),
+    ];
+    const sections = listMenuSections(own, groups, compare, ["ann" as ProfileId]);
+    expect(sections.map((s) => s.options.map((o) => [o.id, o.ribbon ?? false]))).toEqual([
+      [
+        ["me", false],
+        ["lucas", false],
+      ],
+      [
+        ["ann", true],
+        ["bo", false],
+      ],
+      [["ann", true]],
+    ]);
+  });
+
+  it("has no ribbons when you drew nobody", () => {
+    const groups = [group("Family", [member("me", "Orjan"), member("ann", "Ann")])];
+    const options = listMenuSections(own, groups, compare).flatMap((s) => s.options);
+    expect(options.some((o) => o.ribbon)).toBe(false);
+  });
 });
