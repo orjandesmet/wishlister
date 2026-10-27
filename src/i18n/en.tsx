@@ -182,6 +182,45 @@ export const en = {
     new: "New occasion",
     confirmDelete: (p: { name: string }) => `Delete ${p.name} for the whole group?`,
   },
+  secretSanta: {
+    title: "Secret Santa",
+    help: "Draw who buys a present for whom. Everyone who takes part gets an email with the one person they drew, and follows that person's list. Nobody sees who drew whom, not even managers.",
+    noOccasions: "Add an occasion to start a Secret Santa for it.",
+    start: "Start Secret Santa",
+    running: "A Secret Santa is running.",
+    youDrew: (p: { name: JSX.Element }) => <>You drew {p.name}.</>,
+    notTakingPart: "You're not taking part.",
+    ribbon: "Your Secret Santa",
+    ribbonFor: (p: { occasion: string }) => `You drew this person for ${p.occasion}.`,
+    who: "Who takes part",
+    whoHelp: "Only members with their own list can take part. Children and guardians can't.",
+    nobodyToDraw: "There are no members who can take part yet.",
+    exclusions: "Exclusions (optional)",
+    exclusionsHelp:
+      "Choose who must not draw whom, for example a couple. It works one way: to keep a couple apart, set it for both.",
+    mustNotDraw: (p: { name: string }) => `${p.name} must not draw`,
+    excludedCount: (p: { count: number }) => (p.count === 0 ? "nobody" : `${p.count} excluded`),
+    needTwo: "Pick at least 2 people to take part.",
+    draw: "Draw names",
+    drawing: "Drawing…",
+    confirmStart: (p: { occasion: string; count: number }) =>
+      `Draw names for ${p.occasion} among ${p.count} people? Everyone gets an email and the draw can't be redone.`,
+    participants: (p: { count: number }) => `Taking part (${p.count})`,
+    participantsHelp: "You see who takes part, never who drew whom.",
+    confirmRemove: (p: { name: string }) =>
+      `Remove ${p.name} from the Secret Santa? Whoever drew ${p.name} gets the person ${p.name} drew, and an email about it. This can't be undone.`,
+    startedSent: "The Secret Santa has started. Everyone who takes part got an email.",
+    startedNotSetUp:
+      "The Secret Santa has started. Emails can't be sent yet, so everyone can see who they drew on this page.",
+    startedMailFailed:
+      "The Secret Santa has started, but sending the emails failed. We'll try again this evening.",
+    removed: (p: { name: string }) => `${p.name} was removed from the Secret Santa.`,
+    drawEnded: "Too few people were left, so the Secret Santa ended.",
+    leaveBlocked: (p: { occasions: string }) =>
+      `You take part in the Secret Santa for ${p.occasions}. Ask a manager to remove you from it before you leave the group.`,
+    removeBlocked: (p: { name: string; occasions: string }) =>
+      `${p.name} takes part in the Secret Santa for ${p.occasions}. Remove them from it first.`,
+  },
   child: {
     editProfile: "Edit profile",
     name: "Name",
@@ -420,6 +459,7 @@ export const en = {
     unfollowed: "You stopped following this list.",
     asked: "Your question was sent.",
     answered: "Your answer was saved.",
+    secretSantaStarted: (p: { occasion: string }) => `Secret Santa started for ${p.occasion}.`,
   },
   wishlist: {
     fallbackTitle: "Wishlist",
