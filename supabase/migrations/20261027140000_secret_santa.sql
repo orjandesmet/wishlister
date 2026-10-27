@@ -377,7 +377,7 @@ begin
       and pr.giver_profile_id = target_profile
       and o.date >= current_date - 1
   ) then
-    raise exception 'Take part in a Secret Santa: ask a manager to remove you from it first'
+    raise exception 'This person takes part in a Secret Santa that hasn''t ended: a manager has to remove them from it first'
       using errcode = 'check_violation';
   end if;
 
