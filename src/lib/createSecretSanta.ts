@@ -9,7 +9,6 @@ import type { Occasion } from "./api/occasions.ts";
 import { announce, focusHeading } from "./a11y.ts";
 import { createCachedResource } from "./cache.ts";
 import type { ActionRunner } from "./createActionRunner.ts";
-import type { GroupData } from "./createGroupData.ts";
 import { t } from "./i18n.ts";
 import type { GroupId, ProfileId, SecretSantaId } from "./ids.ts";
 import { loadSecretSantas } from "./loaders.ts";
@@ -19,11 +18,11 @@ import { today } from "./occasions.ts";
 /**
  * A group's Secret Santa draws as the signed-in person sees them, and, for managers, who
  * takes part and removing people. Never who drew whom, except your own. (Starting one is
- * createSecretSantaStart's, on its own page.)
+ * createSecretSantaStart's.)
  */
 export function createSecretSanta(
   groupId: () => GroupId,
-  data: GroupData,
+  isManager: () => boolean,
   occasions: () => Occasion[] | undefined,
   runner: ActionRunner,
 ) {
@@ -32,7 +31,7 @@ export function createSecretSanta(
 
   // Only managers remove people, so only they load who takes part.
   const [participants, { refetch: refetchParticipants }] = createResource(
-    () => (data.isManager() ? draws()?.map((draw) => draw.id) : undefined),
+    () => (isManager() ? draws()?.map((draw) => draw.id) : undefined),
     async (ids) =>
       new Map<SecretSantaId, SecretSantaCandidate[]>(
         await Promise.all(
@@ -62,6 +61,7 @@ export function createSecretSanta(
   return {
     draws,
     participants,
+    reload,
     drawsTakingPart,
     onRemove: (draw: SecretSanta, person: SecretSantaCandidate) => {
       if (!confirm(t("secretSanta.confirmRemove", { name: person.display_name }))) return;

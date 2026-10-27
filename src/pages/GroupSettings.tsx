@@ -22,7 +22,12 @@ export default function GroupSettings() {
   const runner = createActionRunner();
   const data = createGroupData(() => params.groupId);
   const occasions = createGroupOccasions(() => params.groupId, runner);
-  const santa = createSecretSanta(() => params.groupId, data, occasions.occasions, runner);
+  const santa = createSecretSanta(
+    () => params.groupId,
+    data.isManager,
+    occasions.occasions,
+    runner,
+  );
   const onRemove = createMemberRemoval(data, runner, santa.drawsTakingPart);
   const { group } = data;
 
@@ -74,12 +79,7 @@ export default function GroupSettings() {
             onDelete={occasions.onDelete}
             secretSanta={
               isReady(santa.draws) && !santa.draws.error
-                ? {
-                    draws: santa.draws() ?? [],
-                    isManager: data.isManager(),
-                    participants: santa.participants() ?? new Map(),
-                    onRemove: santa.onRemove,
-                  }
+                ? { draws: santa.draws() ?? [], isManager: data.isManager() }
                 : undefined
             }
           />

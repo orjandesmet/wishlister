@@ -21,7 +21,7 @@ import { prefetchOnIntent, warmUp } from "./lib/prefetch.ts";
 import { activeTheme } from "./lib/theme.ts";
 import ChildSettings from "./pages/ChildSettings.tsx";
 import GroupSettings from "./pages/GroupSettings.tsx";
-import SecretSantaStart from "./pages/SecretSantaStart.tsx";
+import SecretSantaPage from "./pages/SecretSantaPage.tsx";
 import Home from "./pages/Home.tsx";
 import Join from "./pages/Join.tsx";
 import ItemForm from "./pages/ItemForm.tsx";
@@ -138,7 +138,7 @@ export const AppRoutes = () => (
       <Route path="/groups/:groupId" component={freshPer("groupId", GroupSettings)} />
       <Route
         path="/groups/:groupId/occasions/:occasionId/secret-santa"
-        component={freshPer("occasionId", SecretSantaStart)}
+        component={freshPer("occasionId", SecretSantaPage)}
       />
       <Route path="/children/:profileId" component={freshPer("profileId", ChildSettings)} />
       <Route path="/lists/:profileId" component={freshPer("profileId", WishList)} />

@@ -580,22 +580,58 @@ export const SecretSantaStartLink: Story = {
   },
 };
 
+const runningDraw = () => [
+  {
+    id: "draw-1" as SecretSantaId,
+    occasion_id: christmas.id,
+    taking_part: true,
+    recipient_profile_id: "anna" as ProfileId,
+    recipient_name: "Anna",
+  },
+];
+
 /** A draw is running: you see who you drew, and as a manager who takes part, not the pairs. */
 export const SecretSantaRunning: Story = {
   beforeEach: () => {
     data.group = managerOfFamily;
     data.occasions = [christmas];
-    data.santas = [
-      {
-        id: "draw-1" as SecretSantaId,
-        occasion_id: christmas.id,
-        taking_part: true,
-        recipient_profile_id: "anna" as ProfileId,
-        recipient_name: "Anna",
-      },
-    ];
+    data.santas = runningDraw();
+  },
+  render: app("/groups/group-1/occasions/o3/secret-santa"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByRole("link", { name: "Anna" })).toBeInTheDocument();
+    await expect(await canvas.findByRole("button", { name: /Remove\s*Bert/ })).toBeInTheDocument();
+  },
+};
+
+/** As a member: who you drew, and nobody else's pair, and no way to remove anyone. */
+export const SecretSantaRunningAsMember: Story = {
+  beforeEach: () => {
+    data.occasions = [christmas];
+    data.santas = runningDraw();
+  },
+  render: app("/groups/group-1/occasions/o3/secret-santa"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByRole("link", { name: "Anna" })).toBeInTheDocument();
+    await expect(canvas.queryByRole("button", { name: /Remove/ })).toBeNull();
+  },
+};
+
+/** On the group page, a running draw is just a link under its occasion. */
+export const SecretSantaRunningLink: Story = {
+  beforeEach: () => {
+    data.group = managerOfFamily;
+    data.occasions = [christmas];
+    data.santas = runningDraw();
   },
   render: app("/groups/group-1"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("link", { name: /^Secret Santa/ }));
+    await expect(await canvas.findByRole("link", { name: "Anna" })).toBeInTheDocument();
+  },
 };
 
 /** Nobody leaves while taking part in a running draw: the message says what to do. */

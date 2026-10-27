@@ -11,7 +11,12 @@ import { t } from "./i18n.ts";
 import type { GroupId } from "./ids.ts";
 
 /** Starting a group's Secret Santa for an occasion: who can take part, and making the draw. */
-export function createSecretSantaStart(groupId: () => GroupId, occasionName: () => string) {
+export function createSecretSantaStart(
+  groupId: () => GroupId,
+  occasionName: () => string,
+  /** Runs once the draw is made, to load it. */
+  onStarted: () => Promise<unknown>,
+) {
   // Managers only: the database refuses anyone else.
   const [candidates] = createResource(groupId, getSecretSantaCandidates);
   const [busy, setBusy] = createSignal(false);
@@ -42,6 +47,7 @@ export function createSecretSantaStart(groupId: () => GroupId, occasionName: () 
         // Made by a Netlify function, not through the Supabase client, so what the group page
         // remembers about its draws is out of date now.
         clearCache();
+        await onStarted();
         announce(t("a11y.secretSantaStarted", { occasion: name }));
       } catch (e) {
         setError((e as Error).message);
