@@ -112,13 +112,22 @@
   }
 }
 
+.occasionText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
 /* Not a link: just a soft accent line saying a Secret Santa is on. */
 .secretSanta {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   margin: 0;
-  padding: 8px 12px;
+  padding: 4px 10px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--accent-ink);
   background: var(--accent-soft);
@@ -126,7 +135,7 @@
 }
 
 .secretSantaIcon {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   flex-shrink: 0;
 }

@@ -46,6 +46,21 @@ export function GroupCard(props: GroupCardProps) {
     return t("groupCard.inDays", { days });
   };
 
+  /** The soft accent line saying a Secret Santa is on. `showOccasion` names its occasion. */
+  const secretSantaLine = (occasion: Occasion, showOccasion: boolean) => (
+    <p class={styles.secretSanta}>
+      <SecretSantaIcon class={styles.secretSantaIcon} />
+      <span>
+        {showOccasion
+          ? t("groupCard.secretSantaFor", { occasion: occasion.name })
+          : t("groupCard.secretSanta")}
+        <Show when={!showOccasion}>
+          <span class={u.visuallyHidden}> {occasion.name}</span>
+        </Show>
+      </span>
+    </p>
+  );
+
   const soon = (date: IsoDate) => daysBetween(props.today, date) <= 1;
 
   return (
@@ -87,25 +102,24 @@ export function GroupCard(props: GroupCardProps) {
                 <span>{t("groupCard.daysUnit")}</span>
               </Show>
             </span>
-            <p class={styles.nextOccasion} aria-hidden="true">
-              {t("groupCard.occasionLine", {
-                name: occasion().name,
-                date: formatOccasionDate(occasion().date, locale()),
-              })}
-            </p>
+            <div class={styles.occasionText}>
+              <p class={styles.nextOccasion} aria-hidden="true">
+                {t("groupCard.occasionLine", {
+                  name: occasion().name,
+                  date: formatOccasionDate(occasion().date, locale()),
+                })}
+              </p>
+              {/* Under the event name, when it's the Secret Santa of this very occasion. */}
+              <Show when={props.secretSanta?.id === occasion().id ? props.secretSanta : undefined}>
+                {(santa) => secretSantaLine(santa(), false)}
+              </Show>
+            </div>
           </div>
         )}
       </Show>
-      <Show when={props.secretSanta}>
-        {(occasion) => (
-          <p class={styles.secretSanta}>
-            <SecretSantaIcon class={styles.secretSantaIcon} />
-            <span>
-              {t("groupCard.secretSanta")}
-              <span class={u.visuallyHidden}> {occasion().name}</span>
-            </span>
-          </p>
-        )}
+      {/* Running for another occasion than the next one: say which. */}
+      <Show when={props.secretSanta?.id !== props.nextOccasion?.id ? props.secretSanta : undefined}>
+        {(santa) => secretSantaLine(santa(), true)}
       </Show>
       <ul class={u.list}>
         <For each={members()}>

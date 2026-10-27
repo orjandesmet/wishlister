@@ -104,6 +104,7 @@ export const en = {
     occasionLine: (p: { name: string; date: string }) => `${p.name} · ${p.date}`,
     daysUnit: "days",
     secretSanta: "Secret Santa is running",
+    secretSantaFor: (p: { occasion: string }) => `Secret Santa is running for ${p.occasion}`,
   },
   group: {
     back: "‹ Groups",

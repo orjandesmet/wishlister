@@ -75,9 +75,26 @@ describe("GroupCard and Secret Santa", () => {
     expect(badges(host)[0].className).toMatch(/iconOnly/);
   });
 
-  it("says it even when the running one isn't the next occasion", () => {
+  it("puts it under the event name, beside the days left, for the next occasion", () => {
+    const host = mount({ secretSanta: christmas });
+    const line = secretSantaLine(host)!;
+    expect(line.closest('[role="group"]')).not.toBeNull();
+    expect(line.previousElementSibling?.textContent).toContain("Christmas");
+    expect(line.textContent).toBe(t("groupCard.secretSanta") + " Christmas");
+  });
+
+  it("says which occasion it is for when that isn't the next one", () => {
     const later = { ...christmas, id: "later" as OccasionId, name: "Easter" };
     const host = mount({ secretSanta: later });
-    expect(secretSantaLine(host)!.textContent).toContain("Easter");
+    const line = secretSantaLine(host)!;
+    expect(line.closest('[role="group"]')).toBeNull();
+    expect(line.textContent).toBe(t("groupCard.secretSantaFor", { occasion: "Easter" }));
+  });
+
+  it("says which occasion it is for when the group has no next occasion", () => {
+    const host = mount({ secretSanta: christmas, nextOccasion: undefined });
+    expect(secretSantaLine(host)!.textContent).toBe(
+      t("groupCard.secretSantaFor", { occasion: "Christmas" }),
+    );
   });
 });

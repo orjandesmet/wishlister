@@ -113,3 +113,11 @@ export const SecretSantaRunning: Story = {
 export const SecretSantaNotTakingPart: Story = {
   args: { nextOccasion: christmas, secretSanta: christmas },
 };
+
+/** Running for a later occasion than the next one: the line says which. */
+export const SecretSantaForLaterOccasion: Story = {
+  args: {
+    nextOccasion: christmas,
+    secretSanta: { ...christmas, id: "o2" as OccasionId, name: "Easter 2027", date: "2027-03-28" },
+  },
+};
