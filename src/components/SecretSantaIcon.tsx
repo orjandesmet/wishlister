@@ -33,7 +33,7 @@ export function SecretSantaIcon(props: { class?: string; style?: JSX.CSSProperti
       <defs>
         <path
           id={stache}
-          d="M12 12.6c-1.2-.9-2.6-1.2-3.9-.8-1.2.4-2-.2-2.4-1 0 1.6.9 2.7 2.3 2.9 1.5.2 2.9-.3 4-1.1zM12 12.6c1.2-.9 2.6-1.2 3.9-.8 1.2.4 2-.2 2.4-1 0 1.6-.9 2.7-2.3 2.9-1.5.2-2.9-.3-4-1.1z"
+          d="M 12 13.6 C 10.8 12.7 9.4 12.4 8.1 12.8 C 6.9 13.2 6.1 12.6 5.7 11.8 C 5.7 13.4 6.6 14.5 8 14.7 C 9.5 14.9 10.9 14.4 12 13.6 Z M 12 13.6 C 13.2 12.7 14.6 12.4 15.9 12.8 C 17.1 13.2 17.9 12.6 18.3 11.8 C 18.3 13.4 17.4 14.5 16 14.7 C 14.5 14.9 13.1 14.4 12 13.6 Z"
         />
         {/* Around its own centre, so it can be put anywhere and any size. */}
         <path id={question} d="M-2.3 -2.4a2.3 2.3 0 1 1 3.6 1.9c-.9.6-1.3 1.2-1.3 2.2M0 4.2h.01" />
@@ -73,7 +73,7 @@ export function SecretSantaIcon(props: { class?: string; style?: JSX.CSSProperti
           {/* The beard. */}
           <path
             opacity=".5"
-            d="M 4.8 11 C 4.5 16.4 7.4 22.2 12 23.4 C 16.6 22.2 19.5 16.4 19.2 11 C 17.7 12 12 13.948 12 13.948 C 12 13.948 6.3 12 4.8 11 Z"
+            d="M 4.8 13 C 4.5 18.4 7.4 22.2 12 23.4 C 16.6 22.2 19.5 18.4 19.2 13 C 17.7 14 12 14.948 12 14.948 C 12 14.948 6.3 14 4.8 13 Z"
           />
         </g>
         {/* The fur brim, and the moustache in the gap cut for it, in the same light tone. */}
