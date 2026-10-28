@@ -68,8 +68,8 @@ export function SecretSantaIcon(props: { class?: string; style?: JSX.CSSProperti
       <g>
         <g mask={`url(#${cutBeard})`}>
           {/* The hat, bent over to the pompom, as wide as the brim is. */}
-          <path d="M5.8 7C6 3.2 8.6.6 12 .6c1.9 0 3.6.8 5 2.2l.7.8-1.8.8c-.4 1.1-.3 2.2.3 2.6z" />
-          <circle cx="19.2" cy="3.9" r="1.6" opacity=".5" />
+          <path d="M 5.8 7 C 6 3.2 8.893 0.604 12.98 0.651 C 17.067 0.698 19.428 4.202 19.428 4.202 C 19.428 4.202 16.974 4.926 18.142 7 L 5.8 7 Z" />
+          <circle cx="20.82" cy="4.56" r="1.45" opacity=".5" />
           {/* The beard. */}
           <path
             opacity=".5"
