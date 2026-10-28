@@ -31,8 +31,10 @@ export const en = {
     label: "Language",
   },
   groupCollapse: {
-    label: "Remember which groups are folded",
-    hint: "On this device, each group's members stay shown or folded the way you left them. Otherwise phones start with them folded.",
+    label: "Members on the groups page",
+    always: "Always collapse",
+    remember: "Remember my choice per group",
+    hint: "Your choice per group is saved on this device only.",
   },
   themes: {
     label: "Seasonal themes",
@@ -112,7 +114,7 @@ export const en = {
     secretSanta: "Secret Santa is running",
     secretSantaFor: (p: { occasion: string }) => `Secret Santa is running for ${p.occasion}`,
     showMembers: (p: { count: number }) =>
-      p.count === 1 ? "Show 1 member" : `Show ${p.count} members`,
+      p.count === 1 ? "Show 1 member" : `Show all ${p.count} members`,
     hideMembers: "Hide members",
   },
   group: {

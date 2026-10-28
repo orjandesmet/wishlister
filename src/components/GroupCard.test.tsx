@@ -130,6 +130,11 @@ describe("GroupCard members", () => {
     });
     expect(names(host)).toHaveLength(1);
     expect(names(host)[0]).toContain("Bert");
+    // Above the button, not under it.
+    const row = host.querySelector("li")!;
+    expect(
+      row.compareDocumentPosition(toggle(host)) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(badges(host)).toHaveLength(1);
   });
 });

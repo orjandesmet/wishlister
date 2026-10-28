@@ -1,7 +1,7 @@
 import { EditLabel } from "./EditLabel.tsx";
 import { A } from "@solidjs/router";
 import { createSignal, createUniqueId, For, Show } from "solid-js";
-import type { Group } from "../lib/api/groups.ts";
+import type { Group, Member } from "../lib/api/groups.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
 import { initialCollapsed, saveCollapsed } from "../lib/groupCollapse.ts";
 import { compareNames, locale, t } from "../lib/i18n.ts";
@@ -28,7 +28,7 @@ export type GroupCardProps = {
   drawnProfileId?: ProfileId;
   /** Today, to say how far away the next occasion is. */
   today: IsoDate;
-  /** Whether the members start collapsed; by default as you left them, or collapsed on phones. */
+  /** Whether the members start collapsed; by default as you left them, or collapsed. */
   startCollapsed?: boolean;
 };
 
@@ -50,8 +50,9 @@ export function GroupCard(props: GroupCardProps) {
     setCollapsed(next);
     saveCollapsed(props.group.id, next);
   };
-  const shownMembers = () =>
-    collapsed() ? members().filter((m) => m.profile_id === props.drawnProfileId) : members();
+  /** While collapsed, the member you drew stays in sight, above the button. */
+  const drawnWhileCollapsed = () =>
+    collapsed() ? members().filter((m) => m.profile_id === props.drawnProfileId) : [];
   const membersId = createUniqueId();
   const isManager = () =>
     props.group.group_members.some(
@@ -81,6 +82,37 @@ export function GroupCard(props: GroupCardProps) {
   );
 
   const soon = (date: IsoDate) => daysBetween(props.today, date) <= 1;
+
+  const memberRow = (member: Member) => (
+    <li>
+      {/* A guardian's own list isn't shown in this group, so there's nothing to open. */}
+      <Show
+        when={member.role !== "guardian"}
+        fallback={
+          <div class={u.listRow}>
+            <Person id={member.profile_id} name={member.profiles.display_name} class={u.muted}>
+              {member.profiles.display_name}
+              {member.profile_id === props.myProfileId ? t("common.you") : ""}
+            </Person>
+            <Chip>{t("groupCard.guardian")}</Chip>
+          </div>
+        }
+      >
+        <A class={u.listRow} href={`/lists/${member.profile_id}`}>
+          <Person id={member.profile_id} name={member.profiles.display_name}>
+            {member.profiles.display_name}
+            {member.profile_id === props.myProfileId ? t("common.you") : ""}
+            <Show when={member.profile_id === props.drawnProfileId}>
+              <SecretSantaRibbon iconOnly occasion={props.secretSanta?.name} />
+            </Show>
+          </Person>
+          <Show when={!member.profiles.account_id}>
+            <Chip>{t("groupCard.child")}</Chip>
+          </Show>
+        </A>
+      </Show>
+    </li>
+  );
 
   return (
     <Card class={styles.groupCard}>
@@ -140,6 +172,11 @@ export function GroupCard(props: GroupCardProps) {
       <Show when={props.secretSanta?.id !== props.nextOccasion?.id ? props.secretSanta : undefined}>
         {(santa) => secretSantaLine(santa(), true)}
       </Show>
+      <Show when={drawnWhileCollapsed().length > 0}>
+        <ul class={u.list}>
+          <For each={drawnWhileCollapsed()}>{memberRow}</For>
+        </ul>
+      </Show>
       <Button
         variant="link"
         class={styles.membersToggle}
@@ -168,42 +205,7 @@ export function GroupCard(props: GroupCardProps) {
       </Button>
       {/* Always in the page, even empty, so aria-controls points somewhere. */}
       <ul id={membersId} class={u.list}>
-        <For each={shownMembers()}>
-          {(member) => (
-            <li>
-              {/* A guardian's own list isn't shown in this group, so there's nothing to open. */}
-              <Show
-                when={member.role !== "guardian"}
-                fallback={
-                  <div class={u.listRow}>
-                    <Person
-                      id={member.profile_id}
-                      name={member.profiles.display_name}
-                      class={u.muted}
-                    >
-                      {member.profiles.display_name}
-                      {member.profile_id === props.myProfileId ? t("common.you") : ""}
-                    </Person>
-                    <Chip>{t("groupCard.guardian")}</Chip>
-                  </div>
-                }
-              >
-                <A class={u.listRow} href={`/lists/${member.profile_id}`}>
-                  <Person id={member.profile_id} name={member.profiles.display_name}>
-                    {member.profiles.display_name}
-                    {member.profile_id === props.myProfileId ? t("common.you") : ""}
-                    <Show when={member.profile_id === props.drawnProfileId}>
-                      <SecretSantaRibbon iconOnly occasion={props.secretSanta?.name} />
-                    </Show>
-                  </Person>
-                  <Show when={!member.profiles.account_id}>
-                    <Chip>{t("groupCard.child")}</Chip>
-                  </Show>
-                </A>
-              </Show>
-            </li>
-          )}
-        </For>
+        <For each={collapsed() ? [] : members()}>{memberRow}</For>
       </ul>
     </Card>
   );
