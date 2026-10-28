@@ -15,8 +15,10 @@ import {
   getCategories,
   setItemsCategory,
   setItemsGroups,
+  setWantLevel,
   type GroupSelection,
   type Item,
+  type WantLevel,
 } from "../lib/api/items.ts";
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
@@ -194,6 +196,30 @@ export default function WishList() {
       announce(t("a11y.removed", { item: item.name }));
       focusHeading();
     });
+  // The hearts go round: I want this, I really want this, I really, really, REALLY want this.
+  // Shown at once; the card (and the pressed button) stays, so focus does too.
+  // One save at a time, so quick taps reach the database in the order they were made.
+  let savingWant: Promise<unknown> = Promise.resolve();
+  const onChangeWant = (item: Item) =>
+    (savingWant = savingWant.then(() =>
+      run(async () => {
+        const level = item.want_level === 3 ? 1 : ((item.want_level + 1) as WantLevel);
+        const was = item.want_level;
+        const id = item.id;
+        const setLevel = (to: WantLevel) =>
+          setItems((prev) =>
+            prev?.map((other) => (other.id === id ? { ...other, want_level: to } : other)),
+          );
+        setLevel(level);
+        announce(t("a11y.wantLevel", { item: item.name, level: t(`item.wantLevel${level}`) }));
+        try {
+          await setWantLevel(id, level);
+        } catch (e) {
+          setLevel(was);
+          throw e;
+        }
+      }),
+    ));
   const bulk = (action: (ids: ItemId[]) => Promise<void>, done: (count: number) => string) => {
     const count = select.selectedIds().length;
     return runBulk(async () => {
@@ -232,6 +258,7 @@ export default function WishList() {
       onCancelPick={purchases.cancelPick}
       onUndo={() => purchases.onUndo(item)}
       onRemove={() => onDelete(item)}
+      onChangeWant={() => onChangeWant(item)}
       selecting={select.selecting()}
       selected={select.selected().has(item.id)}
       onToggleSelect={() => select.toggle(item.id)}
@@ -353,6 +380,7 @@ export default function WishList() {
             <ListOrderSelect
               value={listSections.order()}
               showBought={purchases.showBought()}
+              showWanted={listSections.hasWantLevels()}
               onChange={listSections.chooseOrder}
             />
           </div>

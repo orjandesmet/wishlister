@@ -248,6 +248,10 @@ export const en = {
       `Delete ${p.name}'s profile and wishlist for everyone? This can't be undone.`,
   },
   item: {
+    wantLevel1: "I want this",
+    wantLevel2: "I really want this",
+    wantLevel3: "I really, really, REALLY want this",
+    changeWant: (p: { name: string }) => `Change how much you want ${p.name}`,
     viewPicture: (p: { name: string }) => `View picture: ${p.name}`,
     pictureOf: (p: { name: string }) => `Picture of ${p.name}`,
     viewPictures: (p: { name: string; count: number }) => `View ${p.count} pictures: ${p.name}`,
@@ -320,6 +324,7 @@ export const en = {
 
   listOrder: {
     label: "Sort by",
+    wanted: "Most wanted first",
     added: "Date added",
     newest: "Newest first",
     name: "Name (A to Z)",
@@ -394,6 +399,7 @@ export const en = {
     noGroups: "This list isn't in any groups yet.",
     noGroupsOption: "No groups (only me)",
     notWanted: "Please don't buy this: something I don't want",
+    wantLevel: "How much do you want this?",
     price: "Price (optional)",
     currency: "Currency",
     invalidPrice: "Enter a price like 12.50, or leave it empty.",
@@ -467,6 +473,7 @@ export const en = {
     roleOf: (p: { name: string }) => `Role of ${p.name}`,
     added: (p: { items: string }) => `Added ${p.items}.`,
     removed: (p: { item: string }) => `Removed ${p.item}.`,
+    wantLevel: (p: { item: string; level: string }) => `${p.item}: ${p.level}.`,
     bought: (p: { item: string }) => `Marked ${p.item} as bought.`,
     unbought: (p: { item: string }) => `${p.item} is no longer marked as bought.`,
     unboughtRemoved: (p: { item: string }) =>

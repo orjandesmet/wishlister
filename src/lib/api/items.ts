@@ -15,6 +15,8 @@ export type Item = {
   visible_in_all_groups: boolean;
   /** A "please don't buy" entry instead of a wish. Nobody can buy it. */
   not_wanted: boolean;
+  /** How much the owner wants it. Means nothing on a "please don't buy" entry. */
+  want_level: WantLevel;
   item_groups: { group_id: GroupId }[];
   /** Both set or both null. */
   price: number | null;
@@ -29,12 +31,17 @@ export type Item = {
    */
   removed_at: string | null;
 };
+/** 1 "I want this", 2 "I really want this", 3 "I really, really, REALLY want this". */
+export type WantLevel = 1 | 2 | 3;
+
 export type ItemInput = {
   name: string;
   url: string | null;
   category: string | null;
   visible_in_all_groups: boolean;
   not_wanted: boolean;
+  /** Left out, the saved level stays as it is. */
+  wantLevel?: WantLevel;
   groupIds: GroupId[];
   price: Price | null;
   /** The linked page's picture. Left out, the saved picture stays as it is. */
@@ -44,7 +51,7 @@ export type ItemInput = {
 };
 
 const ITEM_COLUMNS =
-  "id, profile_id, name, url, category, description, visible_in_all_groups, not_wanted, item_groups(group_id), price, price_currency, image_url, item_pictures(id, path, url, position), removed_at";
+  "id, profile_id, name, url, category, description, visible_in_all_groups, not_wanted, want_level, item_groups(group_id), price, price_currency, image_url, item_pictures(id, path, url, position), removed_at";
 
 export async function getItems(profileId: ProfileId): Promise<Item[]> {
   return must(
@@ -88,6 +95,7 @@ function itemColumns(input: ItemInput) {
     not_wanted: input.not_wanted,
     price: input.price?.amount ?? null,
     price_currency: input.price?.currency ?? null,
+    ...(input.wantLevel !== undefined ? { want_level: input.wantLevel } : {}),
     ...(input.imageUrl !== undefined ? { image_url: input.imageUrl } : {}),
     ...(input.description !== undefined ? { description: input.description?.trim() || null } : {}),
   };
@@ -213,6 +221,11 @@ export async function setItemsGroups(itemIds: ItemId[], groups: GroupSelection) 
         ),
       ),
   );
+}
+
+/** How much the owner wants an item. */
+export async function setWantLevel(itemId: ItemId, level: WantLevel) {
+  must(await supabase.from("items").update({ want_level: level }).eq("id", itemId).select("id"));
 }
 
 /** Like deleteItem, for several items. */

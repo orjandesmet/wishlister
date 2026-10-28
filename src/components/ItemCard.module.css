@@ -261,3 +261,38 @@ label.body {
     animation: pop 420ms var(--ease-pop) backwards;
   }
 }
+
+/* "I really want this", with its hearts. A button on your own list, so it is big enough to tap. */
+.want {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: 600;
+  color: var(--text-strong);
+  text-decoration: none;
+  text-align: start;
+}
+
+button.want {
+  min-height: 32px;
+  align-self: flex-start;
+}
+
+.hearts {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--danger);
+}
+
+.hearts svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+/* Plain "I want this" (only shown on your own list): an empty heart. */
+.noHearts svg {
+  fill: none;
+  color: var(--muted);
+}

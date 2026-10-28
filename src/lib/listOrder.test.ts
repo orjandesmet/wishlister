@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { arrangeItems } from "./listOrder.ts";
+import { arrangeItems, effectiveListOrder } from "./listOrder.ts";
 
 const compare = (a: string, b: string) => a.localeCompare(b, "en");
 const items = [
@@ -17,6 +17,13 @@ describe("arrangeItems", () => {
   it("keeps the order items were added", () => {
     expect(names(arrangeItems(items, "added", { compare }))).toEqual([
       ["Puzzle", "atlas", "Socks", "Novel", "Kite", "Mug"],
+    ]);
+  });
+
+  it("puts the most wanted first, keeping the order added among equals", () => {
+    const want = [1, 2, 1, 3, 2, 1];
+    expect(names(arrangeItems(items, "wanted", { compare, wantOf: (i) => want[i] }))).toEqual([
+      ["Novel", "atlas", "Kite", "Puzzle", "Socks", "Mug"],
     ]);
   });
 
@@ -80,5 +87,21 @@ describe("arrangeItems", () => {
     expect(names(arrangeItems(items, "priceDesc", { compare }))).toEqual(
       names(arrangeItems(items, "added", { compare })),
     );
+  });
+});
+
+describe("effectiveListOrder", () => {
+  it("is most wanted first when nothing was picked and something is wanted more", () => {
+    expect(effectiveListOrder(undefined, true)).toBe("wanted");
+  });
+
+  it("keeps the order added when nothing is wanted more than the rest", () => {
+    expect(effectiveListOrder(undefined, false)).toBe("added");
+    expect(effectiveListOrder("wanted", false)).toBe("added");
+  });
+
+  it("keeps what you picked", () => {
+    expect(effectiveListOrder("name", true)).toBe("name");
+    expect(effectiveListOrder("wanted", true)).toBe("wanted");
   });
 });

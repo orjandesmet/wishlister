@@ -58,6 +58,8 @@ export type ItemCardProps = {
   onCancelPick?: () => void;
   onUndo: () => void;
   onRemove: () => void;
+  /** The list's editors tap the hearts to say how much they want it (the next level, round). */
+  onChangeWant?: () => void;
   /** Picking items for a bulk action: the card becomes a checkbox and hides its buttons. */
   selecting?: boolean;
   selected?: boolean;
@@ -85,6 +87,57 @@ function PriceTag(props: { amount: number; currency: string }) {
         )}
       </Show>
     </p>
+  );
+}
+
+/** Lucide "heart" (ISC licence), filled. */
+function Heart() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
+    </svg>
+  );
+}
+
+/**
+ * How much the owner wants it: one heart for "I really want this", three for
+ * "I really, really, REALLY want this", and nothing for plain "I want this", except
+ * for the list's editors, who can tap it to change the level.
+ */
+function WantLevel(props: { level: number; name: string; onChange?: () => void }) {
+  const hearts = () => (props.level >= 3 ? 3 : props.level === 2 ? 1 : 0);
+  const label = () => t(`item.wantLevel${props.level as 1 | 2 | 3}`);
+  const content = () => (
+    <>
+      <span class={styles.hearts} classList={{ [styles.noHearts]: hearts() === 0 }}>
+        <For each={Array.from({ length: Math.max(hearts(), 1) })}>{() => <Heart />}</For>
+      </span>
+      {label()}
+    </>
+  );
+  return (
+    <Show
+      when={props.onChange}
+      fallback={
+        <Show when={hearts() > 0}>
+          <p class={`${styles.want} ${u.small}`}>{content()}</p>
+        </Show>
+      }
+    >
+      {(onChange) => (
+        <Button variant="link" class={`${styles.want} ${u.small}`} onClick={() => onChange()()}>
+          {content()}
+          <span class={u.visuallyHidden}>. {t("item.changeWant", { name: props.name })}</span>
+        </Button>
+      )}
+    </Show>
   );
 }
 
@@ -222,6 +275,13 @@ export function ItemCard(props: ItemCardProps) {
                 }
               >
                 {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
+              </Show>
+              <Show when={!props.item.not_wanted && !props.selecting}>
+                <WantLevel
+                  level={props.item.want_level}
+                  name={props.item.name}
+                  onChange={props.canEdit ? props.onChangeWant : undefined}
+                />
               </Show>
             </div>
           </div>

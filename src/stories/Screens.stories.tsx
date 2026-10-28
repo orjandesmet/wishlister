@@ -211,6 +211,7 @@ const item = (
   description: null,
   visible_in_all_groups: true,
   not_wanted: false,
+  want_level: 1,
   item_groups: [],
   price,
   price_currency: price === null ? null : n % 3 === 0 ? "EUR" : n % 3 === 1 ? "USD" : "GBP",
@@ -254,11 +255,11 @@ function sampleData() {
     details: {} as Record<string, Partial<ProfileDetails>>,
     lists: {
       me: [
-        item(5, "me", "Trail running shoes", 129.95, "Sport"),
+        item(5, "me", "Trail running shoes", 129.95, "Sport", { want_level: 2 }),
         item(6, "me", "Sourdough starter kit", null, null),
       ],
       anna: [
-        item(1, "anna", "Cast iron pan", 62.5, "Kitchen"),
+        item(1, "anna", "Cast iron pan", 62.5, "Kitchen", { want_level: 3 }),
         item(2, "anna", "Pour-over coffee set", 38, "Kitchen"),
         item(3, "anna", "LEGO Botanical bonsai tree", 49.99, "Toys", { image_url: bonsaiPicture }),
         item(4, "anna", "Merino scarf, grey", 35, "Toys", {
