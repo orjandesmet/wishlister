@@ -132,8 +132,8 @@ const backdrops: Record<
   christmas: { symbols: ["❄"], motion: "fall" },
   newYear: { symbols: ["✦", "✧"], motion: "twinkle" },
   birthday: { symbols: ["🎈"], motion: "rise" },
-  halloween: { symbols: ["💀", "👻", "🎃", "🧙", "🕸️"], motion: "twinkle" },
-  easter: { symbols: ["🌸", "🌼"], motion: "sway" },
+  halloween: { symbols: ["💀", "👻", "🎃", "🧙", "🕸️", "🧟‍♂️", "🧛‍♀️", "🕷️"], motion: "twinkle" },
+  easter: { symbols: ["🌸", "🌼", "🐰", "🐣"], motion: "sway" },
 };
 
 /** Fixed spots (in % of the window), so the scatter looks random but never jumps between renders. */
