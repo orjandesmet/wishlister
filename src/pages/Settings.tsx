@@ -3,6 +3,7 @@ import { A } from "@solidjs/router";
 import { createResource, createSignal, For, Show } from "solid-js";
 import { NotificationSettings } from "../components/NotificationSettings.tsx";
 import { CurrencySelect } from "../components/CurrencySelect.tsx";
+import { GroupCollapseSetting } from "../components/GroupCollapseSetting.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { SeasonalThemes } from "../components/SeasonalThemes.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
@@ -12,6 +13,7 @@ import { followList, getMyFollows, unfollowAll, unfollowList } from "../lib/api/
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { today } from "../lib/occasions.ts";
 import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
+import { rememberGroupCollapse, setRememberGroupCollapse } from "../lib/groupCollapse.ts";
 import { locale, t } from "../lib/i18n.ts";
 import { seasonalThemes, setSeasonalThemes, themeToday } from "../lib/theme.ts";
 import { useMe } from "../lib/me.tsx";
@@ -103,6 +105,7 @@ export default function Settings() {
           today={themeToday()}
           onChange={(on) => void onSeasonalThemes(on)}
         />
+        <GroupCollapseSetting on={rememberGroupCollapse()} onChange={setRememberGroupCollapse} />
       </Card>
       <Card>
         <h2>{t("account.children")}</h2>

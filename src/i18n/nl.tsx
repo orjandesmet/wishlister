@@ -25,6 +25,10 @@ export const nl: Dictionary = {
   language: {
     label: "Taal",
   },
+  groupCollapse: {
+    label: "Onthoud welke groepen ingeklapt zijn",
+    hint: "Op dit toestel blijven de leden van elke groep getoond of ingeklapt zoals je ze liet. Anders starten telefoons ingeklapt.",
+  },
   themes: {
     label: "Seizoensthema's",
     hint: "De app kleedt zich aan voor Sinterklaas, Kerstmis, Nieuwjaar, Pasen, Halloween en 1 maart.",
@@ -103,6 +107,8 @@ export const nl: Dictionary = {
     daysUnit: "dagen",
     secretSanta: "Secret Santa loopt",
     secretSantaFor: (p: { occasion: string }) => `Secret Santa loopt voor ${p.occasion}`,
+    showMembers: (p) => (p.count === 1 ? "Toon 1 lid" : `Toon ${p.count} leden`),
+    hideMembers: "Verberg leden",
   },
   group: {
     back: "‹ Groepen",

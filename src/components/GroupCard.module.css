@@ -143,3 +143,37 @@
   height: 18px;
   flex-shrink: 0;
 }
+
+/* Folds the members away, so on a phone the next group is a short scroll down. Full tap height. */
+.membersToggle {
+  align-self: flex-start;
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.membersChevron {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.membersChevron.open {
+  transform: rotate(180deg);
+}
+
+/* Collapsed, with nobody kept in sight: no empty gap. */
+.groupCard ul:empty {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .membersChevron {
+    transition: transform 180ms var(--ease-pop);
+  }
+}
