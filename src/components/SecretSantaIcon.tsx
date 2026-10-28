@@ -73,7 +73,7 @@ export function SecretSantaIcon(props: { class?: string; style?: JSX.CSSProperti
           {/* The beard. */}
           <path
             opacity=".5"
-            d="M4.8 11c-.3 5.4 2.6 11.2 7.2 12.4 4.6-1.2 7.5-7 7.2-12.4-1.5 1-3.2 1-4.6.4-.9-.4-1.7-.7-2.6-.7s-1.7.3-2.6.7c-1.4.6-3.1.6-4.6-.4z"
+            d="M 4.8 11 C 4.5 16.4 7.4 22.2 12 23.4 C 16.6 22.2 19.5 16.4 19.2 11 C 17.7 12 12 13.948 12 13.948 C 12 13.948 6.3 12 4.8 11 Z"
           />
         </g>
         {/* The fur brim, and the moustache in the gap cut for it, in the same light tone. */}
