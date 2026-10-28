@@ -274,6 +274,18 @@ export const Selected: Story = {
   args: { ...Selecting.args, selected: true },
 };
 
+/** The checkbox stays on the left, before the picture, so it lines up with cards without one. */
+export const SelectingWithPicture: Story = {
+  args: { ...Selecting.args, item: { ...meta.args.item, image_url: bonsaiPicture } },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    // Tapping anywhere on the card ticks the box, which is named after the item.
+    await userEvent.click(canvas.getByText(args.item.name));
+    await expect(args.onToggleSelect).toHaveBeenCalledOnce();
+    await expect(canvas.getByRole("checkbox", { name: args.item.name })).toBeChecked();
+  },
+};
+
 /** "Please don't buy": shown apart, and nobody can buy it. */
 export const NotWanted: Story = {
   args: {

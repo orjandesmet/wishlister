@@ -1,5 +1,6 @@
 import { EditLabel } from "./EditLabel.tsx";
 import { A } from "@solidjs/router";
+import { Dynamic } from "solid-js/web";
 import { RemoveLabel } from "./RemoveLabel.tsx";
 import {
   createEffect,
@@ -25,7 +26,6 @@ import { formatOccasionDate } from "../lib/occasions.ts";
 import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
-import { Check } from "./Check.tsx";
 import { Chip } from "./Chip.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
 import { itemPictureSources } from "../lib/itemPictures.ts";
@@ -149,6 +149,7 @@ export function ItemCard(props: ItemCardProps) {
   const foldable = () => !isShort(description());
   const [expanded, setExpanded] = createSignal(false);
   const descriptionId = createUniqueId();
+  const nameId = createUniqueId();
 
   return (
     <Card
@@ -162,254 +163,264 @@ export function ItemCard(props: ItemCardProps) {
         [styles.selected]: props.selected,
       }}
     >
-      <Show when={props.item.not_wanted}>
-        <p class={`${styles.warning} ${styles.notWantedNote}`}>
-          {/* Lucide "ban" (ISC licence). */}
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <path d="m4.9 4.9 14.2 14.2" />
-          </svg>
-          {t("item.notWanted")}
-        </p>
-      </Show>
-      <div class={styles.top}>
-        <ItemPicture
-          srcs={itemPictureSources(props.item)}
-          name={props.item.name}
-          zoomable={!props.selecting}
-        />
-        <div class={styles.topText}>
-          <div class={styles.head}>
-            <Show
-              when={props.selecting}
-              fallback={<strong class={styles.name}>{props.item.name}</strong>}
-            >
-              {/* The whole row is the label, so tapping anywhere on it ticks the box. */}
-              <Check class={styles.selectRow}>
-                <input
-                  type="checkbox"
-                  checked={props.selected ?? false}
-                  onChange={() => props.onToggleSelect?.()}
-                />
-                <strong class={styles.name}>{props.item.name}</strong>
-              </Check>
-            </Show>
-            <Show when={props.canEdit && !props.selecting}>
-              <div class={styles.manage}>
-                <A class={u.link} href={`/items/${props.item.id}/edit`}>
-                  <EditLabel label={t("common.edit")} of={props.item.name} />
-                </A>
-                <Button variant="link" danger onClick={() => props.onRemove()}>
-                  <RemoveLabel of={props.item.name} />
-                </Button>
-              </div>
-            </Show>
-          </div>
-          <Show
-            when={!props.item.not_wanted && props.item.price !== null && props.item.price_currency}
-          >
-            {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
-          </Show>
-        </div>
-      </div>
-      <Show when={description().length > 0}>
-        <div class={styles.description}>
-          <Show
-            when={!foldable() || (expanded() && !props.selecting)}
-            fallback={
-              <p id={descriptionId} class={styles.excerpt}>
-                {plainText(description())}
-              </p>
-            }
-          >
-            <Markdown id={descriptionId} blocks={description()} />
-          </Show>
-          <Show when={foldable() && !props.selecting}>
-            <Button
-              variant="link"
-              class={styles.more}
-              aria-expanded={expanded()}
-              aria-controls={descriptionId}
-              onClick={() => setExpanded((open) => !open)}
-            >
-              {expanded() ? t("item.showLess") : t("item.showMore")}
-              <span class={u.visuallyHidden}>: {props.item.name}</span>
-            </Button>
-          </Show>
-        </div>
-      </Show>
-      <Show when={props.item.category || showUrl()}>
-        <div class={styles.meta}>
-          <Show when={props.item.category}>
-            <Chip hue={hueFor(props.item.category!)}>{props.item.category}</Chip>
-          </Show>
-          <Show when={showUrl()}>
-            {(url) => (
-              <a
-                class={`${u.link} ${styles.shopLink}`}
-                href={url()}
-                target="_blank"
-                rel="noopener noreferrer"
+      {/* While picking, the whole card is the checkbox's label, and the box sits in its own
+          column on the left: the same spot on every card, picture or not. */}
+      <Dynamic component={props.selecting ? "label" : "div"} class={styles.body}>
+        <Show when={props.selecting}>
+          <input
+            type="checkbox"
+            class={styles.selectBox}
+            aria-labelledby={nameId}
+            checked={props.selected ?? false}
+            onChange={() => props.onToggleSelect?.()}
+          />
+        </Show>
+        <div class={styles.content}>
+          <Show when={props.item.not_wanted}>
+            <p class={`${styles.warning} ${styles.notWantedNote}`}>
+              {/* Lucide "ban" (ISC licence). */}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
               >
-                <span class={u.truncate}>{shopName(url())}</span>
-                {/* Lucide "external-link" (ISC licence). */}
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
-                  <path d="M15 3h6v6" />
-                  <path d="M10 14 21 3" />
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                </svg>
-              </a>
-            )}
+                <circle cx="12" cy="12" r="10" />
+                <path d="m4.9 4.9 14.2 14.2" />
+              </svg>
+              {t("item.notWanted")}
+            </p>
           </Show>
-        </div>
-      </Show>
-      <Show when={props.canEdit && !props.item.visible_in_all_groups && !isPrivate()}>
-        <p class={`${u.muted} ${u.small}`}>
-          {t("item.onlyVisibleIn", { groups: <BoldList items={props.groupNames} /> })}
-        </p>
-      </Show>
-      <Show when={props.canEdit && isPrivate()}>
-        <p class={`${styles.warning} ${u.small}`}>
-          {/* Lucide "triangle-alert" (ISC licence). */}
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
-            <path d="M12 9v4" />
-            <path d="M12 17h.01" />
-          </svg>
-          {t("item.private")}
-        </p>
-      </Show>
-      {/* Only others see a removed item: it stays because someone bought it. */}
-      <Show when={props.item.removed_at && !props.selecting}>
-        <p class={`${styles.warning} ${u.small}`}>
-          {/* Lucide "circle-alert" (ISC licence). */}
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <line x1="12" x2="12" y1="8" y2="12" />
-            <line x1="12" x2="12.01" y1="16" y2="16" />
-          </svg>
-          {props.purchase === "mine" ? t("item.removedMine") : t("item.removed")}
-        </p>
-      </Show>
-      <Show when={!props.selecting && props.questions}>{props.questions}</Show>
-      <Switch>
-        <Match when={props.selecting}>{null}</Match>
-        <Match when={props.purchase === "mine"}>
-          <div class={u.row}>
-            <span class={styles.bought}>
-              {props.boughtFor
-                ? t("item.youBoughtFor", { occasion: props.boughtFor })
-                : t("item.youBought")}
-            </span>
-            <Button
-              variant="secondary"
-              size="small"
-              data-purchase
-              onClick={() => {
-                pressed();
-                props.onUndo();
-              }}
-            >
-              {t("item.undo")}
-              <span class={u.visuallyHidden}>: {props.item.name}</span>
-            </Button>
+          <div class={styles.top}>
+            <ItemPicture
+              srcs={itemPictureSources(props.item)}
+              name={props.item.name}
+              zoomable={!props.selecting}
+            />
+            <div class={styles.topText}>
+              <div class={styles.head}>
+                <strong id={nameId} class={styles.name}>
+                  {props.item.name}
+                </strong>
+                <Show when={props.canEdit && !props.selecting}>
+                  <div class={styles.manage}>
+                    <A class={u.link} href={`/items/${props.item.id}/edit`}>
+                      <EditLabel label={t("common.edit")} of={props.item.name} />
+                    </A>
+                    <Button variant="link" danger onClick={() => props.onRemove()}>
+                      <RemoveLabel of={props.item.name} />
+                    </Button>
+                  </div>
+                </Show>
+              </div>
+              <Show
+                when={
+                  !props.item.not_wanted && props.item.price !== null && props.item.price_currency
+                }
+              >
+                {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
+              </Show>
+            </div>
           </div>
-        </Match>
-        <Match when={props.purchase === "someone"}>
-          <span class={`${styles.bought} ${styles.someone}`}>{t("item.someoneBought")}</span>
-        </Match>
-        <Match when={props.purchase === "available" && props.occasionChoices}>
-          {(choices) => (
-            <div class={`${u.stack} ${u.smallGap}`} role="group" aria-labelledby={occasionLabel}>
-              <span class={u.fieldLabel} id={occasionLabel}>
-                {t("item.forWhichOccasion")}
-              </span>
-              <For each={choices()}>
-                {(occasion) => (
-                  <Button
-                    variant="secondary"
-                    data-purchase
-                    onClick={(event) => {
-                      pressed();
-                      rememberButton(event);
-                      props.onPickOccasion?.(occasion.id);
-                    }}
-                  >
-                    {occasion.name} · {formatOccasionDate(occasion.date, locale())}
-                  </Button>
-                )}
-              </For>
-              <div class={u.row}>
+          <Show when={description().length > 0}>
+            <div class={styles.description}>
+              <Show
+                when={!foldable() || (expanded() && !props.selecting)}
+                fallback={
+                  <p id={descriptionId} class={styles.excerpt}>
+                    {plainText(description())}
+                  </p>
+                }
+              >
+                <Markdown id={descriptionId} blocks={description()} />
+              </Show>
+              <Show when={foldable() && !props.selecting}>
                 <Button
                   variant="link"
-                  onClick={(event) => {
-                    pressed();
-                    rememberButton(event);
-                    props.onPickOccasion?.(null);
-                  }}
+                  class={styles.more}
+                  aria-expanded={expanded()}
+                  aria-controls={descriptionId}
+                  onClick={() => setExpanded((open) => !open)}
                 >
-                  {t("item.noOccasion")}
+                  {expanded() ? t("item.showLess") : t("item.showMore")}
+                  <span class={u.visuallyHidden}>: {props.item.name}</span>
                 </Button>
+              </Show>
+            </div>
+          </Show>
+          <Show when={props.item.category || showUrl()}>
+            <div class={styles.meta}>
+              <Show when={props.item.category}>
+                <Chip hue={hueFor(props.item.category!)}>{props.item.category}</Chip>
+              </Show>
+              <Show when={showUrl()}>
+                {(url) => (
+                  <a
+                    class={`${u.link} ${styles.shopLink}`}
+                    href={url()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <span class={u.truncate}>{shopName(url())}</span>
+                    {/* Lucide "external-link" (ISC licence). */}
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="2"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M15 3h6v6" />
+                      <path d="M10 14 21 3" />
+                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                    </svg>
+                  </a>
+                )}
+              </Show>
+            </div>
+          </Show>
+          <Show when={props.canEdit && !props.item.visible_in_all_groups && !isPrivate()}>
+            <p class={`${u.muted} ${u.small}`}>
+              {t("item.onlyVisibleIn", { groups: <BoldList items={props.groupNames} /> })}
+            </p>
+          </Show>
+          <Show when={props.canEdit && isPrivate()}>
+            <p class={`${styles.warning} ${u.small}`}>
+              {/* Lucide "triangle-alert" (ISC licence). */}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+                <path d="M12 9v4" />
+                <path d="M12 17h.01" />
+              </svg>
+              {t("item.private")}
+            </p>
+          </Show>
+          {/* Only others see a removed item: it stays because someone bought it. */}
+          <Show when={props.item.removed_at && !props.selecting}>
+            <p class={`${styles.warning} ${u.small}`}>
+              {/* Lucide "circle-alert" (ISC licence). */}
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="10" />
+                <line x1="12" x2="12" y1="8" y2="12" />
+                <line x1="12" x2="12.01" y1="16" y2="16" />
+              </svg>
+              {props.purchase === "mine" ? t("item.removedMine") : t("item.removed")}
+            </p>
+          </Show>
+          <Show when={!props.selecting && props.questions}>{props.questions}</Show>
+          <Switch>
+            <Match when={props.selecting}>{null}</Match>
+            <Match when={props.purchase === "mine"}>
+              <div class={u.row}>
+                <span class={styles.bought}>
+                  {props.boughtFor
+                    ? t("item.youBoughtFor", { occasion: props.boughtFor })
+                    : t("item.youBought")}
+                </span>
                 <Button
-                  variant="link"
+                  variant="secondary"
+                  size="small"
+                  data-purchase
                   onClick={() => {
                     pressed();
-                    props.onCancelPick?.();
+                    props.onUndo();
                   }}
                 >
-                  {t("common.cancel")}
+                  {t("item.undo")}
+                  <span class={u.visuallyHidden}>: {props.item.name}</span>
                 </Button>
               </div>
-            </div>
-          )}
-        </Match>
-        <Match when={props.purchase === "available"}>
-          <button
-            type="button"
-            data-purchase
-            onClick={(event) => {
-              pressed();
-              rememberButton(event);
-              props.onBuy();
-            }}
-          >
-            {t("item.iBought")}
-            <span class={u.visuallyHidden}>: {props.item.name}</span>
-          </button>
-        </Match>
-      </Switch>
+            </Match>
+            <Match when={props.purchase === "someone"}>
+              <span class={`${styles.bought} ${styles.someone}`}>{t("item.someoneBought")}</span>
+            </Match>
+            <Match when={props.purchase === "available" && props.occasionChoices}>
+              {(choices) => (
+                <div
+                  class={`${u.stack} ${u.smallGap}`}
+                  role="group"
+                  aria-labelledby={occasionLabel}
+                >
+                  <span class={u.fieldLabel} id={occasionLabel}>
+                    {t("item.forWhichOccasion")}
+                  </span>
+                  <For each={choices()}>
+                    {(occasion) => (
+                      <Button
+                        variant="secondary"
+                        data-purchase
+                        onClick={(event) => {
+                          pressed();
+                          rememberButton(event);
+                          props.onPickOccasion?.(occasion.id);
+                        }}
+                      >
+                        {occasion.name} · {formatOccasionDate(occasion.date, locale())}
+                      </Button>
+                    )}
+                  </For>
+                  <div class={u.row}>
+                    <Button
+                      variant="link"
+                      onClick={(event) => {
+                        pressed();
+                        rememberButton(event);
+                        props.onPickOccasion?.(null);
+                      }}
+                    >
+                      {t("item.noOccasion")}
+                    </Button>
+                    <Button
+                      variant="link"
+                      onClick={() => {
+                        pressed();
+                        props.onCancelPick?.();
+                      }}
+                    >
+                      {t("common.cancel")}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </Match>
+            <Match when={props.purchase === "available"}>
+              <button
+                type="button"
+                data-purchase
+                onClick={(event) => {
+                  pressed();
+                  rememberButton(event);
+                  props.onBuy();
+                }}
+              >
+                {t("item.iBought")}
+                <span class={u.visuallyHidden}>: {props.item.name}</span>
+              </button>
+            </Match>
+          </Switch>
+        </div>
+      </Dynamic>
     </Card>
   );
 }
