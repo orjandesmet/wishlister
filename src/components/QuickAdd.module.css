@@ -12,8 +12,8 @@
   color: var(--muted);
 }
 
-.details {
-  align-self: flex-start;
+.actions {
+  flex-wrap: wrap;
 }
 
 /* Floating "quick add" button, above the tab bar. */
