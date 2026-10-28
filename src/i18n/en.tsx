@@ -10,6 +10,8 @@ import type { JSX } from "solid-js";
 export const en = {
   common: {
     loading: "Loading…",
+    preview: "Preview",
+    nothingToPreview: "Nothing to preview yet.",
     you: " (you)",
     save: "Save",
     saving: "Saving…",
@@ -189,6 +191,9 @@ export const en = {
     minLoopHelp:
       "A loop is a group of people who only give to each other. A bigger minimum makes the draw harder to guess; All is one loop through everyone. If no draw is possible, try a smaller one.",
     loopAll: "All",
+    message: "Message (optional)",
+    messageHelp:
+      "Sent along with the first email everyone gets. You can use markdown: **bold**, *italic*, [links](https://…) and lists.",
     viewFor: (p: { occasion: string }) => `Secret Santa for ${p.occasion}`,
     occasion: "Occasion",
     noUpcoming: "Add an upcoming occasion to the group first, then start a Secret Santa for it.",

@@ -35,7 +35,9 @@ create table public.secret_santas (
   group_id uuid not null references public.groups (id) on delete cascade,
   occasion_id uuid not null unique references public.occasions (id) on delete cascade,
   created_by uuid references public.profiles (id) on delete set null,
-  created_at timestamptz not null default now()
+  created_at timestamptz not null default now(),
+  -- Markdown from the manager, sent along with the first email everyone gets.
+  message text check (char_length(message) <= 2000)
 );
 
 create index secret_santas_group_id_idx on public.secret_santas (group_id, created_at desc);
@@ -54,6 +56,9 @@ create table public.secret_santa_pairs (
   recipient_profile_id uuid not null references public.profiles (id) on delete cascade,
   -- When the email went out (or is going out): see claim_secret_santa_notices().
   mailed_at timestamptz,
+  -- Set when the pair changes after an email went out: that email is about the new
+  -- person only, without the draw's message.
+  reassigned boolean not null default false,
   primary key (secret_santa_id, giver_profile_id),
   unique (secret_santa_id, recipient_profile_id),
   constraint secret_santa_pairs_not_yourself check (giver_profile_id <> recipient_profile_id)
@@ -204,7 +209,8 @@ create function public.create_secret_santa(
   target_occasion uuid,
   participants uuid[],
   exclusions jsonb,
-  pairs jsonb
+  pairs jsonb,
+  message text default null
 )
 returns uuid
 language plpgsql security definer set search_path = ''
@@ -273,8 +279,8 @@ begin
     raise exception 'The draw isn''t valid' using errcode = 'check_violation';
   end if;
 
-  insert into public.secret_santas (group_id, occasion_id, created_by)
-  values (occasion.group_id, target_occasion, manager)
+  insert into public.secret_santas (group_id, occasion_id, created_by, message)
+  values (occasion.group_id, target_occasion, manager, nullif(btrim(message), ''))
   returning id into new_id;
 
   insert into public.secret_santa_pairs (secret_santa_id, giver_profile_id, recipient_profile_id)
@@ -346,7 +352,9 @@ begin
     and (profile_id = target_profile or excluded_profile_id = target_profile);
 
   update public.secret_santa_pairs
-  set recipient_profile_id = next_recipient, mailed_at = null
+  set recipient_profile_id = next_recipient,
+      reassigned = reassigned or mailed_at is not null,
+      mailed_at = null
   where secret_santa_id = draw.id and giver_profile_id = giver;
 
   insert into public.list_follows (follower_id, list_id, until)
@@ -455,7 +463,8 @@ returns table (
   occasion_date date,
   group_name text,
   email text,
-  locale text
+  locale text,
+  message text
 )
 language sql security definer set search_path = ''
 as $$
@@ -472,7 +481,7 @@ as $$
     set mailed_at = now()
     from pending p
     where pr.secret_santa_id = p.secret_santa_id and pr.giver_profile_id = p.giver_profile_id
-    returning pr.secret_santa_id, pr.giver_profile_id, pr.recipient_profile_id
+    returning pr.secret_santa_id, pr.giver_profile_id, pr.recipient_profile_id, pr.reassigned
   )
   select
     c.secret_santa_id,
@@ -483,7 +492,8 @@ as $$
     o.date,
     g.name,
     u.email,
-    coalesce(u.raw_user_meta_data ->> 'locale', 'en')
+    coalesce(u.raw_user_meta_data ->> 'locale', 'en'),
+    case when c.reassigned then null else s.message end
   from claimed c
   join public.secret_santas s on s.id = c.secret_santa_id
   join public.occasions o on o.id = s.occasion_id
@@ -517,7 +527,7 @@ revoke execute on function
   public.my_secret_santa_recipients(date),
   public.secret_santa_participants(uuid),
   public.secret_santa_history(uuid),
-  public.create_secret_santa(uuid, uuid, uuid[], jsonb, jsonb),
+  public.create_secret_santa(uuid, uuid, uuid[], jsonb, jsonb, text),
   public.remove_from_secret_santa(uuid, uuid),
   public.claim_secret_santa_notices(),
   public.release_secret_santa_notices(uuid[], uuid[])
@@ -533,7 +543,7 @@ to authenticated;
 
 grant execute on function
   public.secret_santa_history(uuid),
-  public.create_secret_santa(uuid, uuid, uuid[], jsonb, jsonb),
+  public.create_secret_santa(uuid, uuid, uuid[], jsonb, jsonb, text),
   public.claim_secret_santa_notices(),
   public.release_secret_santa_notices(uuid[], uuid[])
 to service_role;

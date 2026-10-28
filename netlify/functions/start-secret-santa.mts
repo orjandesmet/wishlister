@@ -4,7 +4,8 @@
 //
 // POST /.netlify/functions/start-secret-santa with
 // { occasionId, participants: profile ids, exclusions: [{ profile, excluded }],
-// minLoopSize: "all" or a number from 2 to half the participants } and
+// minLoopSize: "all" or a number from 2 to half the participants, message?: markdown
+// that goes out with the first email } and
 // the manager's access token as "Authorization: Bearer …".
 //
 // The draw runs here (see ../lib/secretSanta.ts) and goes to the database through
@@ -52,6 +53,7 @@ export default async (request: Request) => {
     participants?: string[];
     exclusions?: Exclusion[];
     minLoopSize?: MinLoopSize;
+    message?: unknown;
   };
   const { occasionId } = body;
   if (!occasionId || !Array.isArray(body.participants)) {
@@ -77,6 +79,13 @@ export default async (request: Request) => {
       "The minimum loop size must be 'all' or between 2 and half the participants",
     );
   }
+
+  // Markdown for the first email; the database keeps it to 2000 characters.
+  if (body.message !== undefined && body.message !== null && typeof body.message !== "string") {
+    return message(400, "The message must be text");
+  }
+  const note = (body.message ?? "").trim();
+  if (note.length > 2000) return message(400, "The message can be 2000 characters at most");
 
   // Everything about the caller is read as them, so row-level security applies.
   const asCaller = createClient(url, publishableKey, {
@@ -153,6 +162,7 @@ export default async (request: Request) => {
     participants,
     exclusions: exclusions.map((e) => ({ profile_id: e.profile, excluded_profile_id: e.excluded })),
     pairs: result.pairs,
+    message: note || null,
   });
   if (error) {
     if (error.code === "23505") return message(409, error.message);

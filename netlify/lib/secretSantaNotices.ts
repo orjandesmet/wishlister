@@ -6,6 +6,7 @@
 //
 // Like the digest, the texts live here instead of in src/i18n (which holds JSX).
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { parseMarkdown, type Block, type Inline } from "../../src/lib/markdown.ts";
 import { escapeHtml, sendEmails, type Email } from "./mail.ts";
 
 /** One row of claim_secret_santa_notices(): one email. */
@@ -20,6 +21,8 @@ export type SecretSantaRow = {
   group_name: string;
   email: string;
   locale: string;
+  /** The manager's markdown, only for the first email someone gets. */
+  message?: string | null;
 };
 
 type Texts = {
@@ -56,6 +59,37 @@ function formatDate(isoDate: string, locale: string) {
   return new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(date);
 }
 
+const inlineHtml = (nodes: Inline[]): string =>
+  nodes
+    .map((node) => {
+      switch (node.type) {
+        case "text":
+          return escapeHtml(node.text);
+        case "break":
+          return "<br>";
+        case "strong":
+          return `<strong>${inlineHtml(node.children)}</strong>`;
+        case "em":
+          return `<em>${inlineHtml(node.children)}</em>`;
+        case "link":
+          return `<a href="${escapeHtml(node.href)}">${inlineHtml(node.children)}</a>`;
+      }
+    })
+    .join("");
+
+/** The message as HTML. Built from the parsed tree, so what was typed is never HTML. */
+export function messageHtml(blocks: Block[]): string {
+  return blocks
+    .map((block) => {
+      if (block.type === "paragraph") return `<p>${inlineHtml(block.children)}</p>`;
+      const tag = block.ordered ? "ol" : "ul";
+      const start = block.ordered && block.start !== 1 ? ` start="${block.start}"` : "";
+      const items = block.items.map((item) => `<li>${inlineHtml(item)}</li>`).join("");
+      return `<${tag}${start}>${items}</${tag}>`;
+    })
+    .join("\n");
+}
+
 /** One email per row. `siteUrl` is where the app runs, for the link. */
 export function buildSecretSantaEmails(rows: SecretSantaRow[], siteUrl: string): Email[] {
   const site = siteUrl.replace(/\/$/, "");
@@ -64,15 +98,18 @@ export function buildSecretSantaEmails(rows: SecretSantaRow[], siteUrl: string):
     const link = `${site}/lists/${row.recipient_profile_id}`;
     const date = formatDate(row.occasion_date, t.locale);
     const recipient = `<strong>${escapeHtml(row.recipient_name)}</strong>`;
+    const message = row.message?.trim() ?? "";
     return {
       to: row.email,
       subject: t.subject(row.occasion_name),
       html: [
+        ...(message ? [`<div>${messageHtml(parseMarkdown(message))}</div>`, "<hr>"] : []),
         `<p>${t.drawn(recipient, escapeHtml(row.occasion_name), escapeHtml(row.group_name), date)}</p>`,
         `<p><a href="${link}">${t.openList}</a></p>`,
         `<p style="color:#666;font-size:13px">${t.secret}</p>`,
       ].join("\n"),
       text: [
+        ...(message ? [message, "---"] : []),
         t.drawn(row.recipient_name, row.occasion_name, row.group_name, date),
         `${t.openList}: ${link}`,
         t.secret,

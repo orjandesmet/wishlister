@@ -76,6 +76,31 @@ describe("buildSecretSantaEmails", () => {
     expect(email.html).not.toContain("<fun>");
   });
 
+  it("renders the message as HTML above the draw, and as it is in the text", () => {
+    const [email] = buildSecretSantaEmails(
+      [
+        row({
+          message:
+            "Budget is **20 euro**.\n\n- one\n- [two](https://example.com)\n\n<script>x</script>",
+        }),
+      ],
+      "https://wishlister.example",
+    );
+    expect(email.html).toContain("<strong>20 euro</strong>");
+    expect(email.html).toContain("<li>one</li>");
+    expect(email.html).toContain('<li><a href="https://example.com/">two</a></li>');
+    expect(email.html).toContain("&lt;script&gt;x&lt;/script&gt;");
+    expect(email.html).not.toContain("<script>");
+    expect(email.html.indexOf("20 euro")).toBeLessThan(email.html.indexOf("You drew"));
+    expect(email.text).toContain("Budget is **20 euro**.");
+  });
+
+  it("sends no message block without a message", () => {
+    const [email] = buildSecretSantaEmails([row({ message: null })], "https://wishlister.example");
+    expect(email.html).not.toContain("<hr>");
+    expect(email.text).not.toContain("---");
+  });
+
   it("keeps an unreadable date as it is", () => {
     const [email] = buildSecretSantaEmails(
       [row({ occasion_date: "someday" })],

@@ -40,6 +40,8 @@ export type SecretSantaInput = {
   participants: ProfileId[];
   exclusions: SecretSantaExclusion[];
   minLoopSize: MinLoopSize;
+  /** Markdown, sent along with the first email everyone gets. */
+  message?: string;
 };
 
 /**

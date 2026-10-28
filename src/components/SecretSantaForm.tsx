@@ -12,6 +12,7 @@ import { effectiveLoopSize, loopSizeOptions } from "../lib/loopSize.ts";
 import { formatOccasionDate } from "../lib/occasions.ts";
 import u from "../utilities.module.css";
 import { Check } from "./Check.tsx";
+import { MarkdownField } from "./MarkdownField.tsx";
 import { Select } from "./Select.tsx";
 import styles from "./SecretSantaForm.module.css";
 
@@ -26,6 +27,9 @@ export type SecretSantaFormProps = {
   onSubmit: (input: SecretSantaInput) => void;
 };
 
+/** Longest message the database accepts. */
+const MAX_MESSAGE = 2000;
+
 const keyOf = (profile: ProfileId, excluded: ProfileId) => `${profile}|${excluded}`;
 
 /** Picks who takes part in a draw, and who must not draw whom. */
@@ -37,6 +41,8 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
   const id = createUniqueId();
   const [chosen, setChosen] = createSignal<OccasionId>();
   const occasionId = () => chosen() ?? props.occasions[0]?.id;
+
+  const [message, setMessage] = createSignal("");
 
   const [pickedLoop, setPickedLoop] = createSignal<MinLoopSize>("all");
 
@@ -67,6 +73,7 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
       participants,
       exclusions,
       minLoopSize: loopSize(),
+      message: message().trim() || undefined,
     });
   };
 
@@ -182,6 +189,18 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
           {t("secretSanta.minLoopHelp")}
         </p>
       </Show>
+
+      <MarkdownField
+        label={t("secretSanta.message")}
+        rows={4}
+        maxLength={MAX_MESSAGE}
+        describedBy={`message-help-${id}`}
+        value={message()}
+        onInput={setMessage}
+      />
+      <p id={`message-help-${id}`} class={`${u.muted} ${u.small}`}>
+        {t("secretSanta.messageHelp")}
+      </p>
 
       <Show when={taking().length < 2}>
         <p class={u.muted} id={`need-two-${id}`}>

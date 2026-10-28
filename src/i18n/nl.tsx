@@ -5,6 +5,8 @@ import type { Dictionary } from "./en.tsx";
 export const nl: Dictionary = {
   common: {
     loading: "Laden…",
+    preview: "Voorbeeld",
+    nothingToPreview: "Nog niets om te tonen.",
     you: " (jij)",
     save: "Opslaan",
     saving: "Opslaan…",
@@ -182,6 +184,9 @@ export const nl: Dictionary = {
     minLoopHelp:
       "Een kring is een groep mensen die alleen aan elkaar geven. Een grotere kleinste kring maakt de trekking moeilijker te raden; Iedereen is één kring door iedereen. Lukt er geen trekking, kies dan een kleinere.",
     loopAll: "Iedereen",
+    message: "Bericht (optioneel)",
+    messageHelp:
+      "Wordt meegestuurd met de eerste e-mail die iedereen krijgt. Je kunt markdown gebruiken: **vet**, *schuin*, [links](https://…) en lijstjes.",
     viewFor: (p: { occasion: string }) => `Secret Santa voor ${p.occasion}`,
     occasion: "Gelegenheid",
     noUpcoming:
