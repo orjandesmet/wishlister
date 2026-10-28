@@ -260,6 +260,8 @@ export const nl: Dictionary = {
     added: "Datum toegevoegd",
     newest: "Nieuwste eerst",
     name: "Naam (A tot Z)",
+    priceAsc: "Prijs (laag naar hoog)",
+    priceDesc: "Prijs (hoog naar laag)",
     category: "Categorie",
     available: "Nog niet gekocht eerst",
     uncategorised: "Geen categorie",

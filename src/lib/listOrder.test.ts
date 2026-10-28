@@ -59,4 +59,26 @@ describe("arrangeItems", () => {
       names(arrangeItems(items, "added", { compare })),
     );
   });
+
+  // Puzzle 20, atlas none, Socks 5, Novel 20, Kite 35, Mug none.
+  const prices = [20, null, 5, 20, 35, null];
+  const priceOf = (i: number) => prices[i];
+
+  it("sorts by price low to high, ties in the order added, no price last", () => {
+    expect(names(arrangeItems(items, "priceAsc", { compare, priceOf }))).toEqual([
+      ["Socks", "Puzzle", "Novel", "Kite", "atlas", "Mug"],
+    ]);
+  });
+
+  it("sorts by price high to low, still with no price last", () => {
+    expect(names(arrangeItems(items, "priceDesc", { compare, priceOf }))).toEqual([
+      ["Kite", "Puzzle", "Novel", "Socks", "atlas", "Mug"],
+    ]);
+  });
+
+  it("keeps the order added when prices aren't known", () => {
+    expect(names(arrangeItems(items, "priceDesc", { compare }))).toEqual(
+      names(arrangeItems(items, "added", { compare })),
+    );
+  });
 });
