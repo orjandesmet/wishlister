@@ -56,6 +56,7 @@ import {
   type SecretSanta,
   type SecretSantaCandidate,
 } from "../lib/api/secretSanta.ts";
+import { setMockDemo } from "../lib/__mocks__/demoMode.ts";
 import { setMockOtpError, setMockSession } from "../lib/__mocks__/supabase.ts";
 import { t } from "../lib/i18n.ts";
 import type {
@@ -403,6 +404,22 @@ export const Settings: Story = { render: app("/settings") };
 export const Login: Story = {
   beforeEach: () => setMockSession(null),
   render: app("/login"),
+};
+
+/** The demo site (VITE_DEMO=true): pick a seed person instead of an email. */
+export const LoginDemo: Story = {
+  beforeEach: () => {
+    setMockSession(null);
+    setMockDemo(true);
+  },
+  render: app("/login"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(
+      await canvas.findByRole("button", { name: t("login.demoAs", { name: "Alice" }) }),
+    ).toBeVisible();
+    await expect(canvas.queryByLabelText(t("login.email"))).toBeNull();
+  },
 };
 
 /** Same fixtures as the other list stories, but with the states the list page can be in. */
