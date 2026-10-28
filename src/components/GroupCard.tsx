@@ -172,41 +172,44 @@ export function GroupCard(props: GroupCardProps) {
       <Show when={props.secretSanta?.id !== props.nextOccasion?.id ? props.secretSanta : undefined}>
         {(santa) => secretSantaLine(santa(), true)}
       </Show>
-      <Show when={drawnWhileCollapsed().length > 0}>
-        <ul class={u.list}>
-          <For each={drawnWhileCollapsed()}>{memberRow}</For>
-        </ul>
-      </Show>
-      <Button
-        variant="link"
-        class={styles.membersToggle}
-        aria-expanded={!collapsed()}
-        aria-controls={membersId}
-        onClick={toggle}
-      >
-        {collapsed()
-          ? t("groupCard.showMembers", { count: members().length })
-          : t("groupCard.hideMembers")}
-        <span class={u.visuallyHidden}>: {props.group.name}</span>
-        {/* Lucide "chevron-down" (ISC licence). */}
-        <svg
-          class={styles.membersChevron}
-          classList={{ [styles.open]: !collapsed() }}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.75"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
+      {/* One block without the card's gap, so the drawn member, button and list sit close. */}
+      <div class={styles.members}>
+        <Show when={drawnWhileCollapsed().length > 0}>
+          <ul class={u.list}>
+            <For each={drawnWhileCollapsed()}>{memberRow}</For>
+          </ul>
+        </Show>
+        <Button
+          variant="link"
+          class={styles.membersToggle}
+          aria-expanded={!collapsed()}
+          aria-controls={membersId}
+          onClick={toggle}
         >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </Button>
-      {/* Always in the page, even empty, so aria-controls points somewhere. */}
-      <ul id={membersId} class={u.list}>
-        <For each={collapsed() ? [] : members()}>{memberRow}</For>
-      </ul>
+          {collapsed()
+            ? t("groupCard.showMembers", { count: members().length })
+            : t("groupCard.hideMembers")}
+          <span class={u.visuallyHidden}>: {props.group.name}</span>
+          {/* Lucide "chevron-down" (ISC licence). */}
+          <svg
+            class={styles.membersChevron}
+            classList={{ [styles.open]: !collapsed() }}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.75"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m6 9 6 6 6-6" />
+          </svg>
+        </Button>
+        {/* Always in the page, even empty, so aria-controls points somewhere. */}
+        <ul id={membersId} class={u.list}>
+          <For each={collapsed() ? [] : members()}>{memberRow}</For>
+        </ul>
+      </div>
     </Card>
   );
 }
