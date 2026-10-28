@@ -3,7 +3,8 @@
 // takes part who they drew.
 //
 // POST /.netlify/functions/start-secret-santa with
-// { occasionId, participants: profile ids, exclusions: [{ profile, excluded }] } and
+// { occasionId, participants: profile ids, exclusions: [{ profile, excluded }],
+// minLoopSize: "all" or a number from 2 to half the participants } and
 // the manager's access token as "Authorization: Bearer …".
 //
 // The draw runs here (see ../lib/secretSanta.ts) and goes to the database through
@@ -18,7 +19,13 @@
 // and for the emails RESEND_API_KEY and MAIL_FROM.
 import { createClient } from "@supabase/supabase-js";
 import { mailConfigured } from "../lib/mail.ts";
-import { draw, type Exclusion, type Pair } from "../lib/secretSanta.ts";
+import {
+  draw,
+  maxMinLoopSize,
+  type Exclusion,
+  type MinLoopSize,
+  type Pair,
+} from "../lib/secretSanta.ts";
 import { sendSecretSantaNotices } from "../lib/secretSantaNotices.ts";
 
 type Candidate = { profile_id: string; display_name: string };
@@ -44,6 +51,7 @@ export default async (request: Request) => {
     occasionId?: string;
     participants?: string[];
     exclusions?: Exclusion[];
+    minLoopSize?: MinLoopSize;
   };
   const { occasionId } = body;
   if (!occasionId || !Array.isArray(body.participants)) {
@@ -53,6 +61,22 @@ export default async (request: Request) => {
   const exclusions = (Array.isArray(body.exclusions) ? body.exclusions : [])
     .filter((e) => e && typeof e.profile === "string" && typeof e.excluded === "string")
     .map((e) => ({ profile: e.profile, excluded: e.excluded }));
+
+  // "all" (one loop through everyone) unless a number from 2 up to half the participants.
+  const minLoopSize = body.minLoopSize ?? "all";
+  if (
+    minLoopSize !== "all" &&
+    !(
+      Number.isInteger(minLoopSize) &&
+      minLoopSize >= 2 &&
+      minLoopSize <= maxMinLoopSize(participants.length)
+    )
+  ) {
+    return message(
+      400,
+      "The minimum loop size must be 'all' or between 2 and half the participants",
+    );
+  }
 
   // Everything about the caller is read as them, so row-level security applies.
   const asCaller = createClient(url, publishableKey, {
@@ -104,7 +128,12 @@ export default async (request: Request) => {
     });
   }
 
-  const result = draw({ participants, exclusions, history: history.filter((d) => d.length > 0) });
+  const result = draw({
+    participants,
+    exclusions,
+    minLoopSize,
+    history: history.filter((d) => d.length > 0),
+  });
   if (!result.ok) {
     if (result.reason.kind === "too_few_participants") {
       return message(422, "A Secret Santa needs at least 2 participants");
@@ -112,7 +141,9 @@ export default async (request: Request) => {
     const name = names.get(result.reason.profile) ?? "someone";
     return message(
       422,
-      `No draw is possible: too many exclusions for ${name}. Remove some exclusions and try again.`,
+      `No draw is possible: too many exclusions for ${name}. Remove some exclusions${
+        minLoopSize === 2 ? "" : " or choose a smaller minimum loop size"
+      } and try again.`,
     );
   }
 

@@ -66,3 +66,16 @@ export const CouldNotStart: Story = {
       "No draw is possible: too many exclusions for Cleo. Remove some exclusions and try again.",
   },
 };
+
+const more = [
+  ...people,
+  person("dan", "Dan"),
+  person("eva", "Eva"),
+  person("fay", "Fay"),
+  person("gus", "Gus"),
+];
+
+/** From 4 participants on, the minimum loop size can be picked: 2 up to half of them, or all. */
+export const MinimumLoopSize: Story = {
+  args: { candidates: more },
+};

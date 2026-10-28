@@ -6,9 +6,9 @@
 // 1. Nobody draws themselves.
 // 2. A giver doesn't draw anyone the manager excluded for them.
 // 3. A giver doesn't draw anyone they drew in the group's previous 2 draws.
-// 4. One loop through everyone is preferred. If that's impossible, several loops of
-//    at least 4 people each are fine. Loops of 3 or fewer only when the whole draw
-//    has 3 or fewer participants.
+// 4. The manager picks a minimum loop size: "all" makes one loop through everyone, a number
+//    (from 2 up to half the participants) allows several loops of at least that many
+//    people each. A bigger minimum makes the result harder to guess.
 //
 // When no draw is possible, the oldest of the 2 previous draws is dropped from the
 // history and the draw is tried again. If that fails as well, the result names the
@@ -31,6 +31,8 @@ export type DrawInput = {
   exclusions: Exclusion[];
   /** The group's previous draws, the latest first. Only the first 2 count. */
   history?: Pair[][];
+  /** Defaults to "all": one loop through everyone. */
+  minLoopSize?: MinLoopSize;
   /** For tests. Gives a number from 0 up to 1, like Math.random. */
   random?: () => number;
 };
@@ -40,8 +42,14 @@ export type DrawResult =
   | { ok: false; reason: { kind: "too_few_participants" } }
   | { ok: false; reason: { kind: "too_many_exclusions"; profile: string } };
 
-/** Loops are at least this big, unless the whole draw is smaller than this. */
-export const MIN_LOOP_SIZE = 4;
+/**
+ * How small a loop may be: "all" is one loop through everyone, a number is the fewest people
+ * in any loop.
+ */
+export type MinLoopSize = number | "all";
+
+/** The biggest number offered as a minimum loop size: half the participants, rounded down. */
+export const maxMinLoopSize = (participants: number) => Math.floor(participants / 2);
 
 const STEP_LIMIT = 100_000;
 
@@ -161,16 +169,19 @@ function findLoops(
   return participants.map((giver) => ({ giver, recipient: next.get(giver)! }));
 }
 
-function solve(participants: string[], allowed: Allowed, random: () => number): Pair[] | null {
-  const loop = findSingleLoop(participants, allowed, random);
-  if (loop) {
-    return loop.map((giver, index) => ({
-      giver,
-      recipient: loop[(index + 1) % loop.length],
-    }));
+function solve(
+  participants: string[],
+  allowed: Allowed,
+  minLoopSize: MinLoopSize,
+  random: () => number,
+): Pair[] | null {
+  if (minLoopSize === "all" || minLoopSize * 2 > participants.length) {
+    const loop = findSingleLoop(participants, allowed, random);
+    return (
+      loop?.map((giver, index) => ({ giver, recipient: loop[(index + 1) % loop.length] })) ?? null
+    );
   }
-  const minLoop = participants.length <= 3 ? 1 : MIN_LOOP_SIZE;
-  return findLoops(participants, allowed, minLoop, random);
+  return findLoops(participants, allowed, minLoopSize, random);
 }
 
 /** The participant with the fewest people to draw or to be drawn by. */
@@ -196,6 +207,7 @@ export function draw({
   participants,
   exclusions,
   history = [],
+  minLoopSize = "all",
   random = Math.random,
 }: DrawInput): DrawResult {
   const people = [...new Set(participants)];
@@ -205,7 +217,12 @@ export function draw({
   // First with the last 2 draws as history, then with only the latest.
   const attempts = recent.length === 2 ? [recent, recent.slice(0, 1)] : [recent];
   for (const attempt of attempts) {
-    const pairs = solve(people, allowedRecipients(people, exclusions, attempt), random);
+    const pairs = solve(
+      people,
+      allowedRecipients(people, exclusions, attempt),
+      minLoopSize,
+      random,
+    );
     if (pairs) return { ok: true, pairs };
   }
 

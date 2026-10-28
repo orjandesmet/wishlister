@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { draw, MIN_LOOP_SIZE, type Exclusion, type Pair } from "./secretSanta.ts";
+import { draw, maxMinLoopSize, type Exclusion, type Pair } from "./secretSanta.ts";
 
 /** A small seeded random generator, so the tests repeat. */
 function seeded(seed: number) {
@@ -91,7 +91,20 @@ describe("draw", () => {
   });
 
   describe("loops", () => {
-    it("makes one loop through everyone when it can", () => {
+    const twoGroups = (size: number) => {
+      const left = Array.from({ length: size }, (_, i) => `a${i + 1}`);
+      const right = Array.from({ length: size }, (_, i) => `b${i + 1}`);
+      // Nobody can draw from the other group, so each group makes loops of its own.
+      const exclusions = left.flatMap((a) =>
+        right.flatMap((b) => [
+          { profile: a, excluded: b },
+          { profile: b, excluded: a },
+        ]),
+      );
+      return { left, right, participants: [...left, ...right], exclusions };
+    };
+
+    it("makes one loop through everyone by default", () => {
       for (let seed = 1; seed <= 25; seed++) {
         const pairs = pairsOf(
           draw({ participants: people(9), exclusions: [], random: seeded(seed) }),
@@ -100,28 +113,47 @@ describe("draw", () => {
       }
     });
 
-    it("never makes a loop of 3 or fewer in a bigger draw", () => {
+    it("makes one loop through everyone for 'all' too, and never several", () => {
       for (let seed = 1; seed <= 25; seed++) {
-        const participants = people(10);
-        const exclusions = [...both("p1", "p2"), ...both("p3", "p4"), ...both("p5", "p6")];
-        const pairs = pairsOf(draw({ participants, exclusions, random: seeded(seed) }));
-        expect(Math.min(...loopSizes(pairs))).toBeGreaterThanOrEqual(MIN_LOOP_SIZE);
+        const pairs = pairsOf(
+          draw({
+            participants: people(10),
+            exclusions: [],
+            minLoopSize: "all",
+            random: seeded(seed),
+          }),
+        );
+        expect(loopSizes(pairs)).toEqual([10]);
       }
     });
 
-    it("falls back to several loops of 4 or more when one big loop is impossible", () => {
-      // Two groups of 4 who can't draw each other, so each makes its own loop.
-      const left = ["a1", "a2", "a3", "a4"];
-      const right = ["b1", "b2", "b3", "b4"];
-      const exclusions = left.flatMap((a) =>
-        right.flatMap((b) => [
-          { profile: a, excluded: b },
-          { profile: b, excluded: a },
-        ]),
-      );
+    it("fails for 'all' when one loop is impossible, instead of making several", () => {
+      const { participants, exclusions } = twoGroups(4);
+      const result = draw({ participants, exclusions, minLoopSize: "all" });
+      expect(result.ok).toBe(false);
+    });
+
+    it("keeps every loop at the minimum size or bigger", () => {
+      for (const minLoopSize of [2, 3, 4, 5]) {
+        for (let seed = 1; seed <= 15; seed++) {
+          const pairs = pairsOf(
+            draw({
+              participants: people(11),
+              exclusions: [...both("p1", "p2"), ...both("p3", "p4"), ...both("p5", "p6")],
+              minLoopSize,
+              random: seeded(seed),
+            }),
+          );
+          expect(Math.min(...loopSizes(pairs))).toBeGreaterThanOrEqual(minLoopSize);
+        }
+      }
+    });
+
+    it("makes several loops when the minimum allows it and one big loop is impossible", () => {
+      const { left, participants, exclusions } = twoGroups(4);
       for (let seed = 1; seed <= 10; seed++) {
         const pairs = pairsOf(
-          draw({ participants: [...left, ...right], exclusions, random: seeded(seed) }),
+          draw({ participants, exclusions, minLoopSize: 4, random: seeded(seed) }),
         );
         expect(loopSizes(pairs)).toEqual([4, 4]);
         for (const pair of pairs) {
@@ -130,18 +162,34 @@ describe("draw", () => {
       }
     });
 
-    it("fails when only loops of 3 or fewer are possible", () => {
-      // Two groups of 3 who can't draw each other: each would make a loop of 3.
-      const left = ["a1", "a2", "a3"];
-      const right = ["b1", "b2", "b3"];
-      const exclusions = left.flatMap((a) =>
-        right.flatMap((b) => [
-          { profile: a, excluded: b },
-          { profile: b, excluded: a },
-        ]),
-      );
-      const result = draw({ participants: [...left, ...right], exclusions });
-      expect(result.ok).toBe(false);
+    it("lets people draw each other in loops of 2 when the minimum is 2", () => {
+      const seen = new Set<number>();
+      for (let seed = 1; seed <= 60; seed++) {
+        const pairs = pairsOf(
+          draw({ participants: people(6), exclusions: [], minLoopSize: 2, random: seeded(seed) }),
+        );
+        for (const size of loopSizes(pairs)) seen.add(size);
+      }
+      expect(seen.has(2)).toBe(true);
+    });
+
+    it("fails when the minimum is bigger than the loops that are possible", () => {
+      const { participants, exclusions } = twoGroups(3);
+      expect(draw({ participants, exclusions, minLoopSize: 4 }).ok).toBe(false);
+      // Loops of 3 are fine when 3 is the minimum.
+      const pairs = pairsOf(draw({ participants, exclusions, minLoopSize: 3 }));
+      expect(loopSizes(pairs)).toEqual([3, 3]);
+    });
+
+    it("treats a minimum above half the participants as one loop", () => {
+      const pairs = pairsOf(draw({ participants: people(6), exclusions: [], minLoopSize: 5 }));
+      expect(loopSizes(pairs)).toEqual([6]);
+    });
+  });
+
+  describe("maxMinLoopSize", () => {
+    it("is half the participants, rounded down", () => {
+      expect([2, 3, 4, 5, 6, 9, 10].map(maxMinLoopSize)).toEqual([1, 1, 2, 2, 3, 4, 5]);
     });
   });
 

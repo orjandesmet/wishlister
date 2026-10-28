@@ -178,6 +178,10 @@ export const nl: Dictionary = {
     confirmDelete: (p: { name: string }) => `${p.name} wissen voor de hele groep?`,
   },
   secretSanta: {
+    minLoop: "Kleinste kring",
+    minLoopHelp:
+      "Een kring is een groep mensen die alleen aan elkaar geven. Een grotere kleinste kring maakt de trekking moeilijker te raden; Iedereen is één kring door iedereen. Lukt er geen trekking, kies dan een kleinere.",
+    loopAll: "Iedereen",
     viewFor: (p: { occasion: string }) => `Secret Santa voor ${p.occasion}`,
     occasion: "Gelegenheid",
     noUpcoming:

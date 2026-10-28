@@ -185,6 +185,10 @@ export const en = {
     confirmDelete: (p: { name: string }) => `Delete ${p.name} for the whole group?`,
   },
   secretSanta: {
+    minLoop: "Minimum loop size",
+    minLoopHelp:
+      "A loop is a group of people who only give to each other. A bigger minimum makes the draw harder to guess; All is one loop through everyone. If no draw is possible, try a smaller one.",
+    loopAll: "All",
     viewFor: (p: { occasion: string }) => `Secret Santa for ${p.occasion}`,
     occasion: "Occasion",
     noUpcoming: "Add an upcoming occasion to the group first, then start a Secret Santa for it.",

@@ -56,6 +56,15 @@ const checkbox = (host: HTMLElement, label: string) =>
   [...host.querySelectorAll("label")]
     .find((l) => l.textContent?.trim() === label)!
     .querySelector("input")!;
+const occasionSelect = (host: HTMLElement) => host.querySelectorAll("select")[0];
+const loopSelect = (host: HTMLElement) => host.querySelectorAll("select")[1];
+const loopOptions = (host: HTMLElement) =>
+  [...loopSelect(host).querySelectorAll("option")].map((o) => o.textContent);
+const pick = (select: HTMLSelectElement, value: string) => {
+  select.value = value;
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+};
+const many = [ann, bo, cleo, person("dan", "Dan"), person("eva", "Eva"), person("fay", "Fay")];
 const exclusionsOf = (host: HTMLElement, name: string) =>
   [...host.querySelectorAll("details")].find((d) =>
     d.querySelector("summary")?.textContent?.startsWith(name),
@@ -74,17 +83,17 @@ describe("SecretSantaForm", () => {
 
   it("offers the occasions, with the first chosen", () => {
     const host = open();
-    const options = [...host.querySelectorAll("select option")].map((o) => o.textContent);
+    const options = [...occasionSelect(host).querySelectorAll("option")].map((o) => o.textContent);
     expect(options).toHaveLength(2);
     expect(options[0]).toContain("Christmas");
     expect(options[1]).toContain("New Year");
-    expect(host.querySelector("select")!.value).toBe("xmas");
+    expect(occasionSelect(host).value).toBe("xmas");
   });
 
   it("sends the chosen occasion", () => {
     const onSubmit = vi.fn<(input: SecretSantaInput) => void>();
     const host = open({ onSubmit });
-    const select = host.querySelector("select")!;
+    const select = occasionSelect(host);
     select.value = "ny";
     select.dispatchEvent(new Event("change", { bubbles: true }));
     form(host).requestSubmit();
@@ -99,6 +108,7 @@ describe("SecretSantaForm", () => {
       occasionId: "xmas",
       participants: ["ann", "bo", "cleo"],
       exclusions: [],
+      minLoopSize: "all",
     });
   });
 
@@ -191,5 +201,60 @@ describe("SecretSantaForm", () => {
   it("is disabled when nobody can take part", () => {
     const host = open({ candidates: [] });
     expect(submitButton(host).disabled).toBe(true);
+  });
+
+  describe("the minimum loop size", () => {
+    it("offers only 'All', disabled, below 4 participants", () => {
+      const host = open();
+      expect(loopOptions(host)).toEqual([t("secretSanta.loopAll")]);
+      expect(loopSelect(host).disabled).toBe(true);
+    });
+
+    it("offers 2 up to half the participants, then 'All', with 'All' chosen", () => {
+      const host = open({ candidates: many });
+      expect(loopOptions(host)).toEqual(["2", "3", t("secretSanta.loopAll")]);
+      expect(loopSelect(host).value).toBe("all");
+      expect(loopSelect(host).disabled).toBe(false);
+    });
+
+    it("follows who takes part", () => {
+      const host = open({ candidates: many });
+      checkbox(host, "Fay").click();
+      expect(loopOptions(host)).toEqual(["2", t("secretSanta.loopAll")]);
+      checkbox(host, "Eva").click();
+      checkbox(host, "Dan").click();
+      expect(loopOptions(host)).toEqual([t("secretSanta.loopAll")]);
+    });
+
+    it("sends what was picked", () => {
+      const onSubmit = vi.fn<(input: SecretSantaInput) => void>();
+      const host = open({ candidates: many, onSubmit });
+      pick(loopSelect(host), "3");
+      form(host).requestSubmit();
+      expect(onSubmit.mock.calls[0][0].minLoopSize).toBe(3);
+    });
+
+    it("sends the biggest that is still offered when fewer people take part afterwards", () => {
+      const onSubmit = vi.fn<(input: SecretSantaInput) => void>();
+      const host = open({ candidates: many, onSubmit });
+      pick(loopSelect(host), "3");
+      checkbox(host, "Fay").click();
+      checkbox(host, "Eva").click();
+      form(host).requestSubmit();
+      expect(onSubmit.mock.calls[0][0].minLoopSize).toBe(2);
+    });
+
+    it("is explained, and the help is tied to the dropdown", () => {
+      const host = open({ candidates: many });
+      const help = document.getElementById(loopSelect(host).getAttribute("aria-describedby")!)!;
+      expect(help.textContent).toBe(t("secretSanta.minLoopHelp"));
+    });
+
+    it("is left out while fewer than 2 people take part", () => {
+      const host = open();
+      checkbox(host, "Bo").click();
+      checkbox(host, "Cleo").click();
+      expect(host.querySelectorAll("select")).toHaveLength(1);
+    });
   });
 });

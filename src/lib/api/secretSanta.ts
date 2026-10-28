@@ -29,10 +29,17 @@ export type DrawnPerson = {
 /** `profile` must not draw `excluded`. One way only. */
 export type SecretSantaExclusion = { profile: ProfileId; excluded: ProfileId };
 
+/**
+ * The fewest people in any loop of the draw (a loop is people who only give to each other):
+ * "all" is one loop through everyone, a number goes from 2 up to half the participants.
+ */
+export type MinLoopSize = number | "all";
+
 export type SecretSantaInput = {
   occasionId: OccasionId;
   participants: ProfileId[];
   exclusions: SecretSantaExclusion[];
+  minLoopSize: MinLoopSize;
 };
 
 /**

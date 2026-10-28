@@ -1,9 +1,14 @@
 import { A } from "@solidjs/router";
 import { createSignal, createUniqueId, For, Show } from "solid-js";
 import type { Occasion } from "../lib/api/occasions.ts";
-import type { SecretSantaCandidate, SecretSantaInput } from "../lib/api/secretSanta.ts";
+import type {
+  MinLoopSize,
+  SecretSantaCandidate,
+  SecretSantaInput,
+} from "../lib/api/secretSanta.ts";
 import { locale, t } from "../lib/i18n.ts";
 import type { OccasionId, ProfileId } from "../lib/ids.ts";
+import { effectiveLoopSize, loopSizeOptions } from "../lib/loopSize.ts";
 import { formatOccasionDate } from "../lib/occasions.ts";
 import u from "../utilities.module.css";
 import { Check } from "./Check.tsx";
@@ -33,6 +38,8 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
   const [chosen, setChosen] = createSignal<OccasionId>();
   const occasionId = () => chosen() ?? props.occasions[0]?.id;
 
+  const [pickedLoop, setPickedLoop] = createSignal<MinLoopSize>("all");
+
   const taking = () => props.candidates.filter((c) => !unticked().has(c.profile_id));
   const toggle = <T,>(set: Set<T>, value: T, on: boolean) => {
     const next = new Set(set);
@@ -40,6 +47,9 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
     else next.delete(value);
     return next;
   };
+
+  const loopSizes = () => loopSizeOptions(taking().length);
+  const loopSize = () => effectiveLoopSize(pickedLoop(), taking().length);
 
   const onSubmit = (event: SubmitEvent) => {
     event.preventDefault();
@@ -52,7 +62,12 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
         .filter((other) => excluded().has(keyOf(profile, other)))
         .map((other) => ({ profile, excluded: other })),
     );
-    props.onSubmit({ occasionId: occasion, participants, exclusions });
+    props.onSubmit({
+      occasionId: occasion,
+      participants,
+      exclusions,
+      minLoopSize: loopSize(),
+    });
   };
 
   return (
@@ -145,6 +160,27 @@ export function SecretSantaForm(props: SecretSantaFormProps) {
             </For>
           </fieldset>
         </Show>
+      </Show>
+
+      <Show when={taking().length >= 2}>
+        <label>
+          {t("secretSanta.minLoop")}
+          <Select
+            aria-describedby={`loop-help-${id}`}
+            value={String(loopSize())}
+            disabled={loopSizes().length === 0}
+            onChange={(e) => {
+              const value = e.currentTarget.value;
+              setPickedLoop(value === "all" ? "all" : Number(value));
+            }}
+          >
+            <For each={loopSizes()}>{(size) => <option value={size}>{size}</option>}</For>
+            <option value="all">{t("secretSanta.loopAll")}</option>
+          </Select>
+        </label>
+        <p id={`loop-help-${id}`} class={`${u.muted} ${u.small}`}>
+          {t("secretSanta.minLoopHelp")}
+        </p>
       </Show>
 
       <Show when={taking().length < 2}>
