@@ -1,4 +1,4 @@
-import { createUniqueId, type JSX } from "solid-js";
+import { createUniqueId, Show, type JSX } from "solid-js";
 
 /** The question mark in the 24x24 box: where it sits, and how big it is. */
 const QUESTION = { x: 12, y: 15, scale: 1.2 };
@@ -6,13 +6,20 @@ const QUESTION = { x: 12, y: 15, scale: 1.2 };
 /** The gap cut around the question mark wherever it overlaps the Santa, in the Santa's units. */
 const HALO = 3.8;
 
+export type SecretSantaIconProps = {
+  class?: string;
+  style?: JSX.CSSProperties;
+  hasQuestionMark?: boolean;
+};
+
 /**
  * A two-tone Santa: the hat in the text colour, the pompom, fur brim, beard and moustache in a
- * lighter tone of it, and a question mark in the text colour. Where the question mark overlaps
+ * lighter tone of it, and optionally a question mark in the text colour. Where the question mark overlaps
  * him (the brim, the moustache, the beard), a gap is cut around it so it reads on any
  * background. Decorative: the words next to it say what it is.
  */
-export function SecretSantaIcon(props: { class?: string; style?: JSX.CSSProperties }) {
+export function SecretSantaIcon(props: SecretSantaIconProps) {
+  const hasQuestionMark = () => props.hasQuestionMark ?? true;
   // Shapes are shared between the drawing and its masks; the ids are per icon, as the page
   // can hold many.
   const id = createUniqueId();
@@ -40,29 +47,33 @@ export function SecretSantaIcon(props: { class?: string; style?: JSX.CSSProperti
         {/* The gap around the question mark, cut from whatever it overlaps: the brim, the moustache... */}
         <mask id={cutQuestion} maskUnits="userSpaceOnUse" x="-4" y="-4" width="32" height="32">
           <rect x="-4" y="-4" width="32" height="32" fill="white" />
-          <use
-            href={`#${question}`}
-            transform={placed}
-            fill="none"
-            stroke="black"
-            stroke-width={HALO / QUESTION.scale}
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
+          <Show when={hasQuestionMark()}>
+            <use
+              href={`#${question}`}
+              transform={placed}
+              fill="none"
+              stroke="black"
+              stroke-width={HALO / QUESTION.scale}
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </Show>
         </mask>
         {/* ...and the beard, which also gets a gap around the moustache. */}
         <mask id={cutBeard} maskUnits="userSpaceOnUse" x="-4" y="-4" width="32" height="32">
           <rect x="-4" y="-4" width="32" height="32" fill="white" />
           <use href={`#${stache}`} fill="black" stroke="black" stroke-width="1.6" />
-          <use
-            href={`#${question}`}
-            transform={placed}
-            fill="none"
-            stroke="black"
-            stroke-width={HALO / QUESTION.scale}
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          />
+          <Show when={hasQuestionMark()}>
+            <use
+              href={`#${question}`}
+              transform={placed}
+              fill="none"
+              stroke="black"
+              stroke-width={HALO / QUESTION.scale}
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </Show>
         </mask>
       </defs>
       <g>
@@ -89,15 +100,17 @@ export function SecretSantaIcon(props: { class?: string; style?: JSX.CSSProperti
         <use href={`#${stache}`} opacity=".5" mask={`url(#${cutQuestion})`} />
       </g>
       {/* The question mark, above it all. */}
-      <use
-        href={`#${question}`}
-        transform={placed}
-        fill="none"
-        stroke="currentColor"
-        stroke-width={1.9 / QUESTION.scale}
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      />
+      <Show when={hasQuestionMark()}>
+        <use
+          href={`#${question}`}
+          transform={placed}
+          fill="none"
+          stroke="currentColor"
+          stroke-width={1.9 / QUESTION.scale}
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+      </Show>
     </svg>
   );
 }

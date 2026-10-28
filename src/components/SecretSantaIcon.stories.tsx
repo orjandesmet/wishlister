@@ -15,6 +15,8 @@ const meta = {
   title: "Groups/SecretSantaIcon",
   component: SecretSantaIcon,
   parameters: { layout: "padded" },
+  args: { hasQuestionMark: true },
+  argTypes: { hasQuestionMark: { control: "boolean" } },
 } satisfies Meta<typeof SecretSantaIcon>;
 
 export default meta;
@@ -22,7 +24,7 @@ type Story = StoryObj<typeof meta>;
 
 /** At several sizes, on the page, on the soft accent and on the red pill. */
 export const Sizes: Story = {
-  render: () => (
+  render: (args) => (
     <div style={{ display: "flex", gap: "12px", "flex-wrap": "wrap" }}>
       <For each={backgrounds}>
         {(bg) => (
@@ -39,7 +41,9 @@ export const Sizes: Story = {
             }}
           >
             <For each={sizes}>
-              {(size) => <SecretSantaIcon style={{ width: `${size}px`, height: `${size}px` }} />}
+              {(size) => (
+                <SecretSantaIcon {...args} style={{ width: `${size}px`, height: `${size}px` }} />
+              )}
             </For>
           </div>
         )}
@@ -50,6 +54,8 @@ export const Sizes: Story = {
 
 /** In its two places: the button on the occasions card, and the group card line. */
 export const InUse: Story = {
+  // Always drawn the way the app uses it.
+  argTypes: { hasQuestionMark: { table: { disable: true } } },
   render: () => (
     <div style={{ display: "flex", gap: "16px", "align-items": "center", "flex-wrap": "wrap" }}>
       <span
@@ -86,4 +92,10 @@ export const InUse: Story = {
       </span>
     </div>
   ),
+};
+
+/** The Santa without the question mark. */
+export const WithoutQuestionMark: Story = {
+  ...Sizes,
+  args: { hasQuestionMark: false },
 };
