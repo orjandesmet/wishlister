@@ -1,11 +1,26 @@
 /**
  * How a wish list is laid out: in the order items were added, newest first, by
- * name, grouped under a heading per category, or (on someone else's list) with
- * the items nobody bought yet first.
+ * name, by price (cheapest or most expensive first), grouped under a heading per
+ * category, or (on someone else's list) with the items nobody bought yet first.
  */
-export type ListOrder = "added" | "newest" | "name" | "category" | "available";
+export type ListOrder =
+  | "added"
+  | "newest"
+  | "name"
+  | "priceAsc"
+  | "priceDesc"
+  | "category"
+  | "available";
 
-export const listOrders: ListOrder[] = ["added", "newest", "name", "category", "available"];
+export const listOrders: ListOrder[] = [
+  "added",
+  "newest",
+  "name",
+  "priceAsc",
+  "priceDesc",
+  "category",
+  "available",
+];
 
 /** One heading on the list. `category` is null for the single untitled section. */
 export type ListSection<T> = { category: string | null; items: T[] };
@@ -18,6 +33,11 @@ export type ArrangeOptions = {
    * know, so "available" falls back to the order items were added.
    */
   isBought?: (index: number) => boolean;
+  /**
+   * The item's price in one common currency, or null when it has none or it can't
+   * be converted. Left out, the price orders fall back to the order items were added.
+   */
+  priceOf?: (index: number) => number | null;
 };
 
 /**
@@ -50,6 +70,21 @@ export function arrangeItems<T extends { name: string; category: string | null }
       if (!isBought) break;
       // A stable sort, so each half keeps the order items were added.
       const sorted = indexed.toSorted((a, b) => +isBought(a.index) - +isBought(b.index));
+      return [{ category: null, items: unwrap(sorted) }];
+    }
+    case "priceAsc":
+    case "priceDesc": {
+      const priceOf = options.priceOf;
+      if (!priceOf) break;
+      const direction = order === "priceAsc" ? 1 : -1;
+      // Items without a price go last either way; a stable sort keeps ties in the order added.
+      const sorted = indexed
+        .map((entry) => ({ ...entry, price: priceOf(entry.index) }))
+        .toSorted((a, b) => {
+          if (a.price === null || b.price === null)
+            return +(a.price === null) - +(b.price === null);
+          return (a.price - b.price) * direction;
+        });
       return [{ category: null, items: unwrap(sorted) }];
     }
     case "category":

@@ -323,6 +323,8 @@ export const en = {
     added: "Date added",
     newest: "Newest first",
     name: "Name (A to Z)",
+    priceAsc: "Price (low to high)",
+    priceDesc: "Price (high to low)",
     category: "Category",
     available: "Not bought yet first",
     uncategorised: "No category",
