@@ -3,7 +3,7 @@ import { setMemberRole, type Member } from "../lib/api/groups.ts";
 import type { ActionRunner } from "../lib/createActionRunner.ts";
 import type { GroupData } from "../lib/createGroupData.ts";
 import { createGroupInvites } from "../lib/createGroupInvites.ts";
-import { isDemo } from "../lib/demo.ts";
+import { isDemo } from "../lib/demoMode.ts";
 import { t } from "../lib/i18n.ts";
 import { useMe } from "../lib/me.tsx";
 import u from "../utilities.module.css";
@@ -107,7 +107,7 @@ export function GroupMembers(props: {
       </Show>
       <Show when={data.isManager()}>
         {/* The demo sends no email: its accounts are made up. */}
-        <Show when={!isDemo}>
+        <Show when={!isDemo()}>
           <form onSubmit={invites.onInvite}>
             <label>
               {t("group.inviteByEmail")}

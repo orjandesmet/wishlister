@@ -5,7 +5,8 @@ import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { useAuth } from "../lib/auth.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
-import { demoAccounts, demoPassword, isDemo } from "../lib/demo.ts";
+import { demoAccounts, demoPassword } from "../lib/demo.ts";
+import { isDemo } from "../lib/demoMode.ts";
 import { locale, t } from "../lib/i18n.ts";
 import { isSignupClosed } from "../lib/signups.ts";
 import { supabase } from "../lib/supabase.ts";
@@ -94,7 +95,7 @@ export default function Login() {
       <ThemedMark class={styles.mark} />
       <h1>Wishlister</h1>
       <Switch>
-        <Match when={isDemo}>
+        <Match when={isDemo()}>
           <p class={u.muted}>{t("login.demoIntro")}</p>
           <div class={u.stack}>
             <For each={demoAccounts}>
