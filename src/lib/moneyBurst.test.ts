@@ -1,7 +1,8 @@
-import { beforeEach, describe, expect, test } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, test } from "vite-plus/test";
 import type { ItemId } from "./ids.ts";
 import { burstMoneyForTap, isBigPurchase, makeParticles, rememberBuyTap } from "./moneyBurst.ts";
 import styles from "./moneyBurst.module.css";
+import { setThemePreview } from "./theme.ts";
 
 describe("makeParticles", () => {
   const particles = makeParticles(() => 0.5);
@@ -36,7 +37,13 @@ describe("burstMoneyForTap", () => {
   };
   const bursts = () => document.querySelectorAll(`.${styles.burst}`).length;
 
-  beforeEach(() => document.querySelectorAll(`.${styles.burst}`).forEach((b) => b.remove()));
+  beforeEach(() => {
+    document.querySelectorAll(`.${styles.burst}`).forEach((b) => b.remove());
+    // Seasonal themes follow today's date, and some skip the money burst, so the
+    // tests pick the theme themselves.
+    setThemePreview({ theme: "none" });
+  });
+  afterEach(() => setThemePreview({}));
 
   test("bursts once for the item that was tapped, even if its card was rebuilt", () => {
     tapOn("item-1");
@@ -49,6 +56,13 @@ describe("burstMoneyForTap", () => {
   test("stays quiet for a cheap item", () => {
     tapOn("item-1");
     burstMoneyForTap("item-1" as ItemId, 20, "EUR");
+    expect(bursts()).toBe(0);
+  });
+
+  test("leaves it to the theme's own effect when that skips the money", () => {
+    setThemePreview({ theme: "halloween" });
+    tapOn("item-1");
+    burstMoneyForTap("item-1" as ItemId, 60, "EUR");
     expect(bursts()).toBe(0);
   });
 
