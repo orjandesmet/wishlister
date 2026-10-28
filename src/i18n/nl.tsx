@@ -1,9 +1,12 @@
+import type { JSX } from "solid-js";
 import type { Dictionary } from "./en.tsx";
 
 /** Dutch UI text. Same keys as en.tsx; TypeScript flags anything missing. */
 export const nl: Dictionary = {
   common: {
     loading: "Laden…",
+    preview: "Voorbeeld",
+    nothingToPreview: "Nog niets om te tonen.",
     you: " (jij)",
     save: "Opslaan",
     saving: "Opslaan…",
@@ -98,6 +101,8 @@ export const nl: Dictionary = {
     inDays: (p) => `over ${p.days} dagen`,
     occasionLine: (p) => `${p.name} · ${p.date}`,
     daysUnit: "dagen",
+    secretSanta: "Secret Santa loopt",
+    secretSantaFor: (p: { occasion: string }) => `Secret Santa loopt voor ${p.occasion}`,
   },
   group: {
     back: "‹ Groepen",
@@ -173,6 +178,58 @@ export const nl: Dictionary = {
     add: "Gelegenheid toevoegen",
     new: "Nieuwe gelegenheid",
     confirmDelete: (p: { name: string }) => `${p.name} wissen voor de hele groep?`,
+  },
+  secretSanta: {
+    minLoop: "Kleinste kring",
+    minLoopHelp:
+      "Een kring is een groep mensen die alleen aan elkaar geven. Een grotere kleinste kring maakt de trekking moeilijker te raden; Iedereen is één kring door iedereen. Lukt er geen trekking, kies dan een kleinere.",
+    loopAll: "Iedereen",
+    message: "Bericht (optioneel)",
+    messageHelp:
+      "Wordt meegestuurd met de eerste e-mail die iedereen krijgt. Je kunt markdown gebruiken: **vet**, *schuin*, [links](https://…) en lijstjes.",
+    viewFor: (p: { occasion: string }) => `Secret Santa voor ${p.occasion}`,
+    occasion: "Gelegenheid",
+    noUpcoming:
+      "Voeg eerst een komende gelegenheid toe aan de groep en start er dan een Secret Santa voor.",
+    none: "Er is geen Secret Santa gestart voor deze gelegenheid.",
+    title: "Secret Santa",
+    pageTitle: (p: { occasion: string }) => `Secret Santa voor ${p.occasion}`,
+    backTo: (p: { group: string }) => `‹ ${p.group}`,
+    help: "Trek wie voor wie een cadeau koopt. Wie meedoet krijgt een e-mail met de ene persoon die hij of zij trok en volgt het lijstje van die persoon. Niemand ziet wie wie trok, ook beheerders niet.",
+    start: "Secret Santa starten",
+    running: "Er loopt een Secret Santa.",
+    youDrew: (p: { name: JSX.Element }) => <>Jij trok {p.name}.</>,
+    notTakingPart: "Je doet niet mee.",
+    ribbon: "Jouw Secret Santa",
+    ribbonFor: (p: { occasion: string }) => `Je trok deze persoon voor ${p.occasion}.`,
+    who: "Wie doet mee",
+    whoHelp: "Alleen leden met een eigen lijstje kunnen meedoen. Kinderen en voogden niet.",
+    nobodyToDraw: "Er zijn nog geen leden die kunnen meedoen.",
+    exclusions: "Uitzonderingen (optioneel)",
+    exclusionsHelp:
+      "Kies wie niet wie mag trekken, bijvoorbeeld een koppel. Het werkt in één richting: om een koppel uit elkaar te houden, stel je het voor allebei in.",
+    mustNotDraw: (p: { name: string }) => `${p.name} mag niet trekken`,
+    excludedCount: (p: { count: number }) => (p.count === 0 ? "niemand" : `${p.count} uitgesloten`),
+    needTwo: "Kies minstens 2 mensen die meedoen.",
+    draw: "Namen trekken",
+    drawing: "Trekken…",
+    confirmStart: (p: { occasion: string; count: number }) =>
+      `Namen trekken voor ${p.occasion} met ${p.count} mensen? Iedereen krijgt een e-mail en de trekking kan niet overgedaan worden.`,
+    participants: (p: { count: number }) => `Doen mee (${p.count})`,
+    participantsHelp: "Je ziet wie meedoet, nooit wie wie trok.",
+    confirmRemove: (p: { name: string }) =>
+      `${p.name} uit de Secret Santa halen? Wie ${p.name} trok, krijgt de persoon die ${p.name} trok, en een e-mail daarover. Dit kan niet ongedaan gemaakt worden.`,
+    startedSent: "De Secret Santa is gestart. Iedereen die meedoet kreeg een e-mail.",
+    startedNotSetUp:
+      "De Secret Santa is gestart. E-mails versturen kan nog niet, dus iedereen ziet op deze pagina wie hij of zij trok.",
+    startedMailFailed:
+      "De Secret Santa is gestart, maar het versturen van de e-mails mislukte. We proberen het vanavond opnieuw.",
+    removed: (p: { name: string }) => `${p.name} is uit de Secret Santa gehaald.`,
+    drawEnded: "Er bleven te weinig mensen over, dus de Secret Santa is beëindigd.",
+    leaveBlocked: (p: { occasions: string }) =>
+      `Je doet mee aan de Secret Santa voor ${p.occasions}. Vraag een beheerder om je eruit te halen voor je de groep verlaat.`,
+    removeBlocked: (p: { name: string; occasions: string }) =>
+      `${p.name} doet mee aan de Secret Santa voor ${p.occasions}. Haal die persoon eerst uit de Secret Santa.`,
   },
   child: {
     editProfile: "Profiel bewerken",
@@ -408,6 +465,7 @@ export const nl: Dictionary = {
     unfollowed: "Je volgt dit lijstje niet meer.",
     asked: "Je vraag is verstuurd.",
     answered: "Je antwoord is bewaard.",
+    secretSantaStarted: (p: { occasion: string }) => `Secret Santa gestart voor ${p.occasion}.`,
   },
   wishlist: {
     fallbackTitle: "Verlanglijstje",

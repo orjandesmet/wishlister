@@ -13,6 +13,7 @@ import { buildDigestEmails, type DigestRow } from "../lib/digest.ts";
 import { mailConfigured, sendEmails } from "../lib/mail.ts";
 import { sendQuestionNotices } from "../lib/questionNotices.ts";
 import { sendRemovalNotices } from "../lib/removalNotices.ts";
+import { sendSecretSantaNotices } from "../lib/secretSantaNotices.ts";
 
 export default async () => {
   const url = process.env.VITE_SUPABASE_URL;
@@ -51,6 +52,13 @@ export default async () => {
     if (questions.sent > 0) console.log(`Question emails sent: ${questions.sent}`);
     for (const message of questions.errors) {
       console.error(`Sending question emails failed: ${message}`);
+    }
+
+    // And for Secret Santa draws (start-secret-santa, notify-secret-santa).
+    const santas = await sendSecretSantaNotices(admin, siteUrl);
+    if (santas.sent > 0) console.log(`Secret Santa emails sent: ${santas.sent}`);
+    for (const message of santas.errors) {
+      console.error(`Sending Secret Santa emails failed: ${message}`);
     }
   } else {
     console.warn("Digests skipped: RESEND_API_KEY or MAIL_FROM isn't set.");

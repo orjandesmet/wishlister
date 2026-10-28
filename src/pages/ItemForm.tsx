@@ -27,6 +27,7 @@ import { isReady } from "../lib/resource.ts";
 import { Select } from "../components/Select.tsx";
 import u from "../utilities.module.css";
 import { Button } from "../components/Button.tsx";
+import { MarkdownField } from "../components/MarkdownField.tsx";
 import { Card } from "../components/Card.tsx";
 import { Check } from "../components/Check.tsx";
 import styles from "./ItemForm.module.css";
@@ -363,16 +364,14 @@ export default function ItemForm() {
               </div>
             )}
           </Show>
-          <label>
-            {t("itemForm.description")}
-            <textarea
-              rows={4}
-              maxLength={1000}
-              aria-describedby={descriptionHint}
-              value={description()}
-              onInput={(e) => setDescription(e.currentTarget.value)}
-            />
-          </label>
+          <MarkdownField
+            label={t("itemForm.description")}
+            rows={4}
+            maxLength={1000}
+            describedBy={descriptionHint}
+            value={description()}
+            onInput={setDescription}
+          />
           <p id={descriptionHint} class={`${u.muted} ${u.small} ${styles.hint}`}>
             {t("itemForm.descriptionHint")}
           </p>

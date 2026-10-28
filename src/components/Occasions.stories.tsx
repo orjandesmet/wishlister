@@ -39,3 +39,20 @@ export const AsMember: Story = {};
 export const AsManager: Story = { args: { canEdit: true } };
 
 export const NoneYet: Story = { args: { canEdit: true, occasions: [] } };
+
+const secretSanta = { group: "group-1" as GroupId, canStart: false };
+
+/** With a Secret Santa running, everyone gets the one button, naming its occasion. */
+export const SecretSantaRunning: Story = {
+  args: {
+    secretSanta: { ...secretSanta, running: makeOccasion("1", "Christmas 2026", "2026-12-25") },
+  },
+};
+
+/** Members get no button when nothing runs. */
+export const SecretSantaNoneForMembers: Story = { args: { secretSanta } };
+
+/** Managers get one "Start Secret Santa" button: the occasion is picked on its page. */
+export const SecretSantaAsManager: Story = {
+  args: { canEdit: true, secretSanta: { ...secretSanta, canStart: true } },
+};

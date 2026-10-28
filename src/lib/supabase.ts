@@ -16,6 +16,10 @@ const READ_ONLY_RPCS = new Set([
   "group_join_code",
   "next_shared_occasion",
   "purchase_occasions",
+  "secret_santa_candidates",
+  "get_secret_santas",
+  "my_secret_santa_recipients",
+  "secret_santa_participants",
 ]);
 
 /**

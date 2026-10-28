@@ -10,6 +10,7 @@ import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import styles from "./Occasions.module.css";
+import { SecretSantaLink, type SecretSantaLinkProps } from "./SecretSanta.tsx";
 
 export type OccasionsProps = {
   occasions: Occasion[];
@@ -22,6 +23,8 @@ export type OccasionsProps = {
   /** Resolves to true once saved; the form stays open otherwise. */
   onUpdate: (id: OccasionId, input: OccasionInput) => Promise<boolean>;
   onDelete: (occasion: Occasion) => void;
+  /** The group's one Secret Santa button, under the upcoming occasions. Left out where there is none. */
+  secretSanta?: SecretSantaLinkProps;
 };
 
 /** A group's occasions: upcoming ones soonest first, past ones folded away below. */
@@ -93,6 +96,13 @@ export function Occasions(props: OccasionsProps) {
           {row}
         </For>
       </ul>
+      <Show when={props.secretSanta}>
+        {(secretSanta) => (
+          <div class={styles.secretSanta}>
+            <SecretSantaLink {...secretSanta()} />
+          </div>
+        )}
+      </Show>
       <Show when={split().past.length > 0}>
         <details class={styles.past}>
           <summary class={u.muted}>{t("occasions.past", { count: split().past.length })}</summary>

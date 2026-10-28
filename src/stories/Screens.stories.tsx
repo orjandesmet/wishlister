@@ -44,9 +44,29 @@ import {
 } from "../lib/api/profiles.ts";
 import { getPurchaseOccasions, getPurchases, type Purchase } from "../lib/api/purchases.ts";
 import { answerQuestion, askQuestion, getQuestions, type Question } from "../lib/api/questions.ts";
+import {
+  getDrawnPeople,
+  getSecretSantaOccasionIds,
+  getSecretSantaCandidates,
+  getSecretSantaParticipants,
+  getSecretSantas,
+  removeFromSecretSanta,
+  startSecretSanta,
+  type DrawnPerson,
+  type SecretSanta,
+  type SecretSantaCandidate,
+} from "../lib/api/secretSanta.ts";
 import { setMockOtpError, setMockSession } from "../lib/__mocks__/supabase.ts";
 import { t } from "../lib/i18n.ts";
-import type { AccountId, GroupId, ItemId, OccasionId, ProfileId, QuestionId } from "../lib/ids.ts";
+import type {
+  AccountId,
+  GroupId,
+  ItemId,
+  OccasionId,
+  ProfileId,
+  QuestionId,
+  SecretSantaId,
+} from "../lib/ids.ts";
 import { installOffer } from "../lib/install.ts";
 import { today } from "../lib/occasions.ts";
 import { bonsaiPicture, scarfPicture } from "./samplePictures.ts";
@@ -99,6 +119,15 @@ const meta = {
     );
     mocked(askQuestion).mockImplementation(async () => {});
     mocked(answerQuestion).mockImplementation(async () => {});
+    mocked(getSecretSantas).mockImplementation(async () => data.santas);
+    mocked(getSecretSantaCandidates).mockImplementation(async () => data.santaCandidates);
+    mocked(getSecretSantaParticipants).mockImplementation(async () => data.santaCandidates);
+    mocked(getDrawnPeople).mockImplementation(async () => data.drawn);
+    mocked(getSecretSantaOccasionIds).mockImplementation(async () =>
+      data.santas.map((santa) => santa.occasion_id),
+    );
+    mocked(startSecretSanta).mockImplementation(async () => "sent");
+    mocked(removeFromSecretSanta).mockImplementation(async () => "removed");
     mocked(getFollowUntil).mockImplementation(async () => null);
     mocked(getMyFollows).mockImplementation(async () => data.follows);
     mocked(unfollowByToken).mockImplementation(async () => "Anna");
@@ -257,6 +286,16 @@ function sampleData() {
       question(3, 5, "Which shoe size?"),
     ] as Question[],
     follows: [] as FollowedList[],
+    /** The group's Secret Santa draws, as you see them. */
+    santas: [] as SecretSanta[],
+    /** Who can take part in a draw (and does, in a running one). */
+    santaCandidates: [
+      { profile_id: me, display_name: "Orjan" },
+      { profile_id: "anna" as ProfileId, display_name: "Anna" },
+      { profile_id: "bert" as ProfileId, display_name: "Bert" },
+    ] as SecretSantaCandidate[],
+    /** The people you drew, for the ribbon. */
+    drawn: [] as DrawnPerson[],
     addItem: async (): Promise<ItemId> => "new-item" as ItemId,
     addQuickItems: async (): Promise<Item[]> => [],
   };
@@ -293,6 +332,38 @@ const openPopover = (id: string, when = "all") =>
 const quickAddIsPopover = "(max-width: 1199px)";
 
 export const Home: Story = { render: app("/") };
+
+/** The next occasion of Family has a Secret Santa: a line on its card, and a badge on who you drew. */
+export const HomeSecretSanta: Story = {
+  beforeEach: () => {
+    data.santas = [
+      {
+        id: "draw-1" as SecretSantaId,
+        occasion_id: annasBirthday.id,
+        taking_part: true,
+        recipient_profile_id: "anna" as ProfileId,
+        recipient_name: "Anna",
+      },
+    ];
+    data.drawn = [
+      {
+        recipient_profile_id: "anna" as ProfileId,
+        occasion_id: annasBirthday.id,
+        occasion_name: annasBirthday.name,
+        occasion_date: annasBirthday.date,
+      },
+    ];
+  },
+  render: app("/"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByText(/Secret Santa is running/)).toBeInTheDocument();
+    await expect(canvas.queryByRole("link", { name: /Secret Santa is running/ })).toBeNull();
+    await expect(
+      canvas.getByTitle(t("secretSanta.ribbonFor", { occasion: annasBirthday.name })),
+    ).toBeInTheDocument();
+  },
+};
 
 export const HomeEmpty: Story = {
   beforeEach: () => {
@@ -506,6 +577,151 @@ export const GroupSettingsAsManager: Story = {
     ];
   },
   render: app("/groups/group-1"),
+};
+
+const managerOfFamily = (): Group => ({
+  ...family,
+  group_members: [
+    member(orjan, "manager"),
+    member(profile("anna"), "member"),
+    member(profile("bert"), "member"),
+  ],
+});
+const christmas = occasion("o3", "Christmas 2026", "2026-12-25");
+
+/** A manager starts the group's Secret Santa on a page of its own, picking the occasion there. */
+export const SecretSantaStart: Story = {
+  beforeEach: () => {
+    data.group = managerOfFamily;
+    data.occasions = [christmas, occasion("o4", "New Year 2027", "2027-01-01")];
+  },
+  render: app("/groups/group-1/secret-santa"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByLabelText(t("secretSanta.occasion"))).toBeInTheDocument();
+    await expect(await canvas.findByRole("button", { name: t("secretSanta.draw") })).toBeEnabled();
+  },
+};
+
+/** The one button under the occasions on the group page leads there. */
+export const SecretSantaStartLink: Story = {
+  beforeEach: () => {
+    data.group = managerOfFamily;
+    data.occasions = [christmas];
+  },
+  render: app("/groups/group-1"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("link", { name: /Start Secret Santa/ }));
+    await expect(await canvas.findByRole("button", { name: t("secretSanta.draw") })).toBeEnabled();
+  },
+};
+
+const runningDraw = () => [
+  {
+    id: "draw-1" as SecretSantaId,
+    occasion_id: christmas.id,
+    taking_part: true,
+    recipient_profile_id: "anna" as ProfileId,
+    recipient_name: "Anna",
+  },
+];
+
+/** A draw is running: you see who you drew, and as a manager who takes part, not the pairs. */
+export const SecretSantaRunning: Story = {
+  beforeEach: () => {
+    data.group = managerOfFamily;
+    data.occasions = [christmas];
+    data.santas = runningDraw();
+  },
+  render: app("/groups/group-1/secret-santa"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByRole("link", { name: "Anna" })).toBeInTheDocument();
+    await expect(await canvas.findByRole("button", { name: /Remove\s*Bert/ })).toBeInTheDocument();
+  },
+};
+
+/** As a member: who you drew, and nobody else's pair, and no way to remove anyone. */
+export const SecretSantaRunningAsMember: Story = {
+  beforeEach: () => {
+    data.occasions = [christmas];
+    data.santas = runningDraw();
+  },
+  render: app("/groups/group-1/secret-santa"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(await canvas.findByRole("link", { name: "Anna" })).toBeInTheDocument();
+    await expect(canvas.queryByRole("button", { name: /Remove/ })).toBeNull();
+  },
+};
+
+/** On the group page, a running draw is just the one button under the occasions. */
+export const SecretSantaRunningLink: Story = {
+  beforeEach: () => {
+    data.group = managerOfFamily;
+    data.occasions = [christmas];
+    data.santas = runningDraw();
+  },
+  render: app("/groups/group-1"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("link", { name: /Secret Santa for/ }));
+    await expect(await canvas.findByRole("link", { name: "Anna" })).toBeInTheDocument();
+  },
+};
+
+/** Nobody leaves while taking part in a running draw: the message says what to do. */
+export const SecretSantaLeaveBlocked: Story = {
+  beforeEach: () => {
+    data.group = () => ({
+      ...managerOfFamily(),
+      group_members: [member(profile("anna"), "manager"), member(orjan, "member")],
+    });
+    data.occasions = [christmas];
+    data.santas = [
+      {
+        id: "draw-1" as SecretSantaId,
+        occasion_id: christmas.id,
+        taking_part: true,
+        recipient_profile_id: "anna" as ProfileId,
+        recipient_name: "Anna",
+      },
+    ];
+  },
+  render: app("/groups/group-1"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(await canvas.findByRole("button", { name: t("group.leave") }));
+    await expect(
+      await canvas.findByText(t("secretSanta.leaveBlocked", { occasions: "Christmas 2026" })),
+    ).toBeInTheDocument();
+  },
+};
+
+/** The list of the person you drew has the ribbon, and the list menu too. */
+export const SecretSantaRibbonOnList: Story = {
+  beforeEach: () => {
+    data.drawn = [
+      {
+        recipient_profile_id: "anna" as ProfileId,
+        occasion_id: christmas.id,
+        occasion_name: christmas.name,
+        occasion_date: christmas.date,
+      },
+    ];
+  },
+  render: app("/lists/anna"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // One in the page, one in the list menu (closed). The page's comes last.
+    const ribbons = await canvas.findAllByText(t("secretSanta.ribbon"));
+    await expect(ribbons).toHaveLength(2);
+    await expect(ribbons.at(-1)).toHaveAttribute(
+      "title",
+      t("secretSanta.ribbonFor", { occasion: christmas.name }),
+    );
+  },
 };
 
 export const GroupSettingsAsMember: Story = { render: app("/groups/group-1") };

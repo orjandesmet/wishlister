@@ -10,6 +10,8 @@ import u from "../utilities.module.css";
 import { Card } from "./Card.tsx";
 import { Chip } from "./Chip.tsx";
 import { Person } from "./Person.tsx";
+import { SecretSantaRibbon } from "./SecretSantaRibbon.tsx";
+import { SecretSantaIcon } from "./SecretSantaIcon.tsx";
 import styles from "./GroupCard.module.css";
 
 export type GroupCardProps = {
@@ -18,6 +20,10 @@ export type GroupCardProps = {
   myProfileId: ProfileId;
   /** The group's next occasion from today on, if it has one. */
   nextOccasion?: Occasion;
+  /** The occasion of the group's running Secret Santa, if it has one. */
+  secretSanta?: Occasion;
+  /** The member you drew in that Secret Santa, who gets the badge. */
+  drawnProfileId?: ProfileId;
   /** Today, to say how far away the next occasion is. */
   today: IsoDate;
 };
@@ -39,6 +45,21 @@ export function GroupCard(props: GroupCardProps) {
     if (days === 1) return t("groupCard.tomorrow");
     return t("groupCard.inDays", { days });
   };
+
+  /** The soft accent line saying a Secret Santa is on. `showOccasion` names its occasion. */
+  const secretSantaLine = (occasion: Occasion, showOccasion: boolean) => (
+    <p class={styles.secretSanta}>
+      <SecretSantaIcon class={styles.secretSantaIcon} />
+      <span>
+        {showOccasion
+          ? t("groupCard.secretSantaFor", { occasion: occasion.name })
+          : t("groupCard.secretSanta")}
+        <Show when={!showOccasion}>
+          <span class={u.visuallyHidden}> {occasion.name}</span>
+        </Show>
+      </span>
+    </p>
+  );
 
   const soon = (date: IsoDate) => daysBetween(props.today, date) <= 1;
 
@@ -81,14 +102,24 @@ export function GroupCard(props: GroupCardProps) {
                 <span>{t("groupCard.daysUnit")}</span>
               </Show>
             </span>
-            <p class={styles.nextOccasion} aria-hidden="true">
-              {t("groupCard.occasionLine", {
-                name: occasion().name,
-                date: formatOccasionDate(occasion().date, locale()),
-              })}
-            </p>
+            <div class={styles.occasionText}>
+              <p class={styles.nextOccasion} aria-hidden="true">
+                {t("groupCard.occasionLine", {
+                  name: occasion().name,
+                  date: formatOccasionDate(occasion().date, locale()),
+                })}
+              </p>
+              {/* Under the event name, when it's the Secret Santa of this very occasion. */}
+              <Show when={props.secretSanta?.id === occasion().id ? props.secretSanta : undefined}>
+                {(santa) => secretSantaLine(santa(), false)}
+              </Show>
+            </div>
           </div>
         )}
+      </Show>
+      {/* Running for another occasion than the next one: say which. */}
+      <Show when={props.secretSanta?.id !== props.nextOccasion?.id ? props.secretSanta : undefined}>
+        {(santa) => secretSantaLine(santa(), true)}
       </Show>
       <ul class={u.list}>
         <For each={members()}>
@@ -115,6 +146,9 @@ export function GroupCard(props: GroupCardProps) {
                   <Person id={member.profile_id} name={member.profiles.display_name}>
                     {member.profiles.display_name}
                     {member.profile_id === props.myProfileId ? t("common.you") : ""}
+                    <Show when={member.profile_id === props.drawnProfileId}>
+                      <SecretSantaRibbon iconOnly occasion={props.secretSanta?.name} />
+                    </Show>
                   </Person>
                   <Show when={!member.profiles.account_id}>
                     <Chip>{t("groupCard.child")}</Chip>

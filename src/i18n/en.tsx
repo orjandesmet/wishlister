@@ -10,6 +10,8 @@ import type { JSX } from "solid-js";
 export const en = {
   common: {
     loading: "Loading…",
+    preview: "Preview",
+    nothingToPreview: "Nothing to preview yet.",
     you: " (you)",
     save: "Save",
     saving: "Saving…",
@@ -103,6 +105,8 @@ export const en = {
     inDays: (p: { days: number }) => `in ${p.days} days`,
     occasionLine: (p: { name: string; date: string }) => `${p.name} · ${p.date}`,
     daysUnit: "days",
+    secretSanta: "Secret Santa is running",
+    secretSantaFor: (p: { occasion: string }) => `Secret Santa is running for ${p.occasion}`,
   },
   group: {
     back: "‹ Groups",
@@ -181,6 +185,57 @@ export const en = {
     add: "Add occasion",
     new: "New occasion",
     confirmDelete: (p: { name: string }) => `Delete ${p.name} for the whole group?`,
+  },
+  secretSanta: {
+    minLoop: "Minimum loop size",
+    minLoopHelp:
+      "A loop is a group of people who only give to each other. A bigger minimum makes the draw harder to guess; All is one loop through everyone. If no draw is possible, try a smaller one.",
+    loopAll: "All",
+    message: "Message (optional)",
+    messageHelp:
+      "Sent along with the first email everyone gets. You can use markdown: **bold**, *italic*, [links](https://…) and lists.",
+    viewFor: (p: { occasion: string }) => `Secret Santa for ${p.occasion}`,
+    occasion: "Occasion",
+    noUpcoming: "Add an upcoming occasion to the group first, then start a Secret Santa for it.",
+    none: "No Secret Santa has been started for this occasion.",
+    title: "Secret Santa",
+    pageTitle: (p: { occasion: string }) => `Secret Santa for ${p.occasion}`,
+    backTo: (p: { group: string }) => `‹ ${p.group}`,
+    help: "Draw who buys a present for whom. Everyone who takes part gets an email with the one person they drew, and follows that person's list. Nobody sees who drew whom, not even managers.",
+    start: "Start Secret Santa",
+    running: "A Secret Santa is running.",
+    youDrew: (p: { name: JSX.Element }) => <>You drew {p.name}.</>,
+    notTakingPart: "You're not taking part.",
+    ribbon: "Your Secret Santa",
+    ribbonFor: (p: { occasion: string }) => `You drew this person for ${p.occasion}.`,
+    who: "Who takes part",
+    whoHelp: "Only members with their own list can take part. Children and guardians can't.",
+    nobodyToDraw: "There are no members who can take part yet.",
+    exclusions: "Exclusions (optional)",
+    exclusionsHelp:
+      "Choose who must not draw whom, for example a couple. It works one way: to keep a couple apart, set it for both.",
+    mustNotDraw: (p: { name: string }) => `${p.name} must not draw`,
+    excludedCount: (p: { count: number }) => (p.count === 0 ? "nobody" : `${p.count} excluded`),
+    needTwo: "Pick at least 2 people to take part.",
+    draw: "Draw names",
+    drawing: "Drawing…",
+    confirmStart: (p: { occasion: string; count: number }) =>
+      `Draw names for ${p.occasion} among ${p.count} people? Everyone gets an email and the draw can't be redone.`,
+    participants: (p: { count: number }) => `Taking part (${p.count})`,
+    participantsHelp: "You see who takes part, never who drew whom.",
+    confirmRemove: (p: { name: string }) =>
+      `Remove ${p.name} from the Secret Santa? Whoever drew ${p.name} gets the person ${p.name} drew, and an email about it. This can't be undone.`,
+    startedSent: "The Secret Santa has started. Everyone who takes part got an email.",
+    startedNotSetUp:
+      "The Secret Santa has started. Emails can't be sent yet, so everyone can see who they drew on this page.",
+    startedMailFailed:
+      "The Secret Santa has started, but sending the emails failed. We'll try again this evening.",
+    removed: (p: { name: string }) => `${p.name} was removed from the Secret Santa.`,
+    drawEnded: "Too few people were left, so the Secret Santa ended.",
+    leaveBlocked: (p: { occasions: string }) =>
+      `You take part in the Secret Santa for ${p.occasions}. Ask a manager to remove you from it before you leave the group.`,
+    removeBlocked: (p: { name: string; occasions: string }) =>
+      `${p.name} takes part in the Secret Santa for ${p.occasions}. Remove them from it first.`,
   },
   child: {
     editProfile: "Edit profile",
@@ -420,6 +475,7 @@ export const en = {
     unfollowed: "You stopped following this list.",
     asked: "Your question was sent.",
     answered: "Your answer was saved.",
+    secretSantaStarted: (p: { occasion: string }) => `Secret Santa started for ${p.occasion}.`,
   },
   wishlist: {
     fallbackTitle: "Wishlist",

@@ -3,6 +3,7 @@ import { createMemo, createResource, createSignal, For, onCleanup, Show } from "
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
 import { ListMenu } from "../components/ListMenu.tsx";
+import { SecretSantaRibbon } from "../components/SecretSantaRibbon.tsx";
 import { FollowList } from "../components/FollowList.tsx";
 import { ItemCard } from "../components/ItemCard.tsx";
 import { ItemQuestions } from "../components/ItemQuestions.tsx";
@@ -32,7 +33,7 @@ import { useMe } from "../lib/me.tsx";
 import { listMenuSections } from "../lib/listMenu.ts";
 import { isReady } from "../lib/resource.ts";
 import { createCachedResource } from "../lib/cache.ts";
-import { loadItems, loadMyGroups, loadProfileDetails } from "../lib/loaders.ts";
+import { loadDrawnPeople, loadItems, loadMyGroups, loadProfileDetails } from "../lib/loaders.ts";
 import { useQuickAdd } from "../lib/quickAdd.ts";
 import u from "../utilities.module.css";
 import { Button } from "../components/Button.tsx";
@@ -52,6 +53,9 @@ export default function WishList() {
   // A menu beside the title opens your own list, your children's, or anyone's from your groups.
   // The groups are an extra: if they fail to load, the menu still has your own lists.
   const [groups] = createCachedResource(() => true, loadMyGroups);
+  // The people you drew in a Secret Santa get a ribbon. Another extra: no ribbons if it fails.
+  const [drawnPeople] = createCachedResource(() => true, loadDrawnPeople);
+  const drawn = () => (drawnPeople.error ? undefined : drawnPeople()) ?? [];
   const menuSections = () =>
     listMenuSections(
       [
@@ -64,6 +68,7 @@ export default function WishList() {
       ],
       (groups.error ? undefined : groups()) ?? [],
       compareNames,
+      drawn().map((d) => d.recipient_profile_id),
     );
   const showMenu = () => menuSections().flatMap((section) => section.options).length > 1;
 
@@ -283,6 +288,14 @@ export default function WishList() {
           </Show>
         </div>
       </div>
+      {/* Only the one who drew this person sees it. */}
+      <Show when={drawn().find((d) => d.recipient_profile_id === params.profileId)}>
+        {(drawnPerson) => (
+          <p>
+            <SecretSantaRibbon occasion={drawnPerson().occasion_name} />
+          </p>
+        )}
+      </Show>
       <Show when={profile.error || items.error}>
         <p class={u.error} role="alert">
           {t("wishlist.unavailable")}

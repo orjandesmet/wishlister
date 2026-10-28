@@ -19,3 +19,5 @@ export type ItemId = Brand<string, "ItemId">;
 export type OccasionId = Brand<string, "OccasionId">;
 /** item_questions.id */
 export type QuestionId = Brand<string, "QuestionId">;
+/** secret_santas.id: the draw for one occasion. */
+export type SecretSantaId = Brand<string, "SecretSantaId">;

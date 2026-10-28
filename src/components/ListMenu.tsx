@@ -3,6 +3,7 @@ import { t } from "../lib/i18n.ts";
 import type { ProfileId } from "../lib/ids.ts";
 import type { ListMenuSection } from "../lib/listMenu.ts";
 import { Person } from "./Person.tsx";
+import { SecretSantaRibbon } from "./SecretSantaRibbon.tsx";
 import styles from "./ListMenu.module.css";
 
 export type ListMenuProps = {
@@ -52,6 +53,9 @@ export function ListMenu(props: ListMenuProps) {
                       }
                     >
                       {option.name}
+                      <Show when={option.ribbon}>
+                        <SecretSantaRibbon iconOnly />
+                      </Show>
                     </Person>
                   )}
                 </For>

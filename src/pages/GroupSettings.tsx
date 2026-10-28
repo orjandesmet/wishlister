@@ -9,6 +9,7 @@ import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createGroupData } from "../lib/createGroupData.ts";
 import { createGroupOccasions } from "../lib/createGroupOccasions.ts";
 import { createMemberRemoval } from "../lib/createMemberRemoval.ts";
+import { createSecretSanta } from "../lib/createSecretSanta.ts";
 import { t } from "../lib/i18n.ts";
 import type { GroupId } from "../lib/ids.ts";
 import { today } from "../lib/occasions.ts";
@@ -21,7 +22,13 @@ export default function GroupSettings() {
   const runner = createActionRunner();
   const data = createGroupData(() => params.groupId);
   const occasions = createGroupOccasions(() => params.groupId, runner);
-  const onRemove = createMemberRemoval(data, runner);
+  const santa = createSecretSanta(
+    () => params.groupId,
+    data.isManager,
+    occasions.occasions,
+    runner,
+  );
+  const onRemove = createMemberRemoval(data, runner, santa.drawsTakingPart);
   const { group } = data;
 
   usePageTitle(() => group()?.name ?? t("group.fallbackTitle"));
@@ -70,6 +77,17 @@ export default function GroupSettings() {
             onAdd={occasions.onAdd}
             onUpdate={occasions.onUpdate}
             onDelete={occasions.onDelete}
+            secretSanta={
+              isReady(santa.draws) && !santa.draws.error
+                ? {
+                    group: params.groupId,
+                    running: santa.runningOccasion(),
+                    canStart:
+                      data.isManager() &&
+                      (occasions.occasions() ?? []).some((o) => o.date >= today()),
+                  }
+                : undefined
+            }
           />
         </Show>
 

@@ -111,3 +111,35 @@
       beat 2.4s ease-in-out 1.2s infinite;
   }
 }
+
+.occasionText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+/*
+ * Not a link: just a soft line saying a Secret Santa is on. Santa's red, from the pill colours
+ * that the seasonal themes leave alone, so it stands apart from the blue (or themed) accent
+ * of the countdown whatever the season, and keeps its contrast in light and dark.
+ */
+.secretSanta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pill-negative-ink);
+  background: var(--pill-negative-bg);
+  border-radius: var(--radius-control);
+}
+
+.secretSantaIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
