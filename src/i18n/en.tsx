@@ -340,6 +340,7 @@ export const en = {
     notSaved: "Not saved yet",
     retrying: "Couldn't save. Trying again…",
     moreOptions: "More options…",
+    submit: "Add",
     notWantedHint: () => (
       <>
         Start with <strong>!</strong> for something you don't want, like <strong>!socks</strong>.

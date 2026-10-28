@@ -334,6 +334,7 @@ export const nl: Dictionary = {
     notSaved: "Nog niet opgeslagen",
     retrying: "Opslaan mislukt. We proberen het opnieuw…",
     moreOptions: "Meer opties…",
+    submit: "Toevoegen",
     notWantedHint: () => (
       <>
         Begin met <strong>!</strong> voor iets wat je niet wilt, zoals <strong>!kousen</strong>.

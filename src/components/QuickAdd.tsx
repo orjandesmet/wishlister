@@ -80,12 +80,26 @@ export function QuickAdd(props: QuickAddProps) {
     setGroups(ids.includes(id) ? ids.filter((other) => other !== id) : [...ids, id]);
   };
 
-  function onSubmit(event: SubmitEvent) {
-    event.preventDefault();
+  function add() {
     if (!name().trim()) return;
     props.onAdd(name(), groups());
-    // The input keeps focus, so the (on-screen) keyboard stays open for the next item.
     setName("");
+  }
+
+  /** Enter: adds the item and stays open. The input keeps focus, so the (on-screen) keyboard stays up for the next item. */
+  function onSubmit(event: SubmitEvent) {
+    event.preventDefault();
+    add();
+  }
+
+  /**
+   * The button: adds what was typed (if anything) and closes the sheet, for when you're done.
+   * Not a submit button, because Enter clicks the form's submit button and should keep it open.
+   */
+  function addAndClose() {
+    add();
+    const el = popover();
+    if (el?.matches(":popover-open")) el.hidePopover();
   }
 
   const [popover, setPopover] = createSignal<HTMLDivElement>();
@@ -159,13 +173,17 @@ export function QuickAdd(props: QuickAddProps) {
                 <p class={`${u.muted} ${u.small}`}>{t("quickAdd.noGroupsHint")}</p>
               </Show>
             </div>
-            <Button
-              variant="link"
-              class={styles.details}
-              onClick={() => props.onOpenForm({ text: name(), groups: groups() })}
-            >
-              {t("quickAdd.moreOptions")}
-            </Button>
+            <div class={`${u.row} ${styles.actions}`}>
+              <Button
+                variant="link"
+                onClick={() => props.onOpenForm({ text: name(), groups: groups() })}
+              >
+                {t("quickAdd.moreOptions")}
+              </Button>
+              <Button variant="primary" onClick={addAndClose}>
+                {t("quickAdd.submit")}
+              </Button>
+            </div>
           </form>
         </Popover>
       </div>
