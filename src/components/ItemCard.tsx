@@ -269,11 +269,6 @@ export function ItemCard(props: ItemCardProps) {
             </p>
           </Show>
           <div class={styles.top}>
-            <ItemPicture
-              srcs={itemPictureSources(props.item)}
-              name={props.item.name}
-              zoomable={!props.selecting}
-            />
             <div class={styles.topText}>
               <div class={styles.head}>
                 <strong id={nameId} class={styles.name}>
@@ -305,6 +300,11 @@ export function ItemCard(props: ItemCardProps) {
                 />
               </Show>
             </div>
+            <ItemPicture
+              srcs={itemPictureSources(props.item)}
+              name={props.item.name}
+              zoomable={!props.selecting}
+            />
           </div>
           <Show when={description().length > 0}>
             <div class={styles.description}>

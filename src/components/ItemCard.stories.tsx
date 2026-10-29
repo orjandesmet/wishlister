@@ -164,9 +164,18 @@ export const ForeignPrice: Story = {
   args: { item: { ...meta.args.item, price: 59.99, price_currency: "USD" } },
 };
 
-/** The linked page's picture, beside the name. Screen readers skip it: the name says it all. */
+/**
+ * The linked page's picture, on the right of the name and price. Screen readers skip it:
+ * the name says it all.
+ */
 export const WithPicture: Story = {
   args: { item: { ...meta.args.item, image_url: bonsaiPicture } },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    const name = canvas.getByText(args.item.name).getBoundingClientRect();
+    const picture = canvas.getByRole("button", { name: /view picture/i }).getBoundingClientRect();
+    await expect(picture.left).toBeGreaterThanOrEqual(name.right);
+  },
 };
 
 /** Tapping the picture opens it bigger; Close (or Escape, or tapping outside) brings you back. */
@@ -276,7 +285,7 @@ export const Selected: Story = {
   args: { ...Selecting.args, selected: true },
 };
 
-/** The checkbox stays on the left, before the picture, so it lines up with cards without one. */
+/** The checkbox stays on the left and the picture on the right, so boxes line up with cards without one. */
 export const SelectingWithPicture: Story = {
   args: { ...Selecting.args, item: { ...meta.args.item, image_url: bonsaiPicture } },
   play: async ({ canvasElement, args }) => {

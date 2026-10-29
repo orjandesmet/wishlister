@@ -25,7 +25,7 @@
   min-width: 0;
 }
 
-/* The picture, when there is one, beside the name and price. */
+/* The picture, when there is one, on the right of the name and price. */
 .top {
   display: flex;
   align-items: flex-start;
@@ -234,7 +234,7 @@ label.body {
   cursor: pointer;
 }
 
-/* Level with the first line of the card: the name, or the picture beside it. */
+/* Level with the first line of the card: the name. */
 .selectBox {
   flex-shrink: 0;
   width: 22px;
