@@ -13,6 +13,11 @@
   overflow-wrap: anywhere;
 }
 
+/* Only there to find the cards in, for sliding them to their new places; no box of its own. */
+.cards {
+  display: contents;
+}
+
 /* The button under an empty list's message, which replaces the floating one. */
 .emptyQuickAdd {
   display: flex;

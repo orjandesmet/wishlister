@@ -165,7 +165,7 @@ const orjan: MyProfile = {
   display_name: "Orjan",
   seasonal_themes: true,
   group_collapse: "remember",
-  compact_cards: false,
+  card_view: "full",
 };
 
 const member = (p: Profile, role: Member["role"]): Member => ({

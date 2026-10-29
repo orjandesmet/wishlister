@@ -22,9 +22,10 @@ import {
   type WantedLevel,
 } from "../lib/api/items.ts";
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
-import { setProfileCompactCards } from "../lib/api/profiles.ts";
+import { animateMoves } from "../lib/animateMoves.ts";
+import { setProfileCardView } from "../lib/api/profiles.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
-import { chooseCompactCards, compactCards } from "../lib/compactCards.ts";
+import { cardView, chooseCardView } from "../lib/cardView.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createBulkSelect } from "../lib/createBulkSelect.ts";
 import { createFollow } from "../lib/createFollow.ts";
@@ -160,10 +161,14 @@ export default function WishList() {
     if (search.questions === item.id) setSearch({ questions: undefined }, { replace: true });
   };
 
-  const listSections = createListSections(loadedItems, () =>
-    purchases.showBought() ? (item) => purchases.purchaseOf().has(item.id) : undefined,
+  // oxlint-disable-next-line no-unassigned-vars
+  let cardsRoot: HTMLDivElement | undefined;
+  const listSections = createListSections(
+    loadedItems,
+    () => (purchases.showBought() ? (item) => purchases.purchaseOf().has(item.id) : undefined),
+    (apply) => animateMoves(cardsRoot, apply),
   );
-  const { sections, notWanted, isGrouped } = listSections;
+  const { itemsIn, notWanted, isGrouped } = listSections;
   const groupName = (id: GroupId) =>
     profile()?.groups.find((g) => g.id === id)?.name ?? t("wishlist.aGroup");
 
@@ -213,6 +218,7 @@ export default function WishList() {
           setItems((prev) =>
             prev?.map((other) => (other.id === id ? { ...other, wanted_level: to } : other)),
           );
+        listSections.holdPlace(item);
         setLevel(level);
         announce(t("a11y.wantedLevel", { item: item.name, level: t(`item.wantedLevel${level}`) }));
         try {
@@ -249,16 +255,20 @@ export default function WishList() {
   };
 
   // Saved on your account, so every list and every device follows it.
+  const compact = () => cardView() === "compact";
   const onCompact = (on: boolean) =>
     run(async () => {
-      await chooseCompactCards(on, (next) => setProfileCompactCards(me().profile.id, next));
+      await chooseCardView(on ? "compact" : "full", (next) =>
+        setProfileCardView(me().profile.id, next),
+      );
       me().refetchProfile();
     });
 
   const card = (item: Item) => (
     <ItemCard
+      data-item-id={item.id}
       item={item}
-      compact={compactCards()}
+      compact={compact()}
       purchase={purchases.purchase(item)}
       canEdit={canEdit()}
       groupNames={item.item_groups.map((g) => groupName(g.group_id))}
@@ -389,7 +399,7 @@ export default function WishList() {
               </Button>
             </Show>
             <Show when={!select.selecting()}>
-              <CompactToggle on={compactCards()} onChange={(on) => void onCompact(on)} />
+              <CompactToggle on={compact()} onChange={(on) => void onCompact(on)} />
             </Show>
             <ListOrderSelect
               value={listSections.order()}
@@ -399,26 +409,28 @@ export default function WishList() {
             />
           </div>
         </Show>
-        <For each={sections()}>
-          {(section) => (
+        <div ref={cardsRoot} class={styles.cards}>
+          <For each={listSections.categories()}>
+            {(category) => (
+              <section class={u.stack}>
+                <Show when={isGrouped()}>
+                  <h2>{category ?? t("listOrder.uncategorised")}</h2>
+                </Show>
+                <ul class={`${u.list} ${u.cards}`}>
+                  <For each={itemsIn(category)}>{card}</For>
+                </ul>
+              </section>
+            )}
+          </For>
+          <Show when={notWanted().length > 0}>
             <section class={u.stack}>
-              <Show when={isGrouped()}>
-                <h2>{section.category ?? t("listOrder.uncategorised")}</h2>
-              </Show>
+              <h2>{t("listOrder.notWanted")}</h2>
               <ul class={`${u.list} ${u.cards}`}>
-                <For each={section.items}>{card}</For>
+                <For each={notWanted()}>{card}</For>
               </ul>
             </section>
-          )}
-        </For>
-        <Show when={notWanted().length > 0}>
-          <section class={u.stack}>
-            <h2>{t("listOrder.notWanted")}</h2>
-            <ul class={`${u.list} ${u.cards}`}>
-              <For each={notWanted()}>{card}</For>
-            </ul>
-          </section>
-        </Show>
+          </Show>
+        </div>
         <Show when={select.selecting()}>
           <BulkActions
             selected={select.selectedIds().length}

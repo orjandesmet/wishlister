@@ -3,14 +3,14 @@ import { A } from "@solidjs/router";
 import { createResource, createSignal, For, Show } from "solid-js";
 import { NotificationSettings } from "../components/NotificationSettings.tsx";
 import { CurrencySelect } from "../components/CurrencySelect.tsx";
-import { CompactCardsSetting } from "../components/CompactCardsSetting.tsx";
+import { CardViewSetting } from "../components/CardViewSetting.tsx";
 import { GroupCollapseSetting } from "../components/GroupCollapseSetting.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { SeasonalThemes } from "../components/SeasonalThemes.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
 import {
   renameProfile,
-  setProfileCompactCards,
+  setProfileCardView,
   setProfileGroupCollapse,
   setProfileSeasonalThemes,
 } from "../lib/api/profiles.ts";
@@ -18,7 +18,7 @@ import { createChild } from "../lib/api/children.ts";
 import { followList, getMyFollows, unfollowAll, unfollowList } from "../lib/api/follows.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { today } from "../lib/occasions.ts";
-import { chooseCompactCards, compactCards } from "../lib/compactCards.ts";
+import { cardView, chooseCardView, type CardView } from "../lib/cardView.ts";
 import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
 import {
   groupCollapseMode,
@@ -94,10 +94,10 @@ export default function Settings() {
     }
   }
 
-  async function onCompactCards(on: boolean) {
+  async function onCardView(view: CardView) {
     setError(undefined);
     try {
-      await chooseCompactCards(on, (next) => setProfileCompactCards(me().profile.id, next));
+      await chooseCardView(view, (next) => setProfileCardView(me().profile.id, next));
       me().refetchProfile();
     } catch (e) {
       setError((e as Error).message);
@@ -143,7 +143,7 @@ export default function Settings() {
           mode={groupCollapseMode()}
           onChange={(mode) => void onGroupCollapse(mode)}
         />
-        <CompactCardsSetting on={compactCards()} onChange={(on) => void onCompactCards(on)} />
+        <CardViewSetting view={cardView()} onChange={(view) => void onCardView(view)} />
       </Card>
       <Card>
         <h2>{t("account.children")}</h2>

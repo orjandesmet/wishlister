@@ -73,6 +73,8 @@ export type ItemCardProps = {
    * picture and shop name, no category or description. Details shows the full card.
    */
   compact?: boolean;
+  /** Finds the card on the page, e.g. to slide it to a new place (animateMoves). */
+  "data-item-id"?: string;
 };
 
 /**
@@ -324,6 +326,7 @@ export function ItemCard(props: ItemCardProps) {
     <Card
       ref={card}
       as="li"
+      data-item-id={props["data-item-id"]}
       tabIndex={-1}
       class={styles.item}
       classList={{

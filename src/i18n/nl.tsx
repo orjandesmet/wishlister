@@ -25,9 +25,11 @@ export const nl: Dictionary = {
   language: {
     label: "Taal",
   },
-  compactCards: {
-    label: "Compacte itemkaarten",
-    hint: "Kleinere kaarten op elke lijst, zonder afbeeldingen, categorieën of winkelnamen. Details toont de hele kaart.",
+  cardView: {
+    label: "Itemkaarten op lijsten",
+    full: "Volledig",
+    compact: "Compact",
+    hint: "Compacte kaarten tonen geen afbeeldingen, categorieën of winkelnamen; Details toont de hele kaart. Ook te wisselen met de knop Compact op elke lijst.",
     toggle: "Compact",
   },
   groupCollapse: {

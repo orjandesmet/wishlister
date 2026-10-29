@@ -30,9 +30,11 @@ export const en = {
   language: {
     label: "Language",
   },
-  compactCards: {
-    label: "Compact item cards",
-    hint: "Smaller cards on every list, without pictures, categories or shop names. Details shows the whole card.",
+  cardView: {
+    label: "Item cards on lists",
+    full: "Full",
+    compact: "Compact",
+    hint: "Compact cards leave out pictures, categories and shop names; Details shows the whole card. Also switched with the Compact button on any list.",
     toggle: "Compact",
   },
   groupCollapse: {

@@ -23,7 +23,7 @@ export function CompactToggle(props: CompactToggleProps) {
       aria-pressed={props.on}
       onClick={() => props.onChange(!props.on)}
     >
-      <span class={u.labelText}>{t("compactCards.toggle")}</span>
+      <span class={u.labelText}>{t("cardView.toggle")}</span>
       <svg
         class={u.labelIcon}
         viewBox="0 0 24 24"
@@ -37,24 +37,22 @@ export function CompactToggle(props: CompactToggleProps) {
         <Show
           when={props.on}
           fallback={
-            // Lucide "layout-list" (ISC licence): full cards, a picture beside each.
+            // Full cards: two tall blocks.
             <>
-              <rect width="7" height="7" x="3" y="3" rx="1" />
-              <rect width="7" height="7" x="3" y="14" rx="1" />
-              <path d="M14 4h7" />
-              <path d="M14 9h7" />
-              <path d="M14 15h7" />
-              <path d="M14 20h7" />
+              <rect width="18" height="8" x="3" y="2.5" rx="2" />
+              <rect width="18" height="8" x="3" y="13.5" rx="2" />
+              <path d="M7 6.5h10" />
+              <path d="M7 17.5h10" />
             </>
           }
         >
-          {/* Lucide "list" (ISC licence): compact cards, one line each. */}
-          <path d="M3 6h.01" />
-          <path d="M3 12h.01" />
-          <path d="M3 18h.01" />
-          <path d="M8 6h13" />
-          <path d="M8 12h13" />
-          <path d="M8 18h13" />
+          {/* Compact cards: three short blocks. */}
+          <rect width="18" height="5" x="3" y="2" rx="1.5" />
+          <rect width="18" height="5" x="3" y="9.5" rx="1.5" />
+          <rect width="18" height="5" x="3" y="17" rx="1.5" />
+          <path d="M7 4.5h10" />
+          <path d="M7 12h10" />
+          <path d="M7 19.5h10" />
         </Show>
       </svg>
     </Button>
