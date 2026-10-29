@@ -172,7 +172,7 @@ export const WithPicture: Story = {
   args: { item: { ...meta.args.item, image_url: bonsaiPicture } },
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    const name = canvas.getByText(args.item.name).getBoundingClientRect();
+    const name = canvas.getByText(args.item.name, { selector: "strong" }).getBoundingClientRect();
     const picture = canvas.getByRole("button", { name: /view picture/i }).getBoundingClientRect();
     await expect(picture.left).toBeGreaterThanOrEqual(name.right);
   },
