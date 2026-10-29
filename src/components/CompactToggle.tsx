@@ -41,8 +41,6 @@ export function CompactToggle(props: CompactToggleProps) {
             <>
               <rect width="18" height="8" x="3" y="2.5" rx="2" />
               <rect width="18" height="8" x="3" y="13.5" rx="2" />
-              <path d="M7 6.5h10" />
-              <path d="M7 17.5h10" />
             </>
           }
         >
@@ -50,9 +48,6 @@ export function CompactToggle(props: CompactToggleProps) {
           <rect width="18" height="5" x="3" y="2" rx="1.5" />
           <rect width="18" height="5" x="3" y="9.5" rx="1.5" />
           <rect width="18" height="5" x="3" y="17" rx="1.5" />
-          <path d="M7 4.5h10" />
-          <path d="M7 12h10" />
-          <path d="M7 19.5h10" />
         </Show>
       </svg>
     </Button>

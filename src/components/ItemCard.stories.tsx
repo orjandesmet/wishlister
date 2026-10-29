@@ -1,8 +1,11 @@
-import { createSignal } from "solid-js";
+import { createSignal, For } from "solid-js";
+import { createStore } from "solid-js/store";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
-import { expect, fn, userEvent, within } from "storybook/test";
+import { expect, fn, userEvent, waitFor, within } from "storybook/test";
 import type { Item } from "../lib/api/items.ts";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
+import { animateMoves } from "../lib/animateMoves.ts";
+import { createListSections, holdMs } from "../lib/createListSections.ts";
 import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { ItemCard } from "./ItemCard.tsx";
 import {
@@ -443,4 +446,101 @@ export const CompactNotWanted: Story = {
 
 export const CompactSelecting: Story = {
   args: { compact: true, item: compactItem, purchase: "hidden", canEdit: true, selecting: true },
+};
+
+/**
+ * Your own list in compact view, with Details open: tapping the hearts changes the level and
+ * the card stays open, with focus on the button.
+ */
+export const CompactChangingWantedLevel: Story = {
+  args: { compact: true, item: compactItem, purchase: "hidden", canEdit: true },
+  render: (args) => {
+    const [level, setLevel] = createSignal(args.item.wanted_level);
+    return (
+      <ItemCard
+        {...args}
+        item={{ ...args.item, wanted_level: level() }}
+        onChangeWant={() => setLevel((was) => (was === 3 ? 1 : ((was + 1) as 2 | 3)))}
+      />
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const card = within(canvasElement);
+    await userEvent.click(card.getByRole("button", { name: /Details/ }));
+    const hearts = card.getByRole("button", { name: /Change how much/ });
+    await userEvent.click(hearts);
+    await expect(card.getByRole("button", { name: /Less/ })).toBeVisible();
+    await expect(card.getByRole("button", { name: /Change how much/ })).toHaveFocus();
+  },
+};
+
+const levelItem = (id: string, name: string, wanted_level: Item["wanted_level"]): Item => ({
+  ...meta.args.item,
+  id: id as ItemId,
+  name,
+  category: null,
+  url: null,
+  price: null,
+  price_currency: null,
+  wanted_level,
+});
+
+/**
+ * A list sorted "most wanted first". Tap the hearts on Bike helmet a few times: the card
+ * stays where it is for a moment, so you can tap again, then slides to its new place
+ * (it just jumps with reduced motion).
+ */
+export const ReorderAfterWantedLevel: Story = {
+  args: { purchase: "hidden", canEdit: true },
+  render: (args) => {
+    // A store, like the page's items: a changed level keeps the same item, so the same card.
+    const [items, setItems] = createStore([
+      levelItem("bonsai", "LEGO Botanical bonsai tree", 3),
+      levelItem("scarf", "Wool scarf", 2),
+      levelItem("helmet", "Bike helmet", 1),
+    ]);
+    // The cards' list is the story's own <ul> (see the decorator above).
+    const root = () => document.querySelector<HTMLElement>("[data-item-id]")?.parentElement;
+    const list = createListSections(
+      () => items,
+      () => undefined,
+      (apply) => animateMoves(root() ?? undefined, apply),
+    );
+    list.chooseOrder("wanted");
+    const changeWant = (item: Item) => {
+      list.holdPlace(item);
+      const level = item.wanted_level === 3 ? 1 : ((item.wanted_level + 1) as 2 | 3);
+      setItems((other) => other.id === item.id, "wanted_level", level);
+    };
+    return (
+      <For each={list.itemsIn(null)}>
+        {(item) => (
+          <ItemCard
+            {...args}
+            data-item-id={item.id}
+            item={item}
+            onChangeWant={() => changeWant(item)}
+          />
+        )}
+      </For>
+    );
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const names = () =>
+      [...canvasElement.querySelectorAll<HTMLElement>("[data-item-id]")].map(
+        (card) => card.dataset.itemId,
+      );
+    const helmet = () =>
+      canvas.getByRole("button", { name: /Change how much you want Bike helmet/ });
+    await userEvent.click(helmet());
+    await userEvent.click(helmet());
+    // Still last while the taps may go on.
+    await expect(names()).toEqual(["bonsai", "scarf", "helmet"]);
+    // Now wanted as much as the bonsai, so after it (items wanted just as much keep their order).
+    await waitFor(() => expect(names()).toEqual(["bonsai", "helmet", "scarf"]), {
+      timeout: holdMs + 1000,
+    });
+    await expect(helmet()).toHaveFocus();
+  },
 };
