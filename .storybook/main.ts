@@ -5,6 +5,9 @@ export default {
   stories: ["../src/**/*.stories.tsx"],
   // addon-a11y runs axe on every story: its Accessibility panel lists what fails.
   addons: ["@storybook/addon-docs", "@storybook/addon-a11y", "@storybook/addon-vitest"],
+  // Storybook takes its tab icon from a /favicon.svg in staticDirs, so this shows
+  // the app's own favicon instead of the Storybook logo.
+  staticDirs: [{ from: "../public/favicon.svg", to: "/favicon.svg" }],
   // The app's vite.config.ts is used as is, minus the PWA plugin: Storybook needs
   // no service worker, and one would cache old stories.
   async viteFinal(config) {
