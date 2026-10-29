@@ -132,9 +132,28 @@ function WantLevel(props: { level: number; name: string; onChange?: () => void }
       }
     >
       {(onChange) => (
-        <Button variant="link" class={`${styles.want} ${u.small}`} onClick={() => onChange()()}>
+        <Button
+          variant="secondary"
+          size="small"
+          class={`${styles.want} ${styles.wantButton} ${u.small}`}
+          onClick={() => onChange()()}
+        >
           {content()}
           <span class={u.visuallyHidden}>. {t("item.changeWant", { name: props.name })}</span>
+          {/* Lucide "chevrons-up-down" (ISC licence): says the level can be changed. */}
+          <svg
+            class={styles.wantChange}
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="m7 15 5 5 5-5" />
+            <path d="m7 9 5-5 5 5" />
+          </svg>
         </Button>
       )}
     </Show>

@@ -274,9 +274,26 @@ label.body {
   text-align: start;
 }
 
-button.want {
-  min-height: 32px;
+/* On your own list: a small pill, so it reads as something to tap. */
+.wantButton {
   align-self: flex-start;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  color: var(--text-strong);
+  background: var(--surface);
+  border: 1px solid var(--control);
+}
+
+.wantButton:hover {
+  border-color: var(--muted);
+}
+
+.wantChange {
+  width: 14px;
+  height: 14px;
+  flex: none;
+  color: var(--muted);
 }
 
 .hearts {
