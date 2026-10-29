@@ -317,3 +317,7 @@ label.body {
   fill: none;
   color: var(--muted);
 }
+
+.want strong {
+  font-weight: 800;
+}

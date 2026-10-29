@@ -30,6 +30,7 @@ import { Chip } from "./Chip.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
 import { itemPictureSources } from "../lib/itemPictures.ts";
 import { Markdown } from "./Markdown.tsx";
+import { WantedLevelText } from "./WantedLevelText.tsx";
 import styles from "./ItemCard.module.css";
 
 /**
@@ -113,13 +114,14 @@ function Heart() {
  */
 function WantedLevel(props: { level: number; name: string; onChange?: () => void }) {
   const hearts = () => (props.level >= 3 ? 3 : props.level === 2 ? 1 : 0);
-  const label = () => t(`item.wantedLevel${props.level as 1 | 2 | 3}`);
   const content = () => (
     <>
       <span class={styles.hearts} classList={{ [styles.noHearts]: hearts() === 0 }}>
         <For each={Array.from({ length: Math.max(hearts(), 1) })}>{() => <Heart />}</For>
       </span>
-      {label()}
+      <span>
+        <WantedLevelText level={props.level as 1 | 2 | 3} />
+      </span>
     </>
   );
   return (

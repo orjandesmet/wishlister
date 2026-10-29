@@ -11,6 +11,7 @@ import {
   Show,
 } from "solid-js";
 import { CategoryChips } from "../components/CategoryChips.tsx";
+import { WantedLevelText } from "../components/WantedLevelText.tsx";
 import { addItem, getCategories, getItem, updateItem, type WantedLevel } from "../lib/api/items.ts";
 import { savePictures, uploadPictures } from "../lib/api/pictures.ts";
 import { getPageInfo } from "../lib/api/pageInfo.ts";
@@ -344,7 +345,9 @@ export default function ItemForm() {
                       setWantedLevel(level);
                     }}
                   />
-                  {t(`item.wantedLevel${level}`)}
+                  <span>
+                    <WantedLevelText level={level} />
+                  </span>
                 </Check>
               )}
             </For>
