@@ -282,7 +282,7 @@ label.body {
   width: fit-content;
   max-width: 100%;
   min-height: 36px;
-  padding: 0 10px;
+  padding: 0 8px 0 10px;
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--surface);
@@ -294,8 +294,8 @@ label.body {
 }
 
 .wantChange {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
   flex: none;
   color: var(--muted);
 }
@@ -303,6 +303,7 @@ label.body {
 .hearts {
   display: inline-flex;
   gap: 1px;
+  margin-inline-end: 4px;
   color: var(--danger);
 }
 
