@@ -249,8 +249,8 @@ export const en = {
   },
   item: {
     wantedLevel1: "I want this",
-    wantedLevel2: "I really want this",
-    wantedLevel3: "I really, really, REALLY want this",
+    wantedLevel2: "I really want this!",
+    wantedLevel3: "I really, really, REALLY want this!!",
     changeWant: (p: { name: string }) => `Change how much you want ${p.name}`,
     viewPicture: (p: { name: string }) => `View picture: ${p.name}`,
     pictureOf: (p: { name: string }) => `Picture of ${p.name}`,

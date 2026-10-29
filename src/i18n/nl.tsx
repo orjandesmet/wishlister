@@ -243,8 +243,8 @@ export const nl: Dictionary = {
   },
   item: {
     wantedLevel1: "Dit wil ik",
-    wantedLevel2: "Dit wil ik echt",
-    wantedLevel3: "Dit wil ik echt, echt, ECHT",
+    wantedLevel2: "Dit wil ik echt!",
+    wantedLevel3: "Dit wil ik echt, echt, ECHT!!",
     changeWant: (p) => `Wijzig hoe graag je ${p.name} wilt`,
     viewPicture: (p) => `Afbeelding bekijken: ${p.name}`,
     pictureOf: (p) => `Afbeelding van ${p.name}`,
