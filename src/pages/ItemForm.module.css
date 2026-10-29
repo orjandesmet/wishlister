@@ -46,3 +46,8 @@
 .form textarea {
   font-size: 16px;
 }
+
+/* The choices in a group are less tall too, now their text is smaller. */
+.form fieldset label {
+  min-height: 36px;
+}
