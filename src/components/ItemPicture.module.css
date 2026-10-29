@@ -27,6 +27,24 @@
   border-color: var(--control);
 }
 
+/* On a compact card: a picture icon, as big a target as the link icon beside it. */
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  min-width: 32px;
+  min-height: 32px;
+  color: var(--muted);
+}
+
+.iconButton:hover {
+  color: var(--text-strong);
+}
+
+.icon {
+  width: 18px;
+  height: 18px;
+}
+
 /* How many pictures there are, on the thumbnail's corner. */
 .count {
   position: absolute;

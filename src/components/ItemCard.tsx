@@ -67,20 +67,27 @@ export type ItemCardProps = {
   onToggleSelect?: () => void;
   /** The item's questions button and dialog (ItemQuestions), left out while picking items. */
   questions?: JSX.Element;
+  /**
+   * A smaller card: hearts beside the name, a picture icon and a link icon instead of the
+   * picture and shop name, no category or description. Details shows the full card.
+   */
+  compact?: boolean;
+  /** Finds the card on the page, e.g. to slide it to a new place (animateMoves). */
+  "data-item-id"?: string;
 };
 
 /**
  * The item's price as the shop showed it, and roughly what that is in your
  * currency when it's another one.
  */
-function PriceTag(props: { amount: number; currency: string }) {
+function PriceTag(props: { amount: number; currency: string; small?: boolean }) {
   const converted = () => {
     if (props.currency === displayCurrency()) return null;
     const amount = convertAmount(props.amount, props.currency, displayCurrency(), exchangeRates());
     return amount === null ? null : formatPrice(amount, displayCurrency(), locale());
   };
   return (
-    <p class={styles.price}>
+    <p class={styles.price} classList={{ [styles.smallPrice]: props.small }}>
       <span class={styles.priceAmount}>{formatPrice(props.amount, props.currency, locale())}</span>
       <Show when={converted()}>
         {(price) => (
@@ -162,6 +169,43 @@ function WantedLevel(props: { level: number; name: string; onChange?: () => void
   );
 }
 
+/**
+ * The hearts alone, beside the name on a compact card. Screen readers hear the level's
+ * words instead. Plain "I want this" has no hearts, so shows nothing.
+ */
+function InlineHearts(props: { level: number }) {
+  const hearts = () => (props.level >= 3 ? 3 : props.level === 2 ? 1 : 0);
+  return (
+    <Show when={hearts() > 0}>
+      <span class={`${styles.hearts} ${styles.inlineHearts}`}>
+        <For each={Array.from({ length: hearts() })}>{() => <Heart />}</For>
+        <span class={u.visuallyHidden}>
+          <WantedLevelText level={props.level as 1 | 2 | 3} />
+        </span>
+      </span>
+    </Show>
+  );
+}
+
+/** Lucide "external-link" (ISC licence). */
+function ExternalLinkIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    </svg>
+  );
+}
+
 /** A list of names in the language's own wording ("A, B and C"), the names themselves in bold. */
 function BoldList(props: { items: string[] }) {
   const parts = () =>
@@ -225,16 +269,120 @@ export function ItemCard(props: ItemCardProps) {
   const descriptionId = createUniqueId();
   const nameId = createUniqueId();
 
+  // Details opens a compact card into the full one, and Less folds it again. The button moves
+  // between the two layouts, so focus follows it. The card grows or shrinks to its new height
+  // (no animation with reduced motion).
+  const [details, setDetails] = createSignal(false);
+  const compact = () => !!props.compact && !details();
+  const contentId = createUniqueId();
+  // oxlint-disable-next-line no-unassigned-vars
+  let detailsButton: HTMLButtonElement | undefined;
+  // What changes between the two layouts, measured before and after, so it can glide over.
+  const measure = (el: HTMLElement) => {
+    const name = document.getElementById(nameId);
+    const content = document.getElementById(contentId);
+    const style = getComputedStyle(el);
+    // Longhands: not every browser gives the shorthands back from getComputedStyle.
+    return {
+      card: {
+        height: `${el.offsetHeight}px`,
+        paddingTop: style.paddingTop,
+        paddingRight: style.paddingRight,
+        paddingBottom: style.paddingBottom,
+        paddingLeft: style.paddingLeft,
+        borderTopLeftRadius: style.borderTopLeftRadius,
+        borderTopRightRadius: style.borderTopRightRadius,
+        borderBottomLeftRadius: style.borderBottomLeftRadius,
+        borderBottomRightRadius: style.borderBottomRightRadius,
+      },
+      gap: content ? getComputedStyle(content).rowGap : undefined,
+      fontSize: name ? getComputedStyle(name).fontSize : undefined,
+    };
+  };
+  const toggleDetails = () => {
+    const animate =
+      card &&
+      typeof card.animate === "function" &&
+      !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const before = animate ? measure(card!) : undefined;
+    setDetails((open) => !open);
+    // No scrolling: inside the clipped, growing card that would show its bottom first.
+    queueMicrotask(() => detailsButton?.focus({ preventScroll: true }));
+    if (!before || !card) return;
+    const after = measure(card);
+    const timing = { duration: 250, easing: "cubic-bezier(0.2, 0, 0, 1)" };
+    card.animate(
+      [
+        { ...before.card, overflow: "hidden" },
+        { ...after.card, overflow: "hidden" },
+      ],
+      timing,
+    );
+    if (before.gap && after.gap) {
+      document
+        .getElementById(contentId)
+        ?.animate([{ rowGap: before.gap }, { rowGap: after.gap }], timing);
+    }
+    if (before.fontSize && after.fontSize) {
+      document
+        .getElementById(nameId)
+        ?.animate([{ fontSize: before.fontSize }, { fontSize: after.fontSize }], timing);
+    }
+  };
+
+  const detailsToggle = () => (
+    <Show when={props.compact && !props.selecting}>
+      <Button
+        ref={detailsButton}
+        variant="link"
+        size="small"
+        class={styles.details}
+        aria-expanded={details()}
+        aria-controls={contentId}
+        onClick={toggleDetails}
+      >
+        <span class={u.labelText}>{details() ? t("item.lessDetails") : t("item.details")}</span>
+        {/* Lucide "chevrons-down-up" / "chevrons-up-down" (ISC licence): fold, or open. */}
+        <svg
+          class={u.labelIcon}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <Show
+            when={details()}
+            fallback={
+              <>
+                <path d="m7 15 5 5 5-5" />
+                <path d="m7 9 5-5 5 5" />
+              </>
+            }
+          >
+            <path d="m7 20 5-5 5 5" />
+            <path d="m7 4 5 5 5-5" />
+          </Show>
+        </svg>
+        <span class={u.visuallyHidden}>: {props.item.name}</span>
+      </Button>
+    </Show>
+  );
+
   return (
     <Card
       ref={card}
       as="li"
+      data-item-id={props["data-item-id"]}
       tabIndex={-1}
       class={styles.item}
       classList={{
         [styles.private]: isPrivate(),
         [styles.notWanted]: props.item.not_wanted,
         [styles.selected]: props.selected,
+        [styles.compact]: compact(),
       }}
     >
       {/* While picking, the whole card is the checkbox's label, and the box sits in its own
@@ -249,7 +397,7 @@ export function ItemCard(props: ItemCardProps) {
             onChange={() => props.onToggleSelect?.()}
           />
         </Show>
-        <div class={styles.content}>
+        <div id={contentId} class={styles.content}>
           <Show when={props.item.not_wanted}>
             <p class={`${styles.warning} ${styles.notWantedNote}`}>
               {/* Lucide "ban" (ISC licence). */}
@@ -273,6 +421,9 @@ export function ItemCard(props: ItemCardProps) {
               <div class={styles.head}>
                 <strong id={nameId} class={styles.name}>
                   {props.item.name}
+                  <Show when={compact() && !props.item.not_wanted}>
+                    <InlineHearts level={props.item.wanted_level} />
+                  </Show>
                 </strong>
                 <Show when={props.canEdit && !props.selecting}>
                   <div class={styles.manage}>
@@ -287,12 +438,15 @@ export function ItemCard(props: ItemCardProps) {
               </div>
               <Show
                 when={
-                  !props.item.not_wanted && props.item.price !== null && props.item.price_currency
+                  !compact() &&
+                  !props.item.not_wanted &&
+                  props.item.price !== null &&
+                  props.item.price_currency
                 }
               >
                 {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
               </Show>
-              <Show when={!props.item.not_wanted && !props.selecting}>
+              <Show when={!compact() && !props.item.not_wanted && !props.selecting}>
                 <WantedLevel
                   level={props.item.wanted_level}
                   name={props.item.name}
@@ -300,15 +454,51 @@ export function ItemCard(props: ItemCardProps) {
                 />
               </Show>
             </div>
-            <div class={styles.picture}>
+            <Show when={!compact()}>
+              <div class={styles.picture}>
+                <ItemPicture
+                  srcs={itemPictureSources(props.item)}
+                  name={props.item.name}
+                  zoomable={!props.selecting}
+                />
+              </div>
+            </Show>
+          </div>
+          {/* Compact: the price, then the picture and shop as icons, and Details at the end. */}
+          <Show when={compact()}>
+            <div class={styles.compactRow}>
+              <Show
+                when={
+                  !props.item.not_wanted && props.item.price !== null && props.item.price_currency
+                }
+              >
+                {(currency) => <PriceTag amount={props.item.price!} currency={currency()} small />}
+              </Show>
               <ItemPicture
                 srcs={itemPictureSources(props.item)}
                 name={props.item.name}
                 zoomable={!props.selecting}
+                icon
               />
+              <Show when={showUrl()}>
+                {(url) => (
+                  <a
+                    class={`${u.link} ${styles.shopLink} ${styles.shopIcon}`}
+                    href={url()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLinkIcon />
+                    <span class={u.visuallyHidden}>
+                      {t("item.openShop", { name: props.item.name })}
+                    </span>
+                  </a>
+                )}
+              </Show>
+              {detailsToggle()}
             </div>
-          </div>
-          <Show when={description().length > 0}>
+          </Show>
+          <Show when={!compact() && description().length > 0}>
             <div class={styles.description}>
               <Show
                 when={!foldable() || (expanded() && !props.selecting)}
@@ -334,7 +524,12 @@ export function ItemCard(props: ItemCardProps) {
               </Show>
             </div>
           </Show>
-          <Show when={props.item.category || showUrl()}>
+          <Show
+            when={
+              !compact() &&
+              (props.item.category || showUrl() || (props.compact && !props.selecting))
+            }
+          >
             <div class={styles.meta}>
               <Show when={props.item.category}>
                 <Chip hue={hueFor(props.item.category!)}>{props.item.category}</Chip>
@@ -348,26 +543,16 @@ export function ItemCard(props: ItemCardProps) {
                     rel="noopener noreferrer"
                   >
                     <span class={u.truncate}>{shopName(url())}</span>
-                    {/* Lucide "external-link" (ISC licence). */}
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M15 3h6v6" />
-                      <path d="M10 14 21 3" />
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    </svg>
+                    <ExternalLinkIcon />
                   </a>
                 )}
               </Show>
+              {detailsToggle()}
             </div>
           </Show>
-          <Show when={props.canEdit && !props.item.visible_in_all_groups && !isPrivate()}>
+          <Show
+            when={!compact() && props.canEdit && !props.item.visible_in_all_groups && !isPrivate()}
+          >
             <p class={`${u.muted} ${u.small}`}>
               {t("item.onlyVisibleIn", { groups: <BoldList items={props.groupNames} /> })}
             </p>
@@ -411,97 +596,101 @@ export function ItemCard(props: ItemCardProps) {
               {props.purchase === "mine" ? t("item.removedMine") : t("item.removed")}
             </p>
           </Show>
-          <Show when={!props.selecting && props.questions}>{props.questions}</Show>
-          <Switch>
-            <Match when={props.selecting}>{null}</Match>
-            <Match when={props.purchase === "mine"}>
-              <div class={u.row}>
-                <span class={styles.bought}>
-                  {props.boughtFor
-                    ? t("item.youBoughtFor", { occasion: props.boughtFor })
-                    : t("item.youBought")}
-                </span>
-                <Button
-                  variant="secondary"
-                  size="small"
-                  data-purchase
-                  onClick={() => {
-                    pressed();
-                    props.onUndo();
-                  }}
-                >
-                  {t("item.undo")}
-                  <span class={u.visuallyHidden}>: {props.item.name}</span>
-                </Button>
-              </div>
-            </Match>
-            <Match when={props.purchase === "someone"}>
-              <span class={`${styles.bought} ${styles.someone}`}>{t("item.someoneBought")}</span>
-            </Match>
-            <Match when={props.purchase === "available" && props.occasionChoices}>
-              {(choices) => (
-                <div
-                  class={`${u.stack} ${u.smallGap}`}
-                  role="group"
-                  aria-labelledby={occasionLabel}
-                >
-                  <span class={u.fieldLabel} id={occasionLabel}>
-                    {t("item.forWhichOccasion")}
+          {/* Compact: questions and the purchase share one line. */}
+          <div class={compact() ? styles.compactActions : styles.actions}>
+            <Show when={!props.selecting && props.questions}>{props.questions}</Show>
+            <Switch>
+              <Match when={props.selecting}>{null}</Match>
+              <Match when={props.purchase === "mine"}>
+                <div class={u.row}>
+                  <span class={styles.bought}>
+                    {props.boughtFor
+                      ? t("item.youBoughtFor", { occasion: props.boughtFor })
+                      : t("item.youBought")}
                   </span>
-                  <For each={choices()}>
-                    {(occasion) => (
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    data-purchase
+                    onClick={() => {
+                      pressed();
+                      props.onUndo();
+                    }}
+                  >
+                    {t("item.undo")}
+                    <span class={u.visuallyHidden}>: {props.item.name}</span>
+                  </Button>
+                </div>
+              </Match>
+              <Match when={props.purchase === "someone"}>
+                <span class={`${styles.bought} ${styles.someone}`}>{t("item.someoneBought")}</span>
+              </Match>
+              <Match when={props.purchase === "available" && props.occasionChoices}>
+                {(choices) => (
+                  <div
+                    class={`${u.stack} ${u.smallGap}`}
+                    role="group"
+                    aria-labelledby={occasionLabel}
+                  >
+                    <span class={u.fieldLabel} id={occasionLabel}>
+                      {t("item.forWhichOccasion")}
+                    </span>
+                    <For each={choices()}>
+                      {(occasion) => (
+                        <Button
+                          variant="secondary"
+                          data-purchase
+                          onClick={(event) => {
+                            pressed();
+                            rememberButton(event);
+                            props.onPickOccasion?.(occasion.id);
+                          }}
+                        >
+                          {occasion.name} · {formatOccasionDate(occasion.date, locale())}
+                        </Button>
+                      )}
+                    </For>
+                    <div class={u.row}>
                       <Button
-                        variant="secondary"
-                        data-purchase
+                        variant="link"
                         onClick={(event) => {
                           pressed();
                           rememberButton(event);
-                          props.onPickOccasion?.(occasion.id);
+                          props.onPickOccasion?.(null);
                         }}
                       >
-                        {occasion.name} · {formatOccasionDate(occasion.date, locale())}
+                        {t("item.noOccasion")}
                       </Button>
-                    )}
-                  </For>
-                  <div class={u.row}>
-                    <Button
-                      variant="link"
-                      onClick={(event) => {
-                        pressed();
-                        rememberButton(event);
-                        props.onPickOccasion?.(null);
-                      }}
-                    >
-                      {t("item.noOccasion")}
-                    </Button>
-                    <Button
-                      variant="link"
-                      onClick={() => {
-                        pressed();
-                        props.onCancelPick?.();
-                      }}
-                    >
-                      {t("common.cancel")}
-                    </Button>
+                      <Button
+                        variant="link"
+                        onClick={() => {
+                          pressed();
+                          props.onCancelPick?.();
+                        }}
+                      >
+                        {t("common.cancel")}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </Match>
-            <Match when={props.purchase === "available"}>
-              <button
-                type="button"
-                data-purchase
-                onClick={(event) => {
-                  pressed();
-                  rememberButton(event);
-                  props.onBuy();
-                }}
-              >
-                {t("item.iBought")}
-                <span class={u.visuallyHidden}>: {props.item.name}</span>
-              </button>
-            </Match>
-          </Switch>
+                )}
+              </Match>
+              <Match when={props.purchase === "available"}>
+                <button
+                  type="button"
+                  class={compact() ? styles.compactBuy : undefined}
+                  data-purchase
+                  onClick={(event) => {
+                    pressed();
+                    rememberButton(event);
+                    props.onBuy();
+                  }}
+                >
+                  {t("item.iBought")}
+                  <span class={u.visuallyHidden}>: {props.item.name}</span>
+                </button>
+              </Match>
+            </Switch>
+          </div>
         </div>
       </Dynamic>
     </Card>

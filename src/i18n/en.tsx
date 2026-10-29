@@ -30,6 +30,13 @@ export const en = {
   language: {
     label: "Language",
   },
+  cardView: {
+    label: "Item cards on lists",
+    full: "Full",
+    compact: "Compact",
+    hint: "Compact cards leave out pictures, categories and shop names; Details shows the whole card. Also switched with the Compact button on any list.",
+    toggle: "Compact",
+  },
   groupCollapse: {
     label: "Members on the groups page",
     always: "Always collapse",
@@ -281,6 +288,9 @@ export const en = {
     removedMine:
       "Taken off the list after you bought it. Can you still cancel your order? Then undo, and it's gone for good.",
     showMore: "Show more",
+    details: "Details",
+    lessDetails: "Less",
+    openShop: (p: { name: string }) => `Open the shop page: ${p.name}`,
     showLess: "Show less",
   },
   questions: {

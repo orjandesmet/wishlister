@@ -13,6 +13,16 @@
   overflow-wrap: anywhere;
 }
 
+/* Only there to find the cards in, for sliding them to their new places; no box of its own. */
+.cards {
+  display: contents;
+}
+
+/* Compact cards sit closer together. */
+.compactCards {
+  gap: 8px;
+}
+
 /* The button under an empty list's message, which replaces the floating one. */
 .emptyQuickAdd {
   display: flex;
@@ -20,8 +30,12 @@
 }
 
 @media (max-width: 599px) {
+  /* Icon only: the same fixed size as the Compact button, never squeezed off centre. */
   .selectButton {
-    padding: 0 12px;
+    flex: none;
+    width: 44px;
+    min-height: 36px;
+    padding: 0;
   }
 }
 

@@ -1,6 +1,7 @@
 import { supabase } from "../supabase.ts";
 import type { AccountId, GroupId, ProfileId } from "../ids.ts";
 import type { Role } from "./groups.ts";
+import type { CardView } from "../cardView.ts";
 import type { GroupCollapseMode } from "../groupCollapse.ts";
 import { must } from "./must.ts";
 
@@ -12,13 +13,15 @@ export type MyProfile = Profile & {
   seasonal_themes: boolean;
   /** Whether group cards always start collapsed, or the way you left each one. */
   group_collapse: GroupCollapseMode;
+  /** How item cards show on every list. */
+  card_view: CardView;
 };
 
 export async function getMyProfile(accountId: AccountId): Promise<MyProfile> {
   return must(
     await supabase
       .from("profiles")
-      .select("id, display_name, account_id, seasonal_themes, group_collapse")
+      .select("id, display_name, account_id, seasonal_themes, group_collapse, card_view")
       .eq("account_id", accountId)
       .single(),
   );
@@ -98,6 +101,13 @@ export async function setProfileGroupCollapse(profileId: ProfileId, mode: GroupC
       .update({ group_collapse: mode })
       .eq("id", profileId)
       .select("id"),
+  );
+}
+
+/** Picks how item cards show on every list for your account. */
+export async function setProfileCardView(profileId: ProfileId, view: CardView) {
+  must(
+    await supabase.from("profiles").update({ card_view: view }).eq("id", profileId).select("id"),
   );
 }
 

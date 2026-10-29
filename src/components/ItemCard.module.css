@@ -347,3 +347,109 @@ label.body {
 .want strong {
   font-weight: 800;
 }
+
+/* Compact: less room around everything, so more of the list fits on a screen. */
+.item.compact {
+  --card-pad: 8px;
+  --item-gap: 2px;
+  --card-border-radius: 12px;
+}
+
+/* Very wide screens, where quick add stays open beside the list: room enough for the usual
+   padding and corners. */
+@media (min-width: 1200px) {
+  .item.compact {
+    --card-pad: 20px;
+    --card-border-radius: var(--radius);
+  }
+}
+
+.item.compact .head .name {
+  font-size: 16px;
+}
+
+.item.compact .bought {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+/* Hearts on the name's line, after its last word. */
+.inlineHearts {
+  margin-inline: 6px 0;
+  vertical-align: -1px;
+}
+
+/* Price, picture and shop icons, then Details at the far end. */
+.compactRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-height: 32px;
+}
+
+.price.smallPrice {
+  margin: 0;
+}
+
+.smallPrice .priceAmount {
+  font-size: 15px;
+}
+
+.smallPrice .priceConverted {
+  font-size: 13px;
+}
+
+/* The shop as an icon alone, as big a target as the picture icon. */
+.shopIcon {
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  color: var(--muted);
+}
+
+.shopIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.shopIcon:hover {
+  color: var(--text-strong);
+}
+
+/* No padding of its own, so it lines up with the other buttons on the card's right edge. */
+.item .details {
+  margin-inline-start: auto;
+  padding-inline: 0;
+  justify-items: end;
+  font-size: 14px;
+}
+
+/* Questions and the purchase: stacked as usual on a full card... */
+.actions {
+  display: contents;
+}
+
+/* ...side by side on a compact one, the purchase at the end. */
+.compactActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.compactActions > :last-child {
+  margin-inline-start: auto;
+}
+
+/* Choosing the occasion still takes the card's whole width. */
+.compactActions > [role="group"] {
+  flex-basis: 100%;
+}
+
+.compactBuy {
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+}

@@ -25,6 +25,13 @@ export const nl: Dictionary = {
   language: {
     label: "Taal",
   },
+  cardView: {
+    label: "Itemkaarten op lijsten",
+    full: "Volledig",
+    compact: "Compact",
+    hint: "Compacte kaarten tonen geen afbeeldingen, categorieën of winkelnamen; Details toont de hele kaart. Ook te wisselen met de knop Compact op elke lijst.",
+    toggle: "Compact",
+  },
   groupCollapse: {
     label: "Leden op de groepenpagina",
     always: "Altijd inklappen",
@@ -273,6 +280,9 @@ export const nl: Dictionary = {
     removedMine:
       "Van het lijstje gehaald nadat jij het kocht. Kun je je bestelling nog annuleren? Maak het dan ongedaan, dan verdwijnt het voorgoed.",
     showMore: "Toon meer",
+    details: "Details",
+    lessDetails: "Minder",
+    openShop: (p) => `Winkelpagina openen: ${p.name}`,
     showLess: "Toon minder",
   },
   questions: {

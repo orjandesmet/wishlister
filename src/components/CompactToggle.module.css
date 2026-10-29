@@ -1,0 +1,21 @@
+@layer base, components, utilities;
+
+@layer components {
+  /* Pressed: solid, so the state shows at a glance. */
+  .toggle.on {
+    color: var(--accent-contrast);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+}
+
+/* Icon only on small screens: a fixed size that never shrinks, with no padding to push the
+   icon off centre when the row is tight (unlayered, so it wins over the utilities). */
+@media (max-width: 599px) {
+  .toggle {
+    flex: none;
+    width: 44px;
+    min-height: 36px;
+    padding: 0;
+  }
+}
