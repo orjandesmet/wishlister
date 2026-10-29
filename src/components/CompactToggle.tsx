@@ -39,15 +39,15 @@ export function CompactToggle(props: CompactToggleProps) {
           fallback={
             // Full cards: two tall blocks.
             <>
-              <rect width="18" height="8" x="3" y="2.5" rx="2" />
-              <rect width="18" height="8" x="3" y="13.5" rx="2" />
+              <rect width="18" height="7.5" x="3" y="3" rx="2" />
+              <rect width="18" height="7.5" x="3" y="13.5" rx="2" />
             </>
           }
         >
           {/* Compact cards: three short blocks. */}
-          <rect width="18" height="5" x="3" y="2" rx="1.5" />
-          <rect width="18" height="5" x="3" y="9.5" rx="1.5" />
-          <rect width="18" height="5" x="3" y="17" rx="1.5" />
+          <rect width="18" height="4.5" x="3" y="3" rx="1.5" />
+          <rect width="18" height="4.5" x="3" y="9.75" rx="1.5" />
+          <rect width="18" height="4.5" x="3" y="16.5" rx="1.5" />
         </Show>
       </svg>
     </Button>

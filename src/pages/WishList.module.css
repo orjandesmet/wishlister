@@ -30,7 +30,9 @@
 }
 
 @media (max-width: 599px) {
+  /* Icon only: as tall as the Compact button and the sort menu beside it. */
   .selectButton {
+    min-height: 36px;
     padding: 0 12px;
   }
 }
