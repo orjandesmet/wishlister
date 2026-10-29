@@ -300,11 +300,13 @@ export function ItemCard(props: ItemCardProps) {
                 />
               </Show>
             </div>
-            <ItemPicture
-              srcs={itemPictureSources(props.item)}
-              name={props.item.name}
-              zoomable={!props.selecting}
-            />
+            <div class={styles.picture}>
+              <ItemPicture
+                srcs={itemPictureSources(props.item)}
+                name={props.item.name}
+                zoomable={!props.selecting}
+              />
+            </div>
           </div>
           <Show when={description().length > 0}>
             <div class={styles.description}>
