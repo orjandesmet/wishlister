@@ -129,10 +129,10 @@ const backdrops: Record<
   { symbols: string[]; motion: "fall" | "rise" | "twinkle" | "sway" }
 > = {
   sinterklaas: { symbols: ["⭐", "🍪"], motion: "fall" },
-  christmas: { symbols: ["❄"], motion: "fall" },
+  christmas: { symbols: ["❄", "❆", "❅", "⛄︎"], motion: "fall" },
   newYear: { symbols: ["✦", "✧"], motion: "twinkle" },
   birthday: { symbols: ["🎈"], motion: "rise" },
-  halloween: { symbols: ["💀", "👻", "🎃", "🧙", "🕸️", "🧟‍♂️", "🧛‍♀️", "🕷️"], motion: "twinkle" },
+  halloween: { symbols: ["💀", "👻", "🎃", "🧙", "🕷️", "🧟‍♂️", "🧛‍♀️", "🕸️"], motion: "twinkle" },
   easter: { symbols: ["🌸", "🌼", "🐰", "🐣"], motion: "sway" },
 };
 
@@ -165,6 +165,7 @@ function Backdrop(props: { theme: ThemeId }) {
               top: `${top}%`,
               "font-size": `${size * 1.4}rem`,
               "--i": i(),
+              "text-shadow": `0 0 ${size * 0.2}rem light-dark(transparent, #ffffff)`,
             }}
           >
             {backdrop().symbols[i() % backdrop().symbols.length]}
