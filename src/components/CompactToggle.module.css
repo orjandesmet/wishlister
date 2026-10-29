@@ -1,0 +1,16 @@
+@layer base, components, utilities;
+
+@layer components {
+  /* Pressed: solid, so the state shows at a glance. */
+  .toggle.on {
+    color: var(--accent-contrast);
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+
+  @media (max-width: 599px) {
+    button.toggle {
+      padding: 0 12px;
+    }
+  }
+}

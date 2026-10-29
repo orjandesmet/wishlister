@@ -12,13 +12,15 @@ export type MyProfile = Profile & {
   seasonal_themes: boolean;
   /** Whether group cards always start collapsed, or the way you left each one. */
   group_collapse: GroupCollapseMode;
+  /** Smaller item cards on every list, the full card one tap away. */
+  compact_cards: boolean;
 };
 
 export async function getMyProfile(accountId: AccountId): Promise<MyProfile> {
   return must(
     await supabase
       .from("profiles")
-      .select("id, display_name, account_id, seasonal_themes, group_collapse")
+      .select("id, display_name, account_id, seasonal_themes, group_collapse, compact_cards")
       .eq("account_id", accountId)
       .single(),
   );
@@ -98,6 +100,13 @@ export async function setProfileGroupCollapse(profileId: ProfileId, mode: GroupC
       .update({ group_collapse: mode })
       .eq("id", profileId)
       .select("id"),
+  );
+}
+
+/** Switches compact item cards on or off for your account. */
+export async function setProfileCompactCards(profileId: ProfileId, on: boolean) {
+  must(
+    await supabase.from("profiles").update({ compact_cards: on }).eq("id", profileId).select("id"),
   );
 }
 

@@ -5,6 +5,7 @@ import { BulkActions } from "../components/BulkActions.tsx";
 import { ListMenu } from "../components/ListMenu.tsx";
 import { SecretSantaRibbon } from "../components/SecretSantaRibbon.tsx";
 import { FollowList } from "../components/FollowList.tsx";
+import { CompactToggle } from "../components/CompactToggle.tsx";
 import { ItemCard } from "../components/ItemCard.tsx";
 import { ItemQuestions } from "../components/ItemQuestions.tsx";
 import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
@@ -21,7 +22,9 @@ import {
   type WantedLevel,
 } from "../lib/api/items.ts";
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
+import { setProfileCompactCards } from "../lib/api/profiles.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
+import { chooseCompactCards, compactCards } from "../lib/compactCards.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createBulkSelect } from "../lib/createBulkSelect.ts";
 import { createFollow } from "../lib/createFollow.ts";
@@ -245,9 +248,17 @@ export default function WishList() {
     );
   };
 
+  // Saved on your account, so every list and every device follows it.
+  const onCompact = (on: boolean) =>
+    run(async () => {
+      await chooseCompactCards(on, (next) => setProfileCompactCards(me().profile.id, next));
+      me().refetchProfile();
+    });
+
   const card = (item: Item) => (
     <ItemCard
       item={item}
+      compact={compactCards()}
       purchase={purchases.purchase(item)}
       canEdit={canEdit()}
       groupNames={item.item_groups.map((g) => groupName(g.group_id))}
@@ -376,6 +387,9 @@ export default function WishList() {
                   <path d="M13 18h8" />
                 </svg>
               </Button>
+            </Show>
+            <Show when={!select.selecting()}>
+              <CompactToggle on={compactCards()} onChange={(on) => void onCompact(on)} />
             </Show>
             <ListOrderSelect
               value={listSections.order()}

@@ -25,6 +25,11 @@ export const nl: Dictionary = {
   language: {
     label: "Taal",
   },
+  compactCards: {
+    label: "Compacte itemkaarten",
+    hint: "Kleinere kaarten op elke lijst, zonder afbeeldingen, categorieën of winkelnamen. Details toont de hele kaart.",
+    toggle: "Compact",
+  },
   groupCollapse: {
     label: "Leden op de groepenpagina",
     always: "Altijd inklappen",
@@ -273,6 +278,9 @@ export const nl: Dictionary = {
     removedMine:
       "Van het lijstje gehaald nadat jij het kocht. Kun je je bestelling nog annuleren? Maak het dan ongedaan, dan verdwijnt het voorgoed.",
     showMore: "Toon meer",
+    details: "Details",
+    lessDetails: "Minder",
+    openShop: (p) => `Winkelpagina openen: ${p.name}`,
     showLess: "Toon minder",
   },
   questions: {

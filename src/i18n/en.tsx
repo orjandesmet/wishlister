@@ -30,6 +30,11 @@ export const en = {
   language: {
     label: "Language",
   },
+  compactCards: {
+    label: "Compact item cards",
+    hint: "Smaller cards on every list, without pictures, categories or shop names. Details shows the whole card.",
+    toggle: "Compact",
+  },
   groupCollapse: {
     label: "Members on the groups page",
     always: "Always collapse",
@@ -281,6 +286,9 @@ export const en = {
     removedMine:
       "Taken off the list after you bought it. Can you still cancel your order? Then undo, and it's gone for good.",
     showMore: "Show more",
+    details: "Details",
+    lessDetails: "Less",
+    openShop: (p: { name: string }) => `Open the shop page: ${p.name}`,
     showLess: "Show less",
   },
   questions: {

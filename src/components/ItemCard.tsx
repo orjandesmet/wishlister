@@ -22,6 +22,7 @@ import type { OccasionId } from "../lib/ids.ts";
 import { hueFor } from "../lib/hues.ts";
 import { isShort, parseMarkdown, plainText } from "../lib/markdown.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
+import { focusSoon } from "../lib/a11y.ts";
 import { formatOccasionDate } from "../lib/occasions.ts";
 import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
@@ -67,20 +68,25 @@ export type ItemCardProps = {
   onToggleSelect?: () => void;
   /** The item's questions button and dialog (ItemQuestions), left out while picking items. */
   questions?: JSX.Element;
+  /**
+   * A smaller card: hearts beside the name, a picture icon and a link icon instead of the
+   * picture and shop name, no category or description. Details shows the full card.
+   */
+  compact?: boolean;
 };
 
 /**
  * The item's price as the shop showed it, and roughly what that is in your
  * currency when it's another one.
  */
-function PriceTag(props: { amount: number; currency: string }) {
+function PriceTag(props: { amount: number; currency: string; small?: boolean }) {
   const converted = () => {
     if (props.currency === displayCurrency()) return null;
     const amount = convertAmount(props.amount, props.currency, displayCurrency(), exchangeRates());
     return amount === null ? null : formatPrice(amount, displayCurrency(), locale());
   };
   return (
-    <p class={styles.price}>
+    <p class={styles.price} classList={{ [styles.smallPrice]: props.small }}>
       <span class={styles.priceAmount}>{formatPrice(props.amount, props.currency, locale())}</span>
       <Show when={converted()}>
         {(price) => (
@@ -162,6 +168,43 @@ function WantedLevel(props: { level: number; name: string; onChange?: () => void
   );
 }
 
+/**
+ * The hearts alone, beside the name on a compact card. Screen readers hear the level's
+ * words instead. Plain "I want this" has no hearts, so shows nothing.
+ */
+function InlineHearts(props: { level: number }) {
+  const hearts = () => (props.level >= 3 ? 3 : props.level === 2 ? 1 : 0);
+  return (
+    <Show when={hearts() > 0}>
+      <span class={`${styles.hearts} ${styles.inlineHearts}`}>
+        <For each={Array.from({ length: hearts() })}>{() => <Heart />}</For>
+        <span class={u.visuallyHidden}>
+          <WantedLevelText level={props.level as 1 | 2 | 3} />
+        </span>
+      </span>
+    </Show>
+  );
+}
+
+/** Lucide "external-link" (ISC licence). */
+function ExternalLinkIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M15 3h6v6" />
+      <path d="M10 14 21 3" />
+      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    </svg>
+  );
+}
+
 /** A list of names in the language's own wording ("A, B and C"), the names themselves in bold. */
 function BoldList(props: { items: string[] }) {
   const parts = () =>
@@ -225,6 +268,58 @@ export function ItemCard(props: ItemCardProps) {
   const descriptionId = createUniqueId();
   const nameId = createUniqueId();
 
+  // Details opens a compact card into the full one, and Less folds it again. The button moves
+  // between the two layouts, so focus follows it.
+  const [details, setDetails] = createSignal(false);
+  const compact = () => !!props.compact && !details();
+  const contentId = createUniqueId();
+  // oxlint-disable-next-line no-unassigned-vars
+  let detailsButton: HTMLButtonElement | undefined;
+  const toggleDetails = () => {
+    setDetails((open) => !open);
+    focusSoon(() => detailsButton);
+  };
+  const detailsToggle = () => (
+    <Show when={props.compact && !props.selecting}>
+      <Button
+        ref={detailsButton}
+        variant="link"
+        size="small"
+        class={styles.details}
+        aria-expanded={details()}
+        aria-controls={contentId}
+        onClick={toggleDetails}
+      >
+        <span class={u.labelText}>{details() ? t("item.lessDetails") : t("item.details")}</span>
+        {/* Lucide "chevrons-down-up" / "chevrons-up-down" (ISC licence): fold, or open. */}
+        <svg
+          class={u.labelIcon}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <Show
+            when={details()}
+            fallback={
+              <>
+                <path d="m7 15 5 5 5-5" />
+                <path d="m7 9 5-5 5 5" />
+              </>
+            }
+          >
+            <path d="m7 20 5-5 5 5" />
+            <path d="m7 4 5 5 5-5" />
+          </Show>
+        </svg>
+        <span class={u.visuallyHidden}>: {props.item.name}</span>
+      </Button>
+    </Show>
+  );
+
   return (
     <Card
       ref={card}
@@ -235,6 +330,7 @@ export function ItemCard(props: ItemCardProps) {
         [styles.private]: isPrivate(),
         [styles.notWanted]: props.item.not_wanted,
         [styles.selected]: props.selected,
+        [styles.compact]: compact(),
       }}
     >
       {/* While picking, the whole card is the checkbox's label, and the box sits in its own
@@ -249,7 +345,7 @@ export function ItemCard(props: ItemCardProps) {
             onChange={() => props.onToggleSelect?.()}
           />
         </Show>
-        <div class={styles.content}>
+        <div id={contentId} class={styles.content}>
           <Show when={props.item.not_wanted}>
             <p class={`${styles.warning} ${styles.notWantedNote}`}>
               {/* Lucide "ban" (ISC licence). */}
@@ -273,6 +369,9 @@ export function ItemCard(props: ItemCardProps) {
               <div class={styles.head}>
                 <strong id={nameId} class={styles.name}>
                   {props.item.name}
+                  <Show when={compact() && !props.item.not_wanted}>
+                    <InlineHearts level={props.item.wanted_level} />
+                  </Show>
                 </strong>
                 <Show when={props.canEdit && !props.selecting}>
                   <div class={styles.manage}>
@@ -287,12 +386,15 @@ export function ItemCard(props: ItemCardProps) {
               </div>
               <Show
                 when={
-                  !props.item.not_wanted && props.item.price !== null && props.item.price_currency
+                  !compact() &&
+                  !props.item.not_wanted &&
+                  props.item.price !== null &&
+                  props.item.price_currency
                 }
               >
                 {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
               </Show>
-              <Show when={!props.item.not_wanted && !props.selecting}>
+              <Show when={!compact() && !props.item.not_wanted && !props.selecting}>
                 <WantedLevel
                   level={props.item.wanted_level}
                   name={props.item.name}
@@ -300,15 +402,51 @@ export function ItemCard(props: ItemCardProps) {
                 />
               </Show>
             </div>
-            <div class={styles.picture}>
+            <Show when={!compact()}>
+              <div class={styles.picture}>
+                <ItemPicture
+                  srcs={itemPictureSources(props.item)}
+                  name={props.item.name}
+                  zoomable={!props.selecting}
+                />
+              </div>
+            </Show>
+          </div>
+          {/* Compact: the price, then the picture and shop as icons, and Details at the end. */}
+          <Show when={compact()}>
+            <div class={styles.compactRow}>
+              <Show
+                when={
+                  !props.item.not_wanted && props.item.price !== null && props.item.price_currency
+                }
+              >
+                {(currency) => <PriceTag amount={props.item.price!} currency={currency()} small />}
+              </Show>
               <ItemPicture
                 srcs={itemPictureSources(props.item)}
                 name={props.item.name}
                 zoomable={!props.selecting}
+                icon
               />
+              <Show when={showUrl()}>
+                {(url) => (
+                  <a
+                    class={`${u.link} ${styles.shopLink} ${styles.shopIcon}`}
+                    href={url()}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <ExternalLinkIcon />
+                    <span class={u.visuallyHidden}>
+                      {t("item.openShop", { name: props.item.name })}
+                    </span>
+                  </a>
+                )}
+              </Show>
+              {detailsToggle()}
             </div>
-          </div>
-          <Show when={description().length > 0}>
+          </Show>
+          <Show when={!compact() && description().length > 0}>
             <div class={styles.description}>
               <Show
                 when={!foldable() || (expanded() && !props.selecting)}
@@ -334,7 +472,12 @@ export function ItemCard(props: ItemCardProps) {
               </Show>
             </div>
           </Show>
-          <Show when={props.item.category || showUrl()}>
+          <Show
+            when={
+              !compact() &&
+              (props.item.category || showUrl() || (props.compact && !props.selecting))
+            }
+          >
             <div class={styles.meta}>
               <Show when={props.item.category}>
                 <Chip hue={hueFor(props.item.category!)}>{props.item.category}</Chip>
@@ -348,26 +491,16 @@ export function ItemCard(props: ItemCardProps) {
                     rel="noopener noreferrer"
                   >
                     <span class={u.truncate}>{shopName(url())}</span>
-                    {/* Lucide "external-link" (ISC licence). */}
-                    <svg
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      stroke-width="2"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      aria-hidden="true"
-                    >
-                      <path d="M15 3h6v6" />
-                      <path d="M10 14 21 3" />
-                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                    </svg>
+                    <ExternalLinkIcon />
                   </a>
                 )}
               </Show>
+              {detailsToggle()}
             </div>
           </Show>
-          <Show when={props.canEdit && !props.item.visible_in_all_groups && !isPrivate()}>
+          <Show
+            when={!compact() && props.canEdit && !props.item.visible_in_all_groups && !isPrivate()}
+          >
             <p class={`${u.muted} ${u.small}`}>
               {t("item.onlyVisibleIn", { groups: <BoldList items={props.groupNames} /> })}
             </p>

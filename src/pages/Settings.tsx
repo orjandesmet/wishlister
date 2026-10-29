@@ -3,12 +3,14 @@ import { A } from "@solidjs/router";
 import { createResource, createSignal, For, Show } from "solid-js";
 import { NotificationSettings } from "../components/NotificationSettings.tsx";
 import { CurrencySelect } from "../components/CurrencySelect.tsx";
+import { CompactCardsSetting } from "../components/CompactCardsSetting.tsx";
 import { GroupCollapseSetting } from "../components/GroupCollapseSetting.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { SeasonalThemes } from "../components/SeasonalThemes.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
 import {
   renameProfile,
+  setProfileCompactCards,
   setProfileGroupCollapse,
   setProfileSeasonalThemes,
 } from "../lib/api/profiles.ts";
@@ -16,6 +18,7 @@ import { createChild } from "../lib/api/children.ts";
 import { followList, getMyFollows, unfollowAll, unfollowList } from "../lib/api/follows.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { today } from "../lib/occasions.ts";
+import { chooseCompactCards, compactCards } from "../lib/compactCards.ts";
 import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
 import {
   groupCollapseMode,
@@ -32,7 +35,7 @@ import { Card } from "../components/Card.tsx";
 import { Person } from "../components/Person.tsx";
 import { usePageTitle } from "../lib/a11y.ts";
 
-/** Your name, language, currency and seasonal themes, the children you look after, and signing out. */
+/** Your name, language, currency, seasonal themes and how lists look, the children you look after, and signing out. */
 export default function Settings() {
   const me = useMe();
   const [name, setName] = createSignal(me().profile.display_name);
@@ -91,6 +94,16 @@ export default function Settings() {
     }
   }
 
+  async function onCompactCards(on: boolean) {
+    setError(undefined);
+    try {
+      await chooseCompactCards(on, (next) => setProfileCompactCards(me().profile.id, next));
+      me().refetchProfile();
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
   const runner = createActionRunner();
   const [busy, runBusy] = runner.busyRunner();
   const [follows, { refetch: refetchFollows }] = createResource(() => getMyFollows(today()));
@@ -130,6 +143,7 @@ export default function Settings() {
           mode={groupCollapseMode()}
           onChange={(mode) => void onGroupCollapse(mode)}
         />
+        <CompactCardsSetting on={compactCards()} onChange={(on) => void onCompactCards(on)} />
       </Card>
       <Card>
         <h2>{t("account.children")}</h2>

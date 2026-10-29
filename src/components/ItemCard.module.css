@@ -347,3 +347,67 @@ label.body {
 .want strong {
   font-weight: 800;
 }
+
+/* Compact: less room around everything, so more of the list fits on a screen. */
+.item.compact {
+  --card-pad: 12px 14px;
+  --item-gap: 6px;
+}
+
+.item.compact .head .name {
+  font-size: 16px;
+}
+
+.item.compact .bought {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+
+/* Hearts on the name's line, after its last word. */
+.inlineHearts {
+  margin-inline: 6px 0;
+  vertical-align: -1px;
+}
+
+/* Price, picture and shop icons, then Details at the far end. */
+.compactRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+  min-height: 32px;
+}
+
+.price.smallPrice {
+  margin: 0;
+}
+
+.smallPrice .priceAmount {
+  font-size: 15px;
+}
+
+.smallPrice .priceConverted {
+  font-size: 13px;
+}
+
+/* The shop as an icon alone, as big a target as the picture icon. */
+.shopIcon {
+  justify-content: center;
+  min-width: 32px;
+  min-height: 32px;
+  color: var(--muted);
+}
+
+.shopIcon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.shopIcon:hover {
+  color: var(--text-strong);
+}
+
+.details {
+  margin-inline-start: auto;
+  font-size: 14px;
+}

@@ -1,6 +1,7 @@
 import { createSignal } from "solid-js";
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { expect, fn, userEvent, within } from "storybook/test";
+import type { Item } from "../lib/api/items.ts";
 import type { GroupId, ItemId, OccasionId, ProfileId } from "../lib/ids.ts";
 import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { ItemCard } from "./ItemCard.tsx";
@@ -390,4 +391,56 @@ export const NotWantedWithDescription: Story = {
       description: "We have *more than enough* already.",
     },
   },
+};
+
+const compactItem: Item = {
+  ...meta.args.item,
+  wanted_level: 3,
+  image_url: bonsaiPicture,
+  description: "The **10281** set, not the smaller one.",
+};
+
+/**
+ * Compact: hearts beside the name, the picture and shop as icons, no category or
+ * description. Details opens the full card, Less folds it again.
+ */
+export const Compact: Story = {
+  args: { compact: true, item: compactItem },
+  play: async ({ canvasElement }) => {
+    const card = within(canvasElement);
+    await expect(card.queryByText("Toys")).toBeNull();
+    await expect(card.queryByText("lego.com")).toBeNull();
+    await expect(card.getByRole("link", { name: /Open the shop page/ })).toBeVisible();
+    const details = card.getByRole("button", { name: /Details/ });
+    await expect(details).toHaveAttribute("aria-expanded", "false");
+    await userEvent.click(details);
+    await expect(card.getByText("Toys")).toBeVisible();
+    await expect(card.getByText("lego.com")).toBeVisible();
+    const less = card.getByRole("button", { name: /Less/ });
+    await expect(less).toHaveAttribute("aria-expanded", "true");
+    await expect(less).toHaveFocus();
+  },
+};
+
+export const CompactBoughtBySomeoneElse: Story = {
+  args: { compact: true, item: compactItem, purchase: "someone" },
+};
+
+export const CompactOnYourOwnList: Story = {
+  args: { compact: true, item: compactItem, purchase: "hidden", canEdit: true },
+};
+
+export const CompactNameOnly: Story = {
+  args: {
+    compact: true,
+    item: { ...meta.args.item, url: null, category: null, price: null, price_currency: null },
+  },
+};
+
+export const CompactNotWanted: Story = {
+  args: { compact: true, item: { ...meta.args.item, not_wanted: true } },
+};
+
+export const CompactSelecting: Story = {
+  args: { compact: true, item: compactItem, purchase: "hidden", canEdit: true, selecting: true },
 };
