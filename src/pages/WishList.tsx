@@ -256,6 +256,7 @@ export default function WishList() {
 
   // Saved on your account, so every list and every device follows it.
   const compact = () => cardView() === "compact";
+  const several = () => (items()?.length ?? 0) > 1;
   const onCompact = (on: boolean) =>
     run(async () => {
       await chooseCardView(on ? "compact" : "full", (next) =>
@@ -368,9 +369,10 @@ export default function WishList() {
             </Show>
           </EmptyState>
         </Show>
-        <Show when={(items()?.length ?? 0) > 1}>
+        {/* Compact shows from the first item; selecting and sorting only make sense from two. */}
+        <Show when={(items()?.length ?? 0) > 0}>
           <div class={u.row}>
-            <Show when={canEdit() && !select.selecting()}>
+            <Show when={canEdit() && !select.selecting() && several()}>
               <Button
                 ref={selectButton}
                 variant="secondary"
@@ -401,12 +403,14 @@ export default function WishList() {
             <Show when={!select.selecting()}>
               <CompactToggle on={compact()} onChange={(on) => void onCompact(on)} />
             </Show>
-            <ListOrderSelect
-              value={listSections.order()}
-              showBought={purchases.showBought()}
-              showWanted={listSections.hasWantedLevels()}
-              onChange={listSections.chooseOrder}
-            />
+            <Show when={several()}>
+              <ListOrderSelect
+                value={listSections.order()}
+                showBought={purchases.showBought()}
+                showWanted={listSections.hasWantedLevels()}
+                onChange={listSections.chooseOrder}
+              />
+            </Show>
           </div>
         </Show>
         <div ref={cardsRoot} class={styles.cards}>
