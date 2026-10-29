@@ -355,6 +355,14 @@ label.body {
   --card-border-radius: 12px;
 }
 
+/* Very wide screens, where quick add stays open beside the list: room enough for the usual
+   padding. */
+@media (min-width: 1200px) {
+  .item.compact {
+    --card-pad: 20px;
+  }
+}
+
 .item.compact .head .name {
   font-size: 16px;
 }
