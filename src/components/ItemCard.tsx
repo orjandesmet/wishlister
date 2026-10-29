@@ -282,11 +282,18 @@ export function ItemCard(props: ItemCardProps) {
     const name = document.getElementById(nameId);
     const content = document.getElementById(contentId);
     const style = getComputedStyle(el);
+    // Longhands: not every browser gives the shorthands back from getComputedStyle.
     return {
       card: {
         height: `${el.offsetHeight}px`,
-        padding: style.padding,
-        borderRadius: style.borderRadius,
+        paddingTop: style.paddingTop,
+        paddingRight: style.paddingRight,
+        paddingBottom: style.paddingBottom,
+        paddingLeft: style.paddingLeft,
+        borderTopLeftRadius: style.borderTopLeftRadius,
+        borderTopRightRadius: style.borderTopRightRadius,
+        borderBottomLeftRadius: style.borderBottomLeftRadius,
+        borderBottomRightRadius: style.borderBottomRightRadius,
       },
       gap: content ? getComputedStyle(content).rowGap : undefined,
       fontSize: name ? getComputedStyle(name).fontSize : undefined,
