@@ -287,6 +287,7 @@ export default function ItemForm() {
         lookedUp = null;
         filledPrice = null;
         setNotWanted(false);
+        setWantLevel(1);
         setBusy(false);
         nameInput()?.focus();
         return;
@@ -328,32 +329,35 @@ export default function ItemForm() {
               onInput={(e) => setName(e.currentTarget.value)}
             />
           </label>
-          <Check>
-            <input
-              type="checkbox"
-              checked={notWanted()}
-              onChange={(e) => setNotWanted(e.currentTarget.checked)}
-            />
-            {t("itemForm.notWanted")}
-          </Check>
-          <Show when={!notWanted()}>
-            <fieldset>
-              <legend>{t("itemForm.wantLevel")}</legend>
-              <For each={[1, 2, 3] as WantLevel[]}>
-                {(level) => (
-                  <Check>
-                    <input
-                      type="radio"
-                      name="wantLevel"
-                      checked={wantLevel() === level}
-                      onChange={() => setWantLevel(level)}
-                    />
-                    {t(`item.wantLevel${level}`)}
-                  </Check>
-                )}
-              </For>
-            </fieldset>
-          </Show>
+          {/* One choice: how much you want it, or that you don't want it at all. */}
+          <fieldset>
+            <legend>{t("itemForm.wantLevel")}</legend>
+            <For each={[1, 2, 3] as WantLevel[]}>
+              {(level) => (
+                <Check>
+                  <input
+                    type="radio"
+                    name="wantLevel"
+                    checked={!notWanted() && wantLevel() === level}
+                    onChange={() => {
+                      setNotWanted(false);
+                      setWantLevel(level);
+                    }}
+                  />
+                  {t(`item.wantLevel${level}`)}
+                </Check>
+              )}
+            </For>
+            <Check>
+              <input
+                type="radio"
+                name="wantLevel"
+                checked={notWanted()}
+                onChange={() => setNotWanted(true)}
+              />
+              {t("itemForm.notWanted")}
+            </Check>
+          </fieldset>
           <label>
             {t("itemForm.link")}
             <input
