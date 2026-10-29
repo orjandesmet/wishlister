@@ -9,12 +9,15 @@ import type { Session } from "@supabase/supabase-js";
 // Kept on globalThis: the story and the app may load this file as two module instances.
 const state = globalThis as { storySession?: Session | null; storyOtpError?: string | null };
 
-/** Who is signed in for the next story; null to show the login page. */
+/**
+ * Who is signed in for the next story; null to show the login page. Without a locale the
+ * account has none saved, so the app keeps the language picked in the toolbar.
+ */
 export function setMockSession(next: { accountId: string; locale?: string } | null) {
   state.storySession = next
     ? ({
         access_token: "story",
-        user: { id: next.accountId, user_metadata: { locale: next.locale ?? "en" } },
+        user: { id: next.accountId, user_metadata: { locale: next.locale } },
       } as unknown as Session)
     : null;
 }
