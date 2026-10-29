@@ -350,8 +350,9 @@ label.body {
 
 /* Compact: less room around everything, so more of the list fits on a screen. */
 .item.compact {
-  --card-pad: 12px 14px;
-  --item-gap: 6px;
+  --card-pad: 8px;
+  --item-gap: 2px;
+  --card-border-radius: 12px;
 }
 
 .item.compact .head .name {
@@ -407,8 +408,11 @@ label.body {
   color: var(--text-strong);
 }
 
-.details {
+/* No padding of its own, so it lines up with the other buttons on the card's right edge. */
+.item .details {
   margin-inline-start: auto;
+  padding-inline: 0;
+  justify-items: end;
   font-size: 14px;
 }
 
