@@ -36,6 +36,7 @@ function mount(overrides: Partial<GroupCardProps> = {}) {
     myProfileId: "me" as ProfileId,
     nextOccasion: christmas,
     today: "2026-10-21",
+    startCollapsed: false,
     ...overrides,
   };
   render(() => <MemoryRouter root={() => <GroupCard {...props} />} />, host);
@@ -96,5 +97,44 @@ describe("GroupCard and Secret Santa", () => {
     expect(secretSantaLine(host)!.textContent).toBe(
       t("groupCard.secretSantaFor", { occasion: "Christmas" }),
     );
+  });
+});
+
+describe("GroupCard members", () => {
+  const names = (host: HTMLElement) =>
+    [...host.querySelectorAll("li")].map((li) => li.textContent?.trim());
+  const toggle = (host: HTMLElement) => host.querySelector<HTMLButtonElement>("[aria-expanded]")!;
+
+  it("folds the members away and back with one button", () => {
+    const host = mount({ startCollapsed: true });
+    expect(names(host)).toHaveLength(0);
+    expect(toggle(host).getAttribute("aria-expanded")).toBe("false");
+    expect(toggle(host).textContent).toContain(t("groupCard.showMembers", { count: 3 }));
+    // Tells the groups apart for screen readers.
+    expect(toggle(host).textContent).toContain("Family");
+    expect(host.querySelector(`#${toggle(host).getAttribute("aria-controls")}`)?.tagName).toBe(
+      "UL",
+    );
+
+    toggle(host).click();
+    expect(toggle(host).getAttribute("aria-expanded")).toBe("true");
+    expect(names(host)).toHaveLength(3);
+    expect(toggle(host).textContent).toContain(t("groupCard.hideMembers"));
+  });
+
+  it("keeps the member you drew in sight while folded", () => {
+    const host = mount({
+      startCollapsed: true,
+      secretSanta: christmas,
+      drawnProfileId: "bert" as ProfileId,
+    });
+    expect(names(host)).toHaveLength(1);
+    expect(names(host)[0]).toContain("Bert");
+    // Above the button, not under it.
+    const row = host.querySelector("li")!;
+    expect(
+      row.compareDocumentPosition(toggle(host)) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(badges(host)).toHaveLength(1);
   });
 });

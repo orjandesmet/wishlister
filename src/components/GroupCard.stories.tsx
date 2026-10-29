@@ -35,7 +35,10 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const AsMember: Story = {};
+export const AsMember: Story = { args: { startCollapsed: false } };
+
+/** Members folded away, as phones start: the next group is a short scroll down. */
+export const Collapsed: Story = { args: { startCollapsed: true } };
 
 /** Managers get "Manage" instead of "Details". */
 export const AsManager: Story = {
@@ -119,5 +122,15 @@ export const SecretSantaForLaterOccasion: Story = {
   args: {
     nextOccasion: christmas,
     secretSanta: { ...christmas, id: "o2" as OccasionId, name: "Easter 2027", date: "2027-03-28" },
+  },
+};
+
+/** Folded, with a Secret Santa running: the member you drew stays in sight. */
+export const CollapsedWithSecretSanta: Story = {
+  args: {
+    startCollapsed: true,
+    nextOccasion: christmas,
+    secretSanta: christmas,
+    drawnProfileId: "bert" as ProfileId,
   },
 };

@@ -160,7 +160,12 @@ const profile = (id: string, child = false): Profile => ({
   account_id: child ? null : (`account-${id}` as AccountId),
 });
 // Your own profile is "Orjan", the rest are named after their id.
-const orjan: MyProfile = { ...profile("me"), display_name: "Orjan", seasonal_themes: true };
+const orjan: MyProfile = {
+  ...profile("me"),
+  display_name: "Orjan",
+  seasonal_themes: true,
+  group_collapse: "remember",
+};
 
 const member = (p: Profile, role: Member["role"]): Member => ({
   profile_id: p.id,

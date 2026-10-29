@@ -143,3 +143,52 @@
   height: 18px;
   flex-shrink: 0;
 }
+
+.members {
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * Folds the members away, so on a phone the next group is a short scroll down. Looks compact,
+ * but ::before stretches the tap area to the full tap height.
+ */
+.membersToggle {
+  position: relative;
+  align-self: flex-start;
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.membersToggle::before {
+  content: "";
+  position: absolute;
+  inset: calc((32px - var(--tap)) / 2) 0;
+}
+
+.membersChevron {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.membersChevron.open {
+  transform: rotate(180deg);
+}
+
+/* Collapsed, with nobody kept in sight: no empty gap. */
+.members ul:empty {
+  display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .membersChevron {
+    transition: transform 180ms var(--ease-pop);
+  }
+}

@@ -11,6 +11,7 @@ import { getManagedProfiles, getMyProfile, type MyProfile, type Profile } from "
 import { useAuth } from "./auth.tsx";
 import { t } from "./i18n.ts";
 import { isReady } from "./resource.ts";
+import { setGroupCollapseMode } from "./groupCollapse.ts";
 import { setSeasonalThemes } from "./theme.ts";
 import type { AccountId } from "./ids.ts";
 import u from "../utilities.module.css";
@@ -35,10 +36,12 @@ export const MeProvider: ParentComponent = (props) => {
     getManagedProfiles,
   );
 
-  // The seasonal themes follow the account's choice once it's known.
+  // The seasonal themes and group collapsing follow the account's choice once it's known.
   createEffect(() => {
     const loaded = profile();
-    if (loaded) setSeasonalThemes(loaded.seasonal_themes);
+    if (!loaded) return;
+    setSeasonalThemes(loaded.seasonal_themes);
+    setGroupCollapseMode(loaded.group_collapse);
   });
 
   // Wait for the children too, or "My list" turns into "My lists" (and similar) once they arrive.

@@ -30,6 +30,12 @@ export const en = {
   language: {
     label: "Language",
   },
+  groupCollapse: {
+    label: "Members on the groups page",
+    always: "Always collapse",
+    remember: "Remember my choice per group",
+    hint: "Your choice per group is saved on this device only.",
+  },
   themes: {
     label: "Seasonal themes",
     hint: "The app dresses up for Sinterklaas, Christmas, New Year, Easter, Halloween and 1 March.",
@@ -107,6 +113,9 @@ export const en = {
     daysUnit: "days",
     secretSanta: "Secret Santa is running",
     secretSantaFor: (p: { occasion: string }) => `Secret Santa is running for ${p.occasion}`,
+    showMembers: (p: { count: number }) =>
+      p.count === 1 ? "Show 1 member" : `Show all ${p.count} members`,
+    hideMembers: "Hide members",
   },
   group: {
     back: "‹ Groups",

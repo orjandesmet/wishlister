@@ -1,6 +1,7 @@
 import { supabase } from "../supabase.ts";
 import type { AccountId, GroupId, ProfileId } from "../ids.ts";
 import type { Role } from "./groups.ts";
+import type { GroupCollapseMode } from "../groupCollapse.ts";
 import { must } from "./must.ts";
 
 export type Profile = { id: ProfileId; display_name: string; account_id: AccountId | null };
@@ -9,13 +10,15 @@ export type Profile = { id: ProfileId; display_name: string; account_id: Account
 export type MyProfile = Profile & {
   /** False when you switched the seasonal themes off. */
   seasonal_themes: boolean;
+  /** Whether group cards always start collapsed, or the way you left each one. */
+  group_collapse: GroupCollapseMode;
 };
 
 export async function getMyProfile(accountId: AccountId): Promise<MyProfile> {
   return must(
     await supabase
       .from("profiles")
-      .select("id, display_name, account_id, seasonal_themes")
+      .select("id, display_name, account_id, seasonal_themes, group_collapse")
       .eq("account_id", accountId)
       .single(),
   );
@@ -82,6 +85,17 @@ export async function setProfileSeasonalThemes(profileId: ProfileId, on: boolean
     await supabase
       .from("profiles")
       .update({ seasonal_themes: on })
+      .eq("id", profileId)
+      .select("id"),
+  );
+}
+
+/** Picks whether group cards always start collapsed for your account. */
+export async function setProfileGroupCollapse(profileId: ProfileId, mode: GroupCollapseMode) {
+  must(
+    await supabase
+      .from("profiles")
+      .update({ group_collapse: mode })
       .eq("id", profileId)
       .select("id"),
   );

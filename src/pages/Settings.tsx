@@ -3,15 +3,25 @@ import { A } from "@solidjs/router";
 import { createResource, createSignal, For, Show } from "solid-js";
 import { NotificationSettings } from "../components/NotificationSettings.tsx";
 import { CurrencySelect } from "../components/CurrencySelect.tsx";
+import { GroupCollapseSetting } from "../components/GroupCollapseSetting.tsx";
 import { LanguageSelect } from "../components/LanguageSelect.tsx";
 import { SeasonalThemes } from "../components/SeasonalThemes.tsx";
 import { chooseLocale } from "../lib/accountLocale.ts";
-import { renameProfile, setProfileSeasonalThemes } from "../lib/api/profiles.ts";
+import {
+  renameProfile,
+  setProfileGroupCollapse,
+  setProfileSeasonalThemes,
+} from "../lib/api/profiles.ts";
 import { createChild } from "../lib/api/children.ts";
 import { followList, getMyFollows, unfollowAll, unfollowList } from "../lib/api/follows.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { today } from "../lib/occasions.ts";
 import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
+import {
+  groupCollapseMode,
+  setGroupCollapseMode,
+  type GroupCollapseMode,
+} from "../lib/groupCollapse.ts";
 import { locale, t } from "../lib/i18n.ts";
 import { seasonalThemes, setSeasonalThemes, themeToday } from "../lib/theme.ts";
 import { useMe } from "../lib/me.tsx";
@@ -68,6 +78,19 @@ export default function Settings() {
     }
   }
 
+  async function onGroupCollapse(mode: GroupCollapseMode) {
+    setError(undefined);
+    const before = groupCollapseMode();
+    setGroupCollapseMode(mode);
+    try {
+      await setProfileGroupCollapse(me().profile.id, mode);
+      me().refetchProfile();
+    } catch (e) {
+      setGroupCollapseMode(before);
+      setError((e as Error).message);
+    }
+  }
+
   const runner = createActionRunner();
   const [busy, runBusy] = runner.busyRunner();
   const [follows, { refetch: refetchFollows }] = createResource(() => getMyFollows(today()));
@@ -102,6 +125,10 @@ export default function Settings() {
           on={seasonalThemes()}
           today={themeToday()}
           onChange={(on) => void onSeasonalThemes(on)}
+        />
+        <GroupCollapseSetting
+          mode={groupCollapseMode()}
+          onChange={(mode) => void onGroupCollapse(mode)}
         />
       </Card>
       <Card>
