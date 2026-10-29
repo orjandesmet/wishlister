@@ -9,12 +9,17 @@ export type ListOrderSelectProps = {
   value: ListOrder;
   /** Offers "Not bought yet first". Never on your own list, where purchases stay secret. */
   showBought: boolean;
+  /** Offers "Most wanted first": only when something is wanted more than the rest. */
+  showWanted: boolean;
   onChange: (order: ListOrder) => void;
 };
 
 /** Picks how a wish list is sorted or grouped. */
 export function ListOrderSelect(props: ListOrderSelectProps) {
-  const options = () => listOrders.filter((o) => o !== "available" || props.showBought);
+  const options = () =>
+    listOrders.filter(
+      (o) => (o !== "available" || props.showBought) && (o !== "wanted" || props.showWanted),
+    );
   return (
     <label class={styles.listOrder}>
       <span class={u.labelText}>{t("listOrder.label")}</span>
@@ -40,7 +45,12 @@ export function ListOrderSelect(props: ListOrderSelectProps) {
         onChange={(e) => props.onChange(e.currentTarget.value as ListOrder)}
       >
         <For each={options()}>
-          {(order) => <option value={order}>{t(`listOrder.${order}`)}</option>}
+          {(order) => (
+            // Per-option selected: a select's value isn't re-applied when its options change.
+            <option value={order} selected={order === props.value}>
+              {t(`listOrder.${order}`)}
+            </option>
+          )}
         </For>
       </Select>
     </label>

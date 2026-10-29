@@ -2,7 +2,13 @@ import { createMemo, createSignal } from "solid-js";
 import type { Item } from "./api/items.ts";
 import { convertAmount, exchangeRates } from "./currency.ts";
 import { compareNames } from "./i18n.ts";
-import { arrangeItems, readListOrder, saveListOrder, type ListOrder } from "./listOrder.ts";
+import {
+  arrangeItems,
+  effectiveListOrder,
+  readListOrder,
+  saveListOrder,
+  type ListOrder,
+} from "./listOrder.ts";
 
 /** Splits a list into its ordered, categorised sections and the "please don't buy" entries. */
 export function createListSections(
@@ -11,13 +17,18 @@ export function createListSections(
   isBought: () => ((item: Item) => boolean) | undefined,
 ) {
   // The same choice on every list, remembered on this device.
-  const [order, setOrder] = createSignal<ListOrder>(readListOrder());
+  const [picked, setPicked] = createSignal<ListOrder | undefined>(readListOrder());
   const chooseOrder = (next: ListOrder) => {
-    setOrder(next);
+    setPicked(next);
     saveListOrder(next);
   };
   // "Please don't buy" entries get their own section at the bottom, in the order added.
   const notWanted = createMemo(() => (items() ?? []).filter((item) => item.not_wanted));
+  // "Most wanted first" is only offered when some wish is wanted more than "I want this".
+  const hasWantedLevels = createMemo(() =>
+    (items() ?? []).some((item) => !item.not_wanted && item.wanted_level > 1),
+  );
+  const order = () => effectiveListOrder(picked(), hasWantedLevels());
   const sections = createMemo(() => {
     const list = (items() ?? []).filter((item) => !item.not_wanted);
     const bought = isBought();
@@ -31,9 +42,10 @@ export function createListSections(
         if (price === null || !price_currency) return null;
         return convertAmount(price, price_currency, "EUR", rates);
       },
+      wantOf: (i) => list[i].wanted_level,
     });
   });
   const isGrouped = () => sections().some((s) => s.category !== null);
 
-  return { order, chooseOrder, sections, notWanted, isGrouped };
+  return { order, chooseOrder, hasWantedLevels, sections, notWanted, isGrouped };
 }

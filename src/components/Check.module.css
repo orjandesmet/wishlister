@@ -15,5 +15,7 @@
     min-height: auto;
     width: 22px;
     height: 22px;
+    /* Text that wraps must not squeeze the box. */
+    flex: none;
   }
 }

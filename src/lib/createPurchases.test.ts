@@ -33,6 +33,7 @@ const item = (overrides: Partial<Item> = {}): Item => ({
   description: null,
   visible_in_all_groups: true,
   not_wanted: false,
+  wanted_level: 1,
   item_groups: [],
   price: null,
   price_currency: null,

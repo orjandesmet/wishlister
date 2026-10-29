@@ -1,9 +1,10 @@
 /**
- * How a wish list is laid out: in the order items were added, newest first, by
+ * How a wish list is laid out: most wanted first, in the order items were added, newest first, by
  * name, by price (cheapest or most expensive first), grouped under a heading per
  * category, or (on someone else's list) with the items nobody bought yet first.
  */
 export type ListOrder =
+  | "wanted"
   | "added"
   | "newest"
   | "name"
@@ -13,6 +14,7 @@ export type ListOrder =
   | "available";
 
 export const listOrders: ListOrder[] = [
+  "wanted",
   "added",
   "newest",
   "name",
@@ -38,6 +40,11 @@ export type ArrangeOptions = {
    * be converted. Left out, the price orders fall back to the order items were added.
    */
   priceOf?: (index: number) => number | null;
+  /**
+   * How much the owner wants the item, 1 to 3. Left out, "wanted" falls back to the
+   * order items were added.
+   */
+  wantOf?: (index: number) => number;
 };
 
 /**
@@ -56,6 +63,13 @@ export function arrangeItems<T extends { name: string; category: string | null }
   const unwrap = (list: typeof indexed) => list.map(({ item }) => item);
 
   switch (order) {
+    case "wanted": {
+      const wantOf = options.wantOf;
+      if (!wantOf) break;
+      // A stable sort, so items wanted just as much keep the order they were added.
+      const sorted = indexed.toSorted((a, b) => wantOf(b.index) - wantOf(a.index));
+      return [{ category: null, items: unwrap(sorted) }];
+    }
     case "newest":
       return [{ category: null, items: unwrap(indexed.toReversed()) }];
     case "name":
@@ -124,15 +138,25 @@ function groupByCategory<T extends { category: string | null }>(
 
 const storageKey = "listOrder";
 
-/** The order picked last on this device, or "added". */
-export function readListOrder(): ListOrder {
+/** The order picked last on this device, or undefined when none was picked yet. */
+export function readListOrder(): ListOrder | undefined {
   try {
     const saved = localStorage.getItem(storageKey);
     if (listOrders.includes(saved as ListOrder)) return saved as ListOrder;
   } catch {
     // Storage can be blocked (private mode); fall back to the default.
   }
-  return "added";
+  return undefined;
+}
+
+/**
+ * The order a list shows: what you picked, or "Most wanted first" when you picked
+ * nothing yet. "Most wanted first" only exists on a list where something is wanted
+ * more than the rest; elsewhere the list keeps the order items were added.
+ */
+export function effectiveListOrder(picked: ListOrder | undefined, hasWantedLevels: boolean) {
+  const order = picked ?? "wanted";
+  return order === "wanted" && !hasWantedLevels ? "added" : order;
 }
 
 /** Remembers the order on this device, for every list. */

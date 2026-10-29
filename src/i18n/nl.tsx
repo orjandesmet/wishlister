@@ -250,6 +250,10 @@ export const nl: Dictionary = {
       `Het profiel en verlanglijstje van ${p.name} voor iedereen wissen? Dit kan niet ongedaan gemaakt worden.`,
   },
   item: {
+    wantedLevel1: "Dit wil ik",
+    wantedLevel2: "Dit wil ik echt!",
+    wantedLevel3: "Dit wil ik echt, echt, ECHT!!",
+    changeWant: (p) => `Wijzig hoe graag je ${p.name} wilt`,
     viewPicture: (p) => `Afbeelding bekijken: ${p.name}`,
     pictureOf: (p) => `Afbeelding van ${p.name}`,
     viewPictures: (p) => `${p.count} afbeeldingen bekijken: ${p.name}`,
@@ -322,6 +326,7 @@ export const nl: Dictionary = {
 
   listOrder: {
     label: "Sorteren op",
+    wanted: "Meest gewild eerst",
     added: "Datum toegevoegd",
     newest: "Nieuwste eerst",
     name: "Naam (A tot Z)",
@@ -394,6 +399,7 @@ export const nl: Dictionary = {
     noGroups: "Dit lijstje zit nog in geen enkele groep.",
     noGroupsOption: "Geen groepen (alleen ik)",
     notWanted: "Liever niet: iets wat ik niet wil krijgen",
+    wantedLevel: "Hoe graag wil je dit?",
     price: "Prijs (optioneel)",
     currency: "Munt",
     invalidPrice: "Geef een prijs zoals 12,50, of laat het leeg.",
@@ -467,6 +473,7 @@ export const nl: Dictionary = {
     roleOf: (p) => `Rol van ${p.name}`,
     added: (p) => `${p.items} toegevoegd.`,
     removed: (p) => `${p.item} verwijderd.`,
+    wantedLevel: (p) => `${p.item}: ${p.level}.`,
     bought: (p) => `${p.item} gemarkeerd als gekocht.`,
     unbought: (p) => `${p.item} is niet meer gemarkeerd als gekocht.`,
     unboughtRemoved: (p) =>
