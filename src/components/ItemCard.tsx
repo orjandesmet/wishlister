@@ -22,7 +22,6 @@ import type { OccasionId } from "../lib/ids.ts";
 import { hueFor } from "../lib/hues.ts";
 import { isShort, parseMarkdown, plainText } from "../lib/markdown.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
-import { focusSoon } from "../lib/a11y.ts";
 import { formatOccasionDate } from "../lib/occasions.ts";
 import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
@@ -278,26 +277,52 @@ export function ItemCard(props: ItemCardProps) {
   const contentId = createUniqueId();
   // oxlint-disable-next-line no-unassigned-vars
   let detailsButton: HTMLButtonElement | undefined;
+  // What changes between the two layouts, measured before and after, so it can glide over.
+  const measure = (el: HTMLElement) => {
+    const name = document.getElementById(nameId);
+    const content = document.getElementById(contentId);
+    const style = getComputedStyle(el);
+    return {
+      card: {
+        height: `${el.offsetHeight}px`,
+        padding: style.padding,
+        borderRadius: style.borderRadius,
+      },
+      gap: content ? getComputedStyle(content).rowGap : undefined,
+      fontSize: name ? getComputedStyle(name).fontSize : undefined,
+    };
+  };
   const toggleDetails = () => {
-    const before = card?.offsetHeight;
+    const animate =
+      card &&
+      typeof card.animate === "function" &&
+      !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const before = animate ? measure(card!) : undefined;
     setDetails((open) => !open);
-    focusSoon(() => detailsButton);
-    const after = card?.offsetHeight;
-    if (!card || before === undefined || after === undefined || before === after) return;
-    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    if (typeof card.animate !== "function") return;
-    const easing = "cubic-bezier(0.2, 0, 0, 1)";
+    // No scrolling: inside the clipped, growing card that would show its bottom first.
+    queueMicrotask(() => detailsButton?.focus({ preventScroll: true }));
+    if (!before || !card) return;
+    const after = measure(card);
+    const timing = { duration: 250, easing: "cubic-bezier(0.2, 0, 0, 1)" };
     card.animate(
       [
-        { height: `${before}px`, overflow: "hidden" },
-        { height: `${after}px`, overflow: "hidden" },
+        { ...before.card, overflow: "hidden" },
+        { ...after.card, overflow: "hidden" },
       ],
-      { duration: 250, easing },
+      timing,
     );
-    card
-      .querySelector(`.${styles.content}`)
-      ?.animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 250, easing });
+    if (before.gap && after.gap) {
+      document
+        .getElementById(contentId)
+        ?.animate([{ rowGap: before.gap }, { rowGap: after.gap }], timing);
+    }
+    if (before.fontSize && after.fontSize) {
+      document
+        .getElementById(nameId)
+        ?.animate([{ fontSize: before.fontSize }, { fontSize: after.fontSize }], timing);
+    }
   };
+
   const detailsToggle = () => (
     <Show when={props.compact && !props.selecting}>
       <Button
