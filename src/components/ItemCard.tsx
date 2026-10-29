@@ -271,15 +271,32 @@ export function ItemCard(props: ItemCardProps) {
   const nameId = createUniqueId();
 
   // Details opens a compact card into the full one, and Less folds it again. The button moves
-  // between the two layouts, so focus follows it.
+  // between the two layouts, so focus follows it. The card grows or shrinks to its new height
+  // (no animation with reduced motion).
   const [details, setDetails] = createSignal(false);
   const compact = () => !!props.compact && !details();
   const contentId = createUniqueId();
   // oxlint-disable-next-line no-unassigned-vars
   let detailsButton: HTMLButtonElement | undefined;
   const toggleDetails = () => {
+    const before = card?.offsetHeight;
     setDetails((open) => !open);
     focusSoon(() => detailsButton);
+    const after = card?.offsetHeight;
+    if (!card || before === undefined || after === undefined || before === after) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (typeof card.animate !== "function") return;
+    const easing = "cubic-bezier(0.2, 0, 0, 1)";
+    card.animate(
+      [
+        { height: `${before}px`, overflow: "hidden" },
+        { height: `${after}px`, overflow: "hidden" },
+      ],
+      { duration: 250, easing },
+    );
+    card
+      .querySelector(`.${styles.content}`)
+      ?.animate([{ opacity: 0.4 }, { opacity: 1 }], { duration: 250, easing });
   };
   const detailsToggle = () => (
     <Show when={props.compact && !props.selecting}>
@@ -547,97 +564,101 @@ export function ItemCard(props: ItemCardProps) {
               {props.purchase === "mine" ? t("item.removedMine") : t("item.removed")}
             </p>
           </Show>
-          <Show when={!props.selecting && props.questions}>{props.questions}</Show>
-          <Switch>
-            <Match when={props.selecting}>{null}</Match>
-            <Match when={props.purchase === "mine"}>
-              <div class={u.row}>
-                <span class={styles.bought}>
-                  {props.boughtFor
-                    ? t("item.youBoughtFor", { occasion: props.boughtFor })
-                    : t("item.youBought")}
-                </span>
-                <Button
-                  variant="secondary"
-                  size="small"
-                  data-purchase
-                  onClick={() => {
-                    pressed();
-                    props.onUndo();
-                  }}
-                >
-                  {t("item.undo")}
-                  <span class={u.visuallyHidden}>: {props.item.name}</span>
-                </Button>
-              </div>
-            </Match>
-            <Match when={props.purchase === "someone"}>
-              <span class={`${styles.bought} ${styles.someone}`}>{t("item.someoneBought")}</span>
-            </Match>
-            <Match when={props.purchase === "available" && props.occasionChoices}>
-              {(choices) => (
-                <div
-                  class={`${u.stack} ${u.smallGap}`}
-                  role="group"
-                  aria-labelledby={occasionLabel}
-                >
-                  <span class={u.fieldLabel} id={occasionLabel}>
-                    {t("item.forWhichOccasion")}
+          {/* Compact: questions and the purchase share one line. */}
+          <div class={compact() ? styles.compactActions : styles.actions}>
+            <Show when={!props.selecting && props.questions}>{props.questions}</Show>
+            <Switch>
+              <Match when={props.selecting}>{null}</Match>
+              <Match when={props.purchase === "mine"}>
+                <div class={u.row}>
+                  <span class={styles.bought}>
+                    {props.boughtFor
+                      ? t("item.youBoughtFor", { occasion: props.boughtFor })
+                      : t("item.youBought")}
                   </span>
-                  <For each={choices()}>
-                    {(occasion) => (
+                  <Button
+                    variant="secondary"
+                    size="small"
+                    data-purchase
+                    onClick={() => {
+                      pressed();
+                      props.onUndo();
+                    }}
+                  >
+                    {t("item.undo")}
+                    <span class={u.visuallyHidden}>: {props.item.name}</span>
+                  </Button>
+                </div>
+              </Match>
+              <Match when={props.purchase === "someone"}>
+                <span class={`${styles.bought} ${styles.someone}`}>{t("item.someoneBought")}</span>
+              </Match>
+              <Match when={props.purchase === "available" && props.occasionChoices}>
+                {(choices) => (
+                  <div
+                    class={`${u.stack} ${u.smallGap}`}
+                    role="group"
+                    aria-labelledby={occasionLabel}
+                  >
+                    <span class={u.fieldLabel} id={occasionLabel}>
+                      {t("item.forWhichOccasion")}
+                    </span>
+                    <For each={choices()}>
+                      {(occasion) => (
+                        <Button
+                          variant="secondary"
+                          data-purchase
+                          onClick={(event) => {
+                            pressed();
+                            rememberButton(event);
+                            props.onPickOccasion?.(occasion.id);
+                          }}
+                        >
+                          {occasion.name} · {formatOccasionDate(occasion.date, locale())}
+                        </Button>
+                      )}
+                    </For>
+                    <div class={u.row}>
                       <Button
-                        variant="secondary"
-                        data-purchase
+                        variant="link"
                         onClick={(event) => {
                           pressed();
                           rememberButton(event);
-                          props.onPickOccasion?.(occasion.id);
+                          props.onPickOccasion?.(null);
                         }}
                       >
-                        {occasion.name} · {formatOccasionDate(occasion.date, locale())}
+                        {t("item.noOccasion")}
                       </Button>
-                    )}
-                  </For>
-                  <div class={u.row}>
-                    <Button
-                      variant="link"
-                      onClick={(event) => {
-                        pressed();
-                        rememberButton(event);
-                        props.onPickOccasion?.(null);
-                      }}
-                    >
-                      {t("item.noOccasion")}
-                    </Button>
-                    <Button
-                      variant="link"
-                      onClick={() => {
-                        pressed();
-                        props.onCancelPick?.();
-                      }}
-                    >
-                      {t("common.cancel")}
-                    </Button>
+                      <Button
+                        variant="link"
+                        onClick={() => {
+                          pressed();
+                          props.onCancelPick?.();
+                        }}
+                      >
+                        {t("common.cancel")}
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              )}
-            </Match>
-            <Match when={props.purchase === "available"}>
-              <button
-                type="button"
-                data-purchase
-                onClick={(event) => {
-                  pressed();
-                  rememberButton(event);
-                  props.onBuy();
-                }}
-              >
-                {t("item.iBought")}
-                <span class={u.visuallyHidden}>: {props.item.name}</span>
-              </button>
-            </Match>
-          </Switch>
+                )}
+              </Match>
+              <Match when={props.purchase === "available"}>
+                <button
+                  type="button"
+                  class={compact() ? styles.compactBuy : undefined}
+                  data-purchase
+                  onClick={(event) => {
+                    pressed();
+                    rememberButton(event);
+                    props.onBuy();
+                  }}
+                >
+                  {t("item.iBought")}
+                  <span class={u.visuallyHidden}>: {props.item.name}</span>
+                </button>
+              </Match>
+            </Switch>
+          </div>
         </div>
       </Dynamic>
     </Card>

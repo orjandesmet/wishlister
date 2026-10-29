@@ -411,3 +411,32 @@ label.body {
   margin-inline-start: auto;
   font-size: 14px;
 }
+
+/* Questions and the purchase: stacked as usual on a full card... */
+.actions {
+  display: contents;
+}
+
+/* ...side by side on a compact one, the purchase at the end. */
+.compactActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+}
+
+.compactActions > :last-child {
+  margin-inline-start: auto;
+}
+
+/* Choosing the occasion still takes the card's whole width. */
+.compactActions > [role="group"] {
+  flex-basis: 100%;
+}
+
+.compactBuy {
+  min-height: 36px;
+  padding: 0 16px;
+  font-size: 14px;
+}

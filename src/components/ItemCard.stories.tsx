@@ -8,6 +8,7 @@ import { animateMoves } from "../lib/animateMoves.ts";
 import { createListSections, holdMs } from "../lib/createListSections.ts";
 import { burstMoneyForTap } from "../lib/moneyBurst.ts";
 import { ItemCard } from "./ItemCard.tsx";
+import { ItemQuestions } from "./ItemQuestions.tsx";
 import {
   bellPicture,
   bikePicture,
@@ -422,6 +423,26 @@ export const Compact: Story = {
     const less = card.getByRole("button", { name: /Less/ });
     await expect(less).toHaveAttribute("aria-expanded", "true");
     await expect(less).toHaveFocus();
+  },
+};
+
+/** Compact, with "Ask a question" and a smaller "I bought this" on one line. */
+export const CompactWithQuestions: Story = {
+  args: {
+    compact: true,
+    item: compactItem,
+    questions: (
+      <ItemQuestions
+        itemName={compactItem.name}
+        questions={[]}
+        canAsk
+        canAnswer={false}
+        bought={false}
+        busy={false}
+        onAsk={async () => true}
+        onAnswer={async () => true}
+      />
+    ),
   },
 };
 
