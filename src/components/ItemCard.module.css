@@ -266,8 +266,10 @@ label.body {
 .want {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   margin: 0;
+  font-size: 13px;
+  line-height: 1.3;
   font-weight: 600;
   color: var(--text-strong);
   text-decoration: none;
@@ -277,8 +279,10 @@ label.body {
 /* On your own list: a small pill, so it reads as something to tap. */
 .wantButton {
   align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
   min-height: 36px;
-  padding: 0 12px;
+  padding: 0 10px;
   border-radius: 999px;
   color: var(--text-strong);
   background: var(--surface);
@@ -298,13 +302,13 @@ label.body {
 
 .hearts {
   display: inline-flex;
-  gap: 2px;
+  gap: 1px;
   color: var(--danger);
 }
 
 .hearts svg {
-  width: 16px;
-  height: 16px;
+  width: 13px;
+  height: 13px;
   flex: none;
 }
 

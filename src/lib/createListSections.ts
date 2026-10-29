@@ -25,10 +25,10 @@ export function createListSections(
   // "Please don't buy" entries get their own section at the bottom, in the order added.
   const notWanted = createMemo(() => (items() ?? []).filter((item) => item.not_wanted));
   // "Most wanted first" is only offered when some wish is wanted more than "I want this".
-  const hasWantLevels = createMemo(() =>
-    (items() ?? []).some((item) => !item.not_wanted && item.want_level > 1),
+  const hasWantedLevels = createMemo(() =>
+    (items() ?? []).some((item) => !item.not_wanted && item.wanted_level > 1),
   );
-  const order = () => effectiveListOrder(picked(), hasWantLevels());
+  const order = () => effectiveListOrder(picked(), hasWantedLevels());
   const sections = createMemo(() => {
     const list = (items() ?? []).filter((item) => !item.not_wanted);
     const bought = isBought();
@@ -42,10 +42,10 @@ export function createListSections(
         if (price === null || !price_currency) return null;
         return convertAmount(price, price_currency, "EUR", rates);
       },
-      wantOf: (i) => list[i].want_level,
+      wantOf: (i) => list[i].wanted_level,
     });
   });
   const isGrouped = () => sections().some((s) => s.category !== null);
 
-  return { order, chooseOrder, hasWantLevels, sections, notWanted, isGrouped };
+  return { order, chooseOrder, hasWantedLevels, sections, notWanted, isGrouped };
 }

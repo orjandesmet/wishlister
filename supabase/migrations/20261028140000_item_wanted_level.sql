@@ -5,7 +5,7 @@
 -- Backwards compatible: a new column with a default, so the deployed app keeps
 -- adding items without knowing about it.
 alter table public.items
-  add column want_level smallint not null default 1 check (want_level between 1 and 3);
+  add column wanted_level smallint not null default 1 check (wanted_level between 1 and 3);
 
 -- Updates are granted per column (see 20261016120000_table_grants.sql).
-grant update (want_level) on public.items to authenticated;
+grant update (wanted_level) on public.items to authenticated;

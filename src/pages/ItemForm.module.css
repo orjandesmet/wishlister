@@ -29,3 +29,20 @@
 .hint {
   margin-top: -8px;
 }
+
+/* "Please don't buy this" reads as the opposite of the wants above it. */
+.notWantedOption {
+  color: var(--danger);
+}
+
+/* Smaller labels, so the fields stand out. The fields keep 16px: smaller text makes iOS zoom in on focus. */
+.form label,
+.form legend {
+  font-size: 14px;
+}
+
+.form input,
+.form select,
+.form textarea {
+  font-size: 16px;
+}

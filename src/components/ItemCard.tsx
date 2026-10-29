@@ -111,9 +111,9 @@ function Heart() {
  * "I really, really, REALLY want this", and nothing for plain "I want this", except
  * for the list's editors, who can tap it to change the level.
  */
-function WantLevel(props: { level: number; name: string; onChange?: () => void }) {
+function WantedLevel(props: { level: number; name: string; onChange?: () => void }) {
   const hearts = () => (props.level >= 3 ? 3 : props.level === 2 ? 1 : 0);
-  const label = () => t(`item.wantLevel${props.level as 1 | 2 | 3}`);
+  const label = () => t(`item.wantedLevel${props.level as 1 | 2 | 3}`);
   const content = () => (
     <>
       <span class={styles.hearts} classList={{ [styles.noHearts]: hearts() === 0 }}>
@@ -296,8 +296,8 @@ export function ItemCard(props: ItemCardProps) {
                 {(currency) => <PriceTag amount={props.item.price!} currency={currency()} />}
               </Show>
               <Show when={!props.item.not_wanted && !props.selecting}>
-                <WantLevel
-                  level={props.item.want_level}
+                <WantedLevel
+                  level={props.item.wanted_level}
                   name={props.item.name}
                   onChange={props.canEdit ? props.onChangeWant : undefined}
                 />

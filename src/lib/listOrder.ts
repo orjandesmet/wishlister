@@ -154,9 +154,9 @@ export function readListOrder(): ListOrder | undefined {
  * nothing yet. "Most wanted first" only exists on a list where something is wanted
  * more than the rest; elsewhere the list keeps the order items were added.
  */
-export function effectiveListOrder(picked: ListOrder | undefined, hasWantLevels: boolean) {
+export function effectiveListOrder(picked: ListOrder | undefined, hasWantedLevels: boolean) {
   const order = picked ?? "wanted";
-  return order === "wanted" && !hasWantLevels ? "added" : order;
+  return order === "wanted" && !hasWantedLevels ? "added" : order;
 }
 
 /** Remembers the order on this device, for every list. */

@@ -35,7 +35,7 @@ const meta = {
       description: null,
       visible_in_all_groups: true,
       not_wanted: false,
-      want_level: 1,
+      wanted_level: 1,
       item_groups: [],
       price: 49.99,
       price_currency: "EUR",
@@ -48,6 +48,7 @@ const meta = {
     groupNames: [],
     onBuy: fn(),
     onUndo: fn(),
+    onChangeWant: fn(),
     onRemove: fn(),
   },
   argTypes: {
@@ -288,14 +289,19 @@ export const SelectingWithPicture: Story = {
 };
 
 /** "I really want this": one heart. */
-export const ReallyWanted: Story = { args: { item: { ...meta.args.item, want_level: 2 } } };
+export const ReallyWanted: Story = { args: { item: { ...meta.args.item, wanted_level: 2 } } };
 
 /** "I really, really, REALLY want this": three hearts. */
-export const ReallyReallyWanted: Story = { args: { item: { ...meta.args.item, want_level: 3 } } };
+export const ReallyReallyWanted: Story = { args: { item: { ...meta.args.item, wanted_level: 3 } } };
 
-/** On your own list the hearts are a button: each tap goes to the next level. */
-export const WantLevelOnYourOwnList: Story = {
-  args: { ...OwnList.args, onChangeWant: fn() },
+/** Your own list, really, really, REALLY wanted. */
+export const ReallyReallyWantedOnYourOwnList: Story = {
+  args: { ...OwnList.args, item: { ...meta.args.item, wanted_level: 3 } },
+};
+
+/** On your own list the want level is a button: each tap goes to the next level. */
+export const WantedLevelOnYourOwnList: Story = {
+  args: OwnList.args,
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
     await userEvent.click(canvas.getByRole("button", { name: /I want this/ }));

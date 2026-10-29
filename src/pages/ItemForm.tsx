@@ -11,7 +11,7 @@ import {
   Show,
 } from "solid-js";
 import { CategoryChips } from "../components/CategoryChips.tsx";
-import { addItem, getCategories, getItem, updateItem, type WantLevel } from "../lib/api/items.ts";
+import { addItem, getCategories, getItem, updateItem, type WantedLevel } from "../lib/api/items.ts";
 import { savePictures, uploadPictures } from "../lib/api/pictures.ts";
 import { getPageInfo } from "../lib/api/pageInfo.ts";
 import { getProfileDetails } from "../lib/api/profiles.ts";
@@ -58,7 +58,7 @@ export default function ItemForm() {
   const [description, setDescription] = createSignal("");
   const descriptionHint = createUniqueId();
   const [notWanted, setNotWanted] = createSignal(false);
-  const [wantLevel, setWantLevel] = createSignal<WantLevel>(1);
+  const [wantedLevel, setWantedLevel] = createSignal<WantedLevel>(1);
   const [price, setPrice] = createSignal("");
   const [currency, setCurrency] = createSignal(displayCurrency());
   // A saved price can be in a currency outside the usual list; keep it choosable.
@@ -201,7 +201,7 @@ export default function ItemForm() {
       setCategory(loaded.category ?? "");
       setDescription(loaded.description ?? "");
       setNotWanted(loaded.not_wanted);
-      setWantLevel(loaded.want_level);
+      setWantedLevel(loaded.wanted_level);
       if (loaded.price !== null && loaded.price_currency) {
         // Typed back the way the language writes it ("12,50" in Dutch).
         setPrice(
@@ -251,7 +251,7 @@ export default function ItemForm() {
       description: description(),
       visible_in_all_groups: visibility() === "all",
       not_wanted: notWanted(),
-      wantLevel: wantLevel(),
+      wantedLevel: wantedLevel(),
       groupIds: visibility() === "some" ? groupIds() : [],
       price: amount === null ? null : { amount, currency: currency() },
       // The picture belongs to the link: no link, no picture.
@@ -287,7 +287,7 @@ export default function ItemForm() {
         lookedUp = null;
         filledPrice = null;
         setNotWanted(false);
-        setWantLevel(1);
+        setWantedLevel(1);
         setBusy(false);
         nameInput()?.focus();
         return;
@@ -319,7 +319,7 @@ export default function ItemForm() {
           </Show>
         }
       >
-        <Card as="form" onSubmit={onSubmit}>
+        <Card as="form" class={styles.form} onSubmit={onSubmit}>
           <label>
             {t("itemForm.name")}
             <input
@@ -331,31 +331,31 @@ export default function ItemForm() {
           </label>
           {/* One choice: how much you want it, or that you don't want it at all. */}
           <fieldset>
-            <legend>{t("itemForm.wantLevel")}</legend>
-            <For each={[1, 2, 3] as WantLevel[]}>
+            <legend>{t("itemForm.wantedLevel")}</legend>
+            <For each={[1, 2, 3] as WantedLevel[]}>
               {(level) => (
                 <Check>
                   <input
                     type="radio"
-                    name="wantLevel"
-                    checked={!notWanted() && wantLevel() === level}
+                    name="wantedLevel"
+                    checked={!notWanted() && wantedLevel() === level}
                     onChange={() => {
                       setNotWanted(false);
-                      setWantLevel(level);
+                      setWantedLevel(level);
                     }}
                   />
-                  {t(`item.wantLevel${level}`)}
+                  {t(`item.wantedLevel${level}`)}
                 </Check>
               )}
             </For>
             <Check>
               <input
                 type="radio"
-                name="wantLevel"
+                name="wantedLevel"
                 checked={notWanted()}
                 onChange={() => setNotWanted(true)}
               />
-              {t("itemForm.notWanted")}
+              <span class={styles.notWantedOption}>{t("itemForm.notWanted")}</span>
             </Check>
           </fieldset>
           <label>

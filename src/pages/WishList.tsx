@@ -15,10 +15,10 @@ import {
   getCategories,
   setItemsCategory,
   setItemsGroups,
-  setWantLevel,
+  setWantedLevel,
   type GroupSelection,
   type Item,
-  type WantLevel,
+  type WantedLevel,
 } from "../lib/api/items.ts";
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
@@ -203,17 +203,17 @@ export default function WishList() {
   const onChangeWant = (item: Item) =>
     (savingWant = savingWant.then(() =>
       run(async () => {
-        const level = item.want_level === 3 ? 1 : ((item.want_level + 1) as WantLevel);
-        const was = item.want_level;
+        const level = item.wanted_level === 3 ? 1 : ((item.wanted_level + 1) as WantedLevel);
+        const was = item.wanted_level;
         const id = item.id;
-        const setLevel = (to: WantLevel) =>
+        const setLevel = (to: WantedLevel) =>
           setItems((prev) =>
-            prev?.map((other) => (other.id === id ? { ...other, want_level: to } : other)),
+            prev?.map((other) => (other.id === id ? { ...other, wanted_level: to } : other)),
           );
         setLevel(level);
-        announce(t("a11y.wantLevel", { item: item.name, level: t(`item.wantLevel${level}`) }));
+        announce(t("a11y.wantedLevel", { item: item.name, level: t(`item.wantedLevel${level}`) }));
         try {
-          await setWantLevel(id, level);
+          await setWantedLevel(id, level);
         } catch (e) {
           setLevel(was);
           throw e;
@@ -380,7 +380,7 @@ export default function WishList() {
             <ListOrderSelect
               value={listSections.order()}
               showBought={purchases.showBought()}
-              showWanted={listSections.hasWantLevels()}
+              showWanted={listSections.hasWantedLevels()}
               onChange={listSections.chooseOrder}
             />
           </div>

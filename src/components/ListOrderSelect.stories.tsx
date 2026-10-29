@@ -18,6 +18,6 @@ export const OwnList: Story = {};
 export const OtherList: Story = { args: { showBought: true, value: "category" } };
 
 /** Something on the list is wanted more than the rest: "Most wanted first" is offered, and picked. */
-export const WithWantLevels: Story = {
+export const WithWantedLevels: Story = {
   args: { showBought: true, showWanted: true, value: "wanted" },
 };
