@@ -18,6 +18,11 @@
   display: contents;
 }
 
+/* Compact cards sit closer together. */
+.compactCards {
+  gap: 8px;
+}
+
 /* The button under an empty list's message, which replaces the floating one. */
 .emptyQuickAdd {
   display: flex;

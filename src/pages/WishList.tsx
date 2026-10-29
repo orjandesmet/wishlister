@@ -416,7 +416,7 @@ export default function WishList() {
                 <Show when={isGrouped()}>
                   <h2>{category ?? t("listOrder.uncategorised")}</h2>
                 </Show>
-                <ul class={`${u.list} ${u.cards}`}>
+                <ul class={`${u.list} ${u.cards}`} classList={{ [styles.compactCards]: compact() }}>
                   <For each={itemsIn(category)}>{card}</For>
                 </ul>
               </section>
@@ -425,7 +425,7 @@ export default function WishList() {
           <Show when={notWanted().length > 0}>
             <section class={u.stack}>
               <h2>{t("listOrder.notWanted")}</h2>
-              <ul class={`${u.list} ${u.cards}`}>
+              <ul class={`${u.list} ${u.cards}`} classList={{ [styles.compactCards]: compact() }}>
                 <For each={notWanted()}>{card}</For>
               </ul>
             </section>
