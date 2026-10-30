@@ -59,6 +59,13 @@ export type ItemCardProps = {
   onCancelPick?: () => void;
   onUndo: () => void;
   onRemove: () => void;
+  /**
+   * Editors only: it was bought for this occasion, which passed and they chose Keep
+   * for. The card says so and offers Remove or "I want another".
+   */
+  keptFor?: string;
+  onRemoveKept?: () => void;
+  onWantAnother?: () => void;
   /** The list's editors tap the hearts to say how much they want it (the next level, round). */
   onChangeWant?: () => void;
   /** Picking items for a bulk action: the card becomes a checkbox and hides its buttons. */
@@ -601,6 +608,41 @@ export function ItemCard(props: ItemCardProps) {
             <Show when={!props.selecting && props.questions}>{props.questions}</Show>
             <Switch>
               <Match when={props.selecting}>{null}</Match>
+              <Match when={props.keptFor}>
+                {(occasion) => (
+                  <div class={`${u.stack} ${u.smallGap}`}>
+                    <span class={styles.bought}>
+                      {t("item.boughtForOccasion", { occasion: occasion() })}
+                    </span>
+                    <div class={styles.keptActions}>
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        data-purchase
+                        onClick={() => {
+                          pressed();
+                          props.onRemoveKept?.();
+                        }}
+                      >
+                        {t("item.removeKept")}
+                        <span class={u.visuallyHidden}>: {props.item.name}</span>
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="small"
+                        data-purchase
+                        onClick={() => {
+                          pressed();
+                          props.onWantAnother?.();
+                        }}
+                      >
+                        {t("item.wantAnother")}
+                        <span class={u.visuallyHidden}>: {props.item.name}</span>
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </Match>
               <Match when={props.purchase === "mine"}>
                 <div class={u.row}>
                   <span class={styles.bought}>

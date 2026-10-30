@@ -257,6 +257,9 @@ export const nl: Dictionary = {
       `Het profiel en verlanglijstje van ${p.name} voor iedereen wissen? Dit kan niet ongedaan gemaakt worden.`,
   },
   item: {
+    boughtForOccasion: (p: { occasion: string }) => `Gekocht voor ${p.occasion}`,
+    removeKept: "Weghalen",
+    wantAnother: "Ik wil er nog een",
     wantedLevel1: "Dit wil ik",
     wantedLevel2: "Dit wil ik echt!",
     wantedLevel3: "Dit wil ik echt, echt, ECHT!!",
@@ -409,6 +412,7 @@ export const nl: Dictionary = {
     noGroups: "Dit lijstje zit nog in geen enkele groep.",
     noGroupsOption: "Geen groepen (alleen ik)",
     notWanted: "Liever niet: iets wat ik niet wil krijgen",
+    keepOnList: "Op mijn lijst houden als het gekocht is (ik wil er graag meer dan één)",
     wantedLevel: "Hoe graag wil je dit?",
     price: "Prijs (optioneel)",
     currency: "Munt",
@@ -494,6 +498,29 @@ export const nl: Dictionary = {
     asked: "Je vraag is verstuurd.",
     answered: "Je antwoord is bewaard.",
     secretSantaStarted: (p: { occasion: string }) => `Secret Santa gestart voor ${p.occasion}.`,
+  },
+  // Na een gelegenheid, op de lijst zelf (#7).
+  cleanup: {
+    label: "Opruimen na een gelegenheid",
+    question: (p: { count: number; occasion: string }) =>
+      p.count === 1
+        ? `1 item op je lijst is gekocht voor ${p.occasion}. Van je lijst halen?`
+        : `${p.count} items op je lijst zijn gekocht voor ${p.occasion}. Van je lijst halen?`,
+    questionChild: (p: { count: number; occasion: string; name: string }) =>
+      p.count === 1
+        ? `1 item op de lijst van ${p.name} is gekocht voor ${p.occasion}. Van de lijst halen?`
+        : `${p.count} items op de lijst van ${p.name} zijn gekocht voor ${p.occasion}. Van de lijst halen?`,
+    keptItemsStay:
+      "Items met “op mijn lijst houden” blijven staan, klaar om opnieuw gekocht te worden.",
+    remove: "Weghalen",
+    keep: "Ik doe het zelf",
+    removed: (p: { count: number }) =>
+      p.count === 1 ? "1 gekocht item opgeruimd." : `${p.count} gekochte items opgeruimd.`,
+    undo: "Ongedaan maken",
+    undone: "De gekochte items staan er terug.",
+    dismiss: "OK",
+    kept: "Je items tonen nu wat er voor deze gelegenheid gekocht is.",
+    wantedAnother: (p: { item: string }) => `“${p.item}” kan opnieuw gekocht worden.`,
   },
   wishlist: {
     fallbackTitle: "Verlanglijstje",

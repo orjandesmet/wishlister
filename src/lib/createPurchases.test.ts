@@ -40,6 +40,7 @@ const item = (overrides: Partial<Item> = {}): Item => ({
   image_url: null,
   item_pictures: [],
   removed_at: null,
+  keep_on_list: false,
   ...overrides,
 });
 

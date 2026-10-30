@@ -264,6 +264,9 @@ export const en = {
       `Delete ${p.name}'s profile and wishlist for everyone? This can't be undone.`,
   },
   item: {
+    boughtForOccasion: (p: { occasion: string }) => `Bought for ${p.occasion}`,
+    removeKept: "Remove",
+    wantAnother: "I want another",
     wantedLevel1: "I want this",
     wantedLevel2: "I really want this!",
     wantedLevel3: "I really, really, REALLY want this!!",
@@ -418,6 +421,7 @@ export const en = {
     noGroups: "This list isn't in any groups yet.",
     noGroupsOption: "No groups (only me)",
     notWanted: "Please don't buy this: something I don't want",
+    keepOnList: "Keep on my list after it's bought (I'd like more than one)",
     wantedLevel: "How much do you want this?",
     price: "Price (optional)",
     currency: "Currency",
@@ -505,6 +509,28 @@ export const en = {
     asked: "Your question was sent.",
     answered: "Your answer was saved.",
     secretSantaStarted: (p: { occasion: string }) => `Secret Santa started for ${p.occasion}.`,
+  },
+  // After an occasion, on the list's own page (#7).
+  cleanup: {
+    label: "Clean up after an occasion",
+    question: (p: { count: number; occasion: string }) =>
+      p.count === 1
+        ? `1 item on your list was bought for ${p.occasion}. Remove it from your list?`
+        : `${p.count} items on your list were bought for ${p.occasion}. Remove them from your list?`,
+    questionChild: (p: { count: number; occasion: string; name: string }) =>
+      p.count === 1
+        ? `1 item on ${p.name}'s list was bought for ${p.occasion}. Remove it from the list?`
+        : `${p.count} items on ${p.name}'s list were bought for ${p.occasion}. Remove them from the list?`,
+    keptItemsStay: "Items marked “keep on my list” stay, ready to be bought again.",
+    remove: "Remove",
+    keep: "I'll do it myself",
+    removed: (p: { count: number }) =>
+      p.count === 1 ? "Cleaned up 1 bought item." : `Cleaned up ${p.count} bought items.`,
+    undo: "Undo",
+    undone: "The bought items are back.",
+    dismiss: "OK",
+    kept: "Your items now show what was bought for this occasion.",
+    wantedAnother: (p: { item: string }) => `“${p.item}” can be bought again.`,
   },
   wishlist: {
     fallbackTitle: "Wishlist",

@@ -47,6 +47,7 @@ const meta = {
       image_url: null,
       item_pictures: [],
       removed_at: null,
+      keep_on_list: false,
     },
     purchase: "available",
     canEdit: false,
@@ -96,6 +97,17 @@ export const BoughtByYouForAnOccasion: Story = {
 };
 
 /** After "I bought this", when the item can be for more than one occasion. */
+/** Own list, after "I'll do it myself" on the cleanup question: Remove, or buyable again. */
+export const BoughtForAPassedOccasion: Story = {
+  args: {
+    purchase: "hidden",
+    canEdit: true,
+    keptFor: "Christmas 2026",
+    onRemoveKept: fn(),
+    onWantAnother: fn(),
+  },
+};
+
 export const ChoosingAnOccasion: Story = {
   args: {
     occasionChoices: [

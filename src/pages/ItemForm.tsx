@@ -60,6 +60,7 @@ export default function ItemForm() {
   const descriptionHint = createUniqueId();
   const [notWanted, setNotWanted] = createSignal(false);
   const [wantedLevel, setWantedLevel] = createSignal<WantedLevel>(1);
+  const [keepOnList, setKeepOnList] = createSignal(false);
   const [price, setPrice] = createSignal("");
   const [currency, setCurrency] = createSignal(displayCurrency());
   // A saved price can be in a currency outside the usual list; keep it choosable.
@@ -203,6 +204,7 @@ export default function ItemForm() {
       setDescription(loaded.description ?? "");
       setNotWanted(loaded.not_wanted);
       setWantedLevel(loaded.wanted_level);
+      setKeepOnList(loaded.keep_on_list);
       if (loaded.price !== null && loaded.price_currency) {
         // Typed back the way the language writes it ("12,50" in Dutch).
         setPrice(
@@ -253,6 +255,8 @@ export default function ItemForm() {
       visible_in_all_groups: visibility() === "all",
       not_wanted: notWanted(),
       wantedLevel: wantedLevel(),
+      // Nobody buys a "please don't buy", so there's nothing to keep.
+      keepOnList: !notWanted() && keepOnList(),
       groupIds: visibility() === "some" ? groupIds() : [],
       price: amount === null ? null : { amount, currency: currency() },
       // The picture belongs to the link: no link, no picture.
@@ -361,6 +365,17 @@ export default function ItemForm() {
               <span class={styles.notWantedOption}>{t("itemForm.notWanted")}</span>
             </Check>
           </fieldset>
+          {/* Wanted more than once: cleaning up after an occasion leaves it on the list. */}
+          <Show when={!notWanted()}>
+            <Check>
+              <input
+                type="checkbox"
+                checked={keepOnList()}
+                onChange={(e) => setKeepOnList(e.currentTarget.checked)}
+              />
+              {t("itemForm.keepOnList")}
+            </Check>
+          </Show>
           <label>
             {t("itemForm.link")}
             <input
