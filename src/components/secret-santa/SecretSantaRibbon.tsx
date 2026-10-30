@@ -1,7 +1,7 @@
 import { Show } from "solid-js";
-import { t } from "../lib/i18n.ts";
-import styles from "./SecretSantaRibbon.module.css";
+import { t } from "../../lib/i18n.ts";
 import { SecretSantaIcon } from "./SecretSantaIcon.tsx";
+import styles from "./SecretSantaRibbon.module.css";
 
 export type SecretSantaRibbonProps = {
   /** The occasion it's for, said on hover and to screen readers after the label. */

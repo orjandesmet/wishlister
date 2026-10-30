@@ -1,10 +1,10 @@
 import { MemoryRouter } from "@solidjs/router";
 import { render } from "solid-js/web";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import type { Occasion } from "../lib/api/occasions.ts";
-import type { SecretSantaCandidate, SecretSantaInput } from "../lib/api/secretSanta.ts";
-import { t } from "../lib/i18n.ts";
-import type { GroupId, OccasionId, ProfileId } from "../lib/ids.ts";
+import type { Occasion } from "../../lib/api/occasions.ts";
+import type { SecretSantaCandidate, SecretSantaInput } from "../../lib/api/secretSanta.ts";
+import { t } from "../../lib/i18n.ts";
+import type { GroupId, OccasionId, ProfileId } from "../../lib/ids.ts";
 import { SecretSantaForm, type SecretSantaFormProps } from "./SecretSantaForm.tsx";
 
 const person = (id: string, name: string): SecretSantaCandidate => ({

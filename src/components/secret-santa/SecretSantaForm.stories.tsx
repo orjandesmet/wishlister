@@ -1,9 +1,9 @@
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { expect, fn, userEvent, within } from "storybook/test";
-import type { Occasion } from "../lib/api/occasions.ts";
-import type { SecretSantaCandidate } from "../lib/api/secretSanta.ts";
-import { t } from "../lib/i18n.ts";
-import type { ProfileId } from "../lib/ids.ts";
+import type { Occasion } from "../../lib/api/occasions.ts";
+import type { SecretSantaCandidate } from "../../lib/api/secretSanta.ts";
+import { t } from "../../lib/i18n.ts";
+import type { ProfileId } from "../../lib/ids.ts";
 import { SecretSantaForm } from "./SecretSantaForm.tsx";
 
 const person = (id: string, name: string): SecretSantaCandidate => ({
@@ -13,7 +13,7 @@ const person = (id: string, name: string): SecretSantaCandidate => ({
 const people = [person("ann", "Ann"), person("bo", "Bo"), person("cleo", "Cleo")];
 
 const meta = {
-  title: "Groups/SecretSantaForm",
+  title: "SecretSanta/SecretSantaForm",
   component: SecretSantaForm,
   args: {
     occasions: [

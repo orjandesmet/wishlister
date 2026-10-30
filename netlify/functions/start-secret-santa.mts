@@ -26,8 +26,8 @@ import {
   type Exclusion,
   type MinLoopSize,
   type Pair,
-} from "../lib/secretSanta.ts";
-import { sendSecretSantaNotices } from "../lib/secretSantaNotices.ts";
+} from "../lib/secret-santa/secretSanta.ts";
+import { sendSecretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
 
 type Candidate = { profile_id: string; display_name: string };
 type HistoryRow = { draw_rank: number; giver_profile_id: string; recipient_profile_id: string };
