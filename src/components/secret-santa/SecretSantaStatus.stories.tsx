@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { expect, fn, userEvent, within } from "storybook/test";
-import type { SecretSanta, SecretSantaCandidate } from "../lib/api/secretSanta.ts";
-import type { OccasionId, ProfileId, SecretSantaId } from "../lib/ids.ts";
+import type { SecretSanta, SecretSantaCandidate } from "../../lib/api/secretSanta.ts";
+import type { OccasionId, ProfileId, SecretSantaId } from "../../lib/ids.ts";
 import { SecretSantaStatus } from "./SecretSantaStatus.tsx";
 
 const person = (id: string, name: string): SecretSantaCandidate => ({
@@ -18,7 +18,7 @@ const draw: SecretSanta = {
 };
 
 const meta = {
-  title: "Groups/SecretSantaStatus",
+  title: "SecretSanta/SecretSantaStatus",
   component: SecretSantaStatus,
   args: { draw, isManager: false, participants: [], onRemove: fn() },
 } satisfies Meta<typeof SecretSantaStatus>;
