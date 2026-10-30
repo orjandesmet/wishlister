@@ -30,6 +30,11 @@ export type Item = {
    * it: the item stays, shown as bought, until the buyer undoes the purchase.
    */
   removed_at: string | null;
+  /**
+   * Wanted more than once: cleaning up after an occasion leaves it on the list and
+   * only clears its bought mark (see lib/api/cleanup.ts).
+   */
+  keep_on_list: boolean;
 };
 /** 1 "I want this", 2 "I really want this", 3 "I really, really, REALLY want this". */
 export type WantedLevel = 1 | 2 | 3;
@@ -48,10 +53,12 @@ export type ItemInput = {
   imageUrl?: string | null;
   /** Markdown. Left out, the saved description stays as it is. */
   description?: string | null;
+  /** Left out, the saved flag stays as it is. */
+  keepOnList?: boolean;
 };
 
 const ITEM_COLUMNS =
-  "id, profile_id, name, url, category, description, visible_in_all_groups, not_wanted, wanted_level, item_groups(group_id), price, price_currency, image_url, item_pictures(id, path, url, position), removed_at";
+  "id, profile_id, name, url, category, description, visible_in_all_groups, not_wanted, wanted_level, item_groups(group_id), price, price_currency, image_url, item_pictures(id, path, url, position), removed_at, keep_on_list";
 
 export async function getItems(profileId: ProfileId): Promise<Item[]> {
   return must(
@@ -98,6 +105,7 @@ function itemColumns(input: ItemInput) {
     ...(input.wantedLevel !== undefined ? { wanted_level: input.wantedLevel } : {}),
     ...(input.imageUrl !== undefined ? { image_url: input.imageUrl } : {}),
     ...(input.description !== undefined ? { description: input.description?.trim() || null } : {}),
+    ...(input.keepOnList !== undefined ? { keep_on_list: input.keepOnList } : {}),
   };
 }
 

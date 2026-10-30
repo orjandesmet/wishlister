@@ -409,6 +409,7 @@ export const nl: Dictionary = {
     noGroups: "Dit lijstje zit nog in geen enkele groep.",
     noGroupsOption: "Geen groepen (alleen ik)",
     notWanted: "Liever niet: iets wat ik niet wil krijgen",
+    keepOnList: "Op mijn lijst houden als het gekocht is (ik wil er graag meer dan één)",
     wantedLevel: "Hoe graag wil je dit?",
     price: "Prijs (optioneel)",
     currency: "Munt",
@@ -494,6 +495,28 @@ export const nl: Dictionary = {
     asked: "Je vraag is verstuurd.",
     answered: "Je antwoord is bewaard.",
     secretSantaStarted: (p: { occasion: string }) => `Secret Santa gestart voor ${p.occasion}.`,
+  },
+  // Na een gelegenheid, op de lijst zelf (#7).
+  cleanup: {
+    label: "Opruimen na een gelegenheid",
+    question: (p: { count: number; occasion: string }) =>
+      p.count === 1
+        ? `1 item op je lijst is gekocht voor ${p.occasion}. Van je lijst halen?`
+        : `${p.count} items op je lijst zijn gekocht voor ${p.occasion}. Van je lijst halen?`,
+    questionChild: (p: { count: number; occasion: string; name: string }) =>
+      p.count === 1
+        ? `1 item op de lijst van ${p.name} is gekocht voor ${p.occasion}. Van de lijst halen?`
+        : `${p.count} items op de lijst van ${p.name} zijn gekocht voor ${p.occasion}. Van de lijst halen?`,
+    keptItemsStay:
+      "Items met “op mijn lijst houden” blijven staan, klaar om opnieuw gekocht te worden.",
+    remove: "Weghalen",
+    keep: "Laten staan",
+    removed: (p: { count: number }) =>
+      p.count === 1 ? "1 gekocht item opgeruimd." : `${p.count} gekochte items opgeruimd.`,
+    undo: "Ongedaan maken",
+    undone: "De gekochte items staan er terug.",
+    dismiss: "OK",
+    kept: "Laten staan. Je krijgt deze vraag niet meer voor deze gelegenheid.",
   },
   wishlist: {
     fallbackTitle: "Verlanglijstje",

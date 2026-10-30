@@ -2,6 +2,7 @@ import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
+import { CleanupDone, CleanupPrompt } from "../components/CleanupPrompt.tsx";
 import { ListMenu } from "../components/ListMenu.tsx";
 import { SecretSantaRibbon } from "../components/SecretSantaRibbon.tsx";
 import { FollowList } from "../components/FollowList.tsx";
@@ -21,11 +22,18 @@ import {
   type Item,
   type WantedLevel,
 } from "../lib/api/items.ts";
+import {
+  cleanUp,
+  getPendingCleanups,
+  keepAfterOccasions,
+  undoCleanUp,
+} from "../lib/api/cleanup.ts";
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { animateMoves } from "../lib/animateMoves.ts";
 import { setProfileCardView } from "../lib/api/profiles.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { cardView, chooseCardView } from "../lib/cardView.ts";
+import { cleanupPrompts, type CleanupPrompt as Cleanup } from "../lib/cleanup.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createBulkSelect } from "../lib/createBulkSelect.ts";
 import { createFollow } from "../lib/createFollow.ts";
@@ -160,6 +168,43 @@ export default function WishList() {
     questions.clearError();
     if (search.questions === item.id) setSearch({ questions: undefined }, { replace: true });
   };
+
+  // After an occasion, the list's editors are asked whether to remove what was bought for it.
+  // Only from the day after, so nothing is given away before; the database decides that too.
+  const [pendingCleanups, { refetch: refetchCleanups }] = createResource(
+    () => (canEdit() ? params.profileId : undefined),
+    getPendingCleanups,
+  );
+  const cleanups = () =>
+    cleanupPrompts((pendingCleanups.error ? undefined : pendingCleanups()) ?? []);
+  const [cleanedUp, setCleanedUp] = createSignal<{ at: string; count: number }>();
+  const [cleanupBusy, runCleanup] = runner.busyRunner();
+  // Each answer takes its card away, and the button just pressed with it.
+  const onCleanUp = (cleanup: Cleanup) =>
+    runCleanup(async () => {
+      const at = await cleanUp(params.profileId, cleanup.occasionIds);
+      setCleanedUp({ at, count: cleanup.count });
+      await Promise.all([refetchItems(), refetchCleanups()]);
+      announce(t("cleanup.removed", { count: cleanup.count }));
+      focusHeading();
+    });
+  const onUndoCleanUp = () =>
+    runCleanup(async () => {
+      const done = cleanedUp();
+      if (!done) return;
+      await undoCleanUp(params.profileId, done.at);
+      setCleanedUp(undefined);
+      await Promise.all([refetchItems(), refetchCleanups()]);
+      announce(t("cleanup.undone"));
+      focusHeading();
+    });
+  const onKeepAfter = (cleanup: Cleanup) =>
+    runCleanup(async () => {
+      await keepAfterOccasions(params.profileId, cleanup.occasionIds);
+      await refetchCleanups();
+      announce(t("cleanup.kept"));
+      focusHeading();
+    });
 
   // oxlint-disable-next-line no-unassigned-vars
   let cardsRoot: HTMLDivElement | undefined;
@@ -358,6 +403,34 @@ export default function WishList() {
           <p class={u.error} role="alert">
             {error()}
           </p>
+        </Show>
+        <Show when={canEdit() && !select.selecting()}>
+          <Show when={cleanedUp()}>
+            {(done) => (
+              <CleanupDone
+                count={done().count}
+                busy={cleanupBusy()}
+                onUndo={() => void onUndoCleanUp()}
+                onDismiss={() => {
+                  setCleanedUp(undefined);
+                  focusHeading();
+                }}
+              />
+            )}
+          </Show>
+          <For each={cleanups()}>
+            {(cleanup) => (
+              <CleanupPrompt
+                occasion={cleanup.name}
+                count={cleanup.count}
+                childName={isOwnList() ? undefined : profile()?.display_name}
+                hasKeptItems={items()?.some((item) => item.keep_on_list)}
+                busy={cleanupBusy()}
+                onRemove={() => void onCleanUp(cleanup)}
+                onKeep={() => void onKeepAfter(cleanup)}
+              />
+            )}
+          </For>
         </Show>
         <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
           <EmptyState>
