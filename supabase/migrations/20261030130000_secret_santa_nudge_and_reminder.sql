@@ -3,9 +3,9 @@
 -- * Nudge (#138): while a draw runs, the giver can ask the person they drew to add
 --   some ideas, when that person's list has fewer than 3 items the giver could buy.
 --   The email doesn't say who sent it. Once every 3 days per pair.
--- * Reminder (#139): everyone who takes part gets one email 7 days before the
---   occasion, bought or not. A draw started less than a week before the occasion
---   gets none: its first email is recent enough.
+-- * Reminder (#139): everyone who takes part and still follows the list they drew
+--   gets one email 7 days before the occasion, bought or not. A draw started less
+--   than a week before the occasion gets none: its first email is recent enough.
 --
 -- Both emails go out from Netlify functions (nudge-secret-santa, send-digests) with
 -- the secret key, through the claim/release functions below, like the draw emails in
@@ -144,7 +144,7 @@ $$;
 -- Pairs whose occasion is 1 to 7 days away and that weren't reminded yet, marked
 -- as reminded, so two runs at the same time don't both send. Hand them back with
 -- release_secret_santa_reminders() when sending fails. Draws made in the last week
--- before their occasion are skipped.
+-- before their occasion are skipped, and so are givers who unfollowed the list they drew.
 create function public.claim_secret_santa_reminders()
 returns table (
   secret_santa_id uuid,
@@ -168,6 +168,14 @@ as $$
       and o.date > current_date
       and o.date <= current_date + 7
       and s.created_at::date < o.date - 7
+      -- Only givers who still follow the list they drew (the draw made them follow it
+      -- until the occasion), like the digest.
+      and exists (
+        select 1 from public.list_follows f
+        where f.follower_id = pr.giver_profile_id
+          and f.list_id = pr.recipient_profile_id
+          and f.until >= current_date
+      )
     for update of pr skip locked
   ),
   claimed as (

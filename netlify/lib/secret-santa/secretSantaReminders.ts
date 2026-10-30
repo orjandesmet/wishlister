@@ -1,6 +1,6 @@
 // The Secret Santa reminder (#139): a week before the occasion, everyone who takes
-// part in its draw gets one email about the person they drew, bought or not. So the
-// text has to work for people who are done too.
+// part in its draw and still follows the list they drew gets one email about that
+// person, bought or not. So the text has to work for people who are done too.
 //
 // See supabase/migrations/20261030130000_secret_santa_nudge_and_reminder.sql.
 import type { SupabaseClient } from "@supabase/supabase-js";
