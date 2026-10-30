@@ -257,6 +257,9 @@ export const nl: Dictionary = {
       `Het profiel en verlanglijstje van ${p.name} voor iedereen wissen? Dit kan niet ongedaan gemaakt worden.`,
   },
   item: {
+    boughtForOccasion: (p: { occasion: string }) => `Gekocht voor ${p.occasion}`,
+    removeKept: "Weghalen",
+    wantAnother: "Ik wil er nog een",
     wantedLevel1: "Dit wil ik",
     wantedLevel2: "Dit wil ik echt!",
     wantedLevel3: "Dit wil ik echt, echt, ECHT!!",
@@ -510,13 +513,14 @@ export const nl: Dictionary = {
     keptItemsStay:
       "Items met “op mijn lijst houden” blijven staan, klaar om opnieuw gekocht te worden.",
     remove: "Weghalen",
-    keep: "Laten staan",
+    keep: "Ik doe het zelf",
     removed: (p: { count: number }) =>
       p.count === 1 ? "1 gekocht item opgeruimd." : `${p.count} gekochte items opgeruimd.`,
     undo: "Ongedaan maken",
     undone: "De gekochte items staan er terug.",
     dismiss: "OK",
-    kept: "Laten staan. Je krijgt deze vraag niet meer voor deze gelegenheid.",
+    kept: "Je items tonen nu wat er voor deze gelegenheid gekocht is.",
+    wantedAnother: (p: { item: string }) => `“${p.item}” kan opnieuw gekocht worden.`,
   },
   wishlist: {
     fallbackTitle: "Verlanglijstje",

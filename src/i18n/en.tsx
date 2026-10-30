@@ -264,6 +264,9 @@ export const en = {
       `Delete ${p.name}'s profile and wishlist for everyone? This can't be undone.`,
   },
   item: {
+    boughtForOccasion: (p: { occasion: string }) => `Bought for ${p.occasion}`,
+    removeKept: "Remove",
+    wantAnother: "I want another",
     wantedLevel1: "I want this",
     wantedLevel2: "I really want this!",
     wantedLevel3: "I really, really, REALLY want this!!",
@@ -520,13 +523,14 @@ export const en = {
         : `${p.count} items on ${p.name}'s list were bought for ${p.occasion}. Remove them from the list?`,
     keptItemsStay: "Items marked “keep on my list” stay, ready to be bought again.",
     remove: "Remove",
-    keep: "Keep",
+    keep: "I'll do it myself",
     removed: (p: { count: number }) =>
       p.count === 1 ? "Cleaned up 1 bought item." : `Cleaned up ${p.count} bought items.`,
     undo: "Undo",
     undone: "The bought items are back.",
     dismiss: "OK",
-    kept: "Kept. You won't be asked again for this occasion.",
+    kept: "Your items now show what was bought for this occasion.",
+    wantedAnother: (p: { item: string }) => `“${p.item}” can be bought again.`,
   },
   wishlist: {
     fallbackTitle: "Wishlist",

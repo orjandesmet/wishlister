@@ -453,3 +453,10 @@ label.body {
   padding: 0 16px;
   font-size: 14px;
 }
+
+/* Remove or "I want another" on an item bought for a passed occasion. */
+.keptActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

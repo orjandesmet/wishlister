@@ -55,16 +55,16 @@ export function CleanupPrompt(props: CleanupPromptProps) {
   );
 }
 
-/** Right after Remove: how many went, with an undo. */
+/** Right after a cleanup: what happened, with an undo. */
 export function CleanupDone(props: {
-  count: number;
+  message: string;
   busy?: boolean;
   onUndo: () => void;
   onDismiss: () => void;
 }) {
   return (
     <Card as="aside" class={styles.prompt} aria-label={t("cleanup.label")}>
-      <p>{t("cleanup.removed", { count: props.count })}</p>
+      <p>{props.message}</p>
       <div class={styles.actions}>
         <Button
           size="small"

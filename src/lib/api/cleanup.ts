@@ -1,5 +1,5 @@
 import { supabase } from "../supabase.ts";
-import type { OccasionId, ProfileId } from "../ids.ts";
+import type { ItemId, OccasionId, ProfileId } from "../ids.ts";
 import { today, type IsoDate } from "../occasions.ts";
 import { must } from "./must.ts";
 
@@ -46,4 +46,24 @@ export async function keepAfterOccasions(profileId: ProfileId, occasionIds: Occa
       occasion_ids: occasionIds,
     }),
   );
+}
+
+/** An item bought for an occasion its editors chose Keep for: they now see that, on the item. */
+export type KeptItem = { item_id: ItemId; occasion_name: string; occasion_date: IsoDate };
+
+/** Editors only; empty for anyone else. */
+export async function getKeptItems(profileId: ProfileId): Promise<KeptItem[]> {
+  return must(
+    await supabase.rpc("kept_occasion_items", { target_profile: profileId }),
+  ) as KeptItem[];
+}
+
+/** Removes a kept item (archived, like the cleanup). Returns the moment, for `undoCleanUp`. */
+export async function archiveKeptItem(itemId: ItemId): Promise<string> {
+  return must(await supabase.rpc("archive_kept_item", { target_item: itemId })) as string;
+}
+
+/** "I want another": clears the bought mark, so it can be bought again. Undone with `undoCleanUp`. */
+export async function wantAnother(itemId: ItemId): Promise<string> {
+  return must(await supabase.rpc("want_another", { target_item: itemId })) as string;
 }

@@ -32,5 +32,5 @@ export const Busy: Story = { args: { busy: true } };
 /** Right after Remove, with an undo. */
 export const Done: StoryObj<typeof CleanupDone> = {
   render: (args) => <CleanupDone {...args} />,
-  args: { count: 3, onUndo: fn(), onDismiss: fn() },
+  args: { message: "Cleaned up 3 bought items.", onUndo: fn(), onDismiss: fn() },
 };
