@@ -2,7 +2,7 @@
 // to their list. It never says who sent it: everyone in the draw has a Secret Santa,
 // so "your Secret Santa" gives nothing away.
 //
-// See supabase/migrations/20261030120000_secret_santa_nudge_and_reminder.sql.
+// See supabase/migrations/20261030130000_secret_santa_nudge_and_reminder.sql.
 import { escapeHtml, type Email } from "./mail.ts";
 import { formatDate } from "./secretSantaNotices.ts";
 

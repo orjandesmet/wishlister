@@ -2,7 +2,7 @@
 // part in its draw gets one email about the person they drew, bought or not. So the
 // text has to work for people who are done too.
 //
-// See supabase/migrations/20261030120000_secret_santa_nudge_and_reminder.sql.
+// See supabase/migrations/20261030130000_secret_santa_nudge_and_reminder.sql.
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { escapeHtml, sendEmails, type Email } from "./mail.ts";
 
