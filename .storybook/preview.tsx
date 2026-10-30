@@ -13,6 +13,7 @@ import "../src/index.css";
 // supabase.ts is replaced by src/lib/__mocks__/supabase.ts, which answers the auth calls.
 sb.mock(import("../src/lib/supabase.ts"));
 sb.mock(import("../src/lib/api/children.ts"));
+sb.mock(import("../src/lib/api/cleanup.ts"));
 sb.mock(import("../src/lib/api/follows.ts"));
 sb.mock(import("../src/lib/api/groups.ts"));
 sb.mock(import("../src/lib/api/items.ts"));

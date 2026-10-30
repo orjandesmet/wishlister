@@ -13,7 +13,7 @@
 // RESEND_API_KEY and MAIL_FROM.
 import { createClient } from "@supabase/supabase-js";
 import { mailConfigured } from "../lib/mail.ts";
-import { sendSecretSantaNotices } from "../lib/secretSantaNotices.ts";
+import { sendSecretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
 
 export default async (request: Request) => {
   if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });

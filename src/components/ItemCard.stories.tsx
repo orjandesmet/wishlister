@@ -47,6 +47,7 @@ const meta = {
       image_url: null,
       item_pictures: [],
       removed_at: null,
+      keep_on_list: false,
     },
     purchase: "available",
     canEdit: false,

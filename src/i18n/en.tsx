@@ -224,6 +224,18 @@ export const en = {
     notTakingPart: "You're not taking part.",
     ribbon: "Your Secret Santa",
     ribbonFor: (p: { occasion: string }) => `You drew this person for ${p.occasion}.`,
+    nudgeHelp: (p: { name: string }) =>
+      `${p.name}'s list has few ideas. Ask for more: ${p.name} gets an email from "your Secret Santa", without your name.`,
+    nudge: (p: { name: string }) => `Nudge ${p.name}`,
+    nudging: "Sending…",
+    nudged: (p: { days: number }) =>
+      p.days === 0
+        ? "Nudged today"
+        : p.days === 1
+          ? "Nudged yesterday"
+          : `Nudged ${p.days} days ago`,
+    nudgeSent: (p: { name: string }) => `${p.name} got your nudge. They won't know it was you.`,
+    nudgeNotSetUp: "Emails can't be sent yet, so nudging doesn't work for now.",
     who: "Who takes part",
     whoHelp: "Only members with their own list can take part. Children and guardians can't.",
     nobodyToDraw: "There are no members who can take part yet.",
@@ -418,6 +430,7 @@ export const en = {
     noGroups: "This list isn't in any groups yet.",
     noGroupsOption: "No groups (only me)",
     notWanted: "Please don't buy this: something I don't want",
+    keepOnList: "Keep on my list after it's bought (I'd like more than one)",
     wantedLevel: "How much do you want this?",
     price: "Price (optional)",
     currency: "Currency",
@@ -505,6 +518,27 @@ export const en = {
     asked: "Your question was sent.",
     answered: "Your answer was saved.",
     secretSantaStarted: (p: { occasion: string }) => `Secret Santa started for ${p.occasion}.`,
+  },
+  // After an occasion, on the list's own page (#7).
+  cleanup: {
+    label: "Clean up after an occasion",
+    question: (p: { count: number; occasion: string }) =>
+      p.count === 1
+        ? `1 item on your list was bought for ${p.occasion}. Remove it from your list?`
+        : `${p.count} items on your list were bought for ${p.occasion}. Remove them from your list?`,
+    questionChild: (p: { count: number; occasion: string; name: string }) =>
+      p.count === 1
+        ? `1 item on ${p.name}'s list was bought for ${p.occasion}. Remove it from the list?`
+        : `${p.count} items on ${p.name}'s list were bought for ${p.occasion}. Remove them from the list?`,
+    keptItemsStay: "Items marked “keep on my list” stay, ready to be bought again.",
+    remove: "Remove",
+    keep: "Keep",
+    removed: (p: { count: number }) =>
+      p.count === 1 ? "Cleaned up 1 bought item." : `Cleaned up ${p.count} bought items.`,
+    undo: "Undo",
+    undone: "The bought items are back.",
+    dismiss: "OK",
+    kept: "Kept. You won't be asked again for this occasion.",
   },
   wishlist: {
     fallbackTitle: "Wishlist",

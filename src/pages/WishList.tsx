@@ -2,8 +2,10 @@ import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
+import { CleanupDone, CleanupPrompt } from "../components/CleanupPrompt.tsx";
 import { ListMenu } from "../components/ListMenu.tsx";
-import { SecretSantaRibbon } from "../components/SecretSantaRibbon.tsx";
+import { SecretSantaNudge } from "../components/secret-santa/SecretSantaNudge.tsx";
+import { SecretSantaRibbon } from "../components/secret-santa/SecretSantaRibbon.tsx";
 import { FollowList } from "../components/FollowList.tsx";
 import { CompactToggle } from "../components/CompactToggle.tsx";
 import { ItemCard } from "../components/ItemCard.tsx";
@@ -21,11 +23,24 @@ import {
   type Item,
   type WantedLevel,
 } from "../lib/api/items.ts";
+import {
+  cleanUp,
+  getPendingCleanups,
+  keepAfterOccasions,
+  undoCleanUp,
+} from "../lib/api/cleanup.ts";
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { animateMoves } from "../lib/animateMoves.ts";
 import { setProfileCardView } from "../lib/api/profiles.ts";
+import {
+  getNudgeState,
+  NUDGE_BELOW_ITEMS,
+  NUDGE_EVERY_DAYS,
+  nudgeSecretSanta,
+} from "../lib/api/secretSanta.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { cardView, chooseCardView } from "../lib/cardView.ts";
+import { cleanupPrompts, type CleanupPrompt as Cleanup } from "../lib/cleanup.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createBulkSelect } from "../lib/createBulkSelect.ts";
 import { createFollow } from "../lib/createFollow.ts";
@@ -80,6 +95,30 @@ export default function WishList() {
 
   const runner = createActionRunner();
   const { error, run } = runner;
+
+  // The person you drew can be nudged for ideas when their list has few items you could buy.
+  const drawnHere = () => drawn().find((d) => d.recipient_profile_id === params.profileId);
+  const [nudgeState, { refetch: refetchNudge }] = createResource(
+    () => (drawnHere() ? params.profileId : undefined),
+    getNudgeState,
+  );
+  // Another extra: no button if it fails.
+  const nudgeable = () => {
+    const state = nudgeState.error ? undefined : nudgeState();
+    return state && state.buyable_items < NUDGE_BELOW_ITEMS ? state : undefined;
+  };
+  const [nudging, runNudge] = runner.busyRunner();
+  const [nudgeNotice, setNudgeNotice] = createSignal<string>();
+  const onNudge = () =>
+    runNudge(async () => {
+      const name = profile()?.display_name ?? "";
+      const result = await nudgeSecretSanta(params.profileId);
+      const text =
+        result === "sent" ? t("secretSanta.nudgeSent", { name }) : t("secretSanta.nudgeNotSetUp");
+      setNudgeNotice(text);
+      announce(text);
+      await refetchNudge();
+    });
 
   // A list you opened before (or that was loaded ahead, see prefetch.ts) shows at once,
   // and loads again in the background.
@@ -160,6 +199,43 @@ export default function WishList() {
     questions.clearError();
     if (search.questions === item.id) setSearch({ questions: undefined }, { replace: true });
   };
+
+  // After an occasion, the list's editors are asked whether to remove what was bought for it.
+  // Only from the day after, so nothing is given away before; the database decides that too.
+  const [pendingCleanups, { refetch: refetchCleanups }] = createResource(
+    () => (canEdit() ? params.profileId : undefined),
+    getPendingCleanups,
+  );
+  const cleanups = () =>
+    cleanupPrompts((pendingCleanups.error ? undefined : pendingCleanups()) ?? []);
+  const [cleanedUp, setCleanedUp] = createSignal<{ at: string; count: number }>();
+  const [cleanupBusy, runCleanup] = runner.busyRunner();
+  // Each answer takes its card away, and the button just pressed with it.
+  const onCleanUp = (cleanup: Cleanup) =>
+    runCleanup(async () => {
+      const at = await cleanUp(params.profileId, cleanup.occasionIds);
+      setCleanedUp({ at, count: cleanup.count });
+      await Promise.all([refetchItems(), refetchCleanups()]);
+      announce(t("cleanup.removed", { count: cleanup.count }));
+      focusHeading();
+    });
+  const onUndoCleanUp = () =>
+    runCleanup(async () => {
+      const done = cleanedUp();
+      if (!done) return;
+      await undoCleanUp(params.profileId, done.at);
+      setCleanedUp(undefined);
+      await Promise.all([refetchItems(), refetchCleanups()]);
+      announce(t("cleanup.undone"));
+      focusHeading();
+    });
+  const onKeepAfter = (cleanup: Cleanup) =>
+    runCleanup(async () => {
+      await keepAfterOccasions(params.profileId, cleanup.occasionIds);
+      await refetchCleanups();
+      announce(t("cleanup.kept"));
+      focusHeading();
+    });
 
   // oxlint-disable-next-line no-unassigned-vars
   let cardsRoot: HTMLDivElement | undefined;
@@ -338,12 +414,27 @@ export default function WishList() {
         </div>
       </div>
       {/* Only the one who drew this person sees it. */}
-      <Show when={drawn().find((d) => d.recipient_profile_id === params.profileId)}>
+      <Show when={drawnHere()}>
         {(drawnPerson) => (
           <p>
             <SecretSantaRibbon occasion={drawnPerson().occasion_name} />
           </p>
         )}
+      </Show>
+      <Show when={nudgeable()}>
+        {(state) => (
+          <SecretSantaNudge
+            name={profile()?.display_name ?? ""}
+            lastNudgedAt={state().last_nudged_at}
+            everyDays={NUDGE_EVERY_DAYS}
+            now={new Date()}
+            busy={nudging()}
+            onNudge={onNudge}
+          />
+        )}
+      </Show>
+      <Show when={nudgeNotice()}>
+        <p class={`${u.muted} ${u.small}`}>{nudgeNotice()}</p>
       </Show>
       <Show when={profile.error || items.error}>
         <p class={u.error} role="alert">
@@ -358,6 +449,34 @@ export default function WishList() {
           <p class={u.error} role="alert">
             {error()}
           </p>
+        </Show>
+        <Show when={canEdit() && !select.selecting()}>
+          <Show when={cleanedUp()}>
+            {(done) => (
+              <CleanupDone
+                count={done().count}
+                busy={cleanupBusy()}
+                onUndo={() => void onUndoCleanUp()}
+                onDismiss={() => {
+                  setCleanedUp(undefined);
+                  focusHeading();
+                }}
+              />
+            )}
+          </Show>
+          <For each={cleanups()}>
+            {(cleanup) => (
+              <CleanupPrompt
+                occasion={cleanup.name}
+                count={cleanup.count}
+                childName={isOwnList() ? undefined : profile()?.display_name}
+                hasKeptItems={items()?.some((item) => item.keep_on_list)}
+                busy={cleanupBusy()}
+                onRemove={() => void onCleanUp(cleanup)}
+                onKeep={() => void onKeepAfter(cleanup)}
+              />
+            )}
+          </For>
         </Show>
         <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
           <EmptyState>
