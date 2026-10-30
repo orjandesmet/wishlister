@@ -14,8 +14,8 @@ import { buildDigestEmails, type DigestRow } from "../lib/digest.ts";
 import { mailConfigured, sendEmails } from "../lib/mail.ts";
 import { sendQuestionNotices } from "../lib/questionNotices.ts";
 import { sendRemovalNotices } from "../lib/removalNotices.ts";
-import { sendSecretSantaNotices } from "../lib/secretSantaNotices.ts";
-import { sendSecretSantaReminders } from "../lib/secretSantaReminders.ts";
+import { sendSecretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
+import { sendSecretSantaReminders } from "../lib/secret-santa/secretSantaReminders.ts";
 
 export default async () => {
   const url = process.env.VITE_SUPABASE_URL;

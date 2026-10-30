@@ -16,7 +16,7 @@
 // RESEND_API_KEY and MAIL_FROM.
 import { createClient } from "@supabase/supabase-js";
 import { mailConfigured, sendEmail } from "../lib/mail.ts";
-import { buildNudgeEmail, type NudgeRow } from "../lib/secretSantaNudge.ts";
+import { buildNudgeEmail, type NudgeRow } from "../lib/secret-santa/secretSantaNudge.ts";
 
 export default async (request: Request) => {
   if (request.method !== "POST") return message(405, "Method not allowed");

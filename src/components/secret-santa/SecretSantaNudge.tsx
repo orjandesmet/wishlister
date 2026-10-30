@@ -1,7 +1,7 @@
 import { createUniqueId, Show } from "solid-js";
-import { t } from "../lib/i18n.ts";
-import u from "../utilities.module.css";
-import { Button } from "./Button.tsx";
+import { t } from "../../lib/i18n.ts";
+import u from "../../utilities.module.css";
+import { Button } from "../Button.tsx";
 import styles from "./SecretSantaNudge.module.css";
 
 const DAY_MS = 24 * 60 * 60 * 1000;

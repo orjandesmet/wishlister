@@ -6,8 +6,8 @@
 //
 // Like the digest, the texts live here instead of in src/i18n (which holds JSX).
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { parseMarkdown, type Block, type Inline } from "../../src/lib/markdown.ts";
-import { escapeHtml, sendEmails, type Email } from "./mail.ts";
+import { parseMarkdown, type Block, type Inline } from "../../../src/lib/markdown.ts";
+import { escapeHtml, sendEmails, type Email } from "../mail.ts";
 
 /** One row of claim_secret_santa_notices(): one email. */
 export type SecretSantaRow = {

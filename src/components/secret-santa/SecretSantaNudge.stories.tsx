@@ -5,7 +5,7 @@ import { SecretSantaNudge } from "./SecretSantaNudge.tsx";
 const now = new Date("2026-12-10T12:00:00Z");
 
 const meta = {
-  title: "Groups/SecretSantaNudge",
+  title: "SecretSanta/SecretSantaNudge",
   component: SecretSantaNudge,
   args: { name: "Sara", lastNudgedAt: null, everyDays: 3, now, onNudge: fn() },
 } satisfies Meta<typeof SecretSantaNudge>;

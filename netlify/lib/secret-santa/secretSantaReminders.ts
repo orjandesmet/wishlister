@@ -4,7 +4,7 @@
 //
 // See supabase/migrations/20261030130000_secret_santa_nudge_and_reminder.sql.
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { escapeHtml, sendEmails, type Email } from "./mail.ts";
+import { escapeHtml, sendEmails, type Email } from "../mail.ts";
 
 /** One row of claim_secret_santa_reminders(): one email. */
 export type ReminderRow = {

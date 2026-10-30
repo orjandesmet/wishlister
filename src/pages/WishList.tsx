@@ -3,8 +3,8 @@ import { createMemo, createResource, createSignal, For, onCleanup, Show } from "
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
 import { ListMenu } from "../components/ListMenu.tsx";
-import { SecretSantaNudge } from "../components/SecretSantaNudge.tsx";
-import { SecretSantaRibbon } from "../components/SecretSantaRibbon.tsx";
+import { SecretSantaNudge } from "../components/secret-santa/SecretSantaNudge.tsx";
+import { SecretSantaRibbon } from "../components/secret-santa/SecretSantaRibbon.tsx";
 import { FollowList } from "../components/FollowList.tsx";
 import { CompactToggle } from "../components/CompactToggle.tsx";
 import { ItemCard } from "../components/ItemCard.tsx";
