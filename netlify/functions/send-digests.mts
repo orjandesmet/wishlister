@@ -1,6 +1,7 @@
 /// <reference types="node" />
 // Netlify Scheduled Function: every evening, emails everyone who follows a list
-// what was added, removed or bought on it since the last run (#27).
+// what was added, removed or bought on it since the last run (#27), and sends
+// the other emails that wait for it (see below).
 //
 // The database works out who hears about what (pending_digest()), including who
 // may see which item and purchase. This only builds and sends the emails, then
@@ -14,6 +15,7 @@ import { mailConfigured, sendEmails } from "../lib/mail.ts";
 import { sendQuestionNotices } from "../lib/questionNotices.ts";
 import { sendRemovalNotices } from "../lib/removalNotices.ts";
 import { sendSecretSantaNotices } from "../lib/secretSantaNotices.ts";
+import { sendSecretSantaReminders } from "../lib/secretSantaReminders.ts";
 
 export default async () => {
   const url = process.env.VITE_SUPABASE_URL;
@@ -59,6 +61,13 @@ export default async () => {
     if (santas.sent > 0) console.log(`Secret Santa emails sent: ${santas.sent}`);
     for (const message of santas.errors) {
       console.error(`Sending Secret Santa emails failed: ${message}`);
+    }
+
+    // Everyone in a draw hears once more, a week before the occasion (#139).
+    const reminders = await sendSecretSantaReminders(admin, siteUrl);
+    if (reminders.sent > 0) console.log(`Secret Santa reminders sent: ${reminders.sent}`);
+    for (const message of reminders.errors) {
+      console.error(`Sending Secret Santa reminders failed: ${message}`);
     }
   } else {
     console.warn("Digests skipped: RESEND_API_KEY or MAIL_FROM isn't set.");

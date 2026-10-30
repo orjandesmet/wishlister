@@ -53,7 +53,8 @@ const texts: Record<"en" | "nl", Texts> = {
   },
 };
 
-function formatDate(isoDate: string, locale: string) {
+/** "25 December 2026" in the email's language; an unreadable date stays as it is. */
+export function formatDate(isoDate: string, locale: string) {
   const date = new Date(`${isoDate}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return isoDate;
   return new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(date);

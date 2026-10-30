@@ -3,6 +3,7 @@ import { createMemo, createResource, createSignal, For, onCleanup, Show } from "
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
 import { ListMenu } from "../components/ListMenu.tsx";
+import { SecretSantaNudge } from "../components/SecretSantaNudge.tsx";
 import { SecretSantaRibbon } from "../components/SecretSantaRibbon.tsx";
 import { FollowList } from "../components/FollowList.tsx";
 import { CompactToggle } from "../components/CompactToggle.tsx";
@@ -24,6 +25,12 @@ import {
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { animateMoves } from "../lib/animateMoves.ts";
 import { setProfileCardView } from "../lib/api/profiles.ts";
+import {
+  getNudgeState,
+  NUDGE_BELOW_ITEMS,
+  NUDGE_EVERY_DAYS,
+  nudgeSecretSanta,
+} from "../lib/api/secretSanta.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { cardView, chooseCardView } from "../lib/cardView.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
@@ -80,6 +87,30 @@ export default function WishList() {
 
   const runner = createActionRunner();
   const { error, run } = runner;
+
+  // The person you drew can be nudged for ideas when their list has few items you could buy.
+  const drawnHere = () => drawn().find((d) => d.recipient_profile_id === params.profileId);
+  const [nudgeState, { refetch: refetchNudge }] = createResource(
+    () => (drawnHere() ? params.profileId : undefined),
+    getNudgeState,
+  );
+  // Another extra: no button if it fails.
+  const nudgeable = () => {
+    const state = nudgeState.error ? undefined : nudgeState();
+    return state && state.buyable_items < NUDGE_BELOW_ITEMS ? state : undefined;
+  };
+  const [nudging, runNudge] = runner.busyRunner();
+  const [nudgeNotice, setNudgeNotice] = createSignal<string>();
+  const onNudge = () =>
+    runNudge(async () => {
+      const name = profile()?.display_name ?? "";
+      const result = await nudgeSecretSanta(params.profileId);
+      const text =
+        result === "sent" ? t("secretSanta.nudgeSent", { name }) : t("secretSanta.nudgeNotSetUp");
+      setNudgeNotice(text);
+      announce(text);
+      await refetchNudge();
+    });
 
   // A list you opened before (or that was loaded ahead, see prefetch.ts) shows at once,
   // and loads again in the background.
@@ -338,12 +369,27 @@ export default function WishList() {
         </div>
       </div>
       {/* Only the one who drew this person sees it. */}
-      <Show when={drawn().find((d) => d.recipient_profile_id === params.profileId)}>
+      <Show when={drawnHere()}>
         {(drawnPerson) => (
           <p>
             <SecretSantaRibbon occasion={drawnPerson().occasion_name} />
           </p>
         )}
+      </Show>
+      <Show when={nudgeable()}>
+        {(state) => (
+          <SecretSantaNudge
+            name={profile()?.display_name ?? ""}
+            lastNudgedAt={state().last_nudged_at}
+            everyDays={NUDGE_EVERY_DAYS}
+            now={new Date()}
+            busy={nudging()}
+            onNudge={onNudge}
+          />
+        )}
+      </Show>
+      <Show when={nudgeNotice()}>
+        <p class={`${u.muted} ${u.small}`}>{nudgeNotice()}</p>
       </Show>
       <Show when={profile.error || items.error}>
         <p class={u.error} role="alert">
