@@ -1,12 +1,14 @@
 // The Secret Santa reminder (#139): a week before the occasion, everyone who takes
-// part in its draw and still follows the list they drew gets one email about that
-// person, bought or not. So the text has to work for people who are done too.
+// part in its draw finds a few lines about the person they drew at the top of their
+// evening digest, bought or not. So the text has to work for people who are done too.
+// Only in a digest: someone without one that evening hears on the next evening that
+// has one, until the occasion.
 //
 // See supabase/migrations/20261030130000_secret_santa_nudge_and_reminder.sql.
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { escapeHtml, sendEmails, type Email } from "../mail.ts";
+import { escapeHtml } from "../mail.ts";
 
-/** One row of claim_secret_santa_reminders(): one email. */
+/** One row of claim_secret_santa_reminders(): one reminder, for one giver. */
 export type ReminderRow = {
   secret_santa_id: string;
   giver_profile_id: string;
@@ -20,6 +22,9 @@ export type ReminderRow = {
   email: string;
   locale: string;
 };
+
+/** A reminder, ready to go into a digest. */
+export type ReminderBlock = { subject: string; html: string; text: string };
 
 type Texts = {
   subject: (days: number) => string;
@@ -45,49 +50,48 @@ const texts: Record<"en" | "nl", Texts> = {
   },
 };
 
-/** One email per row. `siteUrl` is where the app runs, for the link. */
-export function buildReminderEmails(rows: ReminderRow[], siteUrl: string): Email[] {
-  const site = siteUrl.replace(/\/$/, "");
-  return rows.map((row) => {
-    const t = texts[row.locale === "nl" ? "nl" : "en"];
-    const link = `${site}/lists/${row.recipient_profile_id}`;
-    const recipient = escapeHtml(row.recipient_name);
-    return {
-      to: row.email,
-      subject: t.subject(row.days_left),
-      html: [
-        `<p>${t.body(escapeHtml(row.occasion_name), `<strong>${recipient}</strong>`, row.days_left)}</p>`,
-        `<p><a href="${link}">${t.openList(recipient)}</a></p>`,
-      ].join("\n"),
-      text: [
-        t.body(row.occasion_name, row.recipient_name, row.days_left),
-        `${t.openList(row.recipient_name)}: ${link}`,
-      ].join("\n\n"),
-    };
-  });
+/** The reminder in `locale` (the digest's). `siteUrl` is where the app runs, for the link. */
+export function buildReminder(row: ReminderRow, locale: string, siteUrl: string): ReminderBlock {
+  const t = texts[locale === "nl" ? "nl" : "en"];
+  const link = `${siteUrl.replace(/\/$/, "")}/lists/${row.recipient_profile_id}`;
+  const recipient = escapeHtml(row.recipient_name);
+  return {
+    subject: t.subject(row.days_left),
+    html: [
+      `<p>${t.body(escapeHtml(row.occasion_name), `<strong>${recipient}</strong>`, row.days_left)}</p>`,
+      `<p><a href="${link}">${t.openList(recipient)}</a></p>`,
+    ].join("\n"),
+    text: [
+      t.body(row.occasion_name, row.recipient_name, row.days_left),
+      `${t.openList(row.recipient_name)}: ${link}`,
+    ].join("\n\n"),
+  };
 }
 
 /**
- * Sends the reminders that are due. Claiming the rows marks them as sent, so two runs
- * at once don't both send; a failed send hands them back for the next run. `admin` is
- * a client with the secret key.
+ * The reminders due for `giverIds` (whoever gets a digest this evening). Claiming them
+ * marks them as sent, so two runs at once don't both send them; hand them back with
+ * releaseReminders() when the digest fails. `admin` is a client with the secret key.
  */
-export async function sendSecretSantaReminders(
+export async function claimReminders(
   admin: SupabaseClient,
-  siteUrl: string,
-): Promise<{ sent: number; errors: string[] }> {
-  const { data, error } = await admin.rpc("claim_secret_santa_reminders");
-  if (error) return { sent: 0, errors: [`Couldn't collect the reminders: ${error.message}`] };
-  const rows = (data ?? []) as ReminderRow[];
-  if (rows.length === 0) return { sent: 0, errors: [] };
+  giverIds: string[],
+): Promise<{ reminders: ReminderRow[]; error?: string }> {
+  if (giverIds.length === 0) return { reminders: [] };
+  const { data, error } = await admin.rpc("claim_secret_santa_reminders", { givers: giverIds });
+  if (error) return { reminders: [], error: `Couldn't collect the reminders: ${error.message}` };
+  return { reminders: (data ?? []) as ReminderRow[] };
+}
 
-  const result = await sendEmails(buildReminderEmails(rows, siteUrl));
-  if (result.errors.length > 0) {
-    const { error: releaseError } = await admin.rpc("release_secret_santa_reminders", {
-      draw_ids: rows.map((row) => row.secret_santa_id),
-      giver_ids: rows.map((row) => row.giver_profile_id),
-    });
-    if (releaseError) result.errors.push(`Couldn't release them: ${releaseError.message}`);
-  }
-  return result;
+/** Reminders that weren't sent, for the next evening. Returns an error message, if any. */
+export async function releaseReminders(
+  admin: SupabaseClient,
+  reminders: ReminderRow[],
+): Promise<string | undefined> {
+  if (reminders.length === 0) return undefined;
+  const { error } = await admin.rpc("release_secret_santa_reminders", {
+    draw_ids: reminders.map((row) => row.secret_santa_id),
+    giver_ids: reminders.map((row) => row.giver_profile_id),
+  });
+  return error ? `Couldn't release the reminders: ${error.message}` : undefined;
 }

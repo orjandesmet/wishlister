@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 import { buildDigestEmails, type DigestRow } from "./digest.ts";
+import type { ReminderRow } from "./secret-santa/secretSantaReminders.ts";
 
 const row = (overrides: Partial<DigestRow>): DigestRow => ({
   follower_id: "bert",
@@ -70,5 +71,30 @@ describe("buildDigestEmails", () => {
     );
     expect(email.html).toContain("&lt;Anna&gt;");
     expect(email.html).toContain("Tom &amp; Jerry");
+  });
+
+  it("puts a Secret Santa reminder on top of that giver's digest, as the subject", () => {
+    const reminder: ReminderRow = {
+      secret_santa_id: "draw-1",
+      giver_profile_id: "bert",
+      recipient_profile_id: "sara-list",
+      recipient_name: "Sara",
+      occasion_name: "Christmas",
+      occasion_date: "2026-12-25",
+      days_left: 7,
+      email: "bert@example.com",
+      locale: "en",
+    };
+    const [bert, carl] = buildDigestEmails(
+      [row({}), row({ follower_id: "carl", email: "carl@example.com" })],
+      "https://wishlister.example",
+      [reminder],
+    );
+    expect(bert.subject).toBe("🎅 7 days left. The elves are getting nervous.");
+    const text = bert.text ?? "";
+    expect(text.indexOf("Sara's Secret Santa")).toBeLessThan(text.indexOf("LEGO bonsai"));
+    expect(bert.html).toContain('href="https://wishlister.example/lists/sara-list"');
+    expect(carl.subject).toBe("What changed on Anna's wishlist");
+    expect(carl.text).not.toContain("Secret Santa");
   });
 });

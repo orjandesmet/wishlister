@@ -4,6 +4,7 @@
 // Netlify functions can't use the app's dictionaries in src/i18n (they hold JSX),
 // so the few email texts live here, in the same two languages.
 import { escapeHtml, type Email } from "./mail.ts";
+import { buildReminder, type ReminderRow } from "./secret-santa/secretSantaReminders.ts";
 
 export type Change = "added" | "removed" | "bought";
 
@@ -67,9 +68,14 @@ type ListChanges = {
 
 /**
  * One email per follower, lists and changes in the order the rows come in.
- * `siteUrl` is where the app runs, for the links.
+ * `siteUrl` is where the app runs, for the links. A follower's Secret Santa
+ * `reminders` (#139) go on top, and the first one is the subject.
  */
-export function buildDigestEmails(rows: DigestRow[], siteUrl: string): Email[] {
+export function buildDigestEmails(
+  rows: DigestRow[],
+  siteUrl: string,
+  reminders: ReminderRow[] = [],
+): Email[] {
   const byFollower = new Map<string, { email: string; locale: string; lists: ListChanges[] }>();
   for (const row of rows) {
     let follower = byFollower.get(row.follower_id);
@@ -91,13 +97,19 @@ export function buildDigestEmails(rows: DigestRow[], siteUrl: string): Email[] {
   }
 
   const site = siteUrl.replace(/\/$/, "");
-  return [...byFollower.values()].map(({ email, locale, lists }) => {
+  return [...byFollower].map(([followerId, { email, locale, lists }]) => {
     const t = texts[locale === "nl" ? "nl" : "en"];
-    const subject = lists.length === 1 ? t.subjectOne(lists[0].name) : t.subjectMany(lists.length);
+    const santa = reminders
+      .filter((reminder) => reminder.giver_profile_id === followerId)
+      .map((reminder) => buildReminder(reminder, locale, site));
+    const subject =
+      santa[0]?.subject ??
+      (lists.length === 1 ? t.subjectOne(lists[0].name) : t.subjectMany(lists.length));
     const listUrl = (list: ListChanges) => `${site}/lists/${list.id}`;
     const unfollowUrl = (list: ListChanges) => `${site}/unfollow/${list.unfollowToken}`;
 
     const html = [
+      ...santa.map((reminder) => `${reminder.html}\n<hr>`),
       ...lists.map(
         (list) =>
           `<h2>${escapeHtml(t.heading(list.name))}</h2>` +
@@ -114,6 +126,7 @@ export function buildDigestEmails(rows: DigestRow[], siteUrl: string): Email[] {
     ].join("\n");
 
     const text = [
+      ...santa.map((reminder) => `${reminder.text}\n\n---`),
       ...lists.map((list) =>
         [
           t.heading(list.name),

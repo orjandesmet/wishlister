@@ -15,7 +15,7 @@ import { mailConfigured, sendEmails } from "../lib/mail.ts";
 import { sendQuestionNotices } from "../lib/questionNotices.ts";
 import { sendRemovalNotices } from "../lib/removalNotices.ts";
 import { sendSecretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
-import { sendSecretSantaReminders } from "../lib/secret-santa/secretSantaReminders.ts";
+import { claimReminders, releaseReminders } from "../lib/secret-santa/secretSantaReminders.ts";
 
 export default async () => {
   const url = process.env.VITE_SUPABASE_URL;
@@ -34,12 +34,29 @@ export default async () => {
     const { data, error } = await admin.rpc("pending_digest", { upto });
     if (error) throw new Error(`Couldn't collect the changes: ${error.message}`);
 
-    const emails = buildDigestEmails(data as DigestRow[], siteUrl);
+    const rows = data as DigestRow[];
+
+    // Secret Santa reminders a week before the occasion (#139) ride along with the
+    // digest, so only people who get one this evening hear (the others on a later one).
+    const claimed = await claimReminders(admin, [...new Set(rows.map((row) => row.follower_id))]);
+    if (claimed.error) console.error(claimed.error);
+
+    const emails = buildDigestEmails(rows, siteUrl, claimed.reminders);
     const { sent, errors } = await sendEmails(emails);
     console.log(`Digests sent: ${sent} of ${emails.length}`);
     // A failed batch isn't retried tomorrow: those changes would arrive a day late
     // and next to newer ones. The error is in the function log.
     for (const message of errors) console.error(`Sending digests failed: ${message}`);
+    if (claimed.reminders.length > 0) {
+      if (errors.length > 0) {
+        // Which emails of a failed batch went out isn't known; with fewer than 100
+        // (one batch), none did. The reminders wait for the next digest.
+        const releaseError = await releaseReminders(admin, claimed.reminders);
+        if (releaseError) console.error(releaseError);
+      } else {
+        console.log(`Secret Santa reminders sent: ${claimed.reminders.length}`);
+      }
+    }
 
     // Buyers of removed items normally hear right away (notify-removed); this
     // catches what that missed.
@@ -61,13 +78,6 @@ export default async () => {
     if (santas.sent > 0) console.log(`Secret Santa emails sent: ${santas.sent}`);
     for (const message of santas.errors) {
       console.error(`Sending Secret Santa emails failed: ${message}`);
-    }
-
-    // Everyone in a draw hears once more, a week before the occasion (#139).
-    const reminders = await sendSecretSantaReminders(admin, siteUrl);
-    if (reminders.sent > 0) console.log(`Secret Santa reminders sent: ${reminders.sent}`);
-    for (const message of reminders.errors) {
-      console.error(`Sending Secret Santa reminders failed: ${message}`);
     }
   } else {
     console.warn("Digests skipped: RESEND_API_KEY or MAIL_FROM isn't set.");
