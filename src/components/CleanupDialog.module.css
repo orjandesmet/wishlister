@@ -1,0 +1,52 @@
+.dialog {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.16);
+}
+
+.dialog::backdrop {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+}
+
+.body p {
+  margin: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The name, with the occasion under it. */
+.item {
+  display: flex;
+  flex-direction: column;
+  overflow-wrap: anywhere;
+}
+
+.ok {
+  align-self: flex-end;
+  min-width: 96px;
+}

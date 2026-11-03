@@ -2,7 +2,7 @@ import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
-import { CleanupDone, CleanupPrompt } from "../components/CleanupPrompt.tsx";
+import { CleanupDialog } from "../components/CleanupDialog.tsx";
 import { ListMenu } from "../components/ListMenu.tsx";
 import { SecretSantaRibbon } from "../components/SecretSantaRibbon.tsx";
 import { FollowList } from "../components/FollowList.tsx";
@@ -22,21 +22,12 @@ import {
   type Item,
   type WantedLevel,
 } from "../lib/api/items.ts";
-import {
-  archiveKeptItem,
-  cleanUp,
-  getKeptItems,
-  getPendingCleanups,
-  keepAfterOccasions,
-  undoCleanUp,
-  wantAnother,
-} from "../lib/api/cleanup.ts";
+import { cleanUpBoughtItems, getPendingCleanup } from "../lib/api/cleanup.ts";
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { animateMoves } from "../lib/animateMoves.ts";
 import { setProfileCardView } from "../lib/api/profiles.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { cardView, chooseCardView } from "../lib/cardView.ts";
-import { cleanupPrompts, type CleanupPrompt as Cleanup } from "../lib/cleanup.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createBulkSelect } from "../lib/createBulkSelect.ts";
 import { createFollow } from "../lib/createFollow.ts";
@@ -172,72 +163,30 @@ export default function WishList() {
     if (search.questions === item.id) setSearch({ questions: undefined }, { replace: true });
   };
 
-  // After an occasion, the list's editors are asked whether to remove what was bought for it.
-  // Only from the day after, so nothing is given away before; the database decides that too.
-  const [pendingCleanups, { refetch: refetchCleanups }] = createResource(
+  // After an occasion, its bought items go: the list's editors get one dialog with all of
+  // them, checked, and uncheck what stays. Only from the day after, so nothing is given away
+  // before; the database decides that too.
+  const [pendingCleanup, { refetch: refetchCleanup }] = createResource(
     () => (canEdit() ? params.profileId : undefined),
-    getPendingCleanups,
+    getPendingCleanup,
   );
-  const cleanups = () =>
-    cleanupPrompts((pendingCleanups.error ? undefined : pendingCleanups()) ?? []);
-  // After "I'll do it myself", the items bought for that occasion say so, one by one.
-  const [keptItems, { refetch: refetchKept }] = createResource(
-    () => (canEdit() ? params.profileId : undefined),
-    getKeptItems,
-  );
-  const keptFor = createMemo(
-    () =>
-      new Map(
-        ((keptItems.error ? undefined : keptItems()) ?? []).map((kept) => [
-          kept.item_id,
-          kept.occasion_name,
-        ]),
-      ),
-  );
-  const [cleanedUp, setCleanedUp] = createSignal<{ at: string; message: string }>();
-  const [cleanupBusy, runCleanup] = runner.busyRunner();
-  // Each answer takes its card away, and the button just pressed with it.
-  const onCleanUp = (cleanup: Cleanup) =>
-    runCleanup(async () => {
-      const at = await cleanUp(params.profileId, cleanup.occasionIds);
-      setCleanedUp({ at, message: t("cleanup.removed", { count: cleanup.count }) });
-      await Promise.all([refetchItems(), refetchCleanups()]);
-      announce(t("cleanup.removed", { count: cleanup.count }));
+  const cleanupItems = () => (pendingCleanup.error ? undefined : pendingCleanup()) ?? [];
+  const [cleanupError, setCleanupError] = createSignal<string>();
+  const [cleanupBusy, setCleanupBusy] = createSignal(false);
+  const onCleanUp = async (removeIds: ItemId[]) => {
+    setCleanupBusy(true);
+    setCleanupError(undefined);
+    try {
+      await cleanUpBoughtItems(params.profileId, removeIds);
+      await Promise.all([refetchItems(), refetchCleanup()]);
+      announce(t("cleanup.done"));
       focusHeading();
-    });
-  const onUndoCleanUp = () =>
-    runCleanup(async () => {
-      const done = cleanedUp();
-      if (!done) return;
-      await undoCleanUp(params.profileId, done.at);
-      setCleanedUp(undefined);
-      await Promise.all([refetchItems(), refetchCleanups(), refetchKept()]);
-      announce(t("cleanup.undone"));
-      focusHeading();
-    });
-  const onKeepAfter = (cleanup: Cleanup) =>
-    runCleanup(async () => {
-      await keepAfterOccasions(params.profileId, cleanup.occasionIds);
-      await Promise.all([refetchCleanups(), refetchKept()]);
-      announce(t("cleanup.kept"));
-      focusHeading();
-    });
-  const onRemoveKept = (item: Item) =>
-    runCleanup(async () => {
-      const at = await archiveKeptItem(item.id);
-      setCleanedUp({ at, message: t("a11y.removed", { item: item.name }) });
-      await Promise.all([refetchItems(), refetchKept()]);
-      announce(t("a11y.removed", { item: item.name }));
-      focusHeading();
-    });
-  const onWantAnother = (item: Item) =>
-    runCleanup(async () => {
-      const at = await wantAnother(item.id);
-      setCleanedUp({ at, message: t("cleanup.wantedAnother", { item: item.name }) });
-      await refetchKept();
-      announce(t("cleanup.wantedAnother", { item: item.name }));
-      focusHeading();
-    });
+    } catch (e) {
+      setCleanupError((e as Error).message);
+    } finally {
+      setCleanupBusy(false);
+    }
+  };
 
   // oxlint-disable-next-line no-unassigned-vars
   let cardsRoot: HTMLDivElement | undefined;
@@ -276,9 +225,7 @@ export default function WishList() {
   const onDelete = (item: Item) =>
     run(async () => {
       if (!confirm(t("wishlist.confirmRemoveItem", { item: item.name }))) return;
-      // Bought for an occasion that passed: archived, so its buyer isn't told it was removed.
-      if (keptFor().has(item.id)) await archiveKeptItem(item.id);
-      else await deleteItem(item.id);
+      await deleteItem(item.id);
       await refetchItems();
       // Its card, and the button just pressed, are gone.
       announce(t("a11y.removed", { item: item.name }));
@@ -360,9 +307,6 @@ export default function WishList() {
       onCancelPick={purchases.cancelPick}
       onUndo={() => purchases.onUndo(item)}
       onRemove={() => onDelete(item)}
-      keptFor={canEdit() ? keptFor().get(item.id) : undefined}
-      onRemoveKept={() => void onRemoveKept(item)}
-      onWantAnother={() => void onWantAnother(item)}
       onChangeWant={() => onChangeWant(item)}
       selecting={select.selecting()}
       selected={select.selected().has(item.id)}
@@ -442,33 +386,14 @@ export default function WishList() {
             {error()}
           </p>
         </Show>
-        <Show when={canEdit() && !select.selecting()}>
-          <Show when={cleanedUp()}>
-            {(done) => (
-              <CleanupDone
-                message={done().message}
-                busy={cleanupBusy()}
-                onUndo={() => void onUndoCleanUp()}
-                onDismiss={() => {
-                  setCleanedUp(undefined);
-                  focusHeading();
-                }}
-              />
-            )}
-          </Show>
-          <For each={cleanups()}>
-            {(cleanup) => (
-              <CleanupPrompt
-                occasion={cleanup.name}
-                count={cleanup.count}
-                childName={isOwnList() ? undefined : profile()?.display_name}
-                hasKeptItems={items()?.some((item) => item.keep_on_list)}
-                busy={cleanupBusy()}
-                onRemove={() => void onCleanUp(cleanup)}
-                onKeep={() => void onKeepAfter(cleanup)}
-              />
-            )}
-          </For>
+        <Show when={canEdit() && cleanupItems().length > 0}>
+          <CleanupDialog
+            items={cleanupItems()}
+            childName={isOwnList() ? undefined : profile()?.display_name}
+            busy={cleanupBusy()}
+            error={cleanupError()}
+            onDone={(removeIds) => void onCleanUp(removeIds)}
+          />
         </Show>
         <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
           <EmptyState>

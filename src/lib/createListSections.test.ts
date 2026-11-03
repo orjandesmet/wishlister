@@ -20,7 +20,6 @@ const item = (id: string, wanted_level: Item["wanted_level"]): Item => ({
   image_url: null,
   item_pictures: [],
   removed_at: null,
-  keep_on_list: false,
 });
 
 describe("createListSections", () => {
