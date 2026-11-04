@@ -233,13 +233,9 @@
     height: 13px;
   }
 
-  /* One line: the groups side by side, never a name broken over two lines. */
-  .visibleIn {
-    white-space: nowrap;
-  }
-
   .groups {
     display: flex;
+    flex-wrap: wrap;
     gap: 4px;
   }
 
@@ -371,7 +367,9 @@
 }
 
 .number > p {
+  flex-wrap: wrap;
   justify-content: flex-end;
+  gap: 4px;
 }
 
 /* A narrow table (tablets, small windows): shops as an icon, smaller pictures, names wrap sooner. */
