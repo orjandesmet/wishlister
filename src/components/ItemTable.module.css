@@ -239,6 +239,11 @@
     gap: 4px;
   }
 
+  /* The chips wrap, but a group's name never breaks over two lines. */
+  .groups > * {
+    white-space: nowrap;
+  }
+
   .onlyMe {
     display: inline-flex;
     align-items: center;
