@@ -227,9 +227,11 @@
   color: var(--accent);
 }
 
+/* "≈" never ends up on a line of its own. */
 .priceConverted {
   font-size: 14px;
   color: var(--muted);
+  white-space: nowrap;
 }
 
 /* What is bought shows as a green pill; what someone else bought is a quiet grey one. */
@@ -452,4 +454,9 @@ label.body {
   min-height: 36px;
   padding: 0 16px;
   font-size: 14px;
+}
+
+/* Wraps only between its parts (see YouBoughtFor). */
+.noWrap {
+  white-space: nowrap;
 }

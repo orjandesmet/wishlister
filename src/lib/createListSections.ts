@@ -10,6 +10,14 @@ import {
   saveListOrder,
   type ListOrder,
 } from "./listOrder.ts";
+import {
+  nextTableSort,
+  readTableSort,
+  saveTableSort,
+  sortTableItems,
+  type TableColumn,
+  type TableSort,
+} from "./tableSort.ts";
 
 /** How long a changed wanted level keeps its card in place, so it can be tapped again. */
 export const holdMs = 1200;
@@ -21,6 +29,8 @@ export function createListSections(
   isBought: () => ((item: Item) => boolean) | undefined,
   /** Applies the held cards' new places, e.g. animated (see animateMoves). */
   reorder: (apply: () => void) => void = (apply) => apply(),
+  /** How many questions an item has, for sorting the table by them. */
+  questionsOf: (item: Item) => number = () => 0,
 ) {
   // The same choice on every list, remembered on this device.
   const [picked, setPicked] = createSignal<ListOrder | undefined>(readListOrder());
@@ -47,20 +57,41 @@ export function createListSections(
   };
   onCleanup(() => clearTimeout(release));
 
-  const sections = createMemo(() => {
-    const list = (items() ?? []).filter((item) => !item.not_wanted);
+  // What both the cards and the table sort by. Prices are compared in euros, so prices in
+  // other currencies sort where they belong.
+  const wishes = () => (items() ?? []).filter((item) => !item.not_wanted);
+  const sortValues = (list: Item[]) => {
     const bought = isBought();
     const rates = exchangeRates();
-    return arrangeItems(list, order(), {
+    return {
       compare: compareNames,
-      isBought: bought ? (i) => bought(list[i]) : undefined,
-      // Compared in euros, so prices in other currencies sort where they belong.
-      priceOf: (i) => {
+      isBought: bought ? (i: number) => bought(list[i]) : undefined,
+      priceOf: (i: number) => {
         const { price, price_currency } = list[i];
         if (price === null || !price_currency) return null;
         return convertAmount(price, price_currency, "EUR", rates);
       },
-      wantOf: (i) => held().get(list[i].id) ?? list[i].wanted_level,
+      wantOf: (i: number) => held().get(list[i].id) ?? list[i].wanted_level,
+    };
+  };
+
+  const sections = createMemo(() => {
+    const list = wishes();
+    return arrangeItems(list, order(), sortValues(list));
+  });
+
+  // The table sorts by its column headers instead, also remembered on this device.
+  const [tableSort, setTableSort] = createSignal<TableSort>(readTableSort());
+  const sortTable = (column: TableColumn) => {
+    const next = nextTableSort(tableSort(), column);
+    setTableSort(next);
+    saveTableSort(next);
+  };
+  const tableItems = createMemo(() => {
+    const list = wishes();
+    return sortTableItems(list, tableSort(), {
+      ...sortValues(list),
+      questionsOf: (i) => questionsOf(list[i]),
     });
   });
   const isGrouped = () => sections().some((s) => s.category !== null);
@@ -80,5 +111,8 @@ export function createListSections(
     notWanted,
     isGrouped,
     holdPlace,
+    tableSort,
+    sortTable,
+    tableItems,
   };
 }

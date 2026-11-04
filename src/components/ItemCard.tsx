@@ -80,7 +80,7 @@ export type ItemCardProps = {
  * The item's price as the shop showed it, and roughly what that is in your
  * currency when it's another one.
  */
-function PriceTag(props: { amount: number; currency: string; small?: boolean }) {
+export function PriceTag(props: { amount: number; currency: string; small?: boolean }) {
   const converted = () => {
     if (props.currency === displayCurrency()) return null;
     const amount = convertAmount(props.amount, props.currency, displayCurrency(), exchangeRates());
@@ -99,7 +99,7 @@ function PriceTag(props: { amount: number; currency: string; small?: boolean }) 
 }
 
 /** Lucide "heart" (ISC licence), filled. */
-function Heart() {
+export function Heart() {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -188,7 +188,7 @@ function InlineHearts(props: { level: number }) {
 }
 
 /** Lucide "external-link" (ISC licence). */
-function ExternalLinkIcon() {
+export function ExternalLinkIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -206,8 +206,33 @@ function ExternalLinkIcon() {
   );
 }
 
+/**
+ * "You bought this for Anna's birthday", which only wraps between the sentence and the
+ * occasion: each part stays on one line.
+ */
+export function YouBoughtFor(props: { occasion: string }) {
+  const parts = () => {
+    const text = t("item.youBoughtFor", { occasion: props.occasion });
+    const at = text.lastIndexOf(props.occasion);
+    if (at < 0) return [text];
+    return [text.slice(0, at).trimEnd(), props.occasion, text.slice(at + props.occasion.length)];
+  };
+  return (
+    <>
+      <span class={styles.noWrap}>{parts()[0]}</span>
+      <Show when={parts().length > 1}>
+        {" "}
+        <span class={styles.noWrap}>
+          {parts()[1]}
+          {parts()[2]}
+        </span>
+      </Show>
+    </>
+  );
+}
+
 /** A list of names in the language's own wording ("A, B and C"), the names themselves in bold. */
-function BoldList(props: { items: string[] }) {
+export function BoldList(props: { items: string[] }) {
   const parts = () =>
     new Intl.ListFormat(locale(), { type: "conjunction" }).formatToParts(props.items);
   return (
@@ -218,7 +243,7 @@ function BoldList(props: { items: string[] }) {
 }
 
 /** The shop's name instead of the whole address, which only crowds the card. */
-function shopName(url: string) {
+export function shopName(url: string) {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
   } catch {
@@ -604,9 +629,11 @@ export function ItemCard(props: ItemCardProps) {
               <Match when={props.purchase === "mine"}>
                 <div class={u.row}>
                   <span class={styles.bought}>
-                    {props.boughtFor
-                      ? t("item.youBoughtFor", { occasion: props.boughtFor })
-                      : t("item.youBought")}
+                    {props.boughtFor ? (
+                      <YouBoughtFor occasion={props.boughtFor} />
+                    ) : (
+                      t("item.youBought")
+                    )}
                   </span>
                   <Button
                     variant="secondary"
