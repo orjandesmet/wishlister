@@ -290,8 +290,15 @@
   }
 
   /* What is bought: a green pill; what someone else bought: a quiet grey one. */
+  /*
+   * Never wider than its text: a wrapped line would leave the box at full width, so "You bought
+   * this for" and the occasion each get their own line instead, and the other pills stay on one.
+   */
   .pill {
-    display: inline-block;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-end;
+    white-space: nowrap;
     padding: 4px 10px;
     font-size: 12px;
     font-weight: 700;
