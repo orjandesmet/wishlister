@@ -13,6 +13,31 @@
     border-radius: var(--radius-control);
   }
 
+  /* "Please don't buy": the same table in the pale red of those cards. */
+  .scroller.notWanted {
+    background: var(--pill-negative-bg);
+    border-color: var(--danger);
+  }
+
+  .notWanted .item > tr:first-child > *,
+  .notWanted .table .status {
+    background: var(--pill-negative-bg);
+  }
+
+  .notWanted .item > tr:first-child:hover > * {
+    background: color-mix(in srgb, var(--danger) 8%, var(--pill-negative-bg));
+  }
+
+  .notWanted .name,
+  .notWanted thead th {
+    color: var(--pill-negative-ink);
+  }
+
+  .notWanted thead th,
+  .notWanted .item + .item > tr:first-child > * {
+    border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  }
+
   .table {
     width: 100%;
     border-collapse: collapse;

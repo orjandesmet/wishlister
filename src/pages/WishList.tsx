@@ -361,11 +361,38 @@ export default function WishList() {
     />
   );
 
+  // The wishes, and under them the "please don't buy" entries, in the table view.
+  const itemTable = (rows: Item[], notWantedRows = false) => (
+    <ItemTable
+      items={rows}
+      canEdit={canEdit()}
+      sort={listSections.tableSort()}
+      onSort={listSections.sortTable}
+      showBought={purchases.showBought()}
+      purchase={purchases.purchase}
+      boughtFor={(item) => purchases.purchaseOf().get(item.id)?.occasion?.name}
+      groupNames={(item) => item.item_groups.map((g) => groupName(g.group_id))}
+      occasionChoices={purchases.occasionChoices}
+      onBuy={purchases.onBuy}
+      onPickOccasion={purchases.buy}
+      onCancelPick={purchases.cancelPick}
+      onUndo={purchases.onUndo}
+      onChangeWant={onChangeWant}
+      questions={(item) => itemQuestions(item, true)}
+      questionList={(item) => questions.of(item.id)}
+      selected={select.selected()}
+      onToggleSelect={tableToggle}
+      onSelectAll={tableSelectAll}
+      onSelectNone={select.selectNone}
+      notWanted={notWantedRows}
+    />
+  );
+
   const card = (item: Item) => (
     <ItemCard
       data-item-id={item.id}
       item={item}
-      compact={compact() || table()}
+      compact={compact()}
       purchase={purchases.purchase(item)}
       canEdit={canEdit()}
       groupNames={item.item_groups.map((g) => groupName(g.group_id))}
@@ -543,40 +570,25 @@ export default function WishList() {
             }
           >
             <Show when={listSections.tableItems().length > 0}>
-              <ItemTable
-                items={listSections.tableItems()}
-                canEdit={canEdit()}
-                sort={listSections.tableSort()}
-                onSort={listSections.sortTable}
-                showBought={purchases.showBought()}
-                purchase={purchases.purchase}
-                boughtFor={(item) => purchases.purchaseOf().get(item.id)?.occasion?.name}
-                groupNames={(item) => item.item_groups.map((g) => groupName(g.group_id))}
-                occasionChoices={purchases.occasionChoices}
-                onBuy={purchases.onBuy}
-                onPickOccasion={purchases.buy}
-                onCancelPick={purchases.cancelPick}
-                onUndo={purchases.onUndo}
-                onChangeWant={onChangeWant}
-                questions={(item) => itemQuestions(item, true)}
-                questionList={(item) => questions.of(item.id)}
-                selected={select.selected()}
-                onToggleSelect={tableToggle}
-                onSelectAll={tableSelectAll}
-                onSelectNone={select.selectNone}
-              />
+              {itemTable(listSections.tableItems())}
             </Show>
           </Show>
           <Show when={notWanted().length > 0}>
             <section class={u.stack}>
               <h2>{t("listOrder.notWanted")}</h2>
-              {/* Below the table they stay cards, compact so they don't take over. */}
-              <ul
-                class={`${u.list} ${u.cards}`}
-                classList={{ [styles.compactCards]: compact() || table() }}
+              <Show
+                when={table()}
+                fallback={
+                  <ul
+                    class={`${u.list} ${u.cards}`}
+                    classList={{ [styles.compactCards]: compact() }}
+                  >
+                    <For each={notWanted()}>{card}</For>
+                  </ul>
+                }
               >
-                <For each={notWanted()}>{card}</For>
-              </ul>
+                {itemTable(notWanted(), true)}
+              </Show>
             </section>
           </Show>
         </div>

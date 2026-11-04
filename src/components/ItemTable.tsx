@@ -70,6 +70,11 @@ export type ItemTableProps = {
   onToggleSelect: (item: Item) => void;
   onSelectAll: () => void;
   onSelectNone: () => void;
+  /**
+   * The "Please don't buy" entries, below the wishes: no hearts, price, shop or buying, no
+   * sorting (they stay in the order added) and no "select all".
+   */
+  notWanted?: boolean;
 };
 
 /** "–" in a cell with nothing to show; screen readers just hear an empty cell. */
@@ -260,33 +265,37 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
             </span>
           </Show>
         </th>
-        <td class={styles.wanted}>
-          <WantedCell
-            item={item()}
-            onChange={table().canEdit ? () => table().onChangeWant(item()) : undefined}
-          />
-        </td>
+        <Show when={!table().notWanted}>
+          <td class={styles.wanted}>
+            <WantedCell
+              item={item()}
+              onChange={table().canEdit ? () => table().onChangeWant(item()) : undefined}
+            />
+          </td>
+        </Show>
         <td>
           <Show when={item().category} fallback={<Empty />}>
             {(category) => <Chip hue={hueFor(category())}>{category()}</Chip>}
           </Show>
         </td>
-        <td class={styles.number}>
-          <Show when={item().price !== null && item().price_currency} fallback={<Empty />}>
-            {(currency) => <PriceTag amount={item().price!} currency={currency()} small />}
-          </Show>
-        </td>
-        <td class={styles.shop}>
-          <Show when={item().url} fallback={<Empty />}>
-            {(url) => (
-              <a class={u.link} href={url()} target="_blank" rel="noopener noreferrer">
-                <span class={`${u.truncate} ${styles.shopName}`}>{shopName(url())}</span>
-                <ExternalLinkIcon />
-                <span class={u.visuallyHidden}>: {item().name}</span>
-              </a>
-            )}
-          </Show>
-        </td>
+        <Show when={!table().notWanted}>
+          <td class={styles.number}>
+            <Show when={item().price !== null && item().price_currency} fallback={<Empty />}>
+              {(currency) => <PriceTag amount={item().price!} currency={currency()} small />}
+            </Show>
+          </td>
+          <td class={styles.shop}>
+            <Show when={item().url} fallback={<Empty />}>
+              {(url) => (
+                <a class={u.link} href={url()} target="_blank" rel="noopener noreferrer">
+                  <span class={`${u.truncate} ${styles.shopName}`}>{shopName(url())}</span>
+                  <ExternalLinkIcon />
+                  <span class={u.visuallyHidden}>: {item().name}</span>
+                </a>
+              )}
+            </Show>
+          </td>
+        </Show>
         <Show when={table().canEdit}>
           <td>
             <Switch>
@@ -320,112 +329,115 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
           </td>
         </Show>
         <td class={styles.questions}>{table().questions(item())}</td>
-        <td class={styles.status}>
-          <Show
-            when={!table().canEdit}
-            fallback={
-              <A class={u.link} href={`/items/${item().id}/edit`}>
-                <EditLabel label={t("common.edit")} of={item().name} />
-              </A>
-            }
-          >
-            <Switch>
-              <Match when={purchase() === "mine"}>
-                <span class={styles.statusRow}>
-                  <span class={styles.pill}>
-                    <Show when={table().boughtFor(item())} fallback={t("item.youBought")}>
-                      {(occasion) => <YouBoughtFor occasion={occasion()} />}
-                    </Show>
-                  </span>
-                  <Button
-                    variant="secondary"
-                    size="small"
-                    class={styles.statusButton}
-                    data-purchase
-                    onClick={() => {
-                      pressed();
-                      table().onUndo(item());
-                    }}
-                  >
-                    {t("item.undo")}
-                    <span class={u.visuallyHidden}>: {item().name}</span>
-                  </Button>
-                </span>
-              </Match>
-              <Match when={purchase() === "someone"}>
-                <span class={`${styles.pill} ${styles.someone}`}>{t("item.someoneBought")}</span>
-              </Match>
-              <Match when={purchase() === "available" && table().occasionChoices(item())}>
-                {(choices) => (
-                  <div
-                    class={`${u.stack} ${u.smallGap}`}
-                    role="group"
-                    aria-labelledby={occasionLabel}
-                  >
-                    <span class={u.fieldLabel} id={occasionLabel}>
-                      {t("item.forWhichOccasion")}
+        {/* Nobody buys a "please don't buy" entry: only its editors get a last column, for Edit. */}
+        <Show when={!table().notWanted || table().canEdit}>
+          <td class={styles.status}>
+            <Show
+              when={!table().canEdit}
+              fallback={
+                <A class={u.link} href={`/items/${item().id}/edit`}>
+                  <EditLabel label={t("common.edit")} of={item().name} />
+                </A>
+              }
+            >
+              <Switch>
+                <Match when={purchase() === "mine"}>
+                  <span class={styles.statusRow}>
+                    <span class={styles.pill}>
+                      <Show when={table().boughtFor(item())} fallback={t("item.youBought")}>
+                        {(occasion) => <YouBoughtFor occasion={occasion()} />}
+                      </Show>
                     </span>
-                    <For each={choices()}>
-                      {(occasion) => (
+                    <Button
+                      variant="secondary"
+                      size="small"
+                      class={styles.statusButton}
+                      data-purchase
+                      onClick={() => {
+                        pressed();
+                        table().onUndo(item());
+                      }}
+                    >
+                      {t("item.undo")}
+                      <span class={u.visuallyHidden}>: {item().name}</span>
+                    </Button>
+                  </span>
+                </Match>
+                <Match when={purchase() === "someone"}>
+                  <span class={`${styles.pill} ${styles.someone}`}>{t("item.someoneBought")}</span>
+                </Match>
+                <Match when={purchase() === "available" && table().occasionChoices(item())}>
+                  {(choices) => (
+                    <div
+                      class={`${u.stack} ${u.smallGap}`}
+                      role="group"
+                      aria-labelledby={occasionLabel}
+                    >
+                      <span class={u.fieldLabel} id={occasionLabel}>
+                        {t("item.forWhichOccasion")}
+                      </span>
+                      <For each={choices()}>
+                        {(occasion) => (
+                          <Button
+                            variant="secondary"
+                            size="small"
+                            class={styles.statusButton}
+                            data-purchase
+                            onClick={(event) => {
+                              pressed();
+                              remember(event);
+                              table().onPickOccasion(item(), occasion.id);
+                            }}
+                          >
+                            {occasion.name} · {formatOccasionDate(occasion.date, locale())}
+                          </Button>
+                        )}
+                      </For>
+                      <span class={styles.statusRow}>
                         <Button
-                          variant="secondary"
+                          variant="link"
                           size="small"
-                          class={styles.statusButton}
-                          data-purchase
                           onClick={(event) => {
                             pressed();
                             remember(event);
-                            table().onPickOccasion(item(), occasion.id);
+                            table().onPickOccasion(item(), null);
                           }}
                         >
-                          {occasion.name} · {formatOccasionDate(occasion.date, locale())}
+                          {t("item.noOccasion")}
                         </Button>
-                      )}
-                    </For>
-                    <span class={styles.statusRow}>
-                      <Button
-                        variant="link"
-                        size="small"
-                        onClick={(event) => {
-                          pressed();
-                          remember(event);
-                          table().onPickOccasion(item(), null);
-                        }}
-                      >
-                        {t("item.noOccasion")}
-                      </Button>
-                      <Button
-                        variant="link"
-                        size="small"
-                        onClick={() => {
-                          pressed();
-                          table().onCancelPick();
-                        }}
-                      >
-                        {t("common.cancel")}
-                      </Button>
-                    </span>
-                  </div>
-                )}
-              </Match>
-              <Match when={purchase() === "available"}>
-                <Button
-                  size="small"
-                  class={styles.statusButton}
-                  data-purchase
-                  onClick={(event) => {
-                    pressed();
-                    remember(event);
-                    table().onBuy(item());
-                  }}
-                >
-                  {t("item.iBought")}
-                  <span class={u.visuallyHidden}>: {item().name}</span>
-                </Button>
-              </Match>
-            </Switch>
-          </Show>
-        </td>
+                        <Button
+                          variant="link"
+                          size="small"
+                          onClick={() => {
+                            pressed();
+                            table().onCancelPick();
+                          }}
+                        >
+                          {t("common.cancel")}
+                        </Button>
+                      </span>
+                    </div>
+                  )}
+                </Match>
+                <Match when={purchase() === "available"}>
+                  <Button
+                    size="small"
+                    class={styles.statusButton}
+                    data-purchase
+                    onClick={(event) => {
+                      pressed();
+                      remember(event);
+                      table().onBuy(item());
+                    }}
+                  >
+                    {t("item.iBought")}
+                    <span class={u.visuallyHidden}>: {item().name}</span>
+                  </Button>
+                </Match>
+              </Switch>
+            </Show>
+          </td>
+        </Show>
       </tr>
       <Show when={open()}>
         <tr id={detailId} class={styles.detail}>
@@ -503,7 +515,10 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
  * what the buttons do.
  */
 export function ItemTable(props: ItemTableProps) {
-  const columns = () => (props.canEdit ? 10 : 9);
+  const columns = () => {
+    if (props.notWanted) return props.canEdit ? 7 : 5;
+    return props.canEdit ? 10 : 9;
+  };
   const selectedCount = () => props.items.filter((item) => props.selected.has(item.id)).length;
   const allSelected = () => props.items.length > 0 && selectedCount() === props.items.length;
   // oxlint-disable-next-line no-unassigned-vars
@@ -512,19 +527,40 @@ export function ItemTable(props: ItemTableProps) {
     if (selectAll) selectAll.indeterminate = selectedCount() > 0 && !allSelected();
   });
   const header = (column: TableColumn, label: string, cls?: string) => (
-    <SortHeader column={column} label={label} sort={props.sort} onSort={props.onSort} class={cls} />
+    <Show
+      when={!props.notWanted}
+      fallback={
+        <th scope="col" class={cls}>
+          {label}
+        </th>
+      }
+    >
+      <SortHeader
+        column={column}
+        label={label}
+        sort={props.sort}
+        onSort={props.onSort}
+        class={cls}
+      />
+    </Show>
   );
 
   return (
-    <div class={styles.scroller}>
+    <div class={styles.scroller} classList={{ [styles.notWanted]: props.notWanted }}>
       <table class={styles.table}>
-        <caption class={u.visuallyHidden}>{t("table.caption")}</caption>
+        <caption class={u.visuallyHidden}>
+          {props.notWanted ? t("listOrder.notWanted") : t("table.caption")}
+        </caption>
         <thead>
           <tr>
             <th scope="col" class={styles.lead}>
               <Show
-                when={props.canEdit}
-                fallback={<span class={u.visuallyHidden}>{t("item.details")}</span>}
+                when={props.canEdit && !props.notWanted}
+                fallback={
+                  <span class={u.visuallyHidden}>
+                    {props.canEdit ? t("bulk.select") : t("item.details")}
+                  </span>
+                }
               >
                 <input
                   ref={selectAll}
@@ -540,22 +576,26 @@ export function ItemTable(props: ItemTableProps) {
               <span class={u.visuallyHidden}>{t("table.picture")}</span>
             </th>
             {header("name", t("table.item"))}
-            {header("wanted", t("table.wanted"))}
+            <Show when={!props.notWanted}>{header("wanted", t("table.wanted"))}</Show>
             {header("category", t("table.category"))}
-            {header("price", t("table.price"), styles.number)}
-            <th scope="col">{t("table.shop")}</th>
+            <Show when={!props.notWanted}>
+              {header("price", t("table.price"), styles.number)}
+              <th scope="col">{t("table.shop")}</th>
+            </Show>
             <Show when={props.canEdit}>
               <th scope="col">{t("table.visibleIn")}</th>
             </Show>
             {header("questions", t("table.questions"))}
             <Show
-              when={props.showBought}
+              when={props.showBought && !props.notWanted}
               fallback={
-                <th scope="col" class={styles.status}>
-                  <span class={u.visuallyHidden}>
-                    {props.canEdit ? t("table.actions") : t("table.status")}
-                  </span>
-                </th>
+                <Show when={!props.notWanted || props.canEdit}>
+                  <th scope="col" class={styles.status}>
+                    <span class={u.visuallyHidden}>
+                      {props.canEdit ? t("table.actions") : t("table.status")}
+                    </span>
+                  </th>
+                </Show>
               }
             >
               {header("status", t("table.status"), styles.status)}
