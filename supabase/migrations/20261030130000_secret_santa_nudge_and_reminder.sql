@@ -1,7 +1,7 @@
 -- Two Secret Santa emails (#138, #139).
 --
--- Note: the reminder (#139) was dropped from the app after this migration was
--- applied. Its column and functions stay (unused) so this file matches the database.
+-- Note: the reminder (#139) was dropped after this migration was applied;
+-- 20261104120000_drop_secret_santa_reminder.sql removes its column and functions.
 --
 -- * Nudge (#138): while a draw runs, the giver can ask the person they drew to add
 --   some ideas, when that person's list has fewer than 3 items the giver could buy.
