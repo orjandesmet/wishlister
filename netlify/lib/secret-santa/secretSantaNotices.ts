@@ -6,8 +6,8 @@
 //
 // Like the digest, the texts live here instead of in src/i18n (which holds JSX).
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { parseMarkdown, type Block, type Inline } from "../../src/lib/markdown.ts";
-import { escapeHtml, sendEmails, type Email } from "./mail.ts";
+import { parseMarkdown, type Block, type Inline } from "../../../src/lib/markdown.ts";
+import { escapeHtml, sendEmails, type Email } from "../mail.ts";
 
 /** One row of claim_secret_santa_notices(): one email. */
 export type SecretSantaRow = {
@@ -53,7 +53,8 @@ const texts: Record<"en" | "nl", Texts> = {
   },
 };
 
-function formatDate(isoDate: string, locale: string) {
+/** "25 December 2026" in the email's language; an unreadable date stays as it is. */
+export function formatDate(isoDate: string, locale: string) {
   const date = new Date(`${isoDate}T00:00:00Z`);
   if (Number.isNaN(date.getTime())) return isoDate;
   return new Intl.DateTimeFormat(locale, { dateStyle: "long", timeZone: "UTC" }).format(date);

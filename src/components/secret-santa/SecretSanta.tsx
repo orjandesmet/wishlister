@@ -1,8 +1,8 @@
 import { A } from "@solidjs/router";
 import { Show } from "solid-js";
-import type { Occasion } from "../lib/api/occasions.ts";
-import { t } from "../lib/i18n.ts";
-import type { GroupId } from "../lib/ids.ts";
+import type { Occasion } from "../../lib/api/occasions.ts";
+import { t } from "../../lib/i18n.ts";
+import type { GroupId } from "../../lib/ids.ts";
 import styles from "./SecretSanta.module.css";
 import { SecretSantaIcon } from "./SecretSantaIcon.tsx";
 

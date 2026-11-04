@@ -1,19 +1,19 @@
 import { A } from "@solidjs/router";
 import { createSignal, createUniqueId, For, Show } from "solid-js";
-import type { Occasion } from "../lib/api/occasions.ts";
+import type { Occasion } from "../../lib/api/occasions.ts";
 import type {
   MinLoopSize,
   SecretSantaCandidate,
   SecretSantaInput,
-} from "../lib/api/secretSanta.ts";
-import { locale, t } from "../lib/i18n.ts";
-import type { OccasionId, ProfileId } from "../lib/ids.ts";
-import { effectiveLoopSize, loopSizeOptions } from "../lib/loopSize.ts";
-import { formatOccasionDate } from "../lib/occasions.ts";
-import u from "../utilities.module.css";
-import { Check } from "./Check.tsx";
-import { MarkdownField } from "./MarkdownField.tsx";
-import { Select } from "./Select.tsx";
+} from "../../lib/api/secretSanta.ts";
+import { locale, t } from "../../lib/i18n.ts";
+import type { OccasionId, ProfileId } from "../../lib/ids.ts";
+import { effectiveLoopSize, loopSizeOptions } from "../../lib/loopSize.ts";
+import { formatOccasionDate } from "../../lib/occasions.ts";
+import u from "../../utilities.module.css";
+import { Check } from "../Check.tsx";
+import { MarkdownField } from "../MarkdownField.tsx";
+import { Select } from "../Select.tsx";
 import styles from "./SecretSantaForm.module.css";
 
 export type SecretSantaFormProps = {

@@ -10,7 +10,7 @@ import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import styles from "./Occasions.module.css";
-import { SecretSantaLink, type SecretSantaLinkProps } from "./SecretSanta.tsx";
+import { SecretSantaLink, type SecretSantaLinkProps } from "./secret-santa/SecretSanta.tsx";
 
 export type OccasionsProps = {
   occasions: Occasion[];

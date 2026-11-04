@@ -1,11 +1,11 @@
 import { A } from "@solidjs/router";
 import { For, Show } from "solid-js";
-import type { SecretSanta as Draw, SecretSantaCandidate } from "../lib/api/secretSanta.ts";
-import { t } from "../lib/i18n.ts";
-import u from "../utilities.module.css";
-import { Button } from "./Button.tsx";
-import { Card } from "./Card.tsx";
-import { RemoveLabel } from "./RemoveLabel.tsx";
+import type { SecretSanta as Draw, SecretSantaCandidate } from "../../lib/api/secretSanta.ts";
+import { t } from "../../lib/i18n.ts";
+import u from "../../utilities.module.css";
+import { Button } from "../Button.tsx";
+import { Card } from "../Card.tsx";
+import { RemoveLabel } from "../RemoveLabel.tsx";
 
 export type SecretSantaStatusProps = {
   /** The draw, as the signed-in person sees it: only their own pair. */

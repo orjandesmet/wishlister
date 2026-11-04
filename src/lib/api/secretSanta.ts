@@ -80,6 +80,45 @@ export async function getDrawnPeople(): Promise<DrawnPerson[]> {
   ) as DrawnPerson[];
 }
 
+/**
+ * For the Nudge button on the list of someone you drew (#138): when you last nudged them, and
+ * how many items on their list you could buy. Null when you didn't draw them in a draw that's
+ * still to come.
+ */
+export type NudgeState = {
+  secret_santa_id: SecretSantaId;
+  /** ISO timestamp, null when you never nudged them. */
+  last_nudged_at: string | null;
+  buyable_items: number;
+};
+
+/** A nudge is for lists with fewer items to buy than this. */
+export const NUDGE_BELOW_ITEMS = 3;
+/** Days between two nudges to the same person. */
+export const NUDGE_EVERY_DAYS = 3;
+
+export async function getNudgeState(profileId: ProfileId): Promise<NudgeState | null> {
+  const rows = must(
+    await supabase.rpc("my_secret_santa_nudge", { target_profile: profileId, from_date: today() }),
+  ) as NudgeState[];
+  return rows[0] ?? null;
+}
+
+/**
+ * Emails the person you drew, without your name, to ask for some ideas on their list.
+ * "not_set_up" when the site can't send emails (yet). Throws when it's too soon or their
+ * list has enough ideas (the server checks both).
+ */
+export async function nudgeSecretSanta(profileId: ProfileId): Promise<"sent" | "not_set_up"> {
+  const result = await callFunction(
+    "nudge-secret-santa",
+    "Couldn't send the nudge",
+    { recipient: profileId },
+    [503],
+  );
+  return result.status === 503 ? "not_set_up" : "sent";
+}
+
 /** Managers only: who takes part in a draw. Not who drew whom. */
 export async function getSecretSantaParticipants(
   drawId: SecretSantaId,
@@ -89,8 +128,16 @@ export async function getSecretSantaParticipants(
   ) as SecretSantaCandidate[];
 }
 
-/** Calls a Netlify function as the signed-in user, and reads its `message` on a failure. */
-async function callFunction<T>(name: string, failure: string, body?: unknown): Promise<T> {
+/**
+ * Calls a Netlify function as the signed-in user, and reads its `message` on a failure.
+ * Statuses in `allowed` aren't failures: they come back in `status`.
+ */
+async function callFunction<T>(
+  name: string,
+  failure: string,
+  body?: unknown,
+  allowed: number[] = [],
+): Promise<T & { status: number }> {
   const { data } = await supabase.auth.getSession();
   const response = await fetch(`/.netlify/functions/${name}`, {
     method: "POST",
@@ -101,8 +148,10 @@ async function callFunction<T>(name: string, failure: string, body?: unknown): P
     body: JSON.stringify(body ?? {}),
   });
   const json = (await response.json().catch(() => null)) as ({ message?: string } & T) | null;
-  if (!response.ok) throw new Error(json?.message ?? `${failure} (${response.status})`);
-  return json as T;
+  if (!response.ok && !allowed.includes(response.status)) {
+    throw new Error(json?.message ?? `${failure} (${response.status})`);
+  }
+  return { ...(json as T), status: response.status };
 }
 
 /**

@@ -217,6 +217,19 @@ export const nl: Dictionary = {
     notTakingPart: "Je doet niet mee.",
     ribbon: "Jouw Secret Santa",
     ribbonFor: (p: { occasion: string }) => `Je trok deze persoon voor ${p.occasion}.`,
+    nudgeHelp: (p: { name: string }) =>
+      `Er staat weinig op het lijstje van ${p.name}. Vraag om meer: ${p.name} krijgt een e-mail van "je Secret Santa", zonder jouw naam.`,
+    nudge: (p: { name: string }) => `Stuur ${p.name} een seintje`,
+    nudging: "Versturen…",
+    nudged: (p: { days: number }) =>
+      p.days === 0
+        ? "Vandaag een seintje gestuurd"
+        : p.days === 1
+          ? "Gisteren een seintje gestuurd"
+          : `${p.days} dagen geleden een seintje gestuurd`,
+    nudgeSent: (p: { name: string }) => `${p.name} kreeg je seintje. Niemand weet dat jij het was.`,
+    nudgeNotSetUp:
+      "E-mails kunnen nog niet verstuurd worden, dus een seintje sturen werkt voorlopig niet.",
     who: "Wie doet mee",
     whoHelp: "Alleen leden met een eigen lijstje kunnen meedoen. Kinderen en voogden niet.",
     nobodyToDraw: "Er zijn nog geen leden die kunnen meedoen.",

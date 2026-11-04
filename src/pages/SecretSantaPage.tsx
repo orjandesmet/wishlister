@@ -1,8 +1,8 @@
 import { A, useParams } from "@solidjs/router";
 import { Show } from "solid-js";
 import { Card } from "../components/Card.tsx";
-import { SecretSantaForm } from "../components/SecretSantaForm.tsx";
-import { SecretSantaStatus } from "../components/SecretSantaStatus.tsx";
+import { SecretSantaForm } from "../components/secret-santa/SecretSantaForm.tsx";
+import { SecretSantaStatus } from "../components/secret-santa/SecretSantaStatus.tsx";
 import { usePageTitle } from "../lib/a11y.ts";
 import { createCachedResource } from "../lib/cache.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";

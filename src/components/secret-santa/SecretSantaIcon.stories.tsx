@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { For } from "solid-js";
+import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { SecretSantaIcon } from "./SecretSantaIcon.tsx";
 
 // 18 and 22px are where it's used; the rest is to see the drawing.
@@ -12,7 +12,7 @@ const backgrounds = [
 ];
 
 const meta = {
-  title: "Groups/SecretSantaIcon",
+  title: "SecretSanta/SecretSantaIcon",
   component: SecretSantaIcon,
   parameters: { layout: "padded" },
   args: { hasQuestionMark: true },

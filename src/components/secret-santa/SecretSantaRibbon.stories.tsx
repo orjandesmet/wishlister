@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "storybook-solidjs-vite";
 import { SecretSantaRibbon } from "./SecretSantaRibbon.tsx";
 
 const meta = {
-  title: "Groups/SecretSantaRibbon",
+  title: "SecretSanta/SecretSantaRibbon",
   component: SecretSantaRibbon,
 } satisfies Meta<typeof SecretSantaRibbon>;
 

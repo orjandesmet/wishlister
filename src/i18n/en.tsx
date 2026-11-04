@@ -224,6 +224,18 @@ export const en = {
     notTakingPart: "You're not taking part.",
     ribbon: "Your Secret Santa",
     ribbonFor: (p: { occasion: string }) => `You drew this person for ${p.occasion}.`,
+    nudgeHelp: (p: { name: string }) =>
+      `${p.name}'s list has few ideas. Ask for more: ${p.name} gets an email from "your Secret Santa", without your name.`,
+    nudge: (p: { name: string }) => `Nudge ${p.name}`,
+    nudging: "Sending…",
+    nudged: (p: { days: number }) =>
+      p.days === 0
+        ? "Nudged today"
+        : p.days === 1
+          ? "Nudged yesterday"
+          : `Nudged ${p.days} days ago`,
+    nudgeSent: (p: { name: string }) => `${p.name} got your nudge. They won't know it was you.`,
+    nudgeNotSetUp: "Emails can't be sent yet, so nudging doesn't work for now.",
     who: "Who takes part",
     whoHelp: "Only members with their own list can take part. Children and guardians can't.",
     nobodyToDraw: "There are no members who can take part yet.",

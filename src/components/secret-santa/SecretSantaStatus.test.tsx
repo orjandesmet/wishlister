@@ -1,9 +1,9 @@
 import { MemoryRouter } from "@solidjs/router";
 import { render } from "solid-js/web";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import type { SecretSanta, SecretSantaCandidate } from "../lib/api/secretSanta.ts";
-import { t } from "../lib/i18n.ts";
-import type { OccasionId, ProfileId, SecretSantaId } from "../lib/ids.ts";
+import type { SecretSanta, SecretSantaCandidate } from "../../lib/api/secretSanta.ts";
+import { t } from "../../lib/i18n.ts";
+import type { OccasionId, ProfileId, SecretSantaId } from "../../lib/ids.ts";
 import { SecretSantaStatus, type SecretSantaStatusProps } from "./SecretSantaStatus.tsx";
 
 const person = (id: string, name: string): SecretSantaCandidate => ({

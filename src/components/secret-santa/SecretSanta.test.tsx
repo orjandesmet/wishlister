@@ -1,10 +1,10 @@
 import { MemoryRouter } from "@solidjs/router";
 import { render } from "solid-js/web";
 import { afterEach, describe, expect, it } from "vite-plus/test";
-import type { Occasion } from "../lib/api/occasions.ts";
-import { t } from "../lib/i18n.ts";
-import type { GroupId, OccasionId } from "../lib/ids.ts";
-import { Occasions } from "./Occasions.tsx";
+import type { Occasion } from "../../lib/api/occasions.ts";
+import { t } from "../../lib/i18n.ts";
+import type { GroupId, OccasionId } from "../../lib/ids.ts";
+import { Occasions } from "../Occasions.tsx";
 import type { SecretSantaLinkProps } from "./SecretSanta.tsx";
 import { SecretSantaRibbon } from "./SecretSantaRibbon.tsx";
 
