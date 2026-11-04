@@ -49,7 +49,7 @@ export const nl: Dictionary = {
     questions: "Vragen",
     status: "Gekocht",
     visibleIn: "Zichtbaar in",
-    actions: "Bewerken",
+    actions: "Bewerken of verwijderen",
     selectAll: "Alle wensen selecteren",
     select: (p: { name: string }) => `${p.name} selecteren`,
     details: (p: { name: string }) => `Details: ${p.name}`,

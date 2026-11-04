@@ -378,6 +378,7 @@ export default function WishList() {
       onCancelPick={purchases.cancelPick}
       onUndo={purchases.onUndo}
       onChangeWant={onChangeWant}
+      onRemove={onDelete}
       questions={(item) => itemQuestions(item, true)}
       questionList={(item) => questions.of(item.id)}
       selected={select.selected()}

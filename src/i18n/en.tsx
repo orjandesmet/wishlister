@@ -54,7 +54,7 @@ export const en = {
     questions: "Questions",
     status: "Bought",
     visibleIn: "Visible in",
-    actions: "Edit",
+    actions: "Edit or remove",
     selectAll: "Select all wishes",
     select: (p: { name: string }) => `Select ${p.name}`,
     details: (p: { name: string }) => `Details: ${p.name}`,
