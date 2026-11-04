@@ -288,7 +288,7 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
           </Show>
         </td>
         <Show when={table().canEdit}>
-          <td class={styles.visibleIn}>
+          <td>
             <Switch>
               <Match when={isPrivate()}>
                 <span class={styles.onlyMe}>
