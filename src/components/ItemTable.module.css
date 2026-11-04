@@ -274,9 +274,9 @@
     background: var(--surface);
   }
 
+  /* The pill and Undo side by side: the pill's text wraps instead. */
   .statusRow {
     display: inline-flex;
-    flex-wrap: wrap;
     justify-content: flex-end;
     align-items: center;
     gap: 6px 12px;
