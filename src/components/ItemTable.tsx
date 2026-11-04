@@ -26,6 +26,7 @@ import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Chip } from "./Chip.tsx";
 import { EditLabel } from "./EditLabel.tsx";
+import { RemoveLabel } from "./RemoveLabel.tsx";
 import {
   ExternalLinkIcon,
   Heart,
@@ -62,6 +63,8 @@ export type ItemTableProps = {
   onUndo: (item: Item) => void;
   /** The list's editors tap the hearts to say how much they want it (the next level, round). */
   onChangeWant: (item: Item) => void;
+  /** The list's editors remove an item (after confirming). */
+  onRemove: (item: Item) => void;
   /** The item's questions button and dialog (ItemQuestions, short). */
   questions: (item: Item) => JSX.Element;
   /** The item's questions, shown in its detail row. */
@@ -335,9 +338,14 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
             <Show
               when={!table().canEdit}
               fallback={
-                <A class={u.link} href={`/items/${item().id}/edit`}>
-                  <EditLabel label={t("common.edit")} of={item().name} />
-                </A>
+                <span class={styles.statusRow}>
+                  <A class={u.link} href={`/items/${item().id}/edit`}>
+                    <EditLabel label={t("common.edit")} of={item().name} />
+                  </A>
+                  <Button variant="link" danger onClick={() => table().onRemove(item())}>
+                    <RemoveLabel of={item().name} />
+                  </Button>
+                </span>
               }
             >
               <Switch>
