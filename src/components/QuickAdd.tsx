@@ -108,7 +108,7 @@ export function QuickAdd(props: QuickAddProps) {
   });
 
   return (
-    <section class={`${u.stack} ${styles.quickAdd}`}>
+    <section class={`${u.stack} ${styles.quickAdd}`} data-quick-add>
       <div class={`${u.stack} ${styles.inner}`}>
         <Show when={props.pending.length > 0}>
           <ul class={`${u.list} ${u.cards}`}>

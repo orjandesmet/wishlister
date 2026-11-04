@@ -10,6 +10,8 @@ import { FollowList } from "../components/FollowList.tsx";
 import { CompactToggle } from "../components/CompactToggle.tsx";
 import { ItemCard } from "../components/ItemCard.tsx";
 import { ItemQuestions } from "../components/ItemQuestions.tsx";
+import { ItemTable } from "../components/ItemTable.tsx";
+import { ListViewSwitch } from "../components/ListViewSwitch.tsx";
 import { ListOrderSelect } from "../components/ListOrderSelect.tsx";
 import { QuickAdd, QuickAddButton } from "../components/QuickAdd.tsx";
 import {
@@ -34,7 +36,8 @@ import {
   nudgeSecretSanta,
 } from "../lib/api/secretSanta.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
-import { cardView, chooseCardView } from "../lib/cardView.ts";
+import { chooseCardView } from "../lib/cardView.ts";
+import { chooseListView, listView, tableFits } from "../lib/listView.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createBulkSelect } from "../lib/createBulkSelect.ts";
 import { createFollow } from "../lib/createFollow.ts";
@@ -225,6 +228,7 @@ export default function WishList() {
     loadedItems,
     () => (purchases.showBought() ? (item) => purchases.purchaseOf().has(item.id) : undefined),
     (apply) => animateMoves(cardsRoot, apply),
+    (item) => questions.of(item.id).length,
   );
   const { itemsIn, notWanted, isGrouped } = listSections;
   const groupName = (id: GroupId) =>
@@ -312,8 +316,10 @@ export default function WishList() {
     );
   };
 
-  // Saved on your account, so every list and every device follows it.
-  const compact = () => cardView() === "compact";
+  // Saved on your account, so every list and every device follows it. Wide screens can show a
+  // table too, and there the view picked on the list stays on that device (#136).
+  const compact = () => listView() === "compact";
+  const table = () => listView() === "table";
   const several = () => (items()?.length ?? 0) > 1;
   const onCompact = (on: boolean) =>
     run(async () => {
@@ -323,11 +329,43 @@ export default function WishList() {
       me().refetchProfile();
     });
 
+  // In the table, the checkboxes are always there: ticking one starts selecting.
+  const tableToggle = (item: Item) => {
+    if (!select.selecting()) select.start();
+    select.toggle(item.id);
+  };
+  const tableSelectAll = () => {
+    if (!select.selecting()) select.start();
+    select.selectAll();
+  };
+
+  const itemQuestions = (item: Item, short?: boolean) => (
+    <ItemQuestions
+      itemName={item.name}
+      questions={questions.of(item.id)}
+      // Not once it's bought. Nobody buys a "please don't buy" entry, so it stays open.
+      canAsk={
+        !canEdit() &&
+        !item.removed_at &&
+        (item.not_wanted || purchases.purchase(item) === "available")
+      }
+      canAnswer={canEdit()}
+      bought={purchases.purchase(item) === "mine" || purchases.purchase(item) === "someone"}
+      open={search.questions === item.id}
+      onClose={() => closeQuestions(item)}
+      busy={questions.busy()}
+      error={questions.error()}
+      onAsk={(question) => questions.ask(item.id, question)}
+      onAnswer={questions.answer}
+      short={short}
+    />
+  );
+
   const card = (item: Item) => (
     <ItemCard
       data-item-id={item.id}
       item={item}
-      compact={compact()}
+      compact={compact() || table()}
       purchase={purchases.purchase(item)}
       canEdit={canEdit()}
       groupNames={item.item_groups.map((g) => groupName(g.group_id))}
@@ -342,26 +380,7 @@ export default function WishList() {
       selecting={select.selecting()}
       selected={select.selected().has(item.id)}
       onToggleSelect={() => select.toggle(item.id)}
-      questions={
-        <ItemQuestions
-          itemName={item.name}
-          questions={questions.of(item.id)}
-          // Not once it's bought. Nobody buys a "please don't buy" entry, so it stays open.
-          canAsk={
-            !canEdit() &&
-            !item.removed_at &&
-            (item.not_wanted || purchases.purchase(item) === "available")
-          }
-          canAnswer={canEdit()}
-          bought={purchases.purchase(item) === "mine" || purchases.purchase(item) === "someone"}
-          open={search.questions === item.id}
-          onClose={() => closeQuestions(item)}
-          busy={questions.busy()}
-          error={questions.error()}
-          onAsk={(question) => questions.ask(item.id, question)}
-          onAnswer={questions.answer}
-        />
-      }
+      questions={itemQuestions(item)}
     />
   );
 
@@ -454,7 +473,8 @@ export default function WishList() {
         {/* Compact shows from the first item; selecting and sorting only make sense from two. */}
         <Show when={(items()?.length ?? 0) > 0}>
           <div class={u.row}>
-            <Show when={canEdit() && !select.selecting() && several()}>
+            {/* The table has its checkboxes from the start. */}
+            <Show when={canEdit() && !select.selecting() && several() && !table()}>
               <Button
                 ref={selectButton}
                 variant="secondary"
@@ -483,9 +503,15 @@ export default function WishList() {
               </Button>
             </Show>
             <Show when={!select.selecting()}>
-              <CompactToggle on={compact()} onChange={(on) => void onCompact(on)} />
+              <Show
+                when={tableFits()}
+                fallback={<CompactToggle on={compact()} onChange={(on) => void onCompact(on)} />}
+              >
+                <ListViewSwitch value={listView()} onChange={chooseListView} />
+              </Show>
             </Show>
-            <Show when={several()}>
+            {/* The table sorts by its column headers instead. */}
+            <Show when={several() && !table()}>
               <ListOrderSelect
                 value={listSections.order()}
                 showBought={purchases.showBought()}
@@ -496,22 +522,59 @@ export default function WishList() {
           </div>
         </Show>
         <div ref={cardsRoot} class={styles.cards}>
-          <For each={listSections.categories()}>
-            {(category) => (
-              <section class={u.stack}>
-                <Show when={isGrouped()}>
-                  <h2>{category ?? t("listOrder.uncategorised")}</h2>
-                </Show>
-                <ul class={`${u.list} ${u.cards}`} classList={{ [styles.compactCards]: compact() }}>
-                  <For each={itemsIn(category)}>{card}</For>
-                </ul>
-              </section>
-            )}
-          </For>
+          <Show
+            when={table()}
+            fallback={
+              <For each={listSections.categories()}>
+                {(category) => (
+                  <section class={u.stack}>
+                    <Show when={isGrouped()}>
+                      <h2>{category ?? t("listOrder.uncategorised")}</h2>
+                    </Show>
+                    <ul
+                      class={`${u.list} ${u.cards}`}
+                      classList={{ [styles.compactCards]: compact() }}
+                    >
+                      <For each={itemsIn(category)}>{card}</For>
+                    </ul>
+                  </section>
+                )}
+              </For>
+            }
+          >
+            <Show when={listSections.tableItems().length > 0}>
+              <ItemTable
+                items={listSections.tableItems()}
+                canEdit={canEdit()}
+                sort={listSections.tableSort()}
+                onSort={listSections.sortTable}
+                showBought={purchases.showBought()}
+                purchase={purchases.purchase}
+                boughtFor={(item) => purchases.purchaseOf().get(item.id)?.occasion?.name}
+                groupNames={(item) => item.item_groups.map((g) => groupName(g.group_id))}
+                occasionChoices={purchases.occasionChoices}
+                onBuy={purchases.onBuy}
+                onPickOccasion={purchases.buy}
+                onCancelPick={purchases.cancelPick}
+                onUndo={purchases.onUndo}
+                onChangeWant={onChangeWant}
+                questions={(item) => itemQuestions(item, true)}
+                questionList={(item) => questions.of(item.id)}
+                selected={select.selected()}
+                onToggleSelect={tableToggle}
+                onSelectAll={tableSelectAll}
+                onSelectNone={select.selectNone}
+              />
+            </Show>
+          </Show>
           <Show when={notWanted().length > 0}>
             <section class={u.stack}>
               <h2>{t("listOrder.notWanted")}</h2>
-              <ul class={`${u.list} ${u.cards}`} classList={{ [styles.compactCards]: compact() }}>
+              {/* Below the table they stay cards, compact so they don't take over. */}
+              <ul
+                class={`${u.list} ${u.cards}`}
+                classList={{ [styles.compactCards]: compact() || table() }}
+              >
                 <For each={notWanted()}>{card}</For>
               </ul>
             </section>

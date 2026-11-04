@@ -76,11 +76,11 @@ let lastTap: (BuyTap & { itemId: ItemId }) | undefined;
 
 /**
  * Call when a buy button is tapped. Saving the purchase refetches the list, which can
- * rebuild the card, so the tap (and the card around it, for a seasonal theme's
+ * rebuild the card, so the tap (and the card or table row around it, for a seasonal theme's
  * effect) is kept here rather than in the card.
  */
 export function rememberBuyTap(itemId: ItemId, button: Element) {
-  const card = button.closest("li, article") ?? button;
+  const card = button.closest("li, article, tr") ?? button;
   lastTap = {
     itemId,
     button: button.getBoundingClientRect(),
