@@ -29,6 +29,10 @@
     white-space: nowrap;
   }
 
+  .noWrap {
+    white-space: nowrap;
+  }
+
   /* A link that reads as one: strong text, underlined. Button variant="link" is the button version. */
   .link {
     color: var(--text-strong);

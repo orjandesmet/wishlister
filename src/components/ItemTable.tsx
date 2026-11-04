@@ -31,13 +31,13 @@ import {
   Heart,
   PriceTag,
   shopName,
-  type PurchaseState,
   YouBoughtFor,
+  type PurchaseState,
 } from "./ItemCard.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
+import styles from "./ItemTable.module.css";
 import { Markdown } from "./Markdown.tsx";
 import { WantedLevelText } from "./WantedLevelText.tsx";
-import styles from "./ItemTable.module.css";
 
 export type ItemTableProps = {
   /** The wishes, already in the table's order. "Please don't buy" entries stay out. */
@@ -318,7 +318,7 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
                 </span>
               </Match>
               <Match when={item().visible_in_all_groups}>
-                <span class={`${u.muted} ${u.small}`}>{t("table.allGroups")}</span>
+                <span class={`${u.muted} ${u.small} ${u.noWrap}`}>{t("table.allGroups")}</span>
               </Match>
               <Match when={true}>
                 <span class={styles.groups}>
