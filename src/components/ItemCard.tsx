@@ -206,6 +206,31 @@ export function ExternalLinkIcon() {
   );
 }
 
+/**
+ * "You bought this for Anna's birthday", which only wraps between the sentence and the
+ * occasion: each part stays on one line.
+ */
+export function YouBoughtFor(props: { occasion: string }) {
+  const parts = () => {
+    const text = t("item.youBoughtFor", { occasion: props.occasion });
+    const at = text.lastIndexOf(props.occasion);
+    if (at < 0) return [text];
+    return [text.slice(0, at).trimEnd(), props.occasion, text.slice(at + props.occasion.length)];
+  };
+  return (
+    <>
+      <span class={styles.noWrap}>{parts()[0]}</span>
+      <Show when={parts().length > 1}>
+        {" "}
+        <span class={styles.noWrap}>
+          {parts()[1]}
+          {parts()[2]}
+        </span>
+      </Show>
+    </>
+  );
+}
+
 /** A list of names in the language's own wording ("A, B and C"), the names themselves in bold. */
 export function BoldList(props: { items: string[] }) {
   const parts = () =>
@@ -604,9 +629,11 @@ export function ItemCard(props: ItemCardProps) {
               <Match when={props.purchase === "mine"}>
                 <div class={u.row}>
                   <span class={styles.bought}>
-                    {props.boughtFor
-                      ? t("item.youBoughtFor", { occasion: props.boughtFor })
-                      : t("item.youBought")}
+                    {props.boughtFor ? (
+                      <YouBoughtFor occasion={props.boughtFor} />
+                    ) : (
+                      t("item.youBought")
+                    )}
                   </span>
                   <Button
                     variant="secondary"

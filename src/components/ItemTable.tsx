@@ -26,7 +26,14 @@ import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Chip } from "./Chip.tsx";
 import { EditLabel } from "./EditLabel.tsx";
-import { ExternalLinkIcon, Heart, PriceTag, shopName, type PurchaseState } from "./ItemCard.tsx";
+import {
+  ExternalLinkIcon,
+  Heart,
+  PriceTag,
+  shopName,
+  type PurchaseState,
+  YouBoughtFor,
+} from "./ItemCard.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
 import { Markdown } from "./Markdown.tsx";
 import { WantedLevelText } from "./WantedLevelText.tsx";
@@ -326,9 +333,9 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
               <Match when={purchase() === "mine"}>
                 <span class={styles.statusRow}>
                   <span class={styles.pill}>
-                    {table().boughtFor(item())
-                      ? t("item.youBoughtFor", { occasion: table().boughtFor(item())! })
-                      : t("item.youBought")}
+                    <Show when={table().boughtFor(item())} fallback={t("item.youBought")}>
+                      {(occasion) => <YouBoughtFor occasion={occasion()} />}
+                    </Show>
                   </span>
                   <Button
                     variant="secondary"

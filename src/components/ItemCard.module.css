@@ -455,3 +455,8 @@ label.body {
   padding: 0 16px;
   font-size: 14px;
 }
+
+/* Wraps only between its parts (see YouBoughtFor). */
+.noWrap {
+  white-space: nowrap;
+}
