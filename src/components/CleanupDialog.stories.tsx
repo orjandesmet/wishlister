@@ -36,3 +36,12 @@ export const ChildList: Story = { args: { childName: "Tom" } };
 export const Saving: Story = { args: { busy: true } };
 
 export const Failed: Story = { args: { error: "Couldn't reach the server." } };
+
+/** More than fits on a phone: only the list scrolls, the text and OK stay in view. */
+export const ManyItems: Story = {
+  args: {
+    items: Array.from({ length: 20 }, (_, i) =>
+      item(String(i), `Present number ${i + 1}`, "Christmas 2026", "2026-12-25"),
+    ),
+  },
+};

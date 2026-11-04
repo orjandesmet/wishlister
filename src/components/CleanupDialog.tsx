@@ -54,16 +54,18 @@ export function CleanupDialog(props: CleanupDialogProps) {
         </h2>
         <p>
           {props.childName
-            ? t("cleanup.introChild", { name: props.childName })
-            : t("cleanup.intro")}
+            ? t("cleanup.introChild", { name: props.childName, count: props.items.length })
+            : t("cleanup.intro", { count: props.items.length })}
         </p>
         <ul class={styles.items}>
           <For each={props.items}>
-            {(item) => (
+            {(item, index) => (
               <li>
                 <Check>
                   <input
                     type="checkbox"
+                    // Focus starts here rather than on the scrolling list or on OK.
+                    autofocus={index() === 0}
                     checked={!kept().has(item.item_id)}
                     onChange={(e) => toggle(item.item_id, e.currentTarget.checked)}
                   />

@@ -509,10 +509,14 @@ export const en = {
   // After an occasion, on the list's own page (#7).
   cleanup: {
     title: "Bought for a past occasion",
-    intro:
-      "The following items have been bought for a past occasion and will be removed from your list.",
-    introChild: (p: { name: string }) =>
-      `The following items on ${p.name}'s list have been bought for a past occasion and will be removed.`,
+    intro: (p: { count: number }) =>
+      p.count === 1
+        ? "The following item has been bought for a past occasion and will be removed from your list."
+        : `The following ${p.count} items have been bought for a past occasion and will be removed from your list.`,
+    introChild: (p: { name: string; count: number }) =>
+      p.count === 1
+        ? `The following item on ${p.name}'s list has been bought for a past occasion and will be removed.`
+        : `The following ${p.count} items on ${p.name}'s list have been bought for a past occasion and will be removed.`,
     uncheckHint: "Uncheck what you'd like to keep on the list: it can be bought again.",
     ok: "OK",
     done: "Your list is cleaned up.",

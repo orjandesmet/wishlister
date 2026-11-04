@@ -498,9 +498,14 @@ export const nl: Dictionary = {
   // Na een gelegenheid, op de lijst zelf (#7).
   cleanup: {
     title: "Gekocht voor een voorbije gelegenheid",
-    intro: "Deze items zijn gekocht voor een voorbije gelegenheid en worden van je lijst gehaald.",
-    introChild: (p: { name: string }) =>
-      `Deze items op de lijst van ${p.name} zijn gekocht voor een voorbije gelegenheid en worden weggehaald.`,
+    intro: (p: { count: number }) =>
+      p.count === 1
+        ? "Dit item is gekocht voor een voorbije gelegenheid en wordt van je lijst gehaald."
+        : `Deze ${p.count} items zijn gekocht voor een voorbije gelegenheid en worden van je lijst gehaald.`,
+    introChild: (p: { name: string; count: number }) =>
+      p.count === 1
+        ? `Dit item op de lijst van ${p.name} is gekocht voor een voorbije gelegenheid en wordt weggehaald.`
+        : `Deze ${p.count} items op de lijst van ${p.name} zijn gekocht voor een voorbije gelegenheid en worden weggehaald.`,
     uncheckHint: "Vink uit wat je op de lijst wilt houden: dat kan dan opnieuw gekocht worden.",
     ok: "OK",
     done: "Je lijst is opgeruimd.",
