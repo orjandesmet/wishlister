@@ -2,6 +2,7 @@ import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
+import { CleanupDialog } from "../components/CleanupDialog.tsx";
 import { ListMenu } from "../components/ListMenu.tsx";
 import { SecretSantaNudge } from "../components/secret-santa/SecretSantaNudge.tsx";
 import { SecretSantaRibbon } from "../components/secret-santa/SecretSantaRibbon.tsx";
@@ -22,6 +23,7 @@ import {
   type Item,
   type WantedLevel,
 } from "../lib/api/items.ts";
+import { cleanUpBoughtItems, getPendingCleanup } from "../lib/api/cleanup.ts";
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { animateMoves } from "../lib/animateMoves.ts";
 import { setProfileCardView } from "../lib/api/profiles.ts";
@@ -190,6 +192,31 @@ export default function WishList() {
   const closeQuestions = (item: Item) => {
     questions.clearError();
     if (search.questions === item.id) setSearch({ questions: undefined }, { replace: true });
+  };
+
+  // After an occasion, its bought items go: the list's editors get one dialog with all of
+  // them, checked, and uncheck what stays. Only from the day after, so nothing is given away
+  // before; the database decides that too.
+  const [pendingCleanup, { refetch: refetchCleanup }] = createResource(
+    () => (canEdit() ? params.profileId : undefined),
+    getPendingCleanup,
+  );
+  const cleanupItems = () => (pendingCleanup.error ? undefined : pendingCleanup()) ?? [];
+  const [cleanupError, setCleanupError] = createSignal<string>();
+  const [cleanupBusy, setCleanupBusy] = createSignal(false);
+  const onCleanUp = async (removeIds: ItemId[]) => {
+    setCleanupBusy(true);
+    setCleanupError(undefined);
+    try {
+      await cleanUpBoughtItems(params.profileId, removeIds);
+      await Promise.all([refetchItems(), refetchCleanup()]);
+      announce(t("cleanup.done"));
+      focusHeading();
+    } catch (e) {
+      setCleanupError((e as Error).message);
+    } finally {
+      setCleanupBusy(false);
+    }
   };
 
   // oxlint-disable-next-line no-unassigned-vars
@@ -404,6 +431,15 @@ export default function WishList() {
           <p class={u.error} role="alert">
             {error()}
           </p>
+        </Show>
+        <Show when={canEdit() && cleanupItems().length > 0}>
+          <CleanupDialog
+            items={cleanupItems()}
+            childName={isOwnList() ? undefined : profile()?.display_name}
+            busy={cleanupBusy()}
+            error={cleanupError()}
+            onDone={(removeIds) => void onCleanUp(removeIds)}
+          />
         </Show>
         <Show when={items()?.length === 0 && quickAdd().state().pending.length === 0}>
           <EmptyState>

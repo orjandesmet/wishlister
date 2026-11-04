@@ -508,6 +508,21 @@ export const nl: Dictionary = {
     answered: "Je antwoord is bewaard.",
     secretSantaStarted: (p: { occasion: string }) => `Secret Santa gestart voor ${p.occasion}.`,
   },
+  // Na een gelegenheid, op de lijst zelf (#7).
+  cleanup: {
+    title: "Gekocht voor een voorbije gelegenheid",
+    intro: (p: { count: number }) =>
+      p.count === 1
+        ? "Dit item is gekocht voor een voorbije gelegenheid en wordt van je lijst gehaald."
+        : `Deze ${p.count} items zijn gekocht voor een voorbije gelegenheid en worden van je lijst gehaald.`,
+    introChild: (p: { name: string; count: number }) =>
+      p.count === 1
+        ? `Dit item op de lijst van ${p.name} is gekocht voor een voorbije gelegenheid en wordt weggehaald.`
+        : `Deze ${p.count} items op de lijst van ${p.name} zijn gekocht voor een voorbije gelegenheid en worden weggehaald.`,
+    uncheckHint: "Vink uit wat je op de lijst wilt houden: dat kan dan opnieuw gekocht worden.",
+    ok: "OK",
+    done: "Je lijst is opgeruimd.",
+  },
   wishlist: {
     fallbackTitle: "Verlanglijstje",
     switchList: "Andere lijstjes",
