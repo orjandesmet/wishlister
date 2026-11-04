@@ -1,0 +1,40 @@
+@layer base, components, utilities;
+
+@layer components {
+  /* One pill split in three, the same height as the small buttons beside it. */
+  .switch {
+    display: inline-flex;
+    flex: none;
+    padding: 2px;
+    gap: 2px;
+    background: var(--accent-soft);
+    border-radius: var(--radius-control);
+  }
+
+  .option {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    min-height: 36px;
+    padding: 0;
+    color: var(--accent-ink);
+    background: none;
+    border: 0;
+    border-radius: calc(var(--radius-control) - 2px);
+  }
+
+  .option:hover {
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+  }
+
+  /* Pressed: solid, like the Compact button when it's on. */
+  .option[aria-pressed="true"] {
+    color: var(--accent-contrast);
+    background: var(--accent);
+  }
+
+  .option svg {
+    width: 20px;
+    height: 20px;
+  }
+}

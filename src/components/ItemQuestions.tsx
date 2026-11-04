@@ -30,6 +30,8 @@ export type ItemQuestionsProps = {
   /** Resolves once saved; the forms only empty then, so nothing typed gets lost. */
   onAsk: (question: string) => Promise<boolean>;
   onAnswer: (id: QuestionId, answer: string) => Promise<boolean>;
+  /** In a table cell: the icon and how many questions there are; the rest only for screen readers. */
+  short?: boolean;
 };
 
 /** One question, its answer, and for the list's editors a way to answer it. */
@@ -197,8 +199,22 @@ export function ItemQuestions(props: ItemQuestionsProps) {
           <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
           <path d="M12 17h.01" />
         </svg>
-        {label()}
-        <span class={u.visuallyHidden}>: {props.itemName}</span>
+        <Show
+          when={props.short}
+          fallback={
+            <>
+              {label()}
+              <span class={u.visuallyHidden}>: {props.itemName}</span>
+            </>
+          }
+        >
+          <Show when={count() > 0}>
+            <span aria-hidden="true">{count()}</span>
+          </Show>
+          <span class={u.visuallyHidden}>
+            {label()}: {props.itemName}
+          </span>
+        </Show>
       </Button>
       <dialog
         ref={dialog}

@@ -80,7 +80,7 @@ export type ItemCardProps = {
  * The item's price as the shop showed it, and roughly what that is in your
  * currency when it's another one.
  */
-function PriceTag(props: { amount: number; currency: string; small?: boolean }) {
+export function PriceTag(props: { amount: number; currency: string; small?: boolean }) {
   const converted = () => {
     if (props.currency === displayCurrency()) return null;
     const amount = convertAmount(props.amount, props.currency, displayCurrency(), exchangeRates());
@@ -99,7 +99,7 @@ function PriceTag(props: { amount: number; currency: string; small?: boolean }) 
 }
 
 /** Lucide "heart" (ISC licence), filled. */
-function Heart() {
+export function Heart() {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -188,7 +188,7 @@ function InlineHearts(props: { level: number }) {
 }
 
 /** Lucide "external-link" (ISC licence). */
-function ExternalLinkIcon() {
+export function ExternalLinkIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -207,7 +207,7 @@ function ExternalLinkIcon() {
 }
 
 /** A list of names in the language's own wording ("A, B and C"), the names themselves in bold. */
-function BoldList(props: { items: string[] }) {
+export function BoldList(props: { items: string[] }) {
   const parts = () =>
     new Intl.ListFormat(locale(), { type: "conjunction" }).formatToParts(props.items);
   return (
@@ -218,7 +218,7 @@ function BoldList(props: { items: string[] }) {
 }
 
 /** The shop's name instead of the whole address, which only crowds the card. */
-function shopName(url: string) {
+export function shopName(url: string) {
   try {
     return new URL(url).hostname.replace(/^www\./, "");
   } catch {

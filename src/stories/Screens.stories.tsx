@@ -69,6 +69,7 @@ import type {
   SecretSantaId,
 } from "../lib/ids.ts";
 import { installOffer } from "../lib/install.ts";
+import { chooseListView, tableMedia } from "../lib/listView.ts";
 import { today } from "../lib/occasions.ts";
 import { bonsaiPicture, scarfPicture } from "./samplePictures.ts";
 
@@ -86,6 +87,8 @@ const meta = {
     setMockSession({ accountId: "account-me" });
     setMockOtpError(null);
     localStorage.removeItem("listOrder");
+    localStorage.removeItem("table-sort");
+    chooseListView(undefined);
     mocked(today).mockReturnValue(day);
     mocked(installOffer).mockReturnValue(undefined);
 
@@ -478,6 +481,63 @@ export const OwnListStates: Story = {
       selector: "input",
     });
     await userEvent.type(field, "Sourdough starter kit{Enter}");
+  },
+};
+
+/** Wide screens only (the Viewport toolbar's phone sizes show cards): someone else's list as a table. */
+export const OtherListTable: Story = {
+  beforeEach: () => {
+    chooseListView("table");
+    data.lists.anna.push(
+      item(10, "anna", "Mugs", null, null, { not_wanted: true }),
+      item(11, "anna", "Wool socks", 15, "Clothes", {
+        url: "https://www.example.com/socks",
+        wanted_level: 2,
+      }),
+    );
+  },
+  render: app("/lists/anna"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    // Phone sizes show cards: nothing to click there.
+    await canvas.findByRole("heading", { level: 1, name: /Anna/ });
+    if (!matchMedia(tableMedia).matches) return;
+    // Open the scarf's row: its picture, description and questions.
+    await userEvent.click(
+      await canvas.findByRole("button", {
+        name: t("table.details", { name: "Merino scarf, grey" }),
+      }),
+    );
+    await userEvent.click(canvas.getByRole("button", { name: new RegExp(`^${t("table.price")}`) }));
+  },
+};
+
+/** Your own list as a table: checkboxes always there, "Visible in" and Edit. */
+export const OwnListTable: Story = {
+  beforeEach: () => {
+    chooseListView("table");
+    data.lists.me.push(
+      item(7, "me", "Noise-cancelling headphones", 279, "Music", { visible_in_all_groups: false }),
+      item(8, "me", "Board game: Wingspan", 49, "Games", {
+        visible_in_all_groups: false,
+        item_groups: [{ group_id: family.id }],
+        wanted_level: 3,
+      }),
+      item(9, "me", "Mugs", null, null, { not_wanted: true }),
+    );
+  },
+  render: app("/lists/me"),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    if (!matchMedia(tableMedia).matches) return;
+    await userEvent.click(
+      await canvas.findByRole("checkbox", {
+        name: t("table.select", { name: "Trail running shoes" }),
+      }),
+    );
+    await expect(
+      canvas.getByRole("checkbox", { name: t("table.selectAll") }),
+    ).toBePartiallyChecked();
   },
 };
 
