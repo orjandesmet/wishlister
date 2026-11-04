@@ -34,10 +34,11 @@ function ViewIcon(props: { view: ListView }) {
           <rect width="18" height="4.5" x="3" y="16.5" rx="1.5" />
         </Match>
         <Match when={props.view === "table"}>
-          {/* Table: one block with rows. */}
+          {/* Table: one block with rows, and a column line a quarter in. */}
           <rect width="18" height="18" x="3" y="3" rx="2" />
           <path d="M3 9h18" />
           <path d="M3 15h18" />
+          <path d="M7.5 3v18" />
         </Match>
       </Switch>
     </svg>
