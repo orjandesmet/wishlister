@@ -1,5 +1,8 @@
 -- Two Secret Santa emails (#138, #139).
 --
+-- Note: the reminder (#139) was dropped from the app after this migration was
+-- applied. Its column and functions stay (unused) so this file matches the database.
+--
 -- * Nudge (#138): while a draw runs, the giver can ask the person they drew to add
 --   some ideas, when that person's list has fewer than 3 items the giver could buy.
 --   The email doesn't say who sent it. Once every 3 days per pair.
