@@ -1,5 +1,6 @@
 import { supabase } from "../supabase.ts";
 import type { GroupId, ProfileId } from "../ids.ts";
+import { callFunction } from "./functions.ts";
 import { must } from "./must.ts";
 import type { Profile } from "./profiles.ts";
 
@@ -90,20 +91,8 @@ async function callMailFunction(
   failure: string,
   allowed: number[] = [],
 ): Promise<number> {
-  const { data } = await supabase.auth.getSession();
-  const response = await fetch(`/.netlify/functions/${name}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${data.session?.access_token ?? ""}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ groupId, email }),
-  });
-  if (!response.ok && !allowed.includes(response.status)) {
-    const body = (await response.json().catch(() => null)) as { message?: string } | null;
-    throw new Error(body?.message ?? `${failure} (${response.status})`);
-  }
-  return response.status;
+  const { status } = await callFunction(name, failure, { groupId, email }, allowed);
+  return status;
 }
 
 export async function cancelInvite(groupId: GroupId, email: string) {

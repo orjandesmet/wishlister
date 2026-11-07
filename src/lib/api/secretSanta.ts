@@ -1,6 +1,8 @@
 import { supabase } from "../supabase.ts";
 import type { GroupId, OccasionId, ProfileId, SecretSantaId } from "../ids.ts";
 import { today, type IsoDate } from "../occasions.ts";
+import { t } from "../i18n.ts";
+import { callFunction, FunctionError } from "./functions.ts";
 import { must } from "./must.ts";
 
 /** A member who can take part in a draw. */
@@ -106,17 +108,38 @@ export async function getNudgeState(profileId: ProfileId): Promise<NudgeState | 
 
 /**
  * Emails the person you drew, without your name, to ask for some ideas on their list.
- * "not_set_up" when the site can't send emails (yet). Throws when it's too soon or their
- * list has enough ideas (the server checks both).
+ * "not_set_up" when the site can't send emails (yet). Throws, with a translated reason,
+ * when it's too soon or their list has enough ideas (the server checks both).
  */
 export async function nudgeSecretSanta(profileId: ProfileId): Promise<"sent" | "not_set_up"> {
-  const result = await callFunction(
-    "nudge-secret-santa",
-    "Couldn't send the nudge",
-    { recipient: profileId },
-    [503],
-  );
-  return result.status === 503 ? "not_set_up" : "sent";
+  try {
+    const result = await callFunction(
+      "nudge-secret-santa",
+      "Couldn't send the nudge",
+      { recipient: profileId },
+      [503],
+    );
+    return result.status === 503 ? "not_set_up" : "sent";
+  } catch (e) {
+    throw new Error(nudgeFailure(e));
+  }
+}
+
+/** What went wrong with a nudge, in the user's language (see nudge-secret-santa.mts). */
+export function nudgeFailure(e: unknown): string {
+  if (!(e instanceof FunctionError)) return t("secretSanta.nudgeFailed");
+  switch (e.status) {
+    case 401:
+      return t("common.signedOut");
+    case 404:
+      return t("secretSanta.nudgeNoDraw");
+    case 409:
+      return t("secretSanta.nudgeEnoughIdeas");
+    case 429:
+      return t("secretSanta.nudgeTooSoon");
+    default:
+      return t("secretSanta.nudgeFailed");
+  }
 }
 
 /** Managers only: who takes part in a draw. Not who drew whom. */
@@ -126,32 +149,6 @@ export async function getSecretSantaParticipants(
   return must(
     await supabase.rpc("secret_santa_participants", { target_secret_santa: drawId }),
   ) as SecretSantaCandidate[];
-}
-
-/**
- * Calls a Netlify function as the signed-in user, and reads its `message` on a failure.
- * Statuses in `allowed` aren't failures: they come back in `status`.
- */
-async function callFunction<T>(
-  name: string,
-  failure: string,
-  body?: unknown,
-  allowed: number[] = [],
-): Promise<T & { status: number }> {
-  const { data } = await supabase.auth.getSession();
-  const response = await fetch(`/.netlify/functions/${name}`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${data.session?.access_token ?? ""}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body ?? {}),
-  });
-  const json = (await response.json().catch(() => null)) as ({ message?: string } & T) | null;
-  if (!response.ok && !allowed.includes(response.status)) {
-    throw new Error(json?.message ?? `${failure} (${response.status})`);
-  }
-  return { ...(json as T), status: response.status };
 }
 
 /**
