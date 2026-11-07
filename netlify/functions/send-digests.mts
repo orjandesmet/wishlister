@@ -14,13 +14,14 @@ import { mailConfigured, sendEmails } from "../lib/mail.ts";
 import { sendQuestionNotices } from "../lib/questionNotices.ts";
 import { sendRemovalNotices } from "../lib/removalNotices.ts";
 import { sendSecretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
+import { missingEnv } from "../lib/respond.ts";
 
 export default async () => {
   const url = process.env.VITE_SUPABASE_URL;
   const secretKey = process.env.SUPABASE_SECRET_KEY;
   const siteUrl = process.env.URL;
   if (!url || !secretKey || !siteUrl) {
-    throw new Error("Missing VITE_SUPABASE_URL, SUPABASE_SECRET_KEY or URL");
+    throw new Error(`Missing ${missingEnv("VITE_SUPABASE_URL", "SUPABASE_SECRET_KEY", "URL")}`);
   }
 
   const admin = createClient(url, secretKey, { auth: { persistSession: false } });
@@ -61,7 +62,7 @@ export default async () => {
       console.error(`Sending Secret Santa emails failed: ${message}`);
     }
   } else {
-    console.warn("Digests skipped: RESEND_API_KEY or MAIL_FROM isn't set.");
+    console.warn(`Digests skipped: missing ${missingEnv("RESEND_API_KEY", "MAIL_FROM")}`);
   }
 
   const { error } = await admin.rpc("digest_sent", { upto });

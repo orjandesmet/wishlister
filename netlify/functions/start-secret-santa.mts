@@ -28,6 +28,7 @@ import {
   type Pair,
 } from "../lib/secret-santa/secretSanta.ts";
 import { sendSecretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
+import { bearerToken, message, missingEnv, signedInUser } from "../lib/respond.ts";
 
 type Candidate = { profile_id: string; display_name: string };
 type HistoryRow = { draw_rank: number; giver_profile_id: string; recipient_profile_id: string };
@@ -42,11 +43,12 @@ export default async (request: Request) => {
     return message(
       500,
       "Missing VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY or SUPABASE_SECRET_KEY",
+      `missing ${missingEnv("VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY")}`,
     );
   }
 
-  const token = request.headers.get("Authorization")?.replace(/^Bearer /, "");
-  if (!token) return message(401, "Not signed in");
+  const token = bearerToken(request);
+  if (!token) return message(401, "Not signed in", "no Authorization header");
 
   const body = (await request.json().catch(() => ({}))) as {
     occasionId?: string;
@@ -92,25 +94,38 @@ export default async (request: Request) => {
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false },
   });
-  const { data: user } = await asCaller.auth.getUser(token);
-  if (!user.user) return message(401, "Not signed in");
+  const signedIn = await signedInUser(asCaller, token);
+  if ("response" in signedIn) return signedIn.response;
+  const user = signedIn.user;
 
-  const { data: occasion } = await asCaller
+  const { data: occasion, error: occasionError } = await asCaller
     .from("occasions")
     .select("id, group_id")
     .eq("id", occasionId)
     .maybeSingle();
-  if (!occasion) return message(404, "Occasion not found");
+  if (!occasion) {
+    return message(
+      404,
+      "Occasion not found",
+      `occasion ${occasionId}, account ${user.id}: ${occasionError?.message ?? "no row"}`,
+    );
+  }
   const groupId = occasion.group_id as string;
 
-  const { data: membership } = await asCaller
+  const { data: membership, error: membershipError } = await asCaller
     .from("group_members")
     .select("profile_id, role, profiles!inner(account_id)")
     .eq("group_id", groupId)
-    .eq("profiles.account_id", user.user.id)
+    .eq("profiles.account_id", user.id)
     .maybeSingle();
   if (membership?.role !== "manager") {
-    return message(403, "Only group managers can start a Secret Santa");
+    return message(
+      403,
+      "Only group managers can start a Secret Santa",
+      `account ${user.id} is ${membership?.role ?? "not a member"} in group ${groupId}${
+        membershipError ? `: ${membershipError.message}` : ""
+      }`,
+    );
   }
 
   // Only members with their own list can take part: no children, no guardians.
@@ -118,17 +133,24 @@ export default async (request: Request) => {
     "secret_santa_candidates",
     { target_group: groupId },
   );
-  if (candidatesError) return message(500, candidatesError.message);
+  if (candidatesError) {
+    return message(500, candidatesError.message, "secret_santa_candidates failed");
+  }
   const names = new Map((candidates as Candidate[]).map((c) => [c.profile_id, c.display_name]));
   if (!participants.every((id) => names.has(id))) {
-    return message(400, "Only members with their own list can take part");
+    const others = participants.filter((id) => !names.has(id));
+    return message(
+      400,
+      "Only members with their own list can take part",
+      `not allowed: ${others.join(", ")}`,
+    );
   }
 
   const admin = createClient(url, secretKey, { auth: { persistSession: false } });
   const { data: historyRows, error: historyError } = await admin.rpc("secret_santa_history", {
     target_group: groupId,
   });
-  if (historyError) return message(500, historyError.message);
+  if (historyError) return message(500, historyError.message, "secret_santa_history failed");
   const history: Pair[][] = [[], []];
   for (const row of (historyRows ?? []) as HistoryRow[]) {
     history[row.draw_rank - 1]?.push({
@@ -167,11 +189,13 @@ export default async (request: Request) => {
   if (error) {
     if (error.code === "23505") return message(409, error.message);
     if (error.code === "23514") return message(422, error.message);
-    console.error(`Saving the Secret Santa failed: ${error.message}`);
-    return message(500, error.message);
+    return message(500, error.message, `saving the Secret Santa failed (${error.code})`);
   }
 
-  if (!mailConfigured()) return mailed("not_set_up");
+  if (!mailConfigured()) {
+    console.warn(`Drawn, no emails: missing ${missingEnv("RESEND_API_KEY", "MAIL_FROM")}`);
+    return mailed("not_set_up");
+  }
   const { errors } = await sendSecretSantaNotices(admin, new URL(request.url).origin);
   for (const failure of errors) console.error(`Sending Secret Santa emails failed: ${failure}`);
   return mailed(errors.length > 0 ? "failed" : "sent");
@@ -179,8 +203,4 @@ export default async (request: Request) => {
 
 function mailed(mail: "sent" | "not_set_up" | "failed") {
   return Response.json({ message: "drawn", mail });
-}
-
-function message(status: number, text: string) {
-  return Response.json({ message: text }, { status });
 }
