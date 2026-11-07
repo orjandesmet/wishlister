@@ -38,8 +38,12 @@ export default async (request: Request) => {
   if (typeof body.recipient !== "string") return message(400, "recipient is required");
 
   const asCaller = createClient(url, publishableKey, { auth: { persistSession: false } });
-  const { data: user } = await asCaller.auth.getUser(token);
-  if (!user.user) return message(401, "Not signed in");
+  const { data: user, error: userError } = await asCaller.auth.getUser(token);
+  if (!user.user) {
+    // Logged so a 401 says why: an expired or revoked token, or Supabase not answering.
+    console.warn(`Checking the token failed: ${userError?.status ?? "?"} ${userError?.message}`);
+    return message(401, "Not signed in");
+  }
 
   const admin = createClient(url, secretKey, { auth: { persistSession: false } });
   const { data: giver } = await admin
@@ -47,7 +51,10 @@ export default async (request: Request) => {
     .select("id")
     .eq("account_id", user.user.id)
     .maybeSingle();
-  if (!giver) return message(401, "Not signed in");
+  if (!giver) {
+    console.warn(`No profile for account ${user.user.id}`);
+    return message(401, "Not signed in");
+  }
 
   const { data, error } = await admin.rpc("claim_secret_santa_nudge", {
     giver: giver.id,

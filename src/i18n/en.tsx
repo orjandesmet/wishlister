@@ -21,6 +21,7 @@ export const en = {
     close: "Close",
     delete: "Delete",
     someone: "someone",
+    signedOut: "Your sign-in has run out. Reload the page, or sign out and in again.",
   },
   roles: {
     manager: "Manager",
@@ -264,6 +265,10 @@ export const en = {
           : `Nudged ${p.days} days ago`,
     nudgeSent: (p: { name: string }) => `${p.name} got your nudge. They won't know it was you.`,
     nudgeNotSetUp: "Emails can't be sent yet, so nudging doesn't work for now.",
+    nudgeTooSoon: "You nudged them less than 3 days ago. Try again later.",
+    nudgeEnoughIdeas: "Their list has enough ideas now, so there's no need for a nudge.",
+    nudgeNoDraw: "You didn't draw this person in a Secret Santa that's still to come.",
+    nudgeFailed: "The nudge couldn't be sent. Try again in a moment.",
     who: "Who takes part",
     whoHelp: "Only members with their own list can take part. Children and guardians can't.",
     nobodyToDraw: "There are no members who can take part yet.",

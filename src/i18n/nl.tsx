@@ -16,6 +16,7 @@ export const nl: Dictionary = {
     close: "Sluiten",
     delete: "Wissen",
     someone: "iemand",
+    signedOut: "Je bent niet meer aangemeld. Laad de pagina opnieuw, of meld je af en weer aan.",
   },
   roles: {
     manager: "Beheerder",
@@ -258,6 +259,10 @@ export const nl: Dictionary = {
     nudgeSent: (p: { name: string }) => `${p.name} kreeg je seintje. Niemand weet dat jij het was.`,
     nudgeNotSetUp:
       "E-mails kunnen nog niet verstuurd worden, dus een seintje sturen werkt voorlopig niet.",
+    nudgeTooSoon: "Je stuurde minder dan 3 dagen geleden een seintje. Probeer het later opnieuw.",
+    nudgeEnoughIdeas: "Er staan nu genoeg ideeën op het lijstje, een seintje is niet nodig.",
+    nudgeNoDraw: "Je trok deze persoon niet in een Secret Santa die nog moet komen.",
+    nudgeFailed: "Het seintje kon niet verstuurd worden. Probeer het zo meteen opnieuw.",
     who: "Wie doet mee",
     whoHelp: "Alleen leden met een eigen lijstje kunnen meedoen. Kinderen en voogden niet.",
     nobodyToDraw: "Er zijn nog geen leden die kunnen meedoen.",
