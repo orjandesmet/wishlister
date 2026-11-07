@@ -37,7 +37,10 @@ export default async (request: Request) => {
   const body = (await request.json().catch(() => ({}))) as { recipient?: unknown };
   if (typeof body.recipient !== "string") return message(400, "recipient is required");
 
-  const asCaller = createClient(url, publishableKey, { auth: { persistSession: false } });
+  const asCaller = createClient(url, publishableKey, {
+    global: { headers: { Authorization: `Bearer ${token}` } },
+    auth: { persistSession: false },
+  });
   const { data: user, error: userError } = await asCaller.auth.getUser(token);
   if (!user.user) {
     // Logged so a 401 says why: an expired or revoked token, or Supabase not answering.
@@ -45,17 +48,19 @@ export default async (request: Request) => {
     return message(401, "Not signed in");
   }
 
-  const admin = createClient(url, secretKey, { auth: { persistSession: false } });
-  const { data: giver } = await admin
+  // Looked up as the caller (row-level security lets you read your own profile): the
+  // secret key's service_role has no table grants, only execute on the nudge functions.
+  const { data: giver, error: giverError } = await asCaller
     .from("profiles")
     .select("id")
     .eq("account_id", user.user.id)
     .maybeSingle();
   if (!giver) {
-    console.warn(`No profile for account ${user.user.id}`);
-    return message(401, "Not signed in");
+    console.error(`No profile for account ${user.user.id}: ${giverError?.message ?? "no row"}`);
+    return message(500, "Couldn't find your profile");
   }
 
+  const admin = createClient(url, secretKey, { auth: { persistSession: false } });
   const { data, error } = await admin.rpc("claim_secret_santa_nudge", {
     giver: giver.id,
     recipient: body.recipient,
