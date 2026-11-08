@@ -8,13 +8,13 @@
 //
 // Needs VITE_SUPABASE_URL, SUPABASE_SECRET_KEY, RESEND_API_KEY and MAIL_FROM.
 // Netlify sets URL, the site's address, for the links in the emails.
-import { createClient } from "@supabase/supabase-js";
 import { buildDigestEmails, type DigestRow } from "../lib/digest.ts";
 import { mailConfigured, sendEmails } from "../lib/mail.ts";
 import { sendQuestionNotices } from "../lib/questionNotices.ts";
 import { sendRemovalNotices } from "../lib/removalNotices.ts";
 import { sendSecretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
 import { missingEnv } from "../lib/respond.ts";
+import { adminClient } from "../lib/supabase.ts";
 
 export default async () => {
   const url = process.env.VITE_SUPABASE_URL;
@@ -24,7 +24,7 @@ export default async () => {
     throw new Error(`Missing ${missingEnv("VITE_SUPABASE_URL", "SUPABASE_SECRET_KEY", "URL")}`);
   }
 
-  const admin = createClient(url, secretKey, { auth: { persistSession: false } });
+  const admin = adminClient(url, secretKey);
   const upto = new Date().toISOString();
 
   // Without a mail setup there's nothing to send, but the window still moves on:

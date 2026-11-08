@@ -5,8 +5,8 @@
 // Storage itself, so it only lists them (orphaned_item_pictures()).
 //
 // Needs VITE_SUPABASE_URL and SUPABASE_SECRET_KEY.
-import { createClient } from "@supabase/supabase-js";
 import { missingEnv } from "../lib/respond.ts";
+import { adminClient } from "../lib/supabase.ts";
 
 const BUCKET = "item-pictures";
 
@@ -17,7 +17,7 @@ export default async () => {
     throw new Error(`Missing ${missingEnv("VITE_SUPABASE_URL", "SUPABASE_SECRET_KEY")}`);
   }
 
-  const admin = createClient(url, secretKey, { auth: { persistSession: false } });
+  const admin = adminClient(url, secretKey);
   const { data, error } = await admin.rpc("orphaned_item_pictures");
   if (error) throw new Error(`Couldn't list unused pictures: ${error.message}`);
 

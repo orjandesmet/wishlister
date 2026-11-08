@@ -8,41 +8,29 @@
 // Sending it creates their account straight away, and the handle_new_account
 // trigger turns the pending invite into a membership: they're in the group from
 // now on, and the link in the email signs them in.
-import { createClient } from "@supabase/supabase-js";
-import { bearerToken, message, missingEnv, signedInUser } from "../lib/respond.ts";
+import { message } from "../lib/respond.ts";
+import { adminClient, signedInCaller, supabaseKeys } from "../lib/supabase.ts";
 
 export default async (request: Request) => {
   if (request.method !== "POST") return message(405, "Method not allowed");
 
-  const url = process.env.VITE_SUPABASE_URL;
-  const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const secretKey = process.env.SUPABASE_SECRET_KEY;
-  if (!url || !publishableKey || !secretKey) {
-    return message(
-      500,
-      "Sending invite emails isn't set up yet (missing SUPABASE_SECRET_KEY).",
-      `missing ${missingEnv("VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY")}`,
-    );
-  }
+  const setup = supabaseKeys(
+    "Sending invite emails isn't set up yet (missing SUPABASE_SECRET_KEY).",
+  );
+  if ("response" in setup) return setup.response;
+  const { url, secretKey } = setup.keys;
 
-  const token = bearerToken(request);
-  if (!token) return message(401, "Not signed in", "no Authorization header");
+  // Everything is checked as the manager (asCaller), so row-level security applies:
+  // only a manager of the group can see its pending invites.
+  const signedIn = await signedInCaller(request, setup.keys);
+  if ("response" in signedIn) return signedIn.response;
+  const { user, asCaller } = signedIn;
 
   const { groupId, email } = (await request.json().catch(() => ({}))) as {
     groupId?: string;
     email?: string;
   };
   if (!groupId || !email) return message(400, "groupId and email are required");
-
-  // Everything is checked as the manager, so row-level security applies: only a
-  // manager of the group can see its pending invites.
-  const asCaller = createClient(url, publishableKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false },
-  });
-  const signedIn = await signedInUser(asCaller, token);
-  if ("response" in signedIn) return signedIn.response;
-  const user = signedIn.user;
 
   const normalized = email.trim().toLowerCase();
   const { data: invite, error: inviteError } = await asCaller
@@ -70,7 +58,7 @@ export default async (request: Request) => {
   }
 
   const groupName = (invite.groups as unknown as { name: string } | null)?.name ?? "a group";
-  const admin = createClient(url, secretKey, { auth: { persistSession: false } });
+  const admin = adminClient(url, secretKey);
   // The new account starts in the inviter's language: the email is written in it,
   // and the app opens in it. They can switch on their account page.
   const locale = user.user_metadata.locale === "nl" ? "nl" : "en";

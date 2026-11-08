@@ -9,9 +9,9 @@
 // Netlify to use a Microlink plan instead of the free 50 links a day.
 // bol.com blocks both, so its product links go through ReefAPI when
 // REEFAPI_API_KEY is set (2 credits per product).
-import { createClient } from "@supabase/supabase-js";
 import { isFetchableUrl, lookUpPage } from "../lib/pageInfo.ts";
-import { bearerToken, message, missingEnv, signedInUser } from "../lib/respond.ts";
+import { message, missingEnv } from "../lib/respond.ts";
+import { signedInCaller } from "../lib/supabase.ts";
 
 export default async (request: Request) => {
   if (request.method !== "POST") return message(405, "Method not allowed");
@@ -27,10 +27,7 @@ export default async (request: Request) => {
   }
 
   // Signed-in users only, so this isn't an open proxy for anyone on the internet.
-  const token = bearerToken(request);
-  if (!token) return message(401, "Not signed in", "no Authorization header");
-  const supabase = createClient(url, publishableKey, { auth: { persistSession: false } });
-  const signedIn = await signedInUser(supabase, token);
+  const signedIn = await signedInCaller(request, { url, publishableKey });
   if ("response" in signedIn) return signedIn.response;
 
   const { url: pageUrl } = (await request.json().catch(() => ({}))) as { url?: string };

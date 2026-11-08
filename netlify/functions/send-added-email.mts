@@ -7,52 +7,42 @@
 //
 // Needs VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY,
 // RESEND_API_KEY and MAIL_FROM.
-import { createClient } from "@supabase/supabase-js";
 import { buildAddedEmail } from "../lib/addedEmail.ts";
 import { mailConfigured, sendEmail } from "../lib/mail.ts";
-import { bearerToken, message, missingEnv, signedInUser } from "../lib/respond.ts";
+import { message, missingEnv } from "../lib/respond.ts";
+import {
+  adminClient,
+  readSupabaseKeys,
+  signedInCaller,
+  SUPABASE_KEY_NAMES,
+} from "../lib/supabase.ts";
 
 type Member = { role: string; profiles: { account_id: string | null; display_name: string } };
 
 export default async (request: Request) => {
   if (request.method !== "POST") return message(405, "Method not allowed");
 
-  const url = process.env.VITE_SUPABASE_URL;
-  const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const secretKey = process.env.SUPABASE_SECRET_KEY;
-  if (!url || !publishableKey || !secretKey || !mailConfigured()) {
+  const keys = readSupabaseKeys();
+  if (!keys || !mailConfigured()) {
     // Not an error for the manager: the member is in the group either way.
     return message(
       503,
       "Sending emails isn't set up yet.",
-      `missing ${missingEnv(
-        "VITE_SUPABASE_URL",
-        "VITE_SUPABASE_PUBLISHABLE_KEY",
-        "SUPABASE_SECRET_KEY",
-        "RESEND_API_KEY",
-        "MAIL_FROM",
-      )}`,
+      `missing ${missingEnv(...SUPABASE_KEY_NAMES, "RESEND_API_KEY", "MAIL_FROM")}`,
     );
   }
 
-  const token = bearerToken(request);
-  if (!token) return message(401, "Not signed in", "no Authorization header");
+  // The group is read as the manager (asCaller), so row-level security applies:
+  // they only see groups they're in.
+  const signedIn = await signedInCaller(request, keys);
+  if ("response" in signedIn) return signedIn.response;
+  const { user, asCaller } = signedIn;
 
   const { groupId, email } = (await request.json().catch(() => ({}))) as {
     groupId?: string;
     email?: string;
   };
   if (!groupId || !email) return message(400, "groupId and email are required");
-
-  // The group is read as the manager, so row-level security applies: they only
-  // see groups they're in.
-  const asCaller = createClient(url, publishableKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false },
-  });
-  const signedIn = await signedInUser(asCaller, token);
-  if ("response" in signedIn) return signedIn.response;
-  const user = signedIn.user;
 
   const { data: group, error: groupError } = await asCaller
     .from("groups")
@@ -73,7 +63,7 @@ export default async (request: Request) => {
 
   // Only someone who is in the group gets the email, so this can't be used to
   // email any address. Groups are small, so looking up each account is fine.
-  const admin = createClient(url, secretKey, { auth: { persistSession: false } });
+  const admin = adminClient(keys.url, keys.secretKey);
   const normalized = email.trim().toLowerCase();
   const accounts = await Promise.all(
     members
