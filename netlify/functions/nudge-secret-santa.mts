@@ -17,6 +17,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { mailConfigured, sendEmail } from "../lib/mail.ts";
 import { buildNudgeEmail, type NudgeRow } from "../lib/secret-santa/secretSantaNudge.ts";
+import { bearerToken, message, missingEnv, signedInUser } from "../lib/respond.ts";
 
 export default async (request: Request) => {
   if (request.method !== "POST") return message(405, "Method not allowed");
@@ -28,12 +29,19 @@ export default async (request: Request) => {
     return message(
       500,
       "Missing VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY or SUPABASE_SECRET_KEY",
+      `missing ${missingEnv("VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY")}`,
     );
   }
-  if (!mailConfigured()) return message(503, "Sending emails isn't set up yet");
+  if (!mailConfigured()) {
+    return message(
+      503,
+      "Sending emails isn't set up yet",
+      `missing ${missingEnv("RESEND_API_KEY", "MAIL_FROM")}`,
+    );
+  }
 
-  const token = request.headers.get("Authorization")?.replace(/^Bearer /, "");
-  if (!token) return message(401, "Not signed in");
+  const token = bearerToken(request);
+  if (!token) return message(401, "Not signed in", "no Authorization header");
   const body = (await request.json().catch(() => ({}))) as { recipient?: unknown };
   if (typeof body.recipient !== "string") return message(400, "recipient is required");
 
@@ -41,23 +49,23 @@ export default async (request: Request) => {
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false },
   });
-  const { data: user, error: userError } = await asCaller.auth.getUser(token);
-  if (!user.user) {
-    // Logged so a 401 says why: an expired or revoked token, or Supabase not answering.
-    console.warn(`Checking the token failed: ${userError?.status ?? "?"} ${userError?.message}`);
-    return message(401, "Not signed in");
-  }
+  const signedIn = await signedInUser(asCaller, token);
+  if ("response" in signedIn) return signedIn.response;
+  const user = signedIn.user;
 
   // Looked up as the caller (row-level security lets you read your own profile): the
   // secret key's service_role has no table grants, only execute on the nudge functions.
   const { data: giver, error: giverError } = await asCaller
     .from("profiles")
     .select("id")
-    .eq("account_id", user.user.id)
+    .eq("account_id", user.id)
     .maybeSingle();
   if (!giver) {
-    console.error(`No profile for account ${user.user.id}: ${giverError?.message ?? "no row"}`);
-    return message(500, "Couldn't find your profile");
+    return message(
+      500,
+      "Couldn't find your profile",
+      `account ${user.id}: ${giverError?.message ?? "no row"}`,
+    );
   }
 
   const admin = createClient(url, secretKey, { auth: { persistSession: false } });
@@ -69,8 +77,7 @@ export default async (request: Request) => {
     if (error.hint === "too_soon") return message(429, error.message);
     if (error.hint === "enough_items") return message(409, error.message);
     if (error.code === "P0002") return message(404, error.message);
-    console.error(`Claiming the nudge failed: ${error.message}`);
-    return message(500, error.message);
+    return message(500, error.message, `claiming the nudge failed (${error.code})`);
   }
   const [row] = (data ?? []) as NudgeRow[];
   // Everyone in a draw has an account, but maybe no email address.
@@ -78,18 +85,13 @@ export default async (request: Request) => {
 
   const result = await sendEmail(buildNudgeEmail(row, new URL(request.url).origin));
   if (!result.ok) {
-    console.error(`Sending the nudge failed: ${result.error}`);
     const { error: releaseError } = await admin.rpc("release_secret_santa_nudge", {
       target_secret_santa: row.secret_santa_id,
       giver: giver.id,
       previous_nudged_at: row.previous_nudged_at,
     });
     if (releaseError) console.error(`Releasing the nudge failed: ${releaseError.message}`);
-    return message(502, result.error);
+    return message(502, result.error, "sending the nudge failed");
   }
   return message(200, "sent");
 };
-
-function message(status: number, text: string) {
-  return Response.json({ message: text }, { status });
-}

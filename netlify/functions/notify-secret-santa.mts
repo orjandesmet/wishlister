@@ -14,9 +14,10 @@
 import { createClient } from "@supabase/supabase-js";
 import { mailConfigured } from "../lib/mail.ts";
 import { sendSecretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
+import { bearerToken, message, missingEnv, signedInUser } from "../lib/respond.ts";
 
 export default async (request: Request) => {
-  if (request.method !== "POST") return new Response("Method not allowed", { status: 405 });
+  if (request.method !== "POST") return message(405, "Method not allowed");
 
   const url = process.env.VITE_SUPABASE_URL;
   const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -25,24 +26,25 @@ export default async (request: Request) => {
     return message(
       500,
       "Missing VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY or SUPABASE_SECRET_KEY",
+      `missing ${missingEnv("VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY")}`,
     );
   }
-  if (!mailConfigured()) return message(200, "mail isn't set up");
+  if (!mailConfigured()) {
+    console.warn(`Nothing sent: missing ${missingEnv("RESEND_API_KEY", "MAIL_FROM")}`);
+    return message(200, "mail isn't set up");
+  }
 
   // Only signed-in people can make it run.
-  const token = request.headers.get("Authorization")?.replace(/^Bearer /, "");
-  if (!token) return message(401, "Not signed in");
+  const token = bearerToken(request);
+  if (!token) return message(401, "Not signed in", "no Authorization header");
   const asCaller = createClient(url, publishableKey, { auth: { persistSession: false } });
-  const { data: user } = await asCaller.auth.getUser(token);
-  if (!user.user) return message(401, "Not signed in");
+  const signedIn = await signedInUser(asCaller, token);
+  if ("response" in signedIn) return signedIn.response;
 
   const admin = createClient(url, secretKey, { auth: { persistSession: false } });
   const { sent, errors } = await sendSecretSantaNotices(admin, new URL(request.url).origin);
-  for (const error of errors) console.error(`Sending Secret Santa emails failed: ${error}`);
-  if (errors.length > 0) return message(502, errors.join("; "));
+  if (errors.length > 0) {
+    return message(502, errors.join("; "), `sending Secret Santa emails failed, ${sent} sent`);
+  }
   return message(200, `sent ${sent}`);
 };
-
-function message(status: number, text: string) {
-  return Response.json({ message: text }, { status });
-}
