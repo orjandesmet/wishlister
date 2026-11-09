@@ -1,14 +1,13 @@
 /// <reference types="node" />
 // Netlify Scheduled Function: touches the database once a day so the free
 // Supabase project never counts as inactive (it pauses after 7 idle days).
-import { missingEnv } from "../lib/respond.ts";
+import { requireEnv } from "../lib/respond.ts";
 
 export default async () => {
-  const url = process.env.VITE_SUPABASE_URL;
-  const key = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !key) {
-    throw new Error(`Missing ${missingEnv("VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY")}`);
-  }
+  const read = requireEnv("VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY");
+  if ("missing" in read) throw new Error(`Missing ${read.missing}`);
+  const url = read.env.VITE_SUPABASE_URL;
+  const key = read.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
   const response = await fetch(`${url}/rest/v1/rpc/keepalive`, {
     method: "POST",

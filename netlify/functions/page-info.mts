@@ -9,28 +9,22 @@
 // Netlify to use a Microlink plan instead of the free 50 links a day.
 // bol.com blocks both, so its product links go through ReefAPI when
 // REEFAPI_API_KEY is set (2 credits per product).
-import { createClient } from "@supabase/supabase-js";
 import { isFetchableUrl, lookUpPage } from "../lib/pageInfo.ts";
-import { bearerToken, message, missingEnv, signedInUser } from "../lib/respond.ts";
+import { message, requireEnv } from "../lib/respond.ts";
+import { signedInCaller } from "../lib/supabase.ts";
 
 export default async (request: Request) => {
   if (request.method !== "POST") return message(405, "Method not allowed");
 
-  const url = process.env.VITE_SUPABASE_URL;
-  const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  if (!url || !publishableKey) {
-    return message(
-      500,
-      "Supabase isn't configured",
-      `missing ${missingEnv("VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY")}`,
-    );
+  const read = requireEnv("VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY");
+  if ("missing" in read) {
+    return message(500, "Supabase isn't configured", `missing ${read.missing}`);
   }
+  const url = read.env.VITE_SUPABASE_URL;
+  const publishableKey = read.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
   // Signed-in users only, so this isn't an open proxy for anyone on the internet.
-  const token = bearerToken(request);
-  if (!token) return message(401, "Not signed in", "no Authorization header");
-  const supabase = createClient(url, publishableKey, { auth: { persistSession: false } });
-  const signedIn = await signedInUser(supabase, token);
+  const signedIn = await signedInCaller(request, { url, publishableKey });
   if ("response" in signedIn) return signedIn.response;
 
   const { url: pageUrl } = (await request.json().catch(() => ({}))) as { url?: string };

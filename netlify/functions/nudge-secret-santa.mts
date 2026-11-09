@@ -14,24 +14,17 @@
 //
 // Needs VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SECRET_KEY,
 // RESEND_API_KEY and MAIL_FROM.
-import { createClient } from "@supabase/supabase-js";
 import { mailConfigured, sendEmail } from "../lib/mail.ts";
 import { buildNudgeEmail, type NudgeRow } from "../lib/secret-santa/secretSantaNudge.ts";
-import { bearerToken, message, missingEnv, signedInUser } from "../lib/respond.ts";
+import { message, missingEnv } from "../lib/respond.ts";
+import { adminClient, signedInCaller, supabaseKeys } from "../lib/supabase.ts";
 
 export default async (request: Request) => {
   if (request.method !== "POST") return message(405, "Method not allowed");
 
-  const url = process.env.VITE_SUPABASE_URL;
-  const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const secretKey = process.env.SUPABASE_SECRET_KEY;
-  if (!url || !publishableKey || !secretKey) {
-    return message(
-      500,
-      "Missing VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY or SUPABASE_SECRET_KEY",
-      `missing ${missingEnv("VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY")}`,
-    );
-  }
+  const setup = supabaseKeys();
+  if ("response" in setup) return setup.response;
+  const { url, secretKey } = setup.keys;
   if (!mailConfigured()) {
     return message(
       503,
@@ -40,18 +33,11 @@ export default async (request: Request) => {
     );
   }
 
-  const token = bearerToken(request);
-  if (!token) return message(401, "Not signed in", "no Authorization header");
   const body = (await request.json().catch(() => ({}))) as { recipient?: unknown };
   if (typeof body.recipient !== "string") return message(400, "recipient is required");
-
-  const asCaller = createClient(url, publishableKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false },
-  });
-  const signedIn = await signedInUser(asCaller, token);
+  const signedIn = await signedInCaller(request, setup.keys);
   if ("response" in signedIn) return signedIn.response;
-  const user = signedIn.user;
+  const { user, asCaller } = signedIn;
 
   // Looked up as the caller (row-level security lets you read your own profile): the
   // secret key's service_role has no table grants, only execute on the nudge functions.
@@ -68,7 +54,7 @@ export default async (request: Request) => {
     );
   }
 
-  const admin = createClient(url, secretKey, { auth: { persistSession: false } });
+  const admin = adminClient(url, secretKey);
   const { data, error } = await admin.rpc("claim_secret_santa_nudge", {
     giver: giver.id,
     recipient: body.recipient,

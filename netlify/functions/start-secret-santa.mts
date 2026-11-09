@@ -18,7 +18,6 @@
 //
 // Needs VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY and SUPABASE_SECRET_KEY,
 // and for the emails RESEND_API_KEY and MAIL_FROM.
-import { createClient } from "@supabase/supabase-js";
 import { mailConfigured } from "../lib/mail.ts";
 import {
   draw,
@@ -28,7 +27,8 @@ import {
   type Pair,
 } from "../lib/secret-santa/secretSanta.ts";
 import { sendSecretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
-import { bearerToken, message, missingEnv, signedInUser } from "../lib/respond.ts";
+import { message, missingEnv } from "../lib/respond.ts";
+import { adminClient, signedInCaller, supabaseKeys } from "../lib/supabase.ts";
 
 type Candidate = { profile_id: string; display_name: string };
 type HistoryRow = { draw_rank: number; giver_profile_id: string; recipient_profile_id: string };
@@ -36,19 +36,9 @@ type HistoryRow = { draw_rank: number; giver_profile_id: string; recipient_profi
 export default async (request: Request) => {
   if (request.method !== "POST") return message(405, "Method not allowed");
 
-  const url = process.env.VITE_SUPABASE_URL;
-  const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const secretKey = process.env.SUPABASE_SECRET_KEY;
-  if (!url || !publishableKey || !secretKey) {
-    return message(
-      500,
-      "Missing VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY or SUPABASE_SECRET_KEY",
-      `missing ${missingEnv("VITE_SUPABASE_URL", "VITE_SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SECRET_KEY")}`,
-    );
-  }
-
-  const token = bearerToken(request);
-  if (!token) return message(401, "Not signed in", "no Authorization header");
+  const setup = supabaseKeys();
+  if ("response" in setup) return setup.response;
+  const { url, secretKey } = setup.keys;
 
   const body = (await request.json().catch(() => ({}))) as {
     occasionId?: string;
@@ -89,14 +79,10 @@ export default async (request: Request) => {
   const note = (body.message ?? "").trim();
   if (note.length > 2000) return message(400, "The message can be 2000 characters at most");
 
-  // Everything about the caller is read as them, so row-level security applies.
-  const asCaller = createClient(url, publishableKey, {
-    global: { headers: { Authorization: `Bearer ${token}` } },
-    auth: { persistSession: false },
-  });
-  const signedIn = await signedInUser(asCaller, token);
+  // Everything about the caller is read as them (asCaller), so row-level security applies.
+  const signedIn = await signedInCaller(request, setup.keys);
   if ("response" in signedIn) return signedIn.response;
-  const user = signedIn.user;
+  const { user, asCaller } = signedIn;
 
   const { data: occasion, error: occasionError } = await asCaller
     .from("occasions")
@@ -146,7 +132,7 @@ export default async (request: Request) => {
     );
   }
 
-  const admin = createClient(url, secretKey, { auth: { persistSession: false } });
+  const admin = adminClient(url, secretKey);
   const { data: historyRows, error: historyError } = await admin.rpc("secret_santa_history", {
     target_group: groupId,
   });

@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { bearerToken, message, missingEnv, signedInUser } from "./respond.ts";
+import { bearerToken, message, missingEnv, requireEnv } from "./respond.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -38,40 +37,25 @@ describe("bearerToken", () => {
   });
 });
 
-describe("signedInUser", () => {
-  const client = (result: unknown) =>
-    ({ auth: { getUser: vi.fn().mockResolvedValue(result) } }) as unknown as SupabaseClient;
-
-  it("gives the user", async () => {
-    const user = { id: "account-1" };
-    expect(await signedInUser(client({ data: { user }, error: null }), "t")).toEqual({ user });
-  });
-
-  it("answers 401 and logs why, without the token", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const result = await signedInUser(
-      client({ data: { user: null }, error: { status: 403, message: "token is expired" } }),
-      "secret-token",
-    );
-    expect("response" in result && result.response.status).toBe(401);
-    expect(warn).toHaveBeenCalledWith(
-      "401 Not signed in (checking the token failed: 403 token is expired)",
-    );
-    expect(String(warn.mock.calls)).not.toContain("secret-token");
-  });
-
-  it("answers 401 without a token", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
-    const result = await signedInUser(client({}), undefined);
-    expect("response" in result && result.response.status).toBe(401);
-  });
-});
-
 describe("missingEnv", () => {
   it("names the unset variables only", () => {
     vi.stubEnv("SET_ONE", "value");
     vi.stubEnv("UNSET_ONE", "");
     expect(missingEnv("SET_ONE", "UNSET_ONE")).toBe("UNSET_ONE");
     expect(missingEnv("SET_ONE")).toBe("none");
+  });
+});
+
+describe("requireEnv", () => {
+  it("gives the values when all are set", () => {
+    vi.stubEnv("A_KEY", "a");
+    vi.stubEnv("B_KEY", "b");
+    expect(requireEnv("A_KEY", "B_KEY")).toEqual({ env: { A_KEY: "a", B_KEY: "b" } });
+  });
+
+  it("names the missing ones, not the values", () => {
+    vi.stubEnv("A_KEY", "secret-a");
+    vi.stubEnv("B_KEY", "");
+    expect(requireEnv("A_KEY", "B_KEY", "C_KEY")).toEqual({ missing: "B_KEY, C_KEY" });
   });
 });
