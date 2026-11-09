@@ -14,6 +14,8 @@
 // of `vp run db:start`) and emails go there instead (see mailpit.ts);
 // RESEND_API_KEY isn't needed.
 
+import { envValue } from "./respond.ts";
+
 export type Email = {
   to: string | string[];
   subject: string;
@@ -30,7 +32,9 @@ const RESEND_BATCH_URL = "https://api.resend.com/emails/batch";
 const BATCH_SIZE = 100;
 
 export function mailConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
-  return Boolean(mailpitUrl(env) || (env.RESEND_API_KEY && env.MAIL_FROM));
+  return Boolean(
+    mailpitUrl(env) || (envValue("RESEND_API_KEY", env) && envValue("MAIL_FROM", env)),
+  );
 }
 
 /**
@@ -51,8 +55,8 @@ export async function sendEmail(
     const { sendToMailpit } = await import("./mailpit.ts");
     return sendToMailpit(email, mailpit, env.MAIL_FROM, fetchImpl);
   }
-  const apiKey = env.RESEND_API_KEY;
-  const from = env.MAIL_FROM;
+  const apiKey = envValue("RESEND_API_KEY", env);
+  const from = envValue("MAIL_FROM", env);
   if (!apiKey || !from) {
     return {
       ok: false,
@@ -96,8 +100,8 @@ export async function sendEmails(
     }
     return { sent, errors };
   }
-  const apiKey = env.RESEND_API_KEY;
-  const from = env.MAIL_FROM;
+  const apiKey = envValue("RESEND_API_KEY", env);
+  const from = envValue("MAIL_FROM", env);
   if (!apiKey || !from) {
     return {
       sent: 0,
