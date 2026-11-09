@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import { bearerToken, message, missingEnv, requireEnv } from "./respond.ts";
+import { bearerToken, envValue, message, missingEnv, requireEnv } from "./respond.ts";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -57,5 +57,20 @@ describe("requireEnv", () => {
     vi.stubEnv("A_KEY", "secret-a");
     vi.stubEnv("B_KEY", "");
     expect(requireEnv("A_KEY", "B_KEY", "C_KEY")).toEqual({ missing: "B_KEY, C_KEY" });
+  });
+});
+
+describe("envValue", () => {
+  it("treats empty and `-` as not set", () => {
+    expect(envValue("A", { A: "key" })).toBe("key");
+    expect(envValue("A", { A: "-" })).toBeUndefined();
+    expect(envValue("A", { A: "" })).toBeUndefined();
+    expect(envValue("A", {})).toBeUndefined();
+  });
+
+  it("makes requireEnv and missingEnv count `-` as missing", () => {
+    vi.stubEnv("SOME_KEY", "-");
+    expect(requireEnv("SOME_KEY")).toEqual({ missing: "SOME_KEY" });
+    expect(missingEnv("SOME_KEY")).toBe("SOME_KEY");
   });
 });

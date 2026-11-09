@@ -10,7 +10,7 @@
 // bol.com blocks both, so its product links go through ReefAPI when
 // REEFAPI_API_KEY is set (2 credits per product).
 import { isFetchableUrl, lookUpPage } from "../lib/pageInfo.ts";
-import { message, requireEnv } from "../lib/respond.ts";
+import { envValue, message, requireEnv } from "../lib/respond.ts";
 import { signedInCaller } from "../lib/supabase.ts";
 
 export default async (request: Request) => {
@@ -38,8 +38,8 @@ export default async (request: Request) => {
 
   return Response.json(
     await lookUpPage(pageUrl, {
-      microlink: process.env.MICROLINK_API_KEY,
-      reefapi: process.env.REEFAPI_API_KEY,
+      microlink: envValue("MICROLINK_API_KEY"),
+      reefapi: envValue("REEFAPI_API_KEY"),
     }),
   );
 };

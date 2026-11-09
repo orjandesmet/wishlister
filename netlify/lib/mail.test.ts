@@ -42,6 +42,14 @@ describe("sendEmail", () => {
     expect(mailConfigured({})).toBe(false);
     expect(mailConfigured(env)).toBe(true);
   });
+
+  it("treats a key of `-` as not set up", async () => {
+    const fetch = fakeFetch(200, { id: "email_1" });
+    const off = { ...env, RESEND_API_KEY: "-" };
+    expect(mailConfigured(off)).toBe(false);
+    expect((await sendEmail(email, off, fetch)).ok).toBe(false);
+    expect(fetch).not.toHaveBeenCalled();
+  });
 });
 
 describe("sendEmails", () => {

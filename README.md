@@ -316,6 +316,9 @@ release.
 4. **Netlify**, _Site configuration > Environment variables_: give `VITE_SUPABASE_URL` and
    `VITE_SUPABASE_PUBLISHABLE_KEY` a branch value for `demo` (the demo project's), and add
    `VITE_DEMO` = `true` for the `demo` branch only.
+   Netlify can't give a variable an empty value for one branch, so set a key to `-` to turn its
+   feature off on the demo (e.g. `RESEND_API_KEY`, `MICROLINK_API_KEY`, `REEFAPI_API_KEY`); the
+   functions treat `-` as not set.
 5. **Netlify**, _Build & deploy > Branches and deploy contexts_: under _Branch deploys_, add the
    branch `demo`. It appears after the first release tag, or push it once by hand.
 
