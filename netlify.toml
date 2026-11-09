@@ -5,11 +5,6 @@ port = 8888
 [build]
 command = "pnpm run build"
 publish = "dist"
-# Production only goes live on a release tag, by hand or with the `deploy now` PR label,
-# through .github/workflows/deploy.yml. So Netlify skips its own production builds of main
-# (exit 0 = skip). Deploy previews and the demo branch deploy still build here, and the
-# workflow's build (GITHUB_ACTIONS is set there) goes ahead.
-ignore = "[ \"$CONTEXT\" = production ] && [ -z \"$GITHUB_ACTIONS\" ]"
 
 [build.environment]
 NODE_VERSION = "24"
