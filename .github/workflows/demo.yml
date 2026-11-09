@@ -2,13 +2,20 @@ name: Demo
 
 # Keeps the demo site (a branch deploy of `demo`, on its own Supabase project) fresh:
 # every three days, and by hand, it applies new migrations to the demo database and
-# wipes it back to the seed. A release tag also puts that release on the demo site.
+# wipes it back to the seed. A release tag also puts that release on the demo site
+# (release.yml calls it with `release` for the tags it creates).
 on:
   schedule:
     - cron: "0 4 */3 * *"
   workflow_dispatch:
   push:
     tags: ["v*"]
+  workflow_call:
+    inputs:
+      release:
+        description: "Release tag to put on the demo site"
+        type: string
+        required: true
 
 concurrency:
   group: demo
@@ -41,6 +48,8 @@ jobs:
           version: 2.121.0
       - if: steps.setup.outputs.ready
         uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.release || github.ref }}
       - name: Apply new migrations
         if: steps.setup.outputs.ready
         run: supabase db push --db-url "$DEMO_DATABASE_URL" --yes
@@ -50,5 +59,5 @@ jobs:
         run: psql "$DEMO_DATABASE_URL" -v ON_ERROR_STOP=1 --single-transaction -f supabase/demo/reset.sql
       # Netlify builds the branch deploy; branch deploys cost no credits.
       - name: Put the release on the demo site
-        if: steps.setup.outputs.ready && startsWith(github.ref, 'refs/tags/')
+        if: steps.setup.outputs.ready && (inputs.release || startsWith(github.ref, 'refs/tags/'))
         run: git push --force origin HEAD:refs/heads/demo

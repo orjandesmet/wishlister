@@ -329,6 +329,10 @@ settings page shows a release tag. Netlify's production branch is `production`, 
 **Deploy** workflow (`.github/workflows/deploy.yml`) moves it. Netlify then builds and publishes
 it as usual, with its log under _Deploys_ (same idea as the `demo` branch). The branch moves on:
 
+- **Version bump**: change `"version"` in `package.json` on `main`. The **Release** workflow
+  (`.github/workflows/release.yml`) tags that commit `v<version>` and runs the deploy and the
+  demo update itself (a tag pushed by a workflow can't start other workflows). It doesn't wait
+  for CI, and skips a version that's already tagged.
 - **Release**: push a `v*` tag. It works on any branch, so for a patch on an older release, branch
   off its tag, fix, tag `v1.0.1` there and push the tag. Merge that branch back into `main` too,
   or the next release from `main` won't have the fix. (Only tags on commits that already have

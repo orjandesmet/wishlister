@@ -5,7 +5,8 @@ name: Deploy
 # change the live site. The branch moves when:
 # - a release tag (`v*`) is pushed, on any branch, so a patch tag on a side branch works too;
 # - someone presses "Run workflow" on the Actions tab (optionally naming a tag, branch or commit);
-# - a pull request with the `deploy now` label is merged into main (for hotfixes).
+# - a pull request with the `deploy now` label is merged into main (for hotfixes);
+# - release.yml tags a new version (its tag push can't start this workflow by itself).
 # Same idea as the `demo` branch in demo.yml.
 on:
   push:
@@ -16,6 +17,12 @@ on:
         description: "Tag, branch or commit to put live (empty: the one picked above)"
         required: false
         default: ""
+  workflow_call:
+    inputs:
+      ref:
+        description: "Tag to put live"
+        type: string
+        required: true
   pull_request:
     types: [closed]
     branches: [main]

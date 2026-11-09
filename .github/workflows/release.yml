@@ -1,0 +1,58 @@
+name: Release
+
+# Bumping "version" in package.json on main is enough to release: this tags that commit
+# `v<version>` and then deploys it to production and the demo site. A tag pushed by this
+# workflow can't start other workflows (GitHub blocks that for its own token), so it calls
+# deploy.yml and demo.yml itself. Tagging by hand keeps working too; a tag that already
+# exists is left alone.
+on:
+  push:
+    branches: [main]
+    paths: [package.json]
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  # Pushes the tag and lets the called workflows move `production` and `demo`.
+  contents: write
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # Tags, to see whether this version is already tagged.
+          fetch-depth: 0
+      - name: Tag a new version
+        id: tag
+        run: |
+          tag="v$(jq -r .version package.json)"
+          if git rev-parse --verify --quiet "refs/tags/$tag" > /dev/null; then
+            echo "::notice::$tag already exists, nothing to release."
+            exit 0
+          fi
+          git tag "$tag" "$GITHUB_SHA"
+          git push origin "refs/tags/$tag"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "::notice::Tagged $tag."
+
+  deploy:
+    needs: tag
+    if: needs.tag.outputs.tag
+    uses: ./.github/workflows/deploy.yml
+    with:
+      ref: ${{ needs.tag.outputs.tag }}
+
+  demo:
+    needs: tag
+    if: needs.tag.outputs.tag
+    uses: ./.github/workflows/demo.yml
+    with:
+      release: ${{ needs.tag.outputs.tag }}
+    secrets: inherit
