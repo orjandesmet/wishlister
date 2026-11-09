@@ -8,6 +8,7 @@
 // Like the digest, the texts live here instead of in src/i18n (which holds JSX).
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { escapeHtml, sendEmails, type Email } from "./mail.ts";
+import type { NoticeKind } from "./notices.ts";
 
 /** One row of claim_removal_notices(): one removed item, for its buyer. */
 export type RemovalRow = {
@@ -112,3 +113,5 @@ export async function sendRemovalNotices(
   }
   return result;
 }
+
+export const removalNotices: NoticeKind = { what: "removal notices", send: sendRemovalNotices };

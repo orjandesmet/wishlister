@@ -8,6 +8,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseMarkdown, type Block, type Inline } from "../../../src/lib/markdown.ts";
 import { escapeHtml, sendEmails, type Email } from "../mail.ts";
+import type { NoticeKind } from "../notices.ts";
 
 /** One row of claim_secret_santa_notices(): one email. */
 export type SecretSantaRow = {
@@ -145,3 +146,8 @@ export async function sendSecretSantaNotices(
   }
   return result;
 }
+
+export const secretSantaNotices: NoticeKind = {
+  what: "Secret Santa emails",
+  send: sendSecretSantaNotices,
+};

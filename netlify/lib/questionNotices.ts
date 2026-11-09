@@ -8,6 +8,7 @@
 // Like the digest, the texts live here instead of in src/i18n (which holds JSX).
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { escapeHtml, sendEmails, type Email } from "./mail.ts";
+import type { NoticeKind } from "./notices.ts";
 
 /** One row of claim_question_notices(): one email. */
 export type QuestionRow = {
@@ -174,3 +175,5 @@ export async function sendQuestionNotices(
   }
   return result;
 }
+
+export const questionNotices: NoticeKind = { what: "question emails", send: sendQuestionNotices };
