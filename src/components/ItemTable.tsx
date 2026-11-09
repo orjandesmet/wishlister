@@ -22,6 +22,7 @@ import { itemPictureSources } from "../lib/itemPictures.ts";
 import { shopName } from "../lib/links.ts";
 import { parseMarkdown } from "../lib/markdown.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
+import type { PurchaseState } from "../lib/createPurchases.ts";
 import type { TableColumn, TableSort } from "../lib/tableSort.ts";
 import { heartCount } from "../lib/wantedLevel.ts";
 import u from "../utilities.module.css";
@@ -29,17 +30,14 @@ import { Button } from "./Button.tsx";
 import { Chip } from "./Chip.tsx";
 import { EditLabel } from "./EditLabel.tsx";
 import { RemoveLabel } from "./RemoveLabel.tsx";
-import {
-  ExternalLinkIcon,
-  Heart,
-  PriceTag,
-  YouBoughtFor,
-  type PurchaseState,
-} from "./ItemCard.tsx";
+import { ExternalLinkIcon } from "./ExternalLinkIcon.tsx";
+import { HeartIcon } from "./HeartIcon.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
 import { OccasionPicker } from "./OccasionPicker.tsx";
 import styles from "./ItemTable.module.css";
 import { Markdown } from "./Markdown.tsx";
+import { PriceTag } from "./PriceTag.tsx";
+import { YouBoughtFor } from "./YouBoughtFor.tsx";
 import { WantedLevelText } from "./WantedLevelText.tsx";
 
 export type ItemTableProps = {
@@ -138,7 +136,7 @@ function WantedCell(props: { item: Item; onChange?: () => void }) {
   const content = () => (
     <>
       <span class={styles.hearts} classList={{ [styles.noHearts]: hearts() === 0 }}>
-        <For each={Array.from({ length: Math.max(hearts(), 1) })}>{() => <Heart />}</For>
+        <For each={Array.from({ length: Math.max(hearts(), 1) })}>{() => <HeartIcon />}</For>
       </span>
       <span class={u.visuallyHidden}>
         <WantedLevelText level={level()} />

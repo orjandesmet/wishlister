@@ -1,5 +1,4 @@
 import { createMemo, createSignal } from "solid-js";
-import type { PurchaseState } from "../components/ItemCard.tsx";
 import { announce } from "./a11y.ts";
 import type { Item } from "./api/items.ts";
 import type { Occasion } from "./api/occasions.ts";
@@ -10,6 +9,12 @@ import { t } from "./i18n.ts";
 import { loadPurchases } from "./loaders.ts";
 import type { ItemId, OccasionId, ProfileId } from "./ids.ts";
 import { burstMoneyForTap } from "./moneyBurst.ts";
+
+/**
+ * Whether you can mark the item as bought. "hidden" shows nothing: your own list,
+ * or purchases are still loading.
+ */
+export type PurchaseState = "hidden" | "available" | "mine" | "someone";
 
 /** Who bought what on a list, and the "I bought this" flow. */
 export function createPurchases(

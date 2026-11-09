@@ -196,7 +196,6 @@
 }
 
 .item.notWanted .name,
-.item.notWanted .priceAmount,
 .notWantedNote {
   color: var(--pill-negative-ink);
 }
@@ -208,30 +207,6 @@
 
 .notWantedNote svg {
   color: var(--danger);
-}
-
-/* Figures keep their digits in line. */
-.price {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-strong);
-}
-
-.priceAmount {
-  font-size: 20px;
-  line-height: 1.2;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  color: var(--accent);
-}
-
-/* "≈" never ends up on a line of its own. */
-.priceConverted {
-  font-size: 14px;
-  color: var(--muted);
-  white-space: nowrap;
 }
 
 /* What is bought shows as a green pill; what someone else bought is a quiet grey one. */
@@ -390,18 +365,6 @@ label.body {
   min-height: 32px;
 }
 
-.price.smallPrice {
-  margin: 0;
-}
-
-.smallPrice .priceAmount {
-  font-size: 15px;
-}
-
-.smallPrice .priceConverted {
-  font-size: 13px;
-}
-
 /* The shop as an icon alone, as big a target as the picture icon. */
 .shopIcon {
   justify-content: center;
@@ -454,9 +417,4 @@ label.body {
   min-height: 36px;
   padding: 0 16px;
   font-size: 14px;
-}
-
-/* Wraps only between its parts (see YouBoughtFor). */
-.noWrap {
-  white-space: nowrap;
 }

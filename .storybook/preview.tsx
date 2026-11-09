@@ -27,6 +27,8 @@ sb.mock(import("../src/lib/api/secretSanta.ts"));
 // Real code, but a story can fix the date or show the install banner.
 sb.mock(import("../src/lib/occasions.ts"), { spy: true });
 sb.mock(import("../src/lib/install.ts"), { spy: true });
+// Real code too, but a story can set the exchange rates (PriceTag).
+sb.mock(import("../src/lib/currency.ts"), { spy: true });
 // Demo mode is off unless a story turns it on (src/lib/__mocks__/demoMode.ts).
 sb.mock(import("../src/lib/demoMode.ts"));
 
