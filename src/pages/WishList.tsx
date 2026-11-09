@@ -205,22 +205,16 @@ export default function WishList() {
     getPendingCleanup,
   );
   const cleanupItems = () => loaded(pendingCleanup) ?? [];
-  const [cleanupError, setCleanupError] = createSignal<string>();
-  const [cleanupBusy, setCleanupBusy] = createSignal(false);
-  const onCleanUp = async (removeIds: ItemId[]) => {
-    setCleanupBusy(true);
-    setCleanupError(undefined);
-    try {
+  // Its own runner: what goes wrong shows in the dialog, not on the page behind it.
+  const cleanup = createActionRunner();
+  const [cleanupBusy, runCleanup] = cleanup.busyRunner();
+  const onCleanUp = (removeIds: ItemId[]) =>
+    runCleanup(async () => {
       await cleanUpBoughtItems(params.profileId, removeIds);
       await Promise.all([refetchItems(), refetchCleanup()]);
       announce(t("cleanup.done"));
       focusHeading();
-    } catch (e) {
-      setCleanupError((e as Error).message);
-    } finally {
-      setCleanupBusy(false);
-    }
-  };
+    });
 
   // oxlint-disable-next-line no-unassigned-vars
   let cardsRoot: HTMLDivElement | undefined;
@@ -484,7 +478,7 @@ export default function WishList() {
             items={cleanupItems()}
             childName={isOwnList() ? undefined : profile()?.display_name}
             busy={cleanupBusy()}
-            error={cleanupError()}
+            error={cleanup.error()}
             onDone={(removeIds) => void onCleanUp(removeIds)}
           />
         </Show>

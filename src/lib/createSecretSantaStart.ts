@@ -8,6 +8,7 @@ import {
   type SecretSantaInput,
 } from "./api/secretSanta.ts";
 import { clearCache } from "./cache.ts";
+import { createActionRunner } from "./createActionRunner.ts";
 import { t } from "./i18n.ts";
 import type { GroupId } from "./ids.ts";
 
@@ -20,9 +21,9 @@ export function createSecretSantaStart(
 ) {
   // Managers only: the database refuses anyone else.
   const [candidates] = createResource(groupId, getSecretSantaCandidates);
-  const [busy, setBusy] = createSignal(false);
-  // Why the draw couldn't start, shown by the form's button.
-  const [error, setError] = createSignal<string>();
+  // `error`: why the draw couldn't start, shown by the form's button.
+  const { error, busyRunner } = createActionRunner();
+  const [busy, runBusy] = busyRunner();
   // How the emails went, once the draw is made.
   const [started, setStarted] = createSignal<MailState>();
 
@@ -41,19 +42,14 @@ export function createSecretSantaStart(
       ) {
         return;
       }
-      setError(undefined);
-      setBusy(true);
-      try {
+      await runBusy(async () => {
         setStarted(await startSecretSanta(input));
         // Made by a Netlify function, not through the Supabase client, so what the group page
         // remembers about its draws is out of date now.
         clearCache();
         await onStarted();
         announce(t("a11y.secretSantaStarted", { occasion: name }));
-      } catch (e) {
-        setError((e as Error).message);
-      }
-      setBusy(false);
+      });
     },
   };
 }
