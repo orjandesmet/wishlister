@@ -39,6 +39,36 @@ Then use the local lines from `.env.example` in `.env.local` and restart `vp dev
   `MAILPIT_URL=http://127.0.0.1:54324` to `.env.local` and restart `netlify dev`; with it set
   (and only under `netlify dev`), `RESEND_API_KEY` isn't used. Leave both out to send none.
 
+### Running scheduled functions by hand
+
+`netlify dev` never runs scheduled functions on their schedule, but you can start one
+yourself while it runs (`vp run netlify-dev`, http://localhost:8888):
+
+```bash
+curl http://localhost:8888/.netlify/functions/send-digests
+# or, in a second terminal:
+pnpx --package=netlify-cli netlify -- functions:invoke send-digests --port 8888
+```
+
+The output and any errors appear in the `netlify dev` terminal. This only works locally;
+in production scheduled functions can't be called by URL.
+
+| Function         | Schedule         | What a run does                                                                                      |
+| ---------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
+| `send-digests`   | daily, 17:00 UTC | Emails followers what changed on their lists, plus missed removal, question and Secret Santa emails. |
+| `clean-pictures` | weekly           | Deletes uploaded item pictures no item uses anymore from Storage.                                    |
+| `keepalive`      | daily            | Pings the database so the free Supabase project doesn't pause.                                       |
+
+They need the local `VITE_SUPABASE_URL` and `SUPABASE_SECRET_KEY` (`keepalive` uses
+`VITE_SUPABASE_PUBLISHABLE_KEY`) in `.env.local`; `netlify dev` reads that file and sets
+`URL` to http://localhost:8888 for the links in the emails. For `send-digests`:
+
+- Set `MAILPIT_URL` (see above) to see the emails in Mailpit. Without it (or Resend), the
+  run sends nothing but still marks the changes as handled.
+- Each run only covers changes since the previous run, and only for lists someone follows.
+  The seed already has follows (Bob follows Alice's list, for example), so sign in as the
+  owner, add or remove an item, then run it.
+
 ## Storybook
 
 ```bash
