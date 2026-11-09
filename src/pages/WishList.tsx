@@ -1,6 +1,6 @@
 import { Icon } from "../components/Icon.tsx";
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
-import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
+import { createMemo, createResource, For, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
 import { CleanupDialog } from "../components/CleanupDialog.tsx";
@@ -41,9 +41,9 @@ import { createListSections } from "../lib/createListSections.ts";
 import { createPurchases } from "../lib/createPurchases.ts";
 import { createQuestions } from "../lib/createQuestions.ts";
 import { createSecretSantaNudge } from "../lib/createSecretSantaNudge.ts";
-import { compareNames, formatList, locale, t } from "../lib/i18n.ts";
+import { compareNames, formatList, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
-import { addDays, formatOccasionDate, today, type IsoDate } from "../lib/occasions.ts";
+import { addDays, today } from "../lib/occasions.ts";
 import { useMe } from "../lib/me.tsx";
 import { listMenuSections } from "../lib/listMenu.ts";
 import { isReady, loaded } from "../lib/resource.ts";
@@ -58,9 +58,6 @@ import styles from "./WishList.module.css";
 
 /** How long you follow a list when no shared occasion is coming up. */
 const DEFAULT_FOLLOW_DAYS = 30;
-
-/** How long the "you're now following" tooltip stays. */
-const FOLLOWED_NOTICE_MS = 3500;
 
 export default function WishList() {
   const params = useParams<{ profileId: ProfileId }>();
@@ -130,33 +127,6 @@ export default function WishList() {
   // Only loaded once we know it isn't your own list.
   const otherList = () => (profile() && !isOwnList() ? params.profileId : undefined);
   const follow = createFollow(() => params.profileId, otherList, runner);
-  // The bell's label changes with it, but out of sight once its popover closes: say it.
-  const onFollow = async (until: IsoDate) => {
-    await follow.follow(until);
-    if (!runner.error()) {
-      announce(t("follow.untilDate", { date: formatOccasionDate(until, locale()) }));
-    }
-  };
-  const onUnfollow = async () => {
-    await follow.unfollow();
-    if (!runner.error()) announce(t("a11y.unfollowed"));
-  };
-  const isFollowing = () => {
-    const until = follow.followUntil.latest;
-    return until != null && until >= today();
-  };
-  // Buying follows the list for you; the bell wiggles and says so for a moment.
-  const [justFollowed, setJustFollowed] = createSignal(false);
-  let followedTimer: ReturnType<typeof setTimeout> | undefined;
-  onCleanup(() => clearTimeout(followedTimer));
-  const onBought = async () => {
-    const was = isFollowing();
-    await follow.refetchFollow();
-    if (was || !isFollowing()) return;
-    setJustFollowed(true);
-    clearTimeout(followedTimer);
-    followedTimer = setTimeout(() => setJustFollowed(false), FOLLOWED_NOTICE_MS);
-  };
   // Reading a failed resource throws, so the helpers see "no items" and the page shows its error.
   const loadedItems = () => loaded(items);
   const purchases = createPurchases(
@@ -164,7 +134,7 @@ export default function WishList() {
     isOwnList,
     () => me().profile.id,
     runner,
-    onBought,
+    follow.afterBuying,
     (gone) => {
       setItems((prev) => prev?.filter((item) => item.id !== gone.id));
       // Its card, and the Undo button just pressed, are gone.
@@ -412,9 +382,9 @@ export default function WishList() {
               suggestedOccasion={follow.nextOccasion()?.name}
               today={today()}
               busy={follow.busy()}
-              onFollow={onFollow}
-              onUnfollow={onUnfollow}
-              justFollowed={justFollowed()}
+              onFollow={follow.follow}
+              onUnfollow={follow.unfollow}
+              justFollowed={follow.justFollowed()}
             />
           </Show>
         </div>
