@@ -1,0 +1,79 @@
+name: Deploy
+
+# Puts a release live. Netlify no longer builds main on every merge (see `ignore` in
+# netlify.toml), so production only changes when this workflow runs:
+# - a release tag (`v*`) is pushed, on any branch, so a patch tag on a side branch works too;
+# - someone presses "Run workflow" on the Actions tab (pick a branch or tag in "Use workflow from");
+# - a pull request with the `deploy now` label is merged into main (for hotfixes).
+# It builds the exact commit here and uploads it to Netlify as the production deploy, with the
+# site's own environment variables. Pull request previews and the demo branch deploy still
+# build on Netlify as before.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+# One production deploy at a time, in the order they were started.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.merged &&
+       contains(github.event.pull_request.labels.*.name, 'deploy now'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    steps:
+      - name: Check Netlify is set up
+        run: |
+          if [ -z "$NETLIFY_AUTH_TOKEN" ] || [ -z "$NETLIFY_SITE_ID" ]; then
+            echo "::error::Add the NETLIFY_AUTH_TOKEN and NETLIFY_SITE_ID repository secrets (see README, Production deploys)."
+            exit 1
+          fi
+      - uses: actions/checkout@v7
+        with:
+          # For a merged pull request: the merge commit on main, not the PR's own branch.
+          ref: ${{ github.event.pull_request.merge_commit_sha || github.ref }}
+          # All history and tags, so the settings page shows the release tag (scripts/buildVersion.ts).
+          fetch-depth: 0
+      # Installs Vite+, Node and pnpm (pinned by devEngines), then runs `vp install`.
+      - uses: voidzero-dev/setup-vp@v1.22.0
+        with:
+          node-version: "24"
+          cache: true
+      - name: Describe the deploy
+        id: describe
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          short=$(git rev-parse --short HEAD)
+          case "$EVENT" in
+            push) message="Release $REF_NAME" ;;
+            pull_request) message="Hotfix: PR #$PR_NUMBER ($short)" ;;
+            *) message="By hand: $REF_NAME ($short)" ;;
+          esac
+          echo "message=$message" >> "$GITHUB_OUTPUT"
+      # Runs the build from netlify.toml with the site's production environment variables,
+      # bundles the functions and publishes everything as the production deploy.
+      - name: Build and deploy to production
+        env:
+          MESSAGE: ${{ steps.describe.outputs.message }}
+        run: >-
+          pnpm dlx netlify-cli@27.16.2 deploy
+          --build --prod --context production
+          --site "$NETLIFY_SITE_ID"
+          --message "$MESSAGE"

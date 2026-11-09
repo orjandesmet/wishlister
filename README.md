@@ -215,6 +215,8 @@ maskable 192 and 512).
    Optionally add `MICROLINK_API_KEY` (see _4. Microlink_ below) and `REEFAPI_API_KEY`
    (see _5. ReefAPI_ below).
 3. Deploy, then put the site URL into Supabase's _Site URL_ (step 1.3).
+4. Set up production deploys from GitHub, see _Production deploys_ below. Until then, merges to
+   `main` don't go live (Netlify skips them on purpose).
 
 ### 3. Resend (app emails)
 
@@ -317,6 +319,38 @@ release.
    `VITE_DEMO` = `true` for the `demo` branch only.
 5. **Netlify**, _Build & deploy > Branches and deploy contexts_: under _Branch deploys_, add the
    branch `demo`. It appears after the first release tag, or push it once by hand.
+
+## Production deploys
+
+Merging into `main` doesn't put anything live. Netlify skips its own production builds (the
+`ignore` command in `netlify.toml`), which saves free-plan credits and means the settings page
+shows a release tag. Production changes only through the **Deploy** workflow
+(`.github/workflows/deploy.yml`), which builds the exact commit in GitHub Actions and uploads it
+to Netlify as the production deploy:
+
+- **Release**: push a `v*` tag. It works on any branch, so for a patch on an older release, branch
+  off its tag, fix, tag `v1.0.1` there and push the tag. Merge that branch back into `main` too,
+  or the next release from `main` won't have the fix. (Only tags on commits that already have
+  `deploy.yml` deploy this way.)
+- **By hand**: _Actions > Deploy > Run workflow_, and pick a branch or tag under _Use workflow
+  from_. Use this to redeploy after changing a Netlify environment variable, too.
+- **Hotfix**: add the `deploy now` label to a pull request into `main`; merging it deploys main
+  right away.
+
+A deploy by hand or by label isn't on a tag, so the settings page shows its commit hash until the
+next release. Each deploy still appears under _Deploys_ in Netlify, with a message like
+"Release v1.0.1", and can be rolled back there; the build log is in the Actions run. Deploy
+previews and the demo branch deploy still build on Netlify as before.
+
+One-time setup:
+
+1. **Netlify**, _User settings > Applications > Personal access tokens_: create a token. Add it as
+   the repository secret `NETLIFY_AUTH_TOKEN` (_Settings > Secrets and variables > Actions_).
+2. **Netlify**, _Site configuration > General > Project details_: copy the _Project ID_ and add it
+   as the repository secret `NETLIFY_SITE_ID`.
+3. **GitHub**, _Issues > Labels_: create the label `deploy now`.
+4. Netlify reads the build's environment variables from the site, so make sure the ones in
+   _2. Netlify_ have a value for the _Production_ context (the default "all contexts" is fine).
 
 ## Closing registrations
 
