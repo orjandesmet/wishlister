@@ -7,7 +7,9 @@
 //
 // Like the digest, the texts live here instead of in src/i18n (which holds JSX).
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { escapeHtml, sendEmails, type Email } from "./mail.ts";
+import { footerHtml, siteBase, textsFor, type EmailLocale } from "./emailParts.ts";
+import { escapeHtml, type Email } from "./mail.ts";
+import { sendClaimedNotices, type NoticeKind } from "./notices.ts";
 
 /** One row of claim_removal_notices(): one removed item, for its buyer. */
 export type RemovalRow = {
@@ -31,7 +33,7 @@ type Texts = {
   footer: string;
 };
 
-const texts: Record<"en" | "nl", Texts> = {
+const texts: Record<EmailLocale, Texts> = {
   en: {
     subject: (item, list) => `${list} removed "${item}" from their wishlist`,
     removed: (item, list) => `${list} removed ${item} from their wishlist.`,
@@ -58,9 +60,9 @@ const texts: Record<"en" | "nl", Texts> = {
 
 /** One email per removed item. `siteUrl` is where the app runs, for the link. */
 export function buildRemovalEmails(rows: RemovalRow[], siteUrl: string): Email[] {
-  const site = siteUrl.replace(/\/$/, "");
+  const site = siteBase(siteUrl);
   return rows.map((row) => {
-    const t = texts[row.locale === "nl" ? "nl" : "en"];
+    const t = textsFor(texts, row.locale);
     const listUrl = `${site}/lists/${row.list_id}`;
     const html = [
       `<p>${t.removed(`<strong>${escapeHtml(row.item_name)}</strong>`, escapeHtml(row.list_name))}</p>`,
@@ -68,7 +70,7 @@ export function buildRemovalEmails(rows: RemovalRow[], siteUrl: string): Email[]
       `<p>${escapeHtml(t.cancel)}</p>`,
       `<p>${escapeHtml(t.keep)}</p>`,
       `<p><a href="${listUrl}">${t.open}</a></p>`,
-      `<p style="color:#666;font-size:13px">${t.footer}</p>`,
+      footerHtml(t.footer),
     ].join("\n");
     const text = [
       t.removed(`"${row.item_name}"`, row.list_name),
@@ -88,27 +90,18 @@ export function buildRemovalEmails(rows: RemovalRow[], siteUrl: string): Email[]
 }
 
 /**
- * Mails every buyer who hasn't heard yet. Claiming the rows marks them as mailed,
- * so two runs at once don't both send; a failed send hands them back for the next
- * run. `admin` is a client with the secret key.
+ * Mails every buyer who hasn't heard yet (see sendClaimedNotices). `admin` is a client with the secret key.
  */
-export async function sendRemovalNotices(
+export function sendRemovalNotices(
   admin: SupabaseClient,
   siteUrl: string,
 ): Promise<{ sent: number; errors: string[] }> {
-  const { data, error } = await admin.rpc("claim_removal_notices");
-  if (error) return { sent: 0, errors: [`Couldn't collect removed items: ${error.message}`] };
-  const rows = (data ?? []) as RemovalRow[];
-  if (rows.length === 0) return { sent: 0, errors: [] };
-
-  const result = await sendEmails(buildRemovalEmails(rows, siteUrl));
-  if (result.errors.length > 0) {
-    // Which emails of a failed batch went out isn't known; with fewer than 100
-    // (one batch), nothing did.
-    const { error: releaseError } = await admin.rpc("release_removal_notices", {
-      item_ids: rows.map((row) => row.item_id),
-    });
-    if (releaseError) result.errors.push(`Couldn't release them: ${releaseError.message}`);
-  }
-  return result;
+  return sendClaimedNotices<RemovalRow>(admin, {
+    claim: "claim_removal_notices",
+    rows: "removed items",
+    build: (rows) => buildRemovalEmails(rows, siteUrl),
+    release: (rows) => ["release_removal_notices", { item_ids: rows.map((row) => row.item_id) }],
+  });
 }
+
+export const removalNotices: NoticeKind = { what: "removal notices", send: sendRemovalNotices };

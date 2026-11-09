@@ -7,7 +7,9 @@
 //
 // Like the digest, the texts live here instead of in src/i18n (which holds JSX).
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { escapeHtml, sendEmails, type Email } from "./mail.ts";
+import { footerHtml, siteBase, textsFor, type EmailLocale } from "./emailParts.ts";
+import { escapeHtml, type Email } from "./mail.ts";
+import { sendClaimedNotices, type NoticeKind } from "./notices.ts";
 
 /** One row of claim_question_notices(): one email. */
 export type QuestionRow = {
@@ -43,7 +45,7 @@ type Texts = {
   answerFooter: string;
 };
 
-const texts: Record<"en" | "nl", Texts> = {
+const texts: Record<EmailLocale, Texts> = {
   en: {
     questionSubject: (item) => `Someone has a question about "${item}"`,
     asked: (item, list, ownList) =>
@@ -94,9 +96,9 @@ function quoteHtml(label: string, text: string) {
 
 /** One email per row. `siteUrl` is where the app runs, for the link. */
 export function buildQuestionEmails(rows: QuestionRow[], siteUrl: string): Email[] {
-  const site = siteUrl.replace(/\/$/, "");
+  const site = siteBase(siteUrl);
   return rows.map((row) => {
-    const t = texts[row.locale === "nl" ? "nl" : "en"];
+    const t = textsFor(texts, row.locale);
     const link = `${site}/lists/${row.list_id}?questions=${row.item_id}`;
     const item = `<strong>${escapeHtml(row.item_name)}</strong>`;
     const list = escapeHtml(row.list_name);
@@ -109,7 +111,7 @@ export function buildQuestionEmails(rows: QuestionRow[], siteUrl: string): Email
           `<p>${t.asked(item, list, row.own_list)}</p>`,
           quoteHtml(t.question, row.question),
           `<p><a href="${link}">${t.openToAnswer}</a></p>`,
-          `<p style="color:#666;font-size:13px">${t.questionFooter}</p>`,
+          footerHtml(t.questionFooter),
         ].join("\n"),
         text: [
           t.asked(`"${row.item_name}"`, row.list_name, row.own_list),
@@ -130,7 +132,7 @@ export function buildQuestionEmails(rows: QuestionRow[], siteUrl: string): Email
         quoteHtml(t.question, row.question),
         quoteHtml(t.answer, row.answer ?? ""),
         `<p><a href="${link}">${t.open}</a></p>`,
-        `<p style="color:#666;font-size:13px">${t.answerFooter}</p>`,
+        footerHtml(t.answerFooter),
       ].join("\n"),
       text: [
         intro(`"${row.item_name}"`, row.list_name, row.answerer_name),
@@ -143,34 +145,32 @@ export function buildQuestionEmails(rows: QuestionRow[], siteUrl: string): Email
   });
 }
 
+/** The questions of these rows, either those asked (`answers` false) or those answered. */
+function questionIds(rows: QuestionRow[], answers: boolean) {
+  return [
+    ...new Set(
+      rows.filter((row) => (row.kind !== "question") === answers).map((row) => row.question_id),
+    ),
+  ];
+}
+
 /**
- * Mails everyone who hasn't heard about a new question or answer yet. Claiming
- * the rows marks them as mailed, so two runs at once don't both send; a failed
- * send hands them back for the next run. `admin` is a client with the secret key.
+ * Mails everyone who hasn't heard about a new question or answer yet (see
+ * sendClaimedNotices). `admin` is a client with the secret key.
  */
-export async function sendQuestionNotices(
+export function sendQuestionNotices(
   admin: SupabaseClient,
   siteUrl: string,
 ): Promise<{ sent: number; errors: string[] }> {
-  const { data, error } = await admin.rpc("claim_question_notices");
-  if (error) return { sent: 0, errors: [`Couldn't collect questions: ${error.message}`] };
-  const rows = (data ?? []) as QuestionRow[];
-  if (rows.length === 0) return { sent: 0, errors: [] };
-
-  const result = await sendEmails(buildQuestionEmails(rows, siteUrl));
-  if (result.errors.length > 0) {
-    // Which emails of a failed batch went out isn't known; with fewer than 100
-    // (one batch), nothing did.
-    const ids = (answers: boolean) => [
-      ...new Set(
-        rows.filter((row) => (row.kind !== "question") === answers).map((row) => row.question_id),
-      ),
-    ];
-    const { error: releaseError } = await admin.rpc("release_question_notices", {
-      question_ids: ids(false),
-      answer_ids: ids(true),
-    });
-    if (releaseError) result.errors.push(`Couldn't release them: ${releaseError.message}`);
-  }
-  return result;
+  return sendClaimedNotices<QuestionRow>(admin, {
+    claim: "claim_question_notices",
+    rows: "questions",
+    build: (rows) => buildQuestionEmails(rows, siteUrl),
+    release: (rows) => [
+      "release_question_notices",
+      { question_ids: questionIds(rows, false), answer_ids: questionIds(rows, true) },
+    ],
+  });
 }
+
+export const questionNotices: NoticeKind = { what: "question emails", send: sendQuestionNotices };

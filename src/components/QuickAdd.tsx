@@ -1,3 +1,4 @@
+import { Icon } from "./Icon.tsx";
 import { createSignal, For, onMount, Show } from "solid-js";
 import type { GroupSelection } from "../lib/api/items.ts";
 import { t } from "../lib/i18n.ts";
@@ -40,18 +41,10 @@ export function QuickAddButton(props: { inline?: boolean }) {
       aria-label={props.inline ? undefined : t("quickAdd.label")}
       popovertarget="quick-add-popover"
     >
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
+      <Icon>
         <path d="M13 2 4 14h7l-1 8 7-10h-7z" />
         <path d="M19 3v6M16 6h6" />
-      </svg>
+      </Icon>
       <span
         class={props.inline ? undefined : styles.fabLabel}
         aria-hidden={props.inline ? undefined : true}

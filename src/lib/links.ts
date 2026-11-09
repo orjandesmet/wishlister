@@ -57,3 +57,12 @@ export function isImageLink(url: string): boolean {
     return false;
   }
 }
+
+/** The shop's name instead of the whole address ("shop.example"), which only crowds the item. */
+export function shopName(url: string) {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}

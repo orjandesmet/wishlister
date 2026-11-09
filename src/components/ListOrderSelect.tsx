@@ -1,3 +1,4 @@
+import { Icon } from "./Icon.tsx";
 import { For } from "solid-js";
 import { t } from "../lib/i18n.ts";
 import { listOrders, type ListOrder } from "../lib/listOrder.ts";
@@ -24,21 +25,12 @@ export function ListOrderSelect(props: ListOrderSelectProps) {
     <label class={styles.listOrder}>
       <span class={u.labelText}>{t("listOrder.label")}</span>
       {/* Lucide "arrow-up-down" (ISC licence): stands in for the label on small screens. */}
-      <svg
-        class={u.labelIcon}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.75"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
+      <Icon class={u.labelIcon} strokeWidth={1.75}>
         <path d="m21 16-4 4-4-4" />
         <path d="M17 20V4" />
         <path d="m3 8 4-4 4 4" />
         <path d="M7 4v16" />
-      </svg>
+      </Icon>
       <Select
         class={styles.select}
         value={props.value}

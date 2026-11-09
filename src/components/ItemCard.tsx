@@ -1,15 +1,14 @@
+import { Icon } from "./Icon.tsx";
 import { EditLabel } from "./EditLabel.tsx";
 import { A } from "@solidjs/router";
 import { Dynamic } from "solid-js/web";
 import { RemoveLabel } from "./RemoveLabel.tsx";
 import {
-  createEffect,
   createMemo,
   createSignal,
   createUniqueId,
   For,
   Match,
-  on,
   Show,
   Switch,
   type JSX,
@@ -19,15 +18,18 @@ import type { Occasion } from "../lib/api/occasions.ts";
 import { convertAmount, displayCurrency, exchangeRates, formatPrice } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
+import { createPurchaseRefocus } from "../lib/createPurchaseRefocus.ts";
 import { hueFor } from "../lib/hues.ts";
+import { shopName } from "../lib/links.ts";
 import { isShort, parseMarkdown, plainText } from "../lib/markdown.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
-import { formatOccasionDate } from "../lib/occasions.ts";
+import { heartCount } from "../lib/wantedLevel.ts";
 import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import { Chip } from "./Chip.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
+import { OccasionPicker } from "./OccasionPicker.tsx";
 import { itemPictureSources } from "../lib/itemPictures.ts";
 import { Markdown } from "./Markdown.tsx";
 import { WantedLevelText } from "./WantedLevelText.tsx";
@@ -101,16 +103,9 @@ export function PriceTag(props: { amount: number; currency: string; small?: bool
 /** Lucide "heart" (ISC licence), filled. */
 export function Heart() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
+    <Icon filled>
       <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-    </svg>
+    </Icon>
   );
 }
 
@@ -120,7 +115,7 @@ export function Heart() {
  * for the list's editors, who can tap it to change the level.
  */
 function WantedLevel(props: { level: number; name: string; onChange?: () => void }) {
-  const hearts = () => (props.level >= 3 ? 3 : props.level === 2 ? 1 : 0);
+  const hearts = () => heartCount(props.level);
   const content = () => (
     <>
       <span class={styles.hearts} classList={{ [styles.noHearts]: hearts() === 0 }}>
@@ -150,19 +145,10 @@ function WantedLevel(props: { level: number; name: string; onChange?: () => void
           {content()}
           <span class={u.visuallyHidden}>. {t("item.changeWant", { name: props.name })}</span>
           {/* Lucide "chevrons-up-down" (ISC licence): says the level can be changed. */}
-          <svg
-            class={styles.wantChange}
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            aria-hidden="true"
-          >
+          <Icon class={styles.wantChange}>
             <path d="m7 15 5 5 5-5" />
             <path d="m7 9 5-5 5 5" />
-          </svg>
+          </Icon>
         </Button>
       )}
     </Show>
@@ -174,7 +160,7 @@ function WantedLevel(props: { level: number; name: string; onChange?: () => void
  * words instead. Plain "I want this" has no hearts, so shows nothing.
  */
 function InlineHearts(props: { level: number }) {
-  const hearts = () => (props.level >= 3 ? 3 : props.level === 2 ? 1 : 0);
+  const hearts = () => heartCount(props.level);
   return (
     <Show when={hearts() > 0}>
       <span class={`${styles.hearts} ${styles.inlineHearts}`}>
@@ -190,19 +176,11 @@ function InlineHearts(props: { level: number }) {
 /** Lucide "external-link" (ISC licence). */
 export function ExternalLinkIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
+    <Icon>
       <path d="M15 3h6v6" />
       <path d="M10 14 21 3" />
       <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-    </svg>
+    </Icon>
   );
 }
 
@@ -242,15 +220,6 @@ export function BoldList(props: { items: string[] }) {
   );
 }
 
-/** The shop's name instead of the whole address, which only crowds the card. */
-export function shopName(url: string) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-}
-
 /**
  * One wish, or "please don't buy" entry, on a list. Only shows things; the page
  * decides what the buttons do.
@@ -264,27 +233,12 @@ export function ItemCard(props: ItemCardProps) {
   const rememberButton = (event: MouseEvent) =>
     rememberBuyTap(props.item.id, event.currentTarget as Element);
 
-  // "I bought this", Undo and the occasion buttons replace each other once the page has saved,
-  // so the pressed button is gone. Focus then moves to whatever replaced it (or the card),
-  // instead of dropping to the top of the page. Only when focus was really lost, so it never
-  // pulls focus away from somewhere else.
   // oxlint-disable-next-line no-unassigned-vars
   let card: HTMLElement | undefined;
-  let refocus = false;
-  const pressed = () => (refocus = true);
-  createEffect(
-    on(
-      () => [props.purchase, props.occasionChoices],
-      () => {
-        const lost = !document.activeElement || document.activeElement === document.body;
-        if (!refocus || !lost || !card) return;
-        refocus = false;
-        (card.querySelector<HTMLElement>("[data-purchase]") ?? card).focus();
-      },
-      { defer: true },
-    ),
+  const pressed = createPurchaseRefocus(
+    () => card,
+    () => [props.purchase, props.occasionChoices],
   );
-  const occasionLabel = createUniqueId();
 
   // A long description starts as one or two lines of plain text, so the list stays easy
   // to scan; "Show more" opens the real thing, links and lists included.
@@ -368,16 +322,7 @@ export function ItemCard(props: ItemCardProps) {
       >
         <span class={u.labelText}>{details() ? t("item.lessDetails") : t("item.details")}</span>
         {/* Lucide "chevrons-down-up" / "chevrons-up-down" (ISC licence): fold, or open. */}
-        <svg
-          class={u.labelIcon}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
+        <Icon class={u.labelIcon}>
           <Show
             when={details()}
             fallback={
@@ -390,7 +335,7 @@ export function ItemCard(props: ItemCardProps) {
             <path d="m7 20 5-5 5 5" />
             <path d="m7 4 5 5 5-5" />
           </Show>
-        </svg>
+        </Icon>
         <span class={u.visuallyHidden}>: {props.item.name}</span>
       </Button>
     </Show>
@@ -426,18 +371,10 @@ export function ItemCard(props: ItemCardProps) {
           <Show when={props.item.not_wanted}>
             <p class={`${styles.warning} ${styles.notWantedNote}`}>
               {/* Lucide "ban" (ISC licence). */}
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
+              <Icon>
                 <circle cx="12" cy="12" r="10" />
                 <path d="m4.9 4.9 14.2 14.2" />
-              </svg>
+              </Icon>
               {t("item.notWanted")}
             </p>
           </Show>
@@ -585,19 +522,11 @@ export function ItemCard(props: ItemCardProps) {
           <Show when={props.canEdit && isPrivate()}>
             <p class={`${styles.warning} ${u.small}`}>
               {/* Lucide "triangle-alert" (ISC licence). */}
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
+              <Icon>
                 <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
                 <path d="M12 9v4" />
                 <path d="M12 17h.01" />
-              </svg>
+              </Icon>
               {t("item.private")}
             </p>
           </Show>
@@ -605,19 +534,11 @@ export function ItemCard(props: ItemCardProps) {
           <Show when={props.item.removed_at && !props.selecting}>
             <p class={`${styles.warning} ${u.small}`}>
               {/* Lucide "circle-alert" (ISC licence). */}
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                aria-hidden="true"
-              >
+              <Icon>
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" x2="12" y1="8" y2="12" />
                 <line x1="12" x2="12.01" y1="16" y2="16" />
-              </svg>
+              </Icon>
               {props.purchase === "mine" ? t("item.removedMine") : t("item.removed")}
             </p>
           </Show>
@@ -654,51 +575,18 @@ export function ItemCard(props: ItemCardProps) {
               </Match>
               <Match when={props.purchase === "available" && props.occasionChoices}>
                 {(choices) => (
-                  <div
-                    class={`${u.stack} ${u.smallGap}`}
-                    role="group"
-                    aria-labelledby={occasionLabel}
-                  >
-                    <span class={u.fieldLabel} id={occasionLabel}>
-                      {t("item.forWhichOccasion")}
-                    </span>
-                    <For each={choices()}>
-                      {(occasion) => (
-                        <Button
-                          variant="secondary"
-                          data-purchase
-                          onClick={(event) => {
-                            pressed();
-                            rememberButton(event);
-                            props.onPickOccasion?.(occasion.id);
-                          }}
-                        >
-                          {occasion.name} · {formatOccasionDate(occasion.date, locale())}
-                        </Button>
-                      )}
-                    </For>
-                    <div class={u.row}>
-                      <Button
-                        variant="link"
-                        onClick={(event) => {
-                          pressed();
-                          rememberButton(event);
-                          props.onPickOccasion?.(null);
-                        }}
-                      >
-                        {t("item.noOccasion")}
-                      </Button>
-                      <Button
-                        variant="link"
-                        onClick={() => {
-                          pressed();
-                          props.onCancelPick?.();
-                        }}
-                      >
-                        {t("common.cancel")}
-                      </Button>
-                    </div>
-                  </div>
+                  <OccasionPicker
+                    choices={choices()}
+                    onPick={(occasionId, event) => {
+                      pressed();
+                      rememberButton(event);
+                      props.onPickOccasion?.(occasionId);
+                    }}
+                    onCancel={() => {
+                      pressed();
+                      props.onCancelPick?.();
+                    }}
+                  />
                 )}
               </Match>
               <Match when={props.purchase === "available"}>

@@ -3,6 +3,7 @@ import { RemoveLabel } from "../components/RemoveLabel.tsx";
 import { createResource, createSignal, For, Show } from "solid-js";
 import { addParent, deleteChild, removeParent } from "../lib/api/children.ts";
 import { getAdultProfiles, getProfileDetails, renameProfile } from "../lib/api/profiles.ts";
+import { createActionRunner } from "../lib/createActionRunner.ts";
 import { t } from "../lib/i18n.ts";
 import type { ProfileId } from "../lib/ids.ts";
 import { useMe } from "../lib/me.tsx";
@@ -25,7 +26,7 @@ export default function ChildSettings() {
     getProfileDetails,
   );
   const [adults] = createResource(getAdultProfiles);
-  const [error, setError] = createSignal<string>();
+  const { error, run } = createActionRunner();
   const [name, setName] = createSignal<string>();
   const [saved, setSaved] = createSignal(false);
 
@@ -34,15 +35,6 @@ export default function ChildSettings() {
   const nameOf = (id: ProfileId) =>
     adults()?.find((a) => a.id === id)?.display_name ?? t("common.someone");
   const candidates = () => (adults() ?? []).filter((a) => !parentIds().includes(a.id));
-
-  async function run(action: () => Promise<unknown>) {
-    setError(undefined);
-    try {
-      await action();
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
 
   const onRename = (event: SubmitEvent) => {
     event.preventDefault();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vite-plus/test";
-import { isImageLink, linkLabel, splitLink } from "./links.ts";
+import { isImageLink, linkLabel, shopName, splitLink } from "./links.ts";
 
 describe("splitLink", () => {
   it("leaves text without a link as the name", () => {
@@ -67,5 +67,16 @@ describe("isImageLink", () => {
     expect(isImageLink("https://shop.example/p/bike")).toBe(false);
     expect(isImageLink("https://shop.example/jpg/bike.html")).toBe(false);
     expect(isImageLink("not a link.png")).toBe(false);
+  });
+});
+
+describe("shopName", () => {
+  it("is the host without www.", () => {
+    expect(shopName("https://www.shop.example/p/123?x=1")).toBe("shop.example");
+    expect(shopName("https://toys.example/")).toBe("toys.example");
+  });
+
+  it("keeps what isn't a link", () => {
+    expect(shopName("not a link")).toBe("not a link");
   });
 });

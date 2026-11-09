@@ -1,3 +1,4 @@
+import { Icon } from "./Icon.tsx";
 import { A } from "@solidjs/router";
 import {
   createEffect,
@@ -6,7 +7,6 @@ import {
   createUniqueId,
   For,
   Match,
-  on,
   Show,
   Switch,
   type JSX,
@@ -14,14 +14,16 @@ import {
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
 import type { Question } from "../lib/api/questions.ts";
+import { createPurchaseRefocus } from "../lib/createPurchaseRefocus.ts";
 import { hueFor } from "../lib/hues.ts";
-import { locale, t } from "../lib/i18n.ts";
+import { t } from "../lib/i18n.ts";
 import type { ItemId, OccasionId } from "../lib/ids.ts";
 import { itemPictureSources } from "../lib/itemPictures.ts";
+import { shopName } from "../lib/links.ts";
 import { parseMarkdown } from "../lib/markdown.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
-import { formatOccasionDate } from "../lib/occasions.ts";
 import type { TableColumn, TableSort } from "../lib/tableSort.ts";
+import { heartCount } from "../lib/wantedLevel.ts";
 import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Chip } from "./Chip.tsx";
@@ -31,11 +33,11 @@ import {
   ExternalLinkIcon,
   Heart,
   PriceTag,
-  shopName,
   YouBoughtFor,
   type PurchaseState,
 } from "./ItemCard.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
+import { OccasionPicker } from "./OccasionPicker.tsx";
 import styles from "./ItemTable.module.css";
 import { Markdown } from "./Markdown.tsx";
 import { WantedLevelText } from "./WantedLevelText.tsx";
@@ -103,17 +105,7 @@ function SortHeader(props: {
       <button type="button" class={styles.sort} onClick={() => props.onSort(props.column)}>
         {props.label}
         {/* Lucide "arrow-up" / "arrow-down" / "arrow-up-down" (ISC licence). */}
-        <svg
-          class={styles.arrow}
-          classList={{ [styles.idle]: !direction() }}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
+        <Icon class={styles.arrow} classList={{ [styles.idle]: !direction() }}>
           <Switch
             fallback={
               <>
@@ -133,7 +125,7 @@ function SortHeader(props: {
               <path d="m19 12-7 7-7-7" />
             </Match>
           </Switch>
-        </svg>
+        </Icon>
       </button>
     </th>
   );
@@ -142,7 +134,7 @@ function SortHeader(props: {
 /** How much the owner wants it, as hearts. Editors tap them for the next level, round. */
 function WantedCell(props: { item: Item; onChange?: () => void }) {
   const level = () => props.item.wanted_level;
-  const hearts = () => (level() >= 3 ? 3 : level() === 2 ? 1 : 0);
+  const hearts = () => heartCount(level());
   const content = () => (
     <>
       <span class={styles.hearts} classList={{ [styles.noHearts]: hearts() === 0 }}>
@@ -183,27 +175,15 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
   const isPrivate = () => !item().visible_in_all_groups && groupNames().length === 0;
   const [open, setOpen] = createSignal(false);
   const detailId = createUniqueId();
-  const occasionLabel = createUniqueId();
   const description = createMemo(() => parseMarkdown(item().description ?? ""));
   const remember = (event: MouseEvent) => rememberBuyTap(item().id, event.currentTarget as Element);
 
-  // As on the cards: "I bought this", Undo and the occasion buttons replace each other once
-  // the page has saved, so focus moves to whatever replaced the pressed one (or the row).
+  // As on the cards: once the purchase is saved, focus moves to what replaced the pressed button.
   // oxlint-disable-next-line no-unassigned-vars
   let row: HTMLTableSectionElement | undefined;
-  let refocus = false;
-  const pressed = () => (refocus = true);
-  createEffect(
-    on(
-      () => [purchase(), table().occasionChoices(item())],
-      () => {
-        const lost = !document.activeElement || document.activeElement === document.body;
-        if (!refocus || !lost || !row) return;
-        refocus = false;
-        (row.querySelector<HTMLElement>("[data-purchase]") ?? row).focus();
-      },
-      { defer: true },
-    ),
+  const pressed = createPurchaseRefocus(
+    () => row,
+    () => [purchase(), table().occasionChoices(item())],
   );
 
   return (
@@ -232,17 +212,9 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
                 onClick={() => setOpen((was) => !was)}
               >
                 {/* Lucide "chevron-right" (ISC licence), turned down when open. */}
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
+                <Icon>
                   <path d="m9 18 6-6-6-6" />
-                </svg>
+                </Icon>
                 <span class={u.visuallyHidden}>{t("table.details", { name: item().name })}</span>
               </button>
             }
@@ -305,18 +277,10 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
               <Match when={isPrivate()}>
                 <span class={styles.onlyMe}>
                   {/* Lucide "lock" (ISC licence). */}
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
+                  <Icon>
                     <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
+                  </Icon>
                   {t("table.onlyMe")}
                 </span>
               </Match>
@@ -376,55 +340,21 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
                 </Match>
                 <Match when={purchase() === "available" && table().occasionChoices(item())}>
                   {(choices) => (
-                    <div
-                      class={`${u.stack} ${u.smallGap}`}
-                      role="group"
-                      aria-labelledby={occasionLabel}
-                    >
-                      <span class={u.fieldLabel} id={occasionLabel}>
-                        {t("item.forWhichOccasion")}
-                      </span>
-                      <For each={choices()}>
-                        {(occasion) => (
-                          <Button
-                            variant="secondary"
-                            size="small"
-                            class={styles.statusButton}
-                            data-purchase
-                            onClick={(event) => {
-                              pressed();
-                              remember(event);
-                              table().onPickOccasion(item(), occasion.id);
-                            }}
-                          >
-                            {occasion.name} · {formatOccasionDate(occasion.date, locale())}
-                          </Button>
-                        )}
-                      </For>
-                      <span class={styles.statusRow}>
-                        <Button
-                          variant="link"
-                          size="small"
-                          onClick={(event) => {
-                            pressed();
-                            remember(event);
-                            table().onPickOccasion(item(), null);
-                          }}
-                        >
-                          {t("item.noOccasion")}
-                        </Button>
-                        <Button
-                          variant="link"
-                          size="small"
-                          onClick={() => {
-                            pressed();
-                            table().onCancelPick();
-                          }}
-                        >
-                          {t("common.cancel")}
-                        </Button>
-                      </span>
-                    </div>
+                    <OccasionPicker
+                      choices={choices()}
+                      small
+                      buttonClass={styles.statusButton}
+                      rowClass={styles.statusRow}
+                      onPick={(occasionId, event) => {
+                        pressed();
+                        remember(event);
+                        table().onPickOccasion(item(), occasionId);
+                      }}
+                      onCancel={() => {
+                        pressed();
+                        table().onCancelPick();
+                      }}
+                    />
                   )}
                 </Match>
                 <Match when={purchase() === "available"}>

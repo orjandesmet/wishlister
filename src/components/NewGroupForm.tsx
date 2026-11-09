@@ -1,4 +1,5 @@
 import { createSignal, Show } from "solid-js";
+import { createActionRunner } from "../lib/createActionRunner.ts";
 import { t } from "../lib/i18n.ts";
 import u from "../utilities.module.css";
 import { Card } from "./Card.tsx";
@@ -16,19 +17,12 @@ export type NewGroupFormProps = {
 /** A name and a button: creates a group and opens it. */
 export function NewGroupForm(props: NewGroupFormProps) {
   const [name, setName] = createSignal("");
-  const [busy, setBusy] = createSignal(false);
-  const [error, setError] = createSignal<string>();
+  const runner = createActionRunner();
+  const [busy, runBusy] = runner.busyRunner();
 
-  async function onSubmit(event: SubmitEvent) {
+  function onSubmit(event: SubmitEvent) {
     event.preventDefault();
-    setError(undefined);
-    setBusy(true);
-    try {
-      await props.onCreate(name());
-    } catch (e) {
-      setError((e as Error).message);
-    }
-    setBusy(false);
+    void runBusy(() => props.onCreate(name()));
   }
 
   const fields = (
@@ -45,9 +39,9 @@ export function NewGroupForm(props: NewGroupFormProps) {
       <button type="submit" disabled={busy()}>
         {t("home.create")}
       </button>
-      <Show when={error()}>
+      <Show when={runner.error()}>
         <p class={u.error} role="alert">
-          {error()}
+          {runner.error()}
         </p>
       </Show>
     </>

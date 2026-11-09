@@ -40,71 +40,62 @@ export default function Settings() {
   const me = useMe();
   const [name, setName] = createSignal(me().profile.display_name);
   const [saved, setSaved] = createSignal(false);
-  const [error, setError] = createSignal<string>();
+  const runner = createActionRunner();
+  const { run } = runner;
 
-  async function onRename(event: SubmitEvent) {
+  const onRename = (event: SubmitEvent) => {
     event.preventDefault();
-    setError(undefined);
     setSaved(false);
-    try {
+    void run(async () => {
       await renameProfile(me().profile.id, name());
       me().refetchProfile();
       setSaved(true);
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
+    });
+  };
 
   const [childName, setChildName] = createSignal("");
 
-  async function onAddChild(event: SubmitEvent) {
+  const onAddChild = (event: SubmitEvent) => {
     event.preventDefault();
-    setError(undefined);
-    try {
+    void run(async () => {
       await createChild(childName());
       setChildName("");
       me().refetchManaged();
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
+    });
+  };
 
-  async function onSeasonalThemes(on: boolean) {
-    setError(undefined);
-    setSeasonalThemes(on);
-    try {
-      await setProfileSeasonalThemes(me().profile.id, on);
+  // Shown at once, and put back when saving fails.
+  const onSeasonalThemes = (on: boolean) =>
+    run(async () => {
+      setSeasonalThemes(on);
+      try {
+        await setProfileSeasonalThemes(me().profile.id, on);
+      } catch (e) {
+        setSeasonalThemes(!on);
+        throw e;
+      }
       me().refetchProfile();
-    } catch (e) {
-      setSeasonalThemes(!on);
-      setError((e as Error).message);
-    }
-  }
+    });
 
-  async function onGroupCollapse(mode: GroupCollapseMode) {
-    setError(undefined);
-    const before = groupCollapseMode();
-    setGroupCollapseMode(mode);
-    try {
-      await setProfileGroupCollapse(me().profile.id, mode);
+  const onGroupCollapse = (mode: GroupCollapseMode) =>
+    run(async () => {
+      const before = groupCollapseMode();
+      setGroupCollapseMode(mode);
+      try {
+        await setProfileGroupCollapse(me().profile.id, mode);
+      } catch (e) {
+        setGroupCollapseMode(before);
+        throw e;
+      }
       me().refetchProfile();
-    } catch (e) {
-      setGroupCollapseMode(before);
-      setError((e as Error).message);
-    }
-  }
+    });
 
-  async function onCardView(view: CardView) {
-    setError(undefined);
-    try {
+  const onCardView = (view: CardView) =>
+    run(async () => {
       await chooseCardView(view, (next) => setProfileCardView(me().profile.id, next));
       me().refetchProfile();
-    } catch (e) {
-      setError((e as Error).message);
-    }
-  }
+    });
 
-  const runner = createActionRunner();
   const [busy, runBusy] = runner.busyRunner();
   const [follows, { refetch: refetchFollows }] = createResource(() => getMyFollows(today()));
   const changeFollows = (action: () => Promise<void>) =>
@@ -129,10 +120,7 @@ export default function Settings() {
         </Show>
       </Card>
       <Card>
-        <LanguageSelect
-          value={locale()}
-          onChange={(next) => chooseLocale(next).catch((e: Error) => setError(e.message))}
-        />
+        <LanguageSelect value={locale()} onChange={(next) => void run(() => chooseLocale(next))} />
         <CurrencySelect value={displayCurrency()} onChange={setDisplayCurrency} />
         <SeasonalThemes
           on={seasonalThemes()}
@@ -189,11 +177,6 @@ export default function Settings() {
       <Show when={runner.error()}>
         <p class={u.error} role="alert">
           {runner.error()}
-        </p>
-      </Show>
-      <Show when={error()}>
-        <p class={u.error} role="alert">
-          {error()}
         </p>
       </Show>
       <Button variant="secondary" danger onClick={() => void signOutHere()}>

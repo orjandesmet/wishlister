@@ -7,6 +7,7 @@ import { createActionRunner } from "./createActionRunner.ts";
 import { t } from "./i18n.ts";
 import type { ItemId, QuestionId } from "./ids.ts";
 import { loadQuestions } from "./loaders.ts";
+import { loaded } from "./resource.ts";
 
 const NONE: Question[] = [];
 
@@ -23,7 +24,7 @@ export function createQuestions(items: () => Item[] | undefined) {
   );
   const byItem = createMemo(() => {
     const map = new Map<ItemId, Question[]>();
-    for (const question of (questions.error ? undefined : questions()) ?? []) {
+    for (const question of loaded(questions) ?? []) {
       map.set(question.item_id, [...(map.get(question.item_id) ?? []), question]);
     }
     return map;

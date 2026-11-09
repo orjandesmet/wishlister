@@ -10,9 +10,10 @@
 // Netlify sets URL, the site's address, for the links in the emails.
 import { buildDigestEmails, type DigestRow } from "../lib/digest.ts";
 import { mailConfigured, sendEmails } from "../lib/mail.ts";
-import { sendQuestionNotices } from "../lib/questionNotices.ts";
-import { sendRemovalNotices } from "../lib/removalNotices.ts";
-import { sendSecretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
+import { sendAllNotices } from "../lib/notices.ts";
+import { questionNotices } from "../lib/questionNotices.ts";
+import { removalNotices } from "../lib/removalNotices.ts";
+import { secretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
 import { missingEnv, requireEnv } from "../lib/respond.ts";
 import { adminClient } from "../lib/supabase.ts";
 
@@ -37,27 +38,9 @@ export default async () => {
     // and next to newer ones. The error is in the function log.
     for (const message of errors) console.error(`Sending digests failed: ${message}`);
 
-    // Buyers of removed items normally hear right away (notify-removed); this
-    // catches what that missed.
-    const notices = await sendRemovalNotices(admin, siteUrl);
-    if (notices.sent > 0) console.log(`Removal notices sent: ${notices.sent}`);
-    for (const message of notices.errors) {
-      console.error(`Sending removal notices failed: ${message}`);
-    }
-
-    // The same for questions and answers on items (notify-questions).
-    const questions = await sendQuestionNotices(admin, siteUrl);
-    if (questions.sent > 0) console.log(`Question emails sent: ${questions.sent}`);
-    for (const message of questions.errors) {
-      console.error(`Sending question emails failed: ${message}`);
-    }
-
-    // And for Secret Santa draws (start-secret-santa, notify-secret-santa).
-    const santas = await sendSecretSantaNotices(admin, siteUrl);
-    if (santas.sent > 0) console.log(`Secret Santa emails sent: ${santas.sent}`);
-    for (const message of santas.errors) {
-      console.error(`Sending Secret Santa emails failed: ${message}`);
-    }
+    // The emails that normally go out right away (notify-removed, notify-questions,
+    // start-secret-santa and notify-secret-santa): this catches what those missed.
+    await sendAllNotices([removalNotices, questionNotices, secretSantaNotices], admin, siteUrl);
   } else {
     console.warn(`Digests skipped: missing ${missingEnv("RESEND_API_KEY", "MAIL_FROM")}`);
   }

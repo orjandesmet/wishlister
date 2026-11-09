@@ -1,5 +1,6 @@
+import { Icon } from "../components/Icon.tsx";
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
-import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
+import { createMemo, createResource, For, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
 import { BulkActions } from "../components/BulkActions.tsx";
 import { CleanupDialog } from "../components/CleanupDialog.tsx";
@@ -29,12 +30,7 @@ import { cleanUpBoughtItems, getPendingCleanup } from "../lib/api/cleanup.ts";
 import { announce, focusHeading, focusSoon, usePageTitle } from "../lib/a11y.ts";
 import { animateMoves } from "../lib/animateMoves.ts";
 import { setProfileCardView } from "../lib/api/profiles.ts";
-import {
-  getNudgeState,
-  NUDGE_BELOW_ITEMS,
-  NUDGE_EVERY_DAYS,
-  nudgeSecretSanta,
-} from "../lib/api/secretSanta.ts";
+import { NUDGE_EVERY_DAYS } from "../lib/api/secretSanta.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { chooseCardView } from "../lib/cardView.ts";
 import { chooseListView, listView, tableFits } from "../lib/listView.ts";
@@ -44,15 +40,17 @@ import { createFollow } from "../lib/createFollow.ts";
 import { createListSections } from "../lib/createListSections.ts";
 import { createPurchases } from "../lib/createPurchases.ts";
 import { createQuestions } from "../lib/createQuestions.ts";
-import { compareNames, formatList, locale, t } from "../lib/i18n.ts";
+import { createSecretSantaNudge } from "../lib/createSecretSantaNudge.ts";
+import { compareNames, formatList, t } from "../lib/i18n.ts";
 import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
-import { addDays, formatOccasionDate, today, type IsoDate } from "../lib/occasions.ts";
+import { addDays, today } from "../lib/occasions.ts";
 import { useMe } from "../lib/me.tsx";
 import { listMenuSections } from "../lib/listMenu.ts";
-import { isReady } from "../lib/resource.ts";
+import { isReady, loaded } from "../lib/resource.ts";
 import { createCachedResource } from "../lib/cache.ts";
 import { loadDrawnPeople, loadItems, loadMyGroups, loadProfileDetails } from "../lib/loaders.ts";
 import { useQuickAdd } from "../lib/quickAdd.ts";
+import { nextWantedLevel } from "../lib/wantedLevel.ts";
 import u from "../utilities.module.css";
 import { Button } from "../components/Button.tsx";
 import { EmptyState } from "../components/EmptyState.tsx";
@@ -60,9 +58,6 @@ import styles from "./WishList.module.css";
 
 /** How long you follow a list when no shared occasion is coming up. */
 const DEFAULT_FOLLOW_DAYS = 30;
-
-/** How long the "you're now following" tooltip stays. */
-const FOLLOWED_NOTICE_MS = 3500;
 
 export default function WishList() {
   const params = useParams<{ profileId: ProfileId }>();
@@ -73,7 +68,7 @@ export default function WishList() {
   const [groups] = createCachedResource(() => true, loadMyGroups);
   // The people you drew in a Secret Santa get a ribbon. Another extra: no ribbons if it fails.
   const [drawnPeople] = createCachedResource(() => true, loadDrawnPeople);
-  const drawn = () => (drawnPeople.error ? undefined : drawnPeople()) ?? [];
+  const drawn = () => loaded(drawnPeople) ?? [];
   const menuSections = () =>
     listMenuSections(
       [
@@ -84,7 +79,7 @@ export default function WishList() {
           person: child.display_name,
         })),
       ],
-      (groups.error ? undefined : groups()) ?? [],
+      loaded(groups) ?? [],
       compareNames,
       drawn().map((d) => d.recipient_profile_id),
     );
@@ -95,27 +90,12 @@ export default function WishList() {
 
   // The person you drew can be nudged for ideas when their list has few items you could buy.
   const drawnHere = () => drawn().find((d) => d.recipient_profile_id === params.profileId);
-  const [nudgeState, { refetch: refetchNudge }] = createResource(
-    () => (drawnHere() ? params.profileId : undefined),
-    getNudgeState,
+  const nudge = createSecretSantaNudge(
+    () => params.profileId,
+    () => !!drawnHere(),
+    () => profile()?.display_name ?? "",
+    runner,
   );
-  // Another extra: no button if it fails.
-  const nudgeable = () => {
-    const state = nudgeState.error ? undefined : nudgeState();
-    return state && state.buyable_items < NUDGE_BELOW_ITEMS ? state : undefined;
-  };
-  const [nudging, runNudge] = runner.busyRunner();
-  const [nudgeNotice, setNudgeNotice] = createSignal<string>();
-  const onNudge = () =>
-    runNudge(async () => {
-      const name = profile()?.display_name ?? "";
-      const result = await nudgeSecretSanta(params.profileId);
-      const text =
-        result === "sent" ? t("secretSanta.nudgeSent", { name }) : t("secretSanta.nudgeNotSetUp");
-      setNudgeNotice(text);
-      announce(text);
-      await refetchNudge();
-    });
 
   // A list you opened before (or that was loaded ahead, see prefetch.ts) shows at once,
   // and loads again in the background.
@@ -139,7 +119,7 @@ export default function WishList() {
   const canEdit = () => isOwnList() || (profile()?.managerIds.includes(me().profile.id) ?? false);
   const title = () => {
     if (isOwnList()) return t("wishlist.mine");
-    const p = profile.error ? undefined : profile();
+    const p = loaded(profile);
     return p ? t("wishlist.theirs", { name: p.display_name }) : t("wishlist.fallbackTitle");
   };
   usePageTitle(title);
@@ -147,41 +127,14 @@ export default function WishList() {
   // Only loaded once we know it isn't your own list.
   const otherList = () => (profile() && !isOwnList() ? params.profileId : undefined);
   const follow = createFollow(() => params.profileId, otherList, runner);
-  // The bell's label changes with it, but out of sight once its popover closes: say it.
-  const onFollow = async (until: IsoDate) => {
-    await follow.follow(until);
-    if (!runner.error()) {
-      announce(t("follow.untilDate", { date: formatOccasionDate(until, locale()) }));
-    }
-  };
-  const onUnfollow = async () => {
-    await follow.unfollow();
-    if (!runner.error()) announce(t("a11y.unfollowed"));
-  };
-  const isFollowing = () => {
-    const until = follow.followUntil.latest;
-    return until != null && until >= today();
-  };
-  // Buying follows the list for you; the bell wiggles and says so for a moment.
-  const [justFollowed, setJustFollowed] = createSignal(false);
-  let followedTimer: ReturnType<typeof setTimeout> | undefined;
-  onCleanup(() => clearTimeout(followedTimer));
-  const onBought = async () => {
-    const was = isFollowing();
-    await follow.refetchFollow();
-    if (was || !isFollowing()) return;
-    setJustFollowed(true);
-    clearTimeout(followedTimer);
-    followedTimer = setTimeout(() => setJustFollowed(false), FOLLOWED_NOTICE_MS);
-  };
   // Reading a failed resource throws, so the helpers see "no items" and the page shows its error.
-  const loadedItems = () => (items.error ? undefined : items());
+  const loadedItems = () => loaded(items);
   const purchases = createPurchases(
     loadedItems,
     isOwnList,
     () => me().profile.id,
     runner,
-    onBought,
+    follow.afterBuying,
     (gone) => {
       setItems((prev) => prev?.filter((item) => item.id !== gone.id));
       // Its card, and the Undo button just pressed, are gone.
@@ -204,23 +157,17 @@ export default function WishList() {
     () => (canEdit() ? params.profileId : undefined),
     getPendingCleanup,
   );
-  const cleanupItems = () => (pendingCleanup.error ? undefined : pendingCleanup()) ?? [];
-  const [cleanupError, setCleanupError] = createSignal<string>();
-  const [cleanupBusy, setCleanupBusy] = createSignal(false);
-  const onCleanUp = async (removeIds: ItemId[]) => {
-    setCleanupBusy(true);
-    setCleanupError(undefined);
-    try {
+  const cleanupItems = () => loaded(pendingCleanup) ?? [];
+  // Its own runner: what goes wrong shows in the dialog, not on the page behind it.
+  const cleanup = createActionRunner();
+  const [cleanupBusy, runCleanup] = cleanup.busyRunner();
+  const onCleanUp = (removeIds: ItemId[]) =>
+    runCleanup(async () => {
       await cleanUpBoughtItems(params.profileId, removeIds);
       await Promise.all([refetchItems(), refetchCleanup()]);
       announce(t("cleanup.done"));
       focusHeading();
-    } catch (e) {
-      setCleanupError((e as Error).message);
-    } finally {
-      setCleanupBusy(false);
-    }
-  };
+    });
 
   // oxlint-disable-next-line no-unassigned-vars
   let cardsRoot: HTMLDivElement | undefined;
@@ -273,7 +220,7 @@ export default function WishList() {
   const onChangeWant = (item: Item) =>
     (savingWant = savingWant.then(() =>
       run(async () => {
-        const level = item.wanted_level === 3 ? 1 : ((item.wanted_level + 1) as WantedLevel);
+        const level = nextWantedLevel(item.wanted_level);
         const was = item.wanted_level;
         const id = item.id;
         const setLevel = (to: WantedLevel) =>
@@ -435,9 +382,9 @@ export default function WishList() {
               suggestedOccasion={follow.nextOccasion()?.name}
               today={today()}
               busy={follow.busy()}
-              onFollow={onFollow}
-              onUnfollow={onUnfollow}
-              justFollowed={justFollowed()}
+              onFollow={follow.follow}
+              onUnfollow={follow.unfollow}
+              justFollowed={follow.justFollowed()}
             />
           </Show>
         </div>
@@ -450,20 +397,20 @@ export default function WishList() {
           </p>
         )}
       </Show>
-      <Show when={nudgeable()}>
+      <Show when={nudge.nudgeable()}>
         {(state) => (
           <SecretSantaNudge
             name={profile()?.display_name ?? ""}
             lastNudgedAt={state().last_nudged_at}
             everyDays={NUDGE_EVERY_DAYS}
             now={new Date()}
-            busy={nudging()}
-            onNudge={onNudge}
+            busy={nudge.busy()}
+            onNudge={nudge.nudge}
           />
         )}
       </Show>
-      <Show when={nudgeNotice()}>
-        <p class={`${u.muted} ${u.small}`}>{nudgeNotice()}</p>
+      <Show when={nudge.notice()}>
+        <p class={`${u.muted} ${u.small}`}>{nudge.notice()}</p>
       </Show>
       <Show when={profile.error || items.error}>
         <p class={u.error} role="alert">
@@ -484,7 +431,7 @@ export default function WishList() {
             items={cleanupItems()}
             childName={isOwnList() ? undefined : profile()?.display_name}
             busy={cleanupBusy()}
-            error={cleanupError()}
+            error={cleanup.error()}
             onDone={(removeIds) => void onCleanUp(removeIds)}
           />
         </Show>
@@ -512,22 +459,13 @@ export default function WishList() {
               >
                 <span class={u.labelText}>{t("bulk.select")}</span>
                 {/* Lucide "list-checks" (ISC licence): stands in for the label on small screens. */}
-                <svg
-                  class={u.labelIcon}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
+                <Icon class={u.labelIcon} strokeWidth={1.75}>
                   <path d="m3 17 2 2 4-4" />
                   <path d="m3 7 2 2 4-4" />
                   <path d="M13 6h8" />
                   <path d="M13 12h8" />
                   <path d="M13 18h8" />
-                </svg>
+                </Icon>
               </Button>
             </Show>
             <Show when={!select.selecting()}>

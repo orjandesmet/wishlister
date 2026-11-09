@@ -4,6 +4,7 @@
 //
 // Netlify functions can't use the app's dictionaries in src/i18n (they hold JSX),
 // so the texts live here, in the same two languages.
+import { footerHtml, textsFor, type EmailLocale } from "./emailParts.ts";
 import { escapeHtml, type Email } from "./mail.ts";
 
 export type AddedEmail = {
@@ -26,7 +27,7 @@ type Texts = {
   footer: string;
 };
 
-const texts: Record<"en" | "nl", Texts> = {
+const texts: Record<EmailLocale, Texts> = {
   en: {
     subject: (group) => `You're in ${group} on Wishlister`,
     intro: (by, group) => `${by} added you to the group ${group}.`,
@@ -48,13 +49,13 @@ const texts: Record<"en" | "nl", Texts> = {
 };
 
 export function buildAddedEmail({ to, locale, group, addedBy, groupUrl }: AddedEmail): Email {
-  const t = texts[locale === "nl" ? "nl" : "en"];
+  const t = textsFor(texts, locale);
   const by = addedBy?.trim() || t.someone;
   const html = [
     `<p>${t.intro(`<strong>${escapeHtml(by)}</strong>`, `<strong>${escapeHtml(group)}</strong>`)}</p>`,
     `<p>${t.body}</p>`,
     `<p><a href="${escapeHtml(groupUrl)}">${t.open}</a></p>`,
-    `<p style="color:#666;font-size:13px">${t.footer}</p>`,
+    footerHtml(t.footer),
   ].join("\n");
   const text = [t.intro(by, group), t.body, `${t.open}: ${groupUrl}`, t.footer].join("\n\n");
   return { to, subject: t.subject(group), html, text };

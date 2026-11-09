@@ -3,6 +3,7 @@
 //
 // Netlify functions can't use the app's dictionaries in src/i18n (they hold JSX),
 // so the few email texts live here, in the same two languages.
+import { footerHtml, siteBase, textsFor, type EmailLocale } from "./emailParts.ts";
 import { escapeHtml, type Email } from "./mail.ts";
 
 export type Change = "added" | "removed" | "bought";
@@ -33,7 +34,7 @@ type Texts = {
   footer: string;
 };
 
-const texts: Record<"en" | "nl", Texts> = {
+const texts: Record<EmailLocale, Texts> = {
   en: {
     subjectOne: (name) => `What changed on ${name}'s wishlist`,
     subjectMany: (count) => `What changed on ${count} wishlists you follow`,
@@ -90,9 +91,9 @@ export function buildDigestEmails(rows: DigestRow[], siteUrl: string): Email[] {
     list.changes.push({ change: row.change, item: row.item_name, notWanted: !!row.not_wanted });
   }
 
-  const site = siteUrl.replace(/\/$/, "");
+  const site = siteBase(siteUrl);
   return [...byFollower.values()].map(({ email, locale, lists }) => {
-    const t = texts[locale === "nl" ? "nl" : "en"];
+    const t = textsFor(texts, locale);
     const subject = lists.length === 1 ? t.subjectOne(lists[0].name) : t.subjectMany(lists.length);
     const listUrl = (list: ListChanges) => `${site}/lists/${list.id}`;
     const unfollowUrl = (list: ListChanges) => `${site}/unfollow/${list.unfollowToken}`;
@@ -110,7 +111,7 @@ export function buildDigestEmails(rows: DigestRow[], siteUrl: string): Email[] {
             .join("")}</ul>` +
           `<p><a href="${listUrl(list)}">${t.open}</a> · <a href="${unfollowUrl(list)}">${t.unfollow}</a></p>`,
       ),
-      `<p style="color:#666;font-size:13px">${t.footer}</p>`,
+      footerHtml(t.footer),
     ].join("\n");
 
     const text = [
