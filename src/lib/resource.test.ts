@@ -1,6 +1,6 @@
 import { createResource, createRoot, createSignal } from "solid-js";
 import { describe, expect, it } from "vite-plus/test";
-import { isReady } from "./resource.ts";
+import { isReady, loaded } from "./resource.ts";
 
 const tick = () => new Promise((resolve) => setTimeout(resolve));
 
@@ -30,5 +30,32 @@ describe("isReady", () => {
       expect(isReady(data)).toBe(false);
       dispose();
     });
+  });
+});
+
+describe("loaded", () => {
+  it("is the value once loaded", async () => {
+    const { data, dispose } = createRoot((dispose) => {
+      const [data] = createResource(async () => "value");
+      return { data, dispose };
+    });
+    expect(loaded(data)).toBeUndefined();
+    await tick();
+    expect(loaded(data)).toBe("value");
+    dispose();
+  });
+
+  it("is undefined instead of throwing when loading failed", async () => {
+    const { data, dispose } = createRoot((dispose) => {
+      const [data] = createResource(async (): Promise<string> => {
+        throw new Error("offline");
+      });
+      return { data, dispose };
+    });
+    await tick();
+    expect(data.error).toBeInstanceOf(Error);
+    expect(() => data()).toThrow();
+    expect(loaded(data)).toBeUndefined();
+    dispose();
   });
 });

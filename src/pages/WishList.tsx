@@ -49,7 +49,7 @@ import type { GroupId, ItemId, ProfileId } from "../lib/ids.ts";
 import { addDays, formatOccasionDate, today, type IsoDate } from "../lib/occasions.ts";
 import { useMe } from "../lib/me.tsx";
 import { listMenuSections } from "../lib/listMenu.ts";
-import { isReady } from "../lib/resource.ts";
+import { isReady, loaded } from "../lib/resource.ts";
 import { createCachedResource } from "../lib/cache.ts";
 import { loadDrawnPeople, loadItems, loadMyGroups, loadProfileDetails } from "../lib/loaders.ts";
 import { useQuickAdd } from "../lib/quickAdd.ts";
@@ -73,7 +73,7 @@ export default function WishList() {
   const [groups] = createCachedResource(() => true, loadMyGroups);
   // The people you drew in a Secret Santa get a ribbon. Another extra: no ribbons if it fails.
   const [drawnPeople] = createCachedResource(() => true, loadDrawnPeople);
-  const drawn = () => (drawnPeople.error ? undefined : drawnPeople()) ?? [];
+  const drawn = () => loaded(drawnPeople) ?? [];
   const menuSections = () =>
     listMenuSections(
       [
@@ -84,7 +84,7 @@ export default function WishList() {
           person: child.display_name,
         })),
       ],
-      (groups.error ? undefined : groups()) ?? [],
+      loaded(groups) ?? [],
       compareNames,
       drawn().map((d) => d.recipient_profile_id),
     );
@@ -101,7 +101,7 @@ export default function WishList() {
   );
   // Another extra: no button if it fails.
   const nudgeable = () => {
-    const state = nudgeState.error ? undefined : nudgeState();
+    const state = loaded(nudgeState);
     return state && state.buyable_items < NUDGE_BELOW_ITEMS ? state : undefined;
   };
   const [nudging, runNudge] = runner.busyRunner();
@@ -139,7 +139,7 @@ export default function WishList() {
   const canEdit = () => isOwnList() || (profile()?.managerIds.includes(me().profile.id) ?? false);
   const title = () => {
     if (isOwnList()) return t("wishlist.mine");
-    const p = profile.error ? undefined : profile();
+    const p = loaded(profile);
     return p ? t("wishlist.theirs", { name: p.display_name }) : t("wishlist.fallbackTitle");
   };
   usePageTitle(title);
@@ -175,7 +175,7 @@ export default function WishList() {
     followedTimer = setTimeout(() => setJustFollowed(false), FOLLOWED_NOTICE_MS);
   };
   // Reading a failed resource throws, so the helpers see "no items" and the page shows its error.
-  const loadedItems = () => (items.error ? undefined : items());
+  const loadedItems = () => loaded(items);
   const purchases = createPurchases(
     loadedItems,
     isOwnList,
@@ -204,7 +204,7 @@ export default function WishList() {
     () => (canEdit() ? params.profileId : undefined),
     getPendingCleanup,
   );
-  const cleanupItems = () => (pendingCleanup.error ? undefined : pendingCleanup()) ?? [];
+  const cleanupItems = () => loaded(pendingCleanup) ?? [];
   const [cleanupError, setCleanupError] = createSignal<string>();
   const [cleanupBusy, setCleanupBusy] = createSignal(false);
   const onCleanUp = async (removeIds: ItemId[]) => {
