@@ -23,13 +23,13 @@ import { hueFor } from "../lib/hues.ts";
 import { shopName } from "../lib/links.ts";
 import { isShort, parseMarkdown, plainText } from "../lib/markdown.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
-import { formatOccasionDate } from "../lib/occasions.ts";
 import { heartCount } from "../lib/wantedLevel.ts";
 import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import { Chip } from "./Chip.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
+import { OccasionPicker } from "./OccasionPicker.tsx";
 import { itemPictureSources } from "../lib/itemPictures.ts";
 import { Markdown } from "./Markdown.tsx";
 import { WantedLevelText } from "./WantedLevelText.tsx";
@@ -239,7 +239,6 @@ export function ItemCard(props: ItemCardProps) {
     () => card,
     () => [props.purchase, props.occasionChoices],
   );
-  const occasionLabel = createUniqueId();
 
   // A long description starts as one or two lines of plain text, so the list stays easy
   // to scan; "Show more" opens the real thing, links and lists included.
@@ -576,51 +575,18 @@ export function ItemCard(props: ItemCardProps) {
               </Match>
               <Match when={props.purchase === "available" && props.occasionChoices}>
                 {(choices) => (
-                  <div
-                    class={`${u.stack} ${u.smallGap}`}
-                    role="group"
-                    aria-labelledby={occasionLabel}
-                  >
-                    <span class={u.fieldLabel} id={occasionLabel}>
-                      {t("item.forWhichOccasion")}
-                    </span>
-                    <For each={choices()}>
-                      {(occasion) => (
-                        <Button
-                          variant="secondary"
-                          data-purchase
-                          onClick={(event) => {
-                            pressed();
-                            rememberButton(event);
-                            props.onPickOccasion?.(occasion.id);
-                          }}
-                        >
-                          {occasion.name} · {formatOccasionDate(occasion.date, locale())}
-                        </Button>
-                      )}
-                    </For>
-                    <div class={u.row}>
-                      <Button
-                        variant="link"
-                        onClick={(event) => {
-                          pressed();
-                          rememberButton(event);
-                          props.onPickOccasion?.(null);
-                        }}
-                      >
-                        {t("item.noOccasion")}
-                      </Button>
-                      <Button
-                        variant="link"
-                        onClick={() => {
-                          pressed();
-                          props.onCancelPick?.();
-                        }}
-                      >
-                        {t("common.cancel")}
-                      </Button>
-                    </div>
-                  </div>
+                  <OccasionPicker
+                    choices={choices()}
+                    onPick={(occasionId, event) => {
+                      pressed();
+                      rememberButton(event);
+                      props.onPickOccasion?.(occasionId);
+                    }}
+                    onCancel={() => {
+                      pressed();
+                      props.onCancelPick?.();
+                    }}
+                  />
                 )}
               </Match>
               <Match when={props.purchase === "available"}>

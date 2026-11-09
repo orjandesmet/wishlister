@@ -16,13 +16,12 @@ import type { Occasion } from "../lib/api/occasions.ts";
 import type { Question } from "../lib/api/questions.ts";
 import { createPurchaseRefocus } from "../lib/createPurchaseRefocus.ts";
 import { hueFor } from "../lib/hues.ts";
-import { locale, t } from "../lib/i18n.ts";
+import { t } from "../lib/i18n.ts";
 import type { ItemId, OccasionId } from "../lib/ids.ts";
 import { itemPictureSources } from "../lib/itemPictures.ts";
 import { shopName } from "../lib/links.ts";
 import { parseMarkdown } from "../lib/markdown.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
-import { formatOccasionDate } from "../lib/occasions.ts";
 import type { TableColumn, TableSort } from "../lib/tableSort.ts";
 import { heartCount } from "../lib/wantedLevel.ts";
 import u from "../utilities.module.css";
@@ -38,6 +37,7 @@ import {
   type PurchaseState,
 } from "./ItemCard.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
+import { OccasionPicker } from "./OccasionPicker.tsx";
 import styles from "./ItemTable.module.css";
 import { Markdown } from "./Markdown.tsx";
 import { WantedLevelText } from "./WantedLevelText.tsx";
@@ -175,7 +175,6 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
   const isPrivate = () => !item().visible_in_all_groups && groupNames().length === 0;
   const [open, setOpen] = createSignal(false);
   const detailId = createUniqueId();
-  const occasionLabel = createUniqueId();
   const description = createMemo(() => parseMarkdown(item().description ?? ""));
   const remember = (event: MouseEvent) => rememberBuyTap(item().id, event.currentTarget as Element);
 
@@ -341,55 +340,21 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
                 </Match>
                 <Match when={purchase() === "available" && table().occasionChoices(item())}>
                   {(choices) => (
-                    <div
-                      class={`${u.stack} ${u.smallGap}`}
-                      role="group"
-                      aria-labelledby={occasionLabel}
-                    >
-                      <span class={u.fieldLabel} id={occasionLabel}>
-                        {t("item.forWhichOccasion")}
-                      </span>
-                      <For each={choices()}>
-                        {(occasion) => (
-                          <Button
-                            variant="secondary"
-                            size="small"
-                            class={styles.statusButton}
-                            data-purchase
-                            onClick={(event) => {
-                              pressed();
-                              remember(event);
-                              table().onPickOccasion(item(), occasion.id);
-                            }}
-                          >
-                            {occasion.name} · {formatOccasionDate(occasion.date, locale())}
-                          </Button>
-                        )}
-                      </For>
-                      <span class={styles.statusRow}>
-                        <Button
-                          variant="link"
-                          size="small"
-                          onClick={(event) => {
-                            pressed();
-                            remember(event);
-                            table().onPickOccasion(item(), null);
-                          }}
-                        >
-                          {t("item.noOccasion")}
-                        </Button>
-                        <Button
-                          variant="link"
-                          size="small"
-                          onClick={() => {
-                            pressed();
-                            table().onCancelPick();
-                          }}
-                        >
-                          {t("common.cancel")}
-                        </Button>
-                      </span>
-                    </div>
+                    <OccasionPicker
+                      choices={choices()}
+                      small
+                      buttonClass={styles.statusButton}
+                      rowClass={styles.statusRow}
+                      onPick={(occasionId, event) => {
+                        pressed();
+                        remember(event);
+                        table().onPickOccasion(item(), occasionId);
+                      }}
+                      onCancel={() => {
+                        pressed();
+                        table().onCancelPick();
+                      }}
+                    />
                   )}
                 </Match>
                 <Match when={purchase() === "available"}>
