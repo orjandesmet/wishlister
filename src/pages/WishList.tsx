@@ -54,6 +54,7 @@ import { isReady, loaded } from "../lib/resource.ts";
 import { createCachedResource } from "../lib/cache.ts";
 import { loadDrawnPeople, loadItems, loadMyGroups, loadProfileDetails } from "../lib/loaders.ts";
 import { useQuickAdd } from "../lib/quickAdd.ts";
+import { nextWantedLevel } from "../lib/wantedLevel.ts";
 import u from "../utilities.module.css";
 import { Button } from "../components/Button.tsx";
 import { EmptyState } from "../components/EmptyState.tsx";
@@ -268,7 +269,7 @@ export default function WishList() {
   const onChangeWant = (item: Item) =>
     (savingWant = savingWant.then(() =>
       run(async () => {
-        const level = item.wanted_level === 3 ? 1 : ((item.wanted_level + 1) as WantedLevel);
+        const level = nextWantedLevel(item.wanted_level);
         const was = item.wanted_level;
         const id = item.id;
         const setLevel = (to: WantedLevel) =>

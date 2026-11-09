@@ -4,13 +4,11 @@ import { A } from "@solidjs/router";
 import { Dynamic } from "solid-js/web";
 import { RemoveLabel } from "./RemoveLabel.tsx";
 import {
-  createEffect,
   createMemo,
   createSignal,
   createUniqueId,
   For,
   Match,
-  on,
   Show,
   Switch,
   type JSX,
@@ -20,10 +18,13 @@ import type { Occasion } from "../lib/api/occasions.ts";
 import { convertAmount, displayCurrency, exchangeRates, formatPrice } from "../lib/currency.ts";
 import { locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
+import { createPurchaseRefocus } from "../lib/createPurchaseRefocus.ts";
 import { hueFor } from "../lib/hues.ts";
+import { shopName } from "../lib/links.ts";
 import { isShort, parseMarkdown, plainText } from "../lib/markdown.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
 import { formatOccasionDate } from "../lib/occasions.ts";
+import { heartCount } from "../lib/wantedLevel.ts";
 import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
@@ -114,7 +115,7 @@ export function Heart() {
  * for the list's editors, who can tap it to change the level.
  */
 function WantedLevel(props: { level: number; name: string; onChange?: () => void }) {
-  const hearts = () => (props.level >= 3 ? 3 : props.level === 2 ? 1 : 0);
+  const hearts = () => heartCount(props.level);
   const content = () => (
     <>
       <span class={styles.hearts} classList={{ [styles.noHearts]: hearts() === 0 }}>
@@ -159,7 +160,7 @@ function WantedLevel(props: { level: number; name: string; onChange?: () => void
  * words instead. Plain "I want this" has no hearts, so shows nothing.
  */
 function InlineHearts(props: { level: number }) {
-  const hearts = () => (props.level >= 3 ? 3 : props.level === 2 ? 1 : 0);
+  const hearts = () => heartCount(props.level);
   return (
     <Show when={hearts() > 0}>
       <span class={`${styles.hearts} ${styles.inlineHearts}`}>
@@ -219,15 +220,6 @@ export function BoldList(props: { items: string[] }) {
   );
 }
 
-/** The shop's name instead of the whole address, which only crowds the card. */
-export function shopName(url: string) {
-  try {
-    return new URL(url).hostname.replace(/^www\./, "");
-  } catch {
-    return url;
-  }
-}
-
 /**
  * One wish, or "please don't buy" entry, on a list. Only shows things; the page
  * decides what the buttons do.
@@ -241,25 +233,11 @@ export function ItemCard(props: ItemCardProps) {
   const rememberButton = (event: MouseEvent) =>
     rememberBuyTap(props.item.id, event.currentTarget as Element);
 
-  // "I bought this", Undo and the occasion buttons replace each other once the page has saved,
-  // so the pressed button is gone. Focus then moves to whatever replaced it (or the card),
-  // instead of dropping to the top of the page. Only when focus was really lost, so it never
-  // pulls focus away from somewhere else.
   // oxlint-disable-next-line no-unassigned-vars
   let card: HTMLElement | undefined;
-  let refocus = false;
-  const pressed = () => (refocus = true);
-  createEffect(
-    on(
-      () => [props.purchase, props.occasionChoices],
-      () => {
-        const lost = !document.activeElement || document.activeElement === document.body;
-        if (!refocus || !lost || !card) return;
-        refocus = false;
-        (card.querySelector<HTMLElement>("[data-purchase]") ?? card).focus();
-      },
-      { defer: true },
-    ),
+  const pressed = createPurchaseRefocus(
+    () => card,
+    () => [props.purchase, props.occasionChoices],
   );
   const occasionLabel = createUniqueId();
 
