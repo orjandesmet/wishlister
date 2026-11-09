@@ -4,7 +4,6 @@
 //
 // Never pass a token, key or email address as text or detail: the log is kept by
 // Netlify. Account and profile ids are fine.
-import type { SupabaseClient, User } from "@supabase/supabase-js";
 
 /**
  * A JSON answer `{ message: text }`. Answers of 400 and up are logged with `detail`
@@ -25,22 +24,21 @@ export function bearerToken(request: Request): string | undefined {
   return request.headers.get("Authorization")?.replace(/^Bearer /, "") || undefined;
 }
 
-/**
- * The signed-in user the token belongs to, or a logged 401 answer saying why not:
- * no token, an expired or revoked one, or Supabase not answering.
- */
-export async function signedInUser(
-  client: SupabaseClient,
-  token: string | undefined,
-): Promise<{ user: User } | { response: Response }> {
-  if (!token) return { response: message(401, "Not signed in", "no Authorization header") };
-  const { data, error } = await client.auth.getUser(token);
-  if (data.user) return { user: data.user };
-  const reason = error ? `${error.status ?? "?"} ${error.message}` : "no user for this token";
-  return { response: message(401, "Not signed in", `checking the token failed: ${reason}`) };
-}
-
 /** Which of these environment variables aren't set, for a log line (never their values). */
 export function missingEnv(...names: string[]): string {
   return names.filter((name) => !process.env[name]).join(", ") || "none";
+}
+
+/**
+ * The values of these environment variables, or which of them aren't set (for a log
+ * line, never their values).
+ */
+export function requireEnv<const N extends string>(
+  ...names: N[]
+): { env: Record<N, string> } | { missing: string } {
+  const missing = names.filter((name) => !process.env[name]);
+  if (missing.length > 0) return { missing: missing.join(", ") };
+  return {
+    env: Object.fromEntries(names.map((name) => [name, process.env[name]])) as Record<N, string>,
+  };
 }

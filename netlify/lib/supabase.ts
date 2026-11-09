@@ -7,7 +7,7 @@
 // - admin (secret key): skips row-level security. Only use it after checking the
 //   caller, for what the caller can't do themselves (auth admin, sending emails).
 import { createClient, type SupabaseClient, type User } from "@supabase/supabase-js";
-import { bearerToken, message, missingEnv, signedInUser } from "./respond.ts";
+import { bearerToken, message, requireEnv } from "./respond.ts";
 
 export type SupabaseKeys = { url: string; publishableKey: string; secretKey: string };
 
@@ -16,15 +16,21 @@ export const SUPABASE_KEY_NAMES = [
   "VITE_SUPABASE_URL",
   "VITE_SUPABASE_PUBLISHABLE_KEY",
   "SUPABASE_SECRET_KEY",
-];
+] as const;
 
-/** The Supabase url, publishable key and secret key, or undefined if any isn't set. */
-export function readSupabaseKeys(): SupabaseKeys | undefined {
-  const url = process.env.VITE_SUPABASE_URL;
-  const publishableKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const secretKey = process.env.SUPABASE_SECRET_KEY;
-  if (!url || !publishableKey || !secretKey) return undefined;
-  return { url, publishableKey, secretKey };
+/** The Supabase url, publishable key and secret key, or which of them aren't set. */
+export function readSupabaseKeys(): { keys: SupabaseKeys } | { missing: string } {
+  const read = requireEnv(...SUPABASE_KEY_NAMES);
+  if ("missing" in read) return read;
+  // Typed by SUPABASE_KEY_NAMES, so renaming one there makes these fail to compile.
+  const { env } = read;
+  return {
+    keys: {
+      url: env.VITE_SUPABASE_URL,
+      publishableKey: env.VITE_SUPABASE_PUBLISHABLE_KEY,
+      secretKey: env.SUPABASE_SECRET_KEY,
+    },
+  };
 }
 
 /**
@@ -32,11 +38,11 @@ export function readSupabaseKeys(): SupabaseKeys | undefined {
  * what the app gets to see.
  */
 export function supabaseKeys(
-  text = "Missing VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY or SUPABASE_SECRET_KEY",
+  text = `Missing ${SUPABASE_KEY_NAMES.slice(0, -1).join(", ")} or ${SUPABASE_KEY_NAMES.at(-1)}`,
 ): { keys: SupabaseKeys } | { response: Response } {
-  const keys = readSupabaseKeys();
-  if (keys) return { keys };
-  return { response: message(500, text, `missing ${missingEnv(...SUPABASE_KEY_NAMES)}`) };
+  const read = readSupabaseKeys();
+  if ("keys" in read) return read;
+  return { response: message(500, text, `missing ${read.missing}`) };
 }
 
 /** A client with the secret key: no row-level security. */
@@ -45,7 +51,7 @@ export function adminClient(url: string, secretKey: string): SupabaseClient {
 }
 
 /** A client that acts as the caller, so row-level security applies. */
-export function callerClient(url: string, publishableKey: string, token: string): SupabaseClient {
+function callerClient(url: string, publishableKey: string, token: string): SupabaseClient {
   return createClient(url, publishableKey, {
     global: { headers: { Authorization: `Bearer ${token}` } },
     auth: { persistSession: false },
@@ -54,7 +60,8 @@ export function callerClient(url: string, publishableKey: string, token: string)
 
 /**
  * The signed-in caller of `request` ("Authorization: Bearer …") and a client acting
- * as them, or a logged 401 answer: no token, or one Supabase doesn't accept.
+ * as them, or a logged 401 answer saying why not: no token, an expired or revoked
+ * one, or Supabase not answering.
  */
 export async function signedInCaller(
   request: Request,
@@ -63,7 +70,8 @@ export async function signedInCaller(
   const token = bearerToken(request);
   if (!token) return { response: message(401, "Not signed in", "no Authorization header") };
   const asCaller = callerClient(keys.url, keys.publishableKey, token);
-  const signedIn = await signedInUser(asCaller, token);
-  if ("response" in signedIn) return { response: signedIn.response };
-  return { user: signedIn.user, asCaller };
+  const { data, error } = await asCaller.auth.getUser(token);
+  if (data.user) return { user: data.user, asCaller };
+  const reason = error ? `${error.status ?? "?"} ${error.message}` : "no user for this token";
+  return { response: message(401, "Not signed in", `checking the token failed: ${reason}`) };
 }

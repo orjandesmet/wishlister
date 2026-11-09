@@ -33,11 +33,11 @@ export default async (request: Request) => {
     );
   }
 
+  const body = (await request.json().catch(() => ({}))) as { recipient?: unknown };
+  if (typeof body.recipient !== "string") return message(400, "recipient is required");
   const signedIn = await signedInCaller(request, setup.keys);
   if ("response" in signedIn) return signedIn.response;
   const { user, asCaller } = signedIn;
-  const body = (await request.json().catch(() => ({}))) as { recipient?: unknown };
-  if (typeof body.recipient !== "string") return message(400, "recipient is required");
 
   // Looked up as the caller (row-level security lets you read your own profile): the
   // secret key's service_role has no table grants, only execute on the nudge functions.

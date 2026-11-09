@@ -5,19 +5,16 @@
 // Storage itself, so it only lists them (orphaned_item_pictures()).
 //
 // Needs VITE_SUPABASE_URL and SUPABASE_SECRET_KEY.
-import { missingEnv } from "../lib/respond.ts";
+import { requireEnv } from "../lib/respond.ts";
 import { adminClient } from "../lib/supabase.ts";
 
 const BUCKET = "item-pictures";
 
 export default async () => {
-  const url = process.env.VITE_SUPABASE_URL;
-  const secretKey = process.env.SUPABASE_SECRET_KEY;
-  if (!url || !secretKey) {
-    throw new Error(`Missing ${missingEnv("VITE_SUPABASE_URL", "SUPABASE_SECRET_KEY")}`);
-  }
+  const read = requireEnv("VITE_SUPABASE_URL", "SUPABASE_SECRET_KEY");
+  if ("missing" in read) throw new Error(`Missing ${read.missing}`);
 
-  const admin = adminClient(url, secretKey);
+  const admin = adminClient(read.env.VITE_SUPABASE_URL, read.env.SUPABASE_SECRET_KEY);
   const { data, error } = await admin.rpc("orphaned_item_pictures");
   if (error) throw new Error(`Couldn't list unused pictures: ${error.message}`);
 

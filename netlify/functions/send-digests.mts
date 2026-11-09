@@ -13,18 +13,15 @@ import { mailConfigured, sendEmails } from "../lib/mail.ts";
 import { sendQuestionNotices } from "../lib/questionNotices.ts";
 import { sendRemovalNotices } from "../lib/removalNotices.ts";
 import { sendSecretSantaNotices } from "../lib/secret-santa/secretSantaNotices.ts";
-import { missingEnv } from "../lib/respond.ts";
+import { missingEnv, requireEnv } from "../lib/respond.ts";
 import { adminClient } from "../lib/supabase.ts";
 
 export default async () => {
-  const url = process.env.VITE_SUPABASE_URL;
-  const secretKey = process.env.SUPABASE_SECRET_KEY;
-  const siteUrl = process.env.URL;
-  if (!url || !secretKey || !siteUrl) {
-    throw new Error(`Missing ${missingEnv("VITE_SUPABASE_URL", "SUPABASE_SECRET_KEY", "URL")}`);
-  }
+  const read = requireEnv("VITE_SUPABASE_URL", "SUPABASE_SECRET_KEY", "URL");
+  if ("missing" in read) throw new Error(`Missing ${read.missing}`);
+  const siteUrl = read.env.URL;
 
-  const admin = adminClient(url, secretKey);
+  const admin = adminClient(read.env.VITE_SUPABASE_URL, read.env.SUPABASE_SECRET_KEY);
   const upto = new Date().toISOString();
 
   // Without a mail setup there's nothing to send, but the window still moves on:

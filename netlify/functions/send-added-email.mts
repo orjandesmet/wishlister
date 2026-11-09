@@ -22,8 +22,8 @@ type Member = { role: string; profiles: { account_id: string | null; display_nam
 export default async (request: Request) => {
   if (request.method !== "POST") return message(405, "Method not allowed");
 
-  const keys = readSupabaseKeys();
-  if (!keys || !mailConfigured()) {
+  const read = readSupabaseKeys();
+  if ("missing" in read || !mailConfigured()) {
     // Not an error for the manager: the member is in the group either way.
     return message(
       503,
@@ -32,17 +32,19 @@ export default async (request: Request) => {
     );
   }
 
-  // The group is read as the manager (asCaller), so row-level security applies:
-  // they only see groups they're in.
-  const signedIn = await signedInCaller(request, keys);
-  if ("response" in signedIn) return signedIn.response;
-  const { user, asCaller } = signedIn;
+  const { keys } = read;
 
   const { groupId, email } = (await request.json().catch(() => ({}))) as {
     groupId?: string;
     email?: string;
   };
   if (!groupId || !email) return message(400, "groupId and email are required");
+
+  // The group is read as the manager (asCaller), so row-level security applies:
+  // they only see groups they're in.
+  const signedIn = await signedInCaller(request, keys);
+  if ("response" in signedIn) return signedIn.response;
+  const { user, asCaller } = signedIn;
 
   const { data: group, error: groupError } = await asCaller
     .from("groups")

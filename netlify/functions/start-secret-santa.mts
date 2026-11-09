@@ -40,10 +40,6 @@ export default async (request: Request) => {
   if ("response" in setup) return setup.response;
   const { url, secretKey } = setup.keys;
 
-  const signedIn = await signedInCaller(request, setup.keys);
-  if ("response" in signedIn) return signedIn.response;
-  const { user, asCaller } = signedIn;
-
   const body = (await request.json().catch(() => ({}))) as {
     occasionId?: string;
     participants?: string[];
@@ -84,6 +80,10 @@ export default async (request: Request) => {
   if (note.length > 2000) return message(400, "The message can be 2000 characters at most");
 
   // Everything about the caller is read as them (asCaller), so row-level security applies.
+  const signedIn = await signedInCaller(request, setup.keys);
+  if ("response" in signedIn) return signedIn.response;
+  const { user, asCaller } = signedIn;
+
   const { data: occasion, error: occasionError } = await asCaller
     .from("occasions")
     .select("id, group_id")

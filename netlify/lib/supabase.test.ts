@@ -27,7 +27,7 @@ describe("supabaseKeys", () => {
       publishableKey: "sb_publishable",
       secretKey: "sb_secret",
     };
-    expect(readSupabaseKeys()).toEqual(keys);
+    expect(readSupabaseKeys()).toEqual({ keys });
     expect(supabaseKeys()).toEqual({ keys });
   });
 
@@ -35,7 +35,7 @@ describe("supabaseKeys", () => {
     stubKeys("");
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const result = supabaseKeys("Not set up");
-    expect(readSupabaseKeys()).toBeUndefined();
+    expect(readSupabaseKeys()).toEqual({ missing: "SUPABASE_SECRET_KEY" });
     expect("response" in result && result.response.status).toBe(500);
     expect("response" in result && (await result.response.json())).toEqual({
       message: "Not set up",
@@ -77,12 +77,30 @@ describe("signedInCaller", () => {
     expect("response" in result && result.response.status).toBe(401);
     expect(warn).toHaveBeenCalledWith("401 Not signed in (no Authorization header)");
     expect(getUser).not.toHaveBeenCalled();
+    expect(createClient).not.toHaveBeenCalled();
   });
 
-  it("answers 401 when Supabase doesn't accept the token", async () => {
-    vi.spyOn(console, "warn").mockImplementation(() => {});
-    getUser.mockResolvedValue({ data: { user: null }, error: { status: 403, message: "expired" } });
+  it("answers 401 and logs why, without the token, when Supabase doesn't accept it", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    getUser.mockResolvedValue({
+      data: { user: null },
+      error: { status: 403, message: "token is expired" },
+    });
+    const result = await signedInCaller(request({ Authorization: "Bearer secret-token" }), keys);
+    expect("response" in result && result.response.status).toBe(401);
+    expect(warn).toHaveBeenCalledWith(
+      "401 Not signed in (checking the token failed: 403 token is expired)",
+    );
+    expect(String(warn.mock.calls)).not.toContain("secret-token");
+  });
+
+  it("answers 401 when there's no user for the token", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    getUser.mockResolvedValue({ data: { user: null }, error: null });
     const result = await signedInCaller(request({ Authorization: "Bearer abc" }), keys);
     expect("response" in result && result.response.status).toBe(401);
+    expect(warn).toHaveBeenCalledWith(
+      "401 Not signed in (checking the token failed: no user for this token)",
+    );
   });
 });

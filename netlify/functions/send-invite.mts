@@ -14,23 +14,21 @@ import { adminClient, signedInCaller, supabaseKeys } from "../lib/supabase.ts";
 export default async (request: Request) => {
   if (request.method !== "POST") return message(405, "Method not allowed");
 
-  const setup = supabaseKeys(
-    "Sending invite emails isn't set up yet (missing SUPABASE_SECRET_KEY).",
-  );
+  const setup = supabaseKeys("Sending invite emails isn't set up yet.");
   if ("response" in setup) return setup.response;
   const { url, secretKey } = setup.keys;
-
-  // Everything is checked as the manager (asCaller), so row-level security applies:
-  // only a manager of the group can see its pending invites.
-  const signedIn = await signedInCaller(request, setup.keys);
-  if ("response" in signedIn) return signedIn.response;
-  const { user, asCaller } = signedIn;
 
   const { groupId, email } = (await request.json().catch(() => ({}))) as {
     groupId?: string;
     email?: string;
   };
   if (!groupId || !email) return message(400, "groupId and email are required");
+
+  // Everything is checked as the manager (asCaller), so row-level security applies:
+  // only a manager of the group can see its pending invites.
+  const signedIn = await signedInCaller(request, setup.keys);
+  if ("response" in signedIn) return signedIn.response;
+  const { user, asCaller } = signedIn;
 
   const normalized = email.trim().toLowerCase();
   const { data: invite, error: inviteError } = await asCaller
