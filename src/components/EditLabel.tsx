@@ -1,3 +1,4 @@
+import { Icon } from "./Icon.tsx";
 import { Show } from "solid-js";
 import u from "../utilities.module.css";
 
@@ -13,16 +14,7 @@ export function EditLabel(props: { label: string; icon?: "pencil" | "chevron"; o
         <span class={u.visuallyHidden}> {props.of}</span>
       </Show>
       {/* Lucide "pencil" and "chevron-right" (ISC licence). */}
-      <svg
-        class={u.labelIcon}
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="1.75"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        aria-hidden="true"
-      >
+      <Icon class={u.labelIcon} strokeWidth={1.75}>
         {props.icon === "chevron" ? (
           <path d="m9 18 6-6-6-6" />
         ) : (
@@ -31,7 +23,7 @@ export function EditLabel(props: { label: string; icon?: "pencil" | "chevron"; o
             <path d="m15 5 4 4" />
           </>
         )}
-      </svg>
+      </Icon>
     </>
   );
 }

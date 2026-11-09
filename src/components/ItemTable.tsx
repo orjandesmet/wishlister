@@ -1,3 +1,4 @@
+import { Icon } from "./Icon.tsx";
 import { A } from "@solidjs/router";
 import {
   createEffect,
@@ -103,17 +104,7 @@ function SortHeader(props: {
       <button type="button" class={styles.sort} onClick={() => props.onSort(props.column)}>
         {props.label}
         {/* Lucide "arrow-up" / "arrow-down" / "arrow-up-down" (ISC licence). */}
-        <svg
-          class={styles.arrow}
-          classList={{ [styles.idle]: !direction() }}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
+        <Icon class={styles.arrow} classList={{ [styles.idle]: !direction() }}>
           <Switch
             fallback={
               <>
@@ -133,7 +124,7 @@ function SortHeader(props: {
               <path d="m19 12-7 7-7-7" />
             </Match>
           </Switch>
-        </svg>
+        </Icon>
       </button>
     </th>
   );
@@ -232,17 +223,9 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
                 onClick={() => setOpen((was) => !was)}
               >
                 {/* Lucide "chevron-right" (ISC licence), turned down when open. */}
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="2"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
+                <Icon>
                   <path d="m9 18 6-6-6-6" />
-                </svg>
+                </Icon>
                 <span class={u.visuallyHidden}>{t("table.details", { name: item().name })}</span>
               </button>
             }
@@ -305,18 +288,10 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
               <Match when={isPrivate()}>
                 <span class={styles.onlyMe}>
                   {/* Lucide "lock" (ISC licence). */}
-                  <svg
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    aria-hidden="true"
-                  >
+                  <Icon>
                     <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                  </svg>
+                  </Icon>
                   {t("table.onlyMe")}
                 </span>
               </Match>

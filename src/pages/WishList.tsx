@@ -1,3 +1,4 @@
+import { Icon } from "../components/Icon.tsx";
 import { useNavigate, useParams, useSearchParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, For, onCleanup, Show } from "solid-js";
 import { Avatar } from "../components/Avatar.tsx";
@@ -506,22 +507,13 @@ export default function WishList() {
               >
                 <span class={u.labelText}>{t("bulk.select")}</span>
                 {/* Lucide "list-checks" (ISC licence): stands in for the label on small screens. */}
-                <svg
-                  class={u.labelIcon}
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  stroke-width="1.75"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  aria-hidden="true"
-                >
+                <Icon class={u.labelIcon} strokeWidth={1.75}>
                   <path d="m3 17 2 2 4-4" />
                   <path d="m3 7 2 2 4-4" />
                   <path d="M13 6h8" />
                   <path d="M13 12h8" />
                   <path d="M13 18h8" />
-                </svg>
+                </Icon>
               </Button>
             </Show>
             <Show when={!select.selecting()}>

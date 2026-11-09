@@ -1,3 +1,4 @@
+import { Icon } from "./Icon.tsx";
 import { For, Match, Switch } from "solid-js";
 import { t } from "../lib/i18n.ts";
 import { listViews, type ListView } from "../lib/listView.ts";
@@ -12,15 +13,7 @@ export type ListViewSwitchProps = {
 /** The view's icon, in the same stroke and corner radius as the Compact button's. */
 function ViewIcon(props: { view: ListView }) {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.75"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
+    <Icon strokeWidth={1.75}>
       <Switch>
         <Match when={props.view === "full"}>
           {/* Full cards: two tall blocks. */}
@@ -41,7 +34,7 @@ function ViewIcon(props: { view: ListView }) {
           <path d="M7.5 3v18" />
         </Match>
       </Switch>
-    </svg>
+    </Icon>
   );
 }
 
