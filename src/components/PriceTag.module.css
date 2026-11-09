@@ -1,0 +1,36 @@
+/* Figures keep their digits in line. */
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+
+.amount {
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--accent);
+}
+
+/* "≈" never ends up on a line of its own. */
+.converted {
+  font-size: 14px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* On a compact card and in the table. */
+.price.small {
+  margin: 0;
+}
+
+.small .amount {
+  font-size: 15px;
+}
+
+.small .converted {
+  font-size: 13px;
+}

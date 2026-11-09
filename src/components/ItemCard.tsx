@@ -15,7 +15,7 @@ import {
 } from "solid-js";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
-import { convertAmount, displayCurrency, exchangeRates, formatPrice } from "../lib/currency.ts";
+import type { PurchaseState } from "../lib/createPurchases.ts";
 import { locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
 import { createPurchaseRefocus } from "../lib/createPurchaseRefocus.ts";
@@ -28,18 +28,16 @@ import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import { Chip } from "./Chip.tsx";
+import { ExternalLinkIcon } from "./ExternalLinkIcon.tsx";
+import { HeartIcon } from "./HeartIcon.tsx";
 import { ItemPicture } from "./ItemPicture.tsx";
 import { OccasionPicker } from "./OccasionPicker.tsx";
 import { itemPictureSources } from "../lib/itemPictures.ts";
 import { Markdown } from "./Markdown.tsx";
+import { PriceTag } from "./PriceTag.tsx";
+import { YouBoughtFor } from "./YouBoughtFor.tsx";
 import { WantedLevelText } from "./WantedLevelText.tsx";
 import styles from "./ItemCard.module.css";
-
-/**
- * Whether you can mark the item as bought. "hidden" shows nothing: your own list,
- * or purchases are still loading.
- */
-export type PurchaseState = "hidden" | "available" | "mine" | "someone";
 
 export type ItemCardProps = {
   item: Item;
@@ -79,37 +77,6 @@ export type ItemCardProps = {
 };
 
 /**
- * The item's price as the shop showed it, and roughly what that is in your
- * currency when it's another one.
- */
-export function PriceTag(props: { amount: number; currency: string; small?: boolean }) {
-  const converted = () => {
-    if (props.currency === displayCurrency()) return null;
-    const amount = convertAmount(props.amount, props.currency, displayCurrency(), exchangeRates());
-    return amount === null ? null : formatPrice(amount, displayCurrency(), locale());
-  };
-  return (
-    <p class={styles.price} classList={{ [styles.smallPrice]: props.small }}>
-      <span class={styles.priceAmount}>{formatPrice(props.amount, props.currency, locale())}</span>
-      <Show when={converted()}>
-        {(price) => (
-          <span class={styles.priceConverted}>{t("item.convertedPrice", { price: price() })}</span>
-        )}
-      </Show>
-    </p>
-  );
-}
-
-/** Lucide "heart" (ISC licence), filled. */
-export function Heart() {
-  return (
-    <Icon filled>
-      <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-    </Icon>
-  );
-}
-
-/**
  * How much the owner wants it: one heart for "I really want this", three for
  * "I really, really, REALLY want this", and nothing for plain "I want this", except
  * for the list's editors, who can tap it to change the level.
@@ -119,7 +86,7 @@ function WantedLevel(props: { level: number; name: string; onChange?: () => void
   const content = () => (
     <>
       <span class={styles.hearts} classList={{ [styles.noHearts]: hearts() === 0 }}>
-        <For each={Array.from({ length: Math.max(hearts(), 1) })}>{() => <Heart />}</For>
+        <For each={Array.from({ length: Math.max(hearts(), 1) })}>{() => <HeartIcon />}</For>
       </span>
       <span>
         <WantedLevelText level={props.level as 1 | 2 | 3} />
@@ -164,48 +131,12 @@ function InlineHearts(props: { level: number }) {
   return (
     <Show when={hearts() > 0}>
       <span class={`${styles.hearts} ${styles.inlineHearts}`}>
-        <For each={Array.from({ length: hearts() })}>{() => <Heart />}</For>
+        <For each={Array.from({ length: hearts() })}>{() => <HeartIcon />}</For>
         <span class={u.visuallyHidden}>
           <WantedLevelText level={props.level as 1 | 2 | 3} />
         </span>
       </span>
     </Show>
-  );
-}
-
-/** Lucide "external-link" (ISC licence). */
-export function ExternalLinkIcon() {
-  return (
-    <Icon>
-      <path d="M15 3h6v6" />
-      <path d="M10 14 21 3" />
-      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-    </Icon>
-  );
-}
-
-/**
- * "You bought this for Anna's birthday", which only wraps between the sentence and the
- * occasion: each part stays on one line.
- */
-export function YouBoughtFor(props: { occasion: string }) {
-  const parts = () => {
-    const text = t("item.youBoughtFor", { occasion: props.occasion });
-    const at = text.lastIndexOf(props.occasion);
-    if (at < 0) return [text];
-    return [text.slice(0, at).trimEnd(), props.occasion, text.slice(at + props.occasion.length)];
-  };
-  return (
-    <>
-      <span class={styles.noWrap}>{parts()[0]}</span>
-      <Show when={parts().length > 1}>
-        {" "}
-        <span class={styles.noWrap}>
-          {parts()[1]}
-          {parts()[2]}
-        </span>
-      </Show>
-    </>
   );
 }
 
