@@ -4,7 +4,7 @@
 // when sending failed. The notify-* functions send one kind as soon as the app asks;
 // the evening digest (send-digests) sends what's left of every kind.
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { mailConfigured } from "./mail.ts";
+import { mailConfigured, sendEmails, type Email } from "./mail.ts";
 import { message, missingEnv } from "./respond.ts";
 import { adminClient, signedInCaller, supabaseKeys } from "./supabase.ts";
 
@@ -16,6 +16,37 @@ export type NoticeSender = (
 
 /** One kind of notice: how it's sent, and what it's called in the log ("removal notices"). */
 export type NoticeKind = { what: string; send: NoticeSender };
+
+/**
+ * Mails every row the database hands out. Claiming the rows marks them as mailed, so
+ * two runs at once don't both send; a failed send hands them back for the next run.
+ */
+export async function sendClaimedNotices<Row>(
+  admin: SupabaseClient,
+  notices: {
+    /** The database function that claims the rows. */
+    claim: string;
+    /** What the rows are, for the error when claiming fails ("removed items"). */
+    rows: string;
+    build: (rows: Row[]) => Email[];
+    /** The database function, and its arguments, that hands these rows back. */
+    release: (rows: Row[]) => [name: string, args: Record<string, unknown>];
+  },
+): Promise<{ sent: number; errors: string[] }> {
+  const { data, error } = await admin.rpc(notices.claim);
+  if (error) return { sent: 0, errors: [`Couldn't collect ${notices.rows}: ${error.message}`] };
+  const rows = (data ?? []) as Row[];
+  if (rows.length === 0) return { sent: 0, errors: [] };
+
+  const result = await sendEmails(notices.build(rows));
+  if (result.errors.length > 0) {
+    // Which emails of a failed batch went out isn't known; with fewer than 100
+    // (one batch), nothing did.
+    const { error: releaseError } = await admin.rpc(...notices.release(rows));
+    if (releaseError) result.errors.push(`Couldn't release them: ${releaseError.message}`);
+  }
+  return result;
+}
 
 /**
  * A Netlify function that sends one kind of notice when a signed-in person asks

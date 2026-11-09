@@ -7,8 +7,8 @@
 // Like the digest, the texts live here instead of in src/i18n (which holds JSX).
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseMarkdown, type Block, type Inline } from "../../../src/lib/markdown.ts";
-import { escapeHtml, sendEmails, type Email } from "../mail.ts";
-import type { NoticeKind } from "../notices.ts";
+import { escapeHtml, type Email } from "../mail.ts";
+import { sendClaimedNotices, type NoticeKind } from "../notices.ts";
 
 /** One row of claim_secret_santa_notices(): one email. */
 export type SecretSantaRow = {
@@ -121,30 +121,24 @@ export function buildSecretSantaEmails(rows: SecretSantaRow[], siteUrl: string):
 }
 
 /**
- * Mails everyone who hasn't heard who they drew yet. Claiming the rows marks them as
- * mailed, so two runs at once don't both send; a failed send hands them back for the
- * next run. `admin` is a client with the secret key.
+ * Mails everyone who hasn't heard who they drew yet (see sendClaimedNotices). `admin` is a client with the secret key.
  */
-export async function sendSecretSantaNotices(
+export function sendSecretSantaNotices(
   admin: SupabaseClient,
   siteUrl: string,
 ): Promise<{ sent: number; errors: string[] }> {
-  const { data, error } = await admin.rpc("claim_secret_santa_notices");
-  if (error) return { sent: 0, errors: [`Couldn't collect Secret Santa pairs: ${error.message}`] };
-  const rows = (data ?? []) as SecretSantaRow[];
-  if (rows.length === 0) return { sent: 0, errors: [] };
-
-  const result = await sendEmails(buildSecretSantaEmails(rows, siteUrl));
-  if (result.errors.length > 0) {
-    // Which emails of a failed batch went out isn't known; with fewer than 100
-    // (one batch), nothing did.
-    const { error: releaseError } = await admin.rpc("release_secret_santa_notices", {
-      draw_ids: rows.map((row) => row.secret_santa_id),
-      giver_ids: rows.map((row) => row.giver_profile_id),
-    });
-    if (releaseError) result.errors.push(`Couldn't release them: ${releaseError.message}`);
-  }
-  return result;
+  return sendClaimedNotices<SecretSantaRow>(admin, {
+    claim: "claim_secret_santa_notices",
+    rows: "Secret Santa pairs",
+    build: (rows) => buildSecretSantaEmails(rows, siteUrl),
+    release: (rows) => [
+      "release_secret_santa_notices",
+      {
+        draw_ids: rows.map((row) => row.secret_santa_id),
+        giver_ids: rows.map((row) => row.giver_profile_id),
+      },
+    ],
+  });
 }
 
 export const secretSantaNotices: NoticeKind = {
