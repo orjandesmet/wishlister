@@ -1,6 +1,7 @@
 import { EditLabel } from "../components/EditLabel.tsx";
 import { A } from "@solidjs/router";
 import { createResource, createSignal, For, Show } from "solid-js";
+import { MyPurchases } from "../components/MyPurchases.tsx";
 import { NotificationSettings } from "../components/NotificationSettings.tsx";
 import { CurrencySelect } from "../components/CurrencySelect.tsx";
 import { CardViewSetting } from "../components/CardViewSetting.tsx";
@@ -16,6 +17,8 @@ import {
 } from "../lib/api/profiles.ts";
 import { createChild } from "../lib/api/children.ts";
 import { followList, getMyFollows, unfollowAll, unfollowList } from "../lib/api/follows.ts";
+import { getMyPurchases, setDelivered } from "../lib/api/purchases.ts";
+import type { ItemId } from "../lib/ids.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { today } from "../lib/occasions.ts";
 import { cardView, chooseCardView, type CardView } from "../lib/cardView.ts";
@@ -35,7 +38,7 @@ import { Card } from "../components/Card.tsx";
 import { Person } from "../components/Person.tsx";
 import { usePageTitle } from "../lib/a11y.ts";
 
-/** Your name, language, currency, seasonal themes and how lists look, the children you look after, and signing out. */
+/** Your name, language, currency, seasonal themes and how lists look, the children you look after, what you bought, and signing out. */
 export default function Settings() {
   const me = useMe();
   const [name, setName] = createSignal(me().profile.display_name);
@@ -104,6 +107,23 @@ export default function Settings() {
       await refetchFollows();
     });
 
+  const [purchases] = createResource(() => me().profile.id, getMyPurchases);
+  // Ticks you changed here, shown at once and put back when saving fails. Kept apart
+  // from the loaded purchases so the rows (and the focused checkbox) stay as they are.
+  const [ticked, setTicked] = createSignal(new Map<ItemId, boolean>());
+  const tick = (itemId: ItemId, on: boolean) => setTicked((map) => new Map(map).set(itemId, on));
+  const onDelivered = (itemId: ItemId, delivered: boolean) => {
+    tick(itemId, delivered);
+    void run(async () => {
+      try {
+        await setDelivered(itemId, delivered);
+      } catch (e) {
+        tick(itemId, !delivered);
+        throw e;
+      }
+    });
+  };
+
   usePageTitle(() => t("account.title"));
 
   return (
@@ -163,6 +183,12 @@ export default function Settings() {
           <button type="submit">{t("group.addChild")}</button>
         </form>
       </Card>
+      <MyPurchases
+        purchases={purchases() ?? []}
+        today={today()}
+        isDelivered={(p) => ticked().get(p.itemId) ?? p.delivered}
+        onDelivered={onDelivered}
+      />
       <NotificationSettings
         follows={follows() ?? []}
         today={today()}

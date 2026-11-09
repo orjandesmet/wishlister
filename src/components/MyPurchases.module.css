@@ -1,0 +1,57 @@
+/* One occasion: its name and date, then the people you bought something for. */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section + .section {
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.occasion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.person {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* The item on the left, the "delivered" tick on the right; they stack on narrow screens. */
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0 12px;
+  padding-left: 8px;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 12rem;
+}
+
+.name {
+  overflow-wrap: anywhere;
+  color: var(--text-strong);
+}
+
+.item p {
+  margin: 0;
+}
+
+.delivered {
+  flex: none;
+}
