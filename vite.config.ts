@@ -6,11 +6,16 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { storybookTest } from "@storybook/addon-vitest/vitest-plugin";
 import { playwright } from "vite-plus/test/browser-playwright";
+import { buildVersion } from "./scripts/buildVersion.ts";
 const dirname =
   typeof __dirname !== "undefined" ? __dirname : path.dirname(fileURLToPath(import.meta.url));
 
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
+  define: {
+    // Shown at the bottom of the settings page: the release tag or the short commit hash.
+    "import.meta.env.VITE_APP_VERSION": JSON.stringify(buildVersion() ?? ""),
+  },
   staged: {
     "*": "vp check --fix",
   },
