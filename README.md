@@ -215,6 +215,7 @@ maskable 192 and 512).
    Optionally add `MICROLINK_API_KEY` (see _4. Microlink_ below) and `REEFAPI_API_KEY`
    (see _5. ReefAPI_ below).
 3. Deploy, then put the site URL into Supabase's _Site URL_ (step 1.3).
+4. Set up production deploys, see _Production deploys_ below.
 
 ### 3. Resend (app emails)
 
@@ -317,6 +318,37 @@ release.
    `VITE_DEMO` = `true` for the `demo` branch only.
 5. **Netlify**, _Build & deploy > Branches and deploy contexts_: under _Branch deploys_, add the
    branch `demo`. It appears after the first release tag, or push it once by hand.
+
+## Production deploys
+
+Merging into `main` doesn't put anything live, which saves free-plan credits and means the
+settings page shows a release tag. Netlify's production branch is `production`, and only the
+**Deploy** workflow (`.github/workflows/deploy.yml`) moves it. Netlify then builds and publishes
+it as usual, with its log under _Deploys_ (same idea as the `demo` branch). The branch moves on:
+
+- **Release**: push a `v*` tag. It works on any branch, so for a patch on an older release, branch
+  off its tag, fix, tag `v1.0.1` there and push the tag. Merge that branch back into `main` too,
+  or the next release from `main` won't have the fix. (Only tags on commits that already have
+  `deploy.yml` trigger it; deploy older ones by hand.)
+- **By hand**: _Actions > Deploy > Run workflow_. It deploys the branch or tag picked under _Use
+  workflow from_, or whatever tag, branch or commit you type in the field.
+- **Hotfix**: add the `deploy now` label to a pull request into `main`; merging it deploys main
+  right away.
+
+A deploy by hand or by label isn't on a tag, so the settings page shows its commit hash until the
+next release. Rolling back in Netlify works as before; the next deploy replaces it.
+
+One-time setup:
+
+1. **Actions**: run the **Deploy** workflow by hand with the latest tag (e.g. `v1.0.0`) in the
+   field. That creates the `production` branch.
+2. **Netlify**, _Project configuration > Build & deploy > Continuous deployment > Branches and
+   deploy contexts_: set the _Production branch_ to `production`. Under _Branch deploys_, add
+   `main` next to `demo` (branch deploys cost no credits; it gives a preview of main at
+   `main--<site>.netlify.app`), and keep _Deploy Previews_ on for pull requests.
+3. **GitHub**, _Issues > Labels_: create the label `deploy now`.
+4. If an environment variable has a value just for _Production_ in Netlify, it now applies to the
+   `production` branch, and `main` gets the _Branch deploys_ value.
 
 ## Closing registrations
 

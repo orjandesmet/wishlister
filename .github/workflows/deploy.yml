@@ -1,0 +1,48 @@
+name: Deploy
+
+# Puts a release live by moving the `production` branch, which is Netlify's production
+# branch. Netlify notices the push and builds it as usual, so merging into main doesn't
+# change the live site. The branch moves when:
+# - a release tag (`v*`) is pushed, on any branch, so a patch tag on a side branch works too;
+# - someone presses "Run workflow" on the Actions tab (optionally naming a tag, branch or commit);
+# - a pull request with the `deploy now` label is merged into main (for hotfixes).
+# Same idea as the `demo` branch in demo.yml.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Tag, branch or commit to put live (empty: the one picked above)"
+        required: false
+        default: ""
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+# One deploy at a time, in the order they were started.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  # Moves the `production` branch.
+  contents: write
+
+jobs:
+  deploy:
+    if: >-
+      github.event_name != 'pull_request' ||
+      (github.event.pull_request.merged &&
+       contains(github.event.pull_request.labels.*.name, 'deploy now'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # A merged pull request: its merge commit on main. By hand: the given ref, if any.
+          ref: ${{ github.event.pull_request.merge_commit_sha || inputs.ref || github.ref }}
+      - name: Move the production branch
+        run: |
+          git push --force origin HEAD:refs/heads/production
+          echo "::notice::production is now at $(git rev-parse --short HEAD). Netlify builds and publishes it."
