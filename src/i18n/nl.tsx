@@ -498,6 +498,7 @@ export const nl: Dictionary = {
     saveName: "Naam opslaan",
     saved: "Opgeslagen.",
     signOut: "Afmelden",
+    version: (p: { version: string }) => `Versie ${p.version}`,
   },
   notifications: {
     title: "Meldingen",

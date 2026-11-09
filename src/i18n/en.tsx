@@ -506,6 +506,7 @@ export const en = {
     saveName: "Save name",
     saved: "Saved.",
     signOut: "Sign out",
+    version: (p: { version: string }) => `Version ${p.version}`,
   },
   notifications: {
     title: "Notifications",

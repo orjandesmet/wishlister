@@ -199,6 +199,13 @@ export default function Settings() {
       <Button variant="secondary" danger onClick={() => void signOutHere()}>
         {t("account.signOut")}
       </Button>
+      <Show when={import.meta.env.VITE_APP_VERSION}>
+        {(version) => (
+          <p class={`${u.muted} ${u.small} ${u.center}`}>
+            {t("account.version", { version: version() })}
+          </p>
+        )}
+      </Show>
     </>
   );
 }
