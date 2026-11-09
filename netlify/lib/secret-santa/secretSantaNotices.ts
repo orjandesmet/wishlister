@@ -7,6 +7,7 @@
 // Like the digest, the texts live here instead of in src/i18n (which holds JSX).
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { parseMarkdown, type Block, type Inline } from "../../../src/lib/markdown.ts";
+import { footerHtml, siteBase, textsFor, type EmailLocale } from "../emailParts.ts";
 import { escapeHtml, type Email } from "../mail.ts";
 import { sendClaimedNotices, type NoticeKind } from "../notices.ts";
 
@@ -35,7 +36,7 @@ type Texts = {
   locale: string;
 };
 
-const texts: Record<"en" | "nl", Texts> = {
+const texts: Record<EmailLocale, Texts> = {
   en: {
     subject: (occasion) => `Your Secret Santa for ${occasion}`,
     drawn: (recipient, occasion, group, date) =>
@@ -94,9 +95,9 @@ export function messageHtml(blocks: Block[]): string {
 
 /** One email per row. `siteUrl` is where the app runs, for the link. */
 export function buildSecretSantaEmails(rows: SecretSantaRow[], siteUrl: string): Email[] {
-  const site = siteUrl.replace(/\/$/, "");
+  const site = siteBase(siteUrl);
   return rows.map((row) => {
-    const t = texts[row.locale === "nl" ? "nl" : "en"];
+    const t = textsFor(texts, row.locale);
     const link = `${site}/lists/${row.recipient_profile_id}`;
     const date = formatDate(row.occasion_date, t.locale);
     const recipient = `<strong>${escapeHtml(row.recipient_name)}</strong>`;
@@ -108,7 +109,7 @@ export function buildSecretSantaEmails(rows: SecretSantaRow[], siteUrl: string):
         ...(message ? [`<div>${messageHtml(parseMarkdown(message))}</div>`, "<hr>"] : []),
         `<p>${t.drawn(recipient, escapeHtml(row.occasion_name), escapeHtml(row.group_name), date)}</p>`,
         `<p><a href="${link}">${t.openList}</a></p>`,
-        `<p style="color:#666;font-size:13px">${t.secret}</p>`,
+        footerHtml(t.secret),
       ].join("\n"),
       text: [
         ...(message ? [message, "---"] : []),

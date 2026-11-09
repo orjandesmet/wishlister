@@ -8,6 +8,7 @@
 // Sending it creates their account straight away, and the handle_new_account
 // trigger turns the pending invite into a membership: they're in the group from
 // now on, and the link in the email signs them in.
+import { emailLocale } from "../lib/emailParts.ts";
 import { message } from "../lib/respond.ts";
 import { adminClient, signedInCaller, supabaseKeys } from "../lib/supabase.ts";
 
@@ -59,7 +60,7 @@ export default async (request: Request) => {
   const admin = adminClient(url, secretKey);
   // The new account starts in the inviter's language: the email is written in it,
   // and the app opens in it. They can switch on their account page.
-  const locale = user.user_metadata.locale === "nl" ? "nl" : "en";
+  const locale = emailLocale(user.user_metadata.locale);
   const { error } = await admin.auth.admin.inviteUserByEmail(normalized, {
     // Available in the email template as {{ .Data.group_name }}, {{ .Data.invited_by }}
     // and {{ .Data.locale }}.

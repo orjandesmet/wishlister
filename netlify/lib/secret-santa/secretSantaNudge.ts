@@ -3,6 +3,7 @@
 // so "your Secret Santa" gives nothing away.
 //
 // See supabase/migrations/20261030130000_secret_santa_nudge_and_reminder.sql.
+import { footerHtml, siteBase, textsFor, type EmailLocale } from "../emailParts.ts";
 import { escapeHtml, type Email } from "../mail.ts";
 import { formatDate } from "./secretSantaNotices.ts";
 
@@ -28,7 +29,7 @@ type Texts = {
   locale: string;
 };
 
-const texts: Record<"en" | "nl", Texts> = {
+const texts: Record<EmailLocale, Texts> = {
   en: {
     subject: "Your Secret Santa would love some ideas",
     body: (occasion, date) =>
@@ -49,8 +50,8 @@ const texts: Record<"en" | "nl", Texts> = {
 
 /** The email for one nudge. `siteUrl` is where the app runs, for the link. */
 export function buildNudgeEmail(row: NudgeRow, siteUrl: string): Email {
-  const t = texts[row.locale === "nl" ? "nl" : "en"];
-  const link = `${siteUrl.replace(/\/$/, "")}/lists/${row.recipient_profile_id}`;
+  const t = textsFor(texts, row.locale);
+  const link = `${siteBase(siteUrl)}/lists/${row.recipient_profile_id}`;
   const date = formatDate(row.occasion_date, t.locale);
   return {
     to: row.email,
@@ -58,7 +59,7 @@ export function buildNudgeEmail(row: NudgeRow, siteUrl: string): Email {
     html: [
       `<p>${t.body(escapeHtml(row.occasion_name), date)}</p>`,
       `<p><a href="${link}">${t.openList}</a></p>`,
-      `<p style="color:#666;font-size:13px">${t.secret}</p>`,
+      footerHtml(t.secret),
     ].join("\n"),
     text: [t.body(row.occasion_name, date), `${t.openList}: ${link}`, t.secret].join("\n\n"),
   };

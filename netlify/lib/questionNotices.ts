@@ -7,6 +7,7 @@
 //
 // Like the digest, the texts live here instead of in src/i18n (which holds JSX).
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { footerHtml, siteBase, textsFor, type EmailLocale } from "./emailParts.ts";
 import { escapeHtml, type Email } from "./mail.ts";
 import { sendClaimedNotices, type NoticeKind } from "./notices.ts";
 
@@ -44,7 +45,7 @@ type Texts = {
   answerFooter: string;
 };
 
-const texts: Record<"en" | "nl", Texts> = {
+const texts: Record<EmailLocale, Texts> = {
   en: {
     questionSubject: (item) => `Someone has a question about "${item}"`,
     asked: (item, list, ownList) =>
@@ -95,9 +96,9 @@ function quoteHtml(label: string, text: string) {
 
 /** One email per row. `siteUrl` is where the app runs, for the link. */
 export function buildQuestionEmails(rows: QuestionRow[], siteUrl: string): Email[] {
-  const site = siteUrl.replace(/\/$/, "");
+  const site = siteBase(siteUrl);
   return rows.map((row) => {
-    const t = texts[row.locale === "nl" ? "nl" : "en"];
+    const t = textsFor(texts, row.locale);
     const link = `${site}/lists/${row.list_id}?questions=${row.item_id}`;
     const item = `<strong>${escapeHtml(row.item_name)}</strong>`;
     const list = escapeHtml(row.list_name);
@@ -110,7 +111,7 @@ export function buildQuestionEmails(rows: QuestionRow[], siteUrl: string): Email
           `<p>${t.asked(item, list, row.own_list)}</p>`,
           quoteHtml(t.question, row.question),
           `<p><a href="${link}">${t.openToAnswer}</a></p>`,
-          `<p style="color:#666;font-size:13px">${t.questionFooter}</p>`,
+          footerHtml(t.questionFooter),
         ].join("\n"),
         text: [
           t.asked(`"${row.item_name}"`, row.list_name, row.own_list),
@@ -131,7 +132,7 @@ export function buildQuestionEmails(rows: QuestionRow[], siteUrl: string): Email
         quoteHtml(t.question, row.question),
         quoteHtml(t.answer, row.answer ?? ""),
         `<p><a href="${link}">${t.open}</a></p>`,
-        `<p style="color:#666;font-size:13px">${t.answerFooter}</p>`,
+        footerHtml(t.answerFooter),
       ].join("\n"),
       text: [
         intro(`"${row.item_name}"`, row.list_name, row.answerer_name),

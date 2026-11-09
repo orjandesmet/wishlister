@@ -7,6 +7,7 @@
 //
 // Like the digest, the texts live here instead of in src/i18n (which holds JSX).
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { footerHtml, siteBase, textsFor, type EmailLocale } from "./emailParts.ts";
 import { escapeHtml, type Email } from "./mail.ts";
 import { sendClaimedNotices, type NoticeKind } from "./notices.ts";
 
@@ -32,7 +33,7 @@ type Texts = {
   footer: string;
 };
 
-const texts: Record<"en" | "nl", Texts> = {
+const texts: Record<EmailLocale, Texts> = {
   en: {
     subject: (item, list) => `${list} removed "${item}" from their wishlist`,
     removed: (item, list) => `${list} removed ${item} from their wishlist.`,
@@ -59,9 +60,9 @@ const texts: Record<"en" | "nl", Texts> = {
 
 /** One email per removed item. `siteUrl` is where the app runs, for the link. */
 export function buildRemovalEmails(rows: RemovalRow[], siteUrl: string): Email[] {
-  const site = siteUrl.replace(/\/$/, "");
+  const site = siteBase(siteUrl);
   return rows.map((row) => {
-    const t = texts[row.locale === "nl" ? "nl" : "en"];
+    const t = textsFor(texts, row.locale);
     const listUrl = `${site}/lists/${row.list_id}`;
     const html = [
       `<p>${t.removed(`<strong>${escapeHtml(row.item_name)}</strong>`, escapeHtml(row.list_name))}</p>`,
@@ -69,7 +70,7 @@ export function buildRemovalEmails(rows: RemovalRow[], siteUrl: string): Email[]
       `<p>${escapeHtml(t.cancel)}</p>`,
       `<p>${escapeHtml(t.keep)}</p>`,
       `<p><a href="${listUrl}">${t.open}</a></p>`,
-      `<p style="color:#666;font-size:13px">${t.footer}</p>`,
+      footerHtml(t.footer),
     ].join("\n");
     const text = [
       t.removed(`"${row.item_name}"`, row.list_name),
