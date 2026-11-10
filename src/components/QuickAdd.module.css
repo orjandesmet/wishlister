@@ -71,6 +71,14 @@
   font-weight: 600;
 }
 
+/* Room under the last card, so the floating button never covers it (its Details or its
+   "I bought this"). Very wide screens have no floating button. */
+@media (max-width: 1199px) {
+  :global(.page):has(.fab):not(:has(.inline)) {
+    padding-bottom: calc(88px + 56px + 16px + env(safe-area-inset-bottom) - var(--pad));
+  }
+}
+
 /* The inline button replaces the floating one. */
 :global(.page):has(.inline) .fab {
   display: none;

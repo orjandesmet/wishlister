@@ -191,6 +191,17 @@ export function ItemCard(props: ItemCardProps) {
   const [details, setDetails] = createSignal(false);
   const compact = () => !!props.compact && !details();
   const contentId = createUniqueId();
+  // Compact cards show the price, picture and shop on a row with Details at its end. With none
+  // of those, Details moves up beside Edit and Remove (or beside the purchase), so it doesn't
+  // take a row of its own.
+  const compactPrice = () =>
+    !props.item.not_wanted && props.item.price !== null ? props.item.price_currency : null;
+  const compactInfo = () =>
+    !!compactPrice() ||
+    !!showUrl() ||
+    (!props.selecting && itemPictureSources(props.item).length > 0);
+  const detailsInManage = () => compact() && !compactInfo() && props.canEdit;
+  const detailsInActions = () => compact() && !compactInfo() && !props.canEdit;
   // oxlint-disable-next-line no-unassigned-vars
   let detailsButton: HTMLButtonElement | undefined;
   // What changes between the two layouts, measured before and after, so it can glide over.
@@ -332,6 +343,7 @@ export function ItemCard(props: ItemCardProps) {
                     <Button variant="link" danger onClick={() => props.onRemove()}>
                       <RemoveLabel of={props.item.name} />
                     </Button>
+                    <Show when={detailsInManage()}>{detailsToggle()}</Show>
                   </div>
                 </Show>
               </div>
@@ -364,13 +376,9 @@ export function ItemCard(props: ItemCardProps) {
             </Show>
           </div>
           {/* Compact: the price, then the picture and shop as icons, and Details at the end. */}
-          <Show when={compact()}>
+          <Show when={compact() && compactInfo()}>
             <div class={styles.compactRow}>
-              <Show
-                when={
-                  !props.item.not_wanted && props.item.price !== null && props.item.price_currency
-                }
-              >
+              <Show when={compactPrice()}>
                 {(currency) => <PriceTag amount={props.item.price!} currency={currency()} small />}
               </Show>
               <ItemPicture
@@ -532,6 +540,7 @@ export function ItemCard(props: ItemCardProps) {
                 </button>
               </Match>
             </Switch>
+            <Show when={detailsInActions()}>{detailsToggle()}</Show>
           </div>
         </div>
       </Dynamic>

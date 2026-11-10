@@ -365,6 +365,13 @@ label.body {
   min-height: 32px;
 }
 
+/* Without a price, the first icon starts the row: pulled back by the room around it, so the
+   icon itself lines up with Edit above it and the card's text. */
+.compactRow > .shopIcon:first-child,
+.compactRow > button:first-child:not(.details) {
+  margin-inline-start: -7px;
+}
+
 /* The shop as an icon alone, as big a target as the picture icon. */
 .shopIcon {
   justify-content: center;

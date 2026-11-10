@@ -505,6 +505,26 @@ export const CompactNameOnly: Story = {
   },
 };
 
+/** Nothing for the compact row: Details sits beside Edit and Remove instead of on a row of its own. */
+export const CompactNameOnlyOnYourOwnList: Story = {
+  args: {
+    compact: true,
+    item: { ...meta.args.item, url: null, category: null, price: null, price_currency: null },
+    purchase: "hidden",
+    canEdit: true,
+  },
+};
+
+/** No price: the shop icon starts the row, lined up with Edit above it. */
+export const CompactLinkOnlyOnYourOwnList: Story = {
+  args: {
+    compact: true,
+    item: { ...meta.args.item, category: null, price: null, price_currency: null },
+    purchase: "hidden",
+    canEdit: true,
+  },
+};
+
 export const CompactNotWanted: Story = {
   args: { compact: true, item: { ...meta.args.item, not_wanted: true } },
 };
