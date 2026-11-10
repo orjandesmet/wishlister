@@ -508,6 +508,14 @@ export const en = {
     signOut: "Sign out",
     version: (p: { version: string }) => `Version ${p.version}`,
   },
+  myPurchases: {
+    title: "What I bought",
+    help: "Everything you marked as bought for upcoming occasions. Tick what has been delivered: only you can see that.",
+    none: "You haven't bought anything for an upcoming occasion yet.",
+    noOccasion: "Not for an occasion",
+    delivered: "Delivered",
+    removed: "Taken off the list after you bought it",
+  },
   notifications: {
     title: "Notifications",
     help: "The lists you get an email about when something changes.",

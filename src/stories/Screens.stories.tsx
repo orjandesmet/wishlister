@@ -42,7 +42,13 @@ import {
   type Profile,
   type ProfileDetails,
 } from "../lib/api/profiles.ts";
-import { getPurchaseOccasions, getPurchases, type Purchase } from "../lib/api/purchases.ts";
+import {
+  getMyPurchases,
+  getPurchaseOccasions,
+  getPurchases,
+  type MyPurchase,
+  type Purchase,
+} from "../lib/api/purchases.ts";
 import { answerQuestion, askQuestion, getQuestions, type Question } from "../lib/api/questions.ts";
 import {
   getDrawnPeople,
@@ -117,6 +123,7 @@ const meta = {
     mocked(addQuickItems).mockImplementation(() => data.addQuickItems());
     mocked(uploadPictures).mockImplementation(async () => new Map());
     mocked(getPurchases).mockImplementation(async () => data.purchases);
+    mocked(getMyPurchases).mockImplementation(async () => data.myPurchases);
     mocked(getPurchaseOccasions).mockImplementation(async () => data.occasions.slice(0, 1));
     mocked(getQuestions).mockImplementation(async (ids) =>
       data.questions.filter((q) => ids.includes(q.item_id)),
@@ -287,6 +294,21 @@ function sampleData() {
         occasion: { name: annasBirthday.name },
       },
     ] as Purchase[],
+    /** What I bought, for the overview on the settings page. */
+    myPurchases: [
+      {
+        itemId: "item-4" as ItemId,
+        name: "Merino scarf, grey",
+        url: null,
+        price: 35,
+        priceCurrency: "EUR",
+        listId: "anna" as ProfileId,
+        listName: "Anna",
+        removed: false,
+        occasion: annasBirthday,
+        delivered: true,
+      },
+    ] as MyPurchase[],
     questions: [
       question(1, 2, "Paper filters or a metal one?", {
         answer: "Metal, please: less waste.",

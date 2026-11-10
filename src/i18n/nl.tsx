@@ -500,6 +500,14 @@ export const nl: Dictionary = {
     signOut: "Afmelden",
     version: (p: { version: string }) => `Versie ${p.version}`,
   },
+  myPurchases: {
+    title: "Wat ik kocht",
+    help: "Alles wat je als gekocht aanduidde voor komende gelegenheden. Vink aan wat geleverd is: alleen jij ziet dat.",
+    none: "Je hebt nog niets gekocht voor een komende gelegenheid.",
+    noOccasion: "Niet voor een gelegenheid",
+    delivered: "Geleverd",
+    removed: "Van het lijstje gehaald nadat je het kocht",
+  },
   notifications: {
     title: "Meldingen",
     help: "De lijstjes waarvan je een e-mail krijgt als er iets verandert.",
