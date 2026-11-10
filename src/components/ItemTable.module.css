@@ -307,6 +307,13 @@
     gap: 6px 12px;
   }
 
+  /* Your purchase: the pill, Undo and the tick, at the column's right edge, on one line. */
+  .statusSteps {
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+  }
+
   .statusButton {
     min-height: 34px;
     padding: 0 12px;

@@ -37,7 +37,7 @@ import { OccasionPicker } from "./OccasionPicker.tsx";
 import styles from "./ItemTable.module.css";
 import { Markdown } from "./Markdown.tsx";
 import { PriceTag } from "./PriceTag.tsx";
-import { YouBoughtFor } from "./YouBoughtFor.tsx";
+import { PurchaseSteps } from "./PurchaseSteps.tsx";
 import { WantedLevelText } from "./WantedLevelText.tsx";
 
 export type ItemTableProps = {
@@ -61,6 +61,12 @@ export type ItemTableProps = {
   onPickOccasion: (item: Item, occasionId: OccasionId | null) => void;
   onCancelPick: () => void;
   onUndo: (item: Item) => void;
+  /**
+   * Your own purchases' "Delivered" tick. Without onDelivered the table has none (the setting
+   * "Show delivery status on item cards" is off).
+   */
+  delivered?: (item: Item) => boolean;
+  onDelivered?: (item: Item, delivered: boolean) => void;
   /** The list's editors tap the hearts to say how much they want it (the next level, round). */
   onChangeWant: (item: Item) => void;
   /** The list's editors remove an item (after confirming). */
@@ -312,26 +318,20 @@ function Row(props: { item: Item; table: ItemTableProps; columns: number }) {
             >
               <Switch>
                 <Match when={purchase() === "mine"}>
-                  <span class={styles.statusRow}>
-                    <span class={styles.pill}>
-                      <Show when={table().boughtFor(item())} fallback={t("item.youBought")}>
-                        {(occasion) => <YouBoughtFor occasion={occasion()} />}
-                      </Show>
-                    </span>
-                    <Button
-                      variant="secondary"
-                      size="small"
-                      class={styles.statusButton}
-                      data-purchase
-                      onClick={() => {
-                        pressed();
-                        table().onUndo(item());
-                      }}
-                    >
-                      {t("item.undo")}
-                      <span class={u.visuallyHidden}>: {item().name}</span>
-                    </Button>
-                  </span>
+                  <PurchaseSteps
+                    class={styles.statusSteps}
+                    compact
+                    name={item().name}
+                    boughtFor={table().boughtFor(item())}
+                    delivered={table().delivered?.(item())}
+                    onDelivered={
+                      table().onDelivered ? (on) => table().onDelivered?.(item(), on) : undefined
+                    }
+                    onUndo={() => {
+                      pressed();
+                      table().onUndo(item());
+                    }}
+                  />
                 </Match>
                 <Match when={purchase() === "someone"}>
                   <span class={`${styles.pill} ${styles.someone}`}>{t("item.someoneBought")}</span>

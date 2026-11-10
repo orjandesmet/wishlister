@@ -325,6 +325,8 @@ export default function WishList() {
       onPickOccasion={purchases.buy}
       onCancelPick={purchases.cancelPick}
       onUndo={purchases.onUndo}
+      delivered={purchases.delivered}
+      onDelivered={showDelivery() ? (item, on) => void purchases.onDelivered(item, on) : undefined}
       onChangeWant={onChangeWant}
       onRemove={onDelete}
       questions={(item) => itemQuestions(item, true)}
