@@ -341,6 +341,13 @@ label.body {
   }
 }
 
+/* No picture column on a compact card, so no gap for it either: Details at the end of the Edit
+   and Remove row lines up with Details at the end of the price row. */
+.item.compact .top {
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 0;
+}
+
 .item.compact .head .name {
   font-size: 16px;
 }
