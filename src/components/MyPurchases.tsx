@@ -9,6 +9,7 @@ import { Card } from "./Card.tsx";
 import { Check } from "./Check.tsx";
 import { Person } from "./Person.tsx";
 import { PriceTag } from "./PriceTag.tsx";
+import { Toggle } from "./Toggle.tsx";
 import styles from "./MyPurchases.module.css";
 
 export type MyPurchasesProps = {
@@ -36,15 +37,12 @@ export function MyPurchases(props: MyPurchasesProps) {
       <h2>{t("myPurchases.title")}</h2>
       <p class={`${u.muted} ${u.small}`}>{t("myPurchases.help")}</p>
       <div>
-        <Check>
-          <input
-            type="checkbox"
-            aria-describedby={hintId}
-            checked={props.showOnCards}
-            onChange={(e) => props.onShowOnCards(e.currentTarget.checked)}
-          />
-          {t("myPurchases.showOnCards")}
-        </Check>
+        <Toggle
+          label={t("myPurchases.showOnCards")}
+          on={props.showOnCards}
+          onChange={props.onShowOnCards}
+          describedBy={hintId}
+        />
         <span id={hintId} class={`${u.muted} ${u.small}`}>
           {t("myPurchases.showOnCardsHint")}
         </span>

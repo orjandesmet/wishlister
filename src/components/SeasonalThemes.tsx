@@ -2,7 +2,7 @@ import { Show } from "solid-js";
 import { t } from "../lib/i18n.ts";
 import type { ThemeId } from "../lib/theme.ts";
 import u from "../utilities.module.css";
-import { Check } from "./Check.tsx";
+import { Toggle } from "./Toggle.tsx";
 
 export type SeasonalThemesProps = {
   on: boolean;
@@ -15,14 +15,7 @@ export type SeasonalThemesProps = {
 export function SeasonalThemes(props: SeasonalThemesProps) {
   return (
     <div class={`${u.stack} ${u.smallGap}`}>
-      <Check>
-        <input
-          type="checkbox"
-          checked={props.on}
-          onChange={(e) => props.onChange(e.currentTarget.checked)}
-        />
-        {t("themes.label")}
-      </Check>
+      <Toggle label={t("themes.label")} on={props.on} onChange={props.onChange} />
       <span class={`${u.muted} ${u.small}`}>
         {t("themes.hint")}
         <Show when={props.on && props.today}>

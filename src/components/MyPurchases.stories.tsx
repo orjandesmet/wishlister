@@ -64,7 +64,7 @@ export const Default: Story = {
 export const ShowOnCards: Story = {
   play: async ({ canvasElement, args }) => {
     const canvas = within(canvasElement);
-    await userEvent.click(canvas.getByRole("checkbox", { name: /Show delivery status/ }));
+    await userEvent.click(canvas.getByRole("switch", { name: /Show delivery status/ }));
     await expect(args.onShowOnCards).toHaveBeenCalledWith(true);
   },
 };
