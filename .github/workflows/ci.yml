@@ -30,6 +30,19 @@ jobs:
         with:
           node-version: "24"
           cache: true
+      # Dependabot can't bump the container tag, so fail with a clear message when it
+      # drifts from the installed `playwright` version.
+      - name: Check Playwright image matches playwright version
+        env:
+          IMAGE: ${{ job.container.image }}
+        run: |
+          tag="${IMAGE##*:v}"
+          image_version="${tag%%-*}"
+          installed=$(node -p "require('playwright/package.json').version")
+          if [ "$image_version" != "$installed" ]; then
+            echo "::error file=.github/workflows/ci.yml::Container image is Playwright $image_version but package.json resolves $installed. Update the container tag to v$installed-noble."
+            exit 1
+          fi
       # Format, lint and type check.
       - run: vp check
       - run: vp test
