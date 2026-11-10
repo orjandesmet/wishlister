@@ -315,6 +315,7 @@ export const nl: Dictionary = {
     private: "Met geen enkele groep gedeeld",
     youBought: "Jij hebt dit gekocht",
     undo: "Ongedaan maken",
+    delivered: "Geleverd",
     someoneBought: "Iemand heeft dit gekocht",
     iBought: "Ik heb dit gekocht",
     youBoughtFor: (p) => `Jij kocht dit voor ${p.occasion}`,
@@ -506,6 +507,9 @@ export const nl: Dictionary = {
     none: "Je hebt nog niets gekocht voor een komende gelegenheid.",
     noOccasion: "Niet voor een gelegenheid",
     delivered: "Geleverd",
+    showOnCards: "Toon de leveringsstatus op itemkaarten",
+    showOnCardsHint:
+      "Zet een vinkje Geleverd bij wat je kocht, op de lijstjes. Alleen jij ziet dat.",
     removed: "Van het lijstje gehaald nadat je het kocht",
   },
   notifications: {
@@ -541,6 +545,8 @@ export const nl: Dictionary = {
     wantedLevel: (p) => `${p.item}: ${p.level}.`,
     bought: (p) => `${p.item} gemarkeerd als gekocht.`,
     unbought: (p) => `${p.item} is niet meer gemarkeerd als gekocht.`,
+    delivered: (p) => `${p.item} gemarkeerd als geleverd.`,
+    undelivered: (p) => `${p.item} is niet meer gemarkeerd als geleverd.`,
     unboughtRemoved: (p) =>
       `${p.item} is niet meer gemarkeerd als gekocht en is van het lijstje verdwenen.`,
     changed: (p) => (p.count === 1 ? "1 item gewijzigd." : `${p.count} items gewijzigd.`),

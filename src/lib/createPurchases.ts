@@ -2,7 +2,7 @@ import { createMemo, createSignal } from "solid-js";
 import { announce } from "./a11y.ts";
 import type { Item } from "./api/items.ts";
 import type { Occasion } from "./api/occasions.ts";
-import { getPurchaseOccasions, markBought, undoBought } from "./api/purchases.ts";
+import { getPurchaseOccasions, markBought, setDelivered, undoBought } from "./api/purchases.ts";
 import { createCachedResource } from "./cache.ts";
 import type { ActionRunner } from "./createActionRunner.ts";
 import { t } from "./i18n.ts";
@@ -51,6 +51,31 @@ export function createPurchases(
   // Owners never learn what was bought, so "not bought first" only exists on other lists.
   const showBought = () => !isOwnList() && purchases() !== undefined;
 
+  // The "Delivered" tick, shown at once when changed here and put back if saving fails. Kept
+  // apart from the loaded purchases so the card (and its focused checkbox) stays as it is.
+  const [ticked, setTicked] = createSignal(new Map<ItemId, boolean>());
+  const setTick = (itemId: ItemId, on: boolean | undefined) =>
+    setTicked((map) => {
+      const next = new Map(map);
+      if (on === undefined) next.delete(itemId);
+      else next.set(itemId, on);
+      return next;
+    });
+  const delivered = (item: Item) =>
+    ticked().get(item.id) ?? (purchaseOf().get(item.id)?.delivery ?? null) !== null;
+  const onDelivered = (item: Item, on: boolean) => {
+    setTick(item.id, on);
+    return runner.run(async () => {
+      try {
+        await setDelivered(item.id, on);
+      } catch (e) {
+        setTick(item.id, !on);
+        throw e;
+      }
+      announce(t(on ? "a11y.delivered" : "a11y.undelivered", { item: item.name }));
+    });
+  };
+
   // "I bought this" asks which occasion it's for, unless there's only one (or none).
   const [choosing, setChoosing] = createSignal<{ itemId: ItemId; occasions: Occasion[] }>();
   const buy = (item: Item, occasionId: OccasionId | null) =>
@@ -72,6 +97,8 @@ export function createPurchases(
   const onUndo = (item: Item) =>
     runner.run(async () => {
       await undoBought(item.id);
+      // The database dropped the tick along with the purchase.
+      setTick(item.id, undefined);
       if (item.removed_at) {
         // The database deleted it along with the purchase.
         onRemovedItemGone(item);
@@ -89,6 +116,8 @@ export function createPurchases(
     buy,
     onBuy,
     onUndo,
+    delivered,
+    onDelivered,
     occasionChoices,
     cancelPick: () => setChoosing(undefined),
   };

@@ -13,6 +13,7 @@ import {
   renameProfile,
   setProfileCardView,
   setProfileGroupCollapse,
+  setProfileShowDelivery,
   setProfileSeasonalThemes,
 } from "../lib/api/profiles.ts";
 import { createChild } from "../lib/api/children.ts";
@@ -22,6 +23,7 @@ import type { ItemId } from "../lib/ids.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { today } from "../lib/occasions.ts";
 import { cardView, chooseCardView, type CardView } from "../lib/cardView.ts";
+import { chooseShowDelivery, showDelivery } from "../lib/showDelivery.ts";
 import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
 import {
   groupCollapseMode,
@@ -96,6 +98,12 @@ export default function Settings() {
   const onCardView = (view: CardView) =>
     run(async () => {
       await chooseCardView(view, (next) => setProfileCardView(me().profile.id, next));
+      me().refetchProfile();
+    });
+
+  const onShowDelivery = (on: boolean) =>
+    run(async () => {
+      await chooseShowDelivery(on, (next) => setProfileShowDelivery(me().profile.id, next));
       me().refetchProfile();
     });
 
@@ -188,6 +196,8 @@ export default function Settings() {
         today={today()}
         isDelivered={(p) => ticked().get(p.itemId) ?? p.delivered}
         onDelivered={onDelivered}
+        showOnCards={showDelivery()}
+        onShowOnCards={(on) => void onShowDelivery(on)}
       />
       <NotificationSettings
         follows={follows() ?? []}

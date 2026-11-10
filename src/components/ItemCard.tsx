@@ -1,8 +1,4 @@
-import { Icon } from "./Icon.tsx";
-import { EditLabel } from "./EditLabel.tsx";
 import { A } from "@solidjs/router";
-import { Dynamic } from "solid-js/web";
-import { RemoveLabel } from "./RemoveLabel.tsx";
 import {
   createMemo,
   createSignal,
@@ -13,13 +9,15 @@ import {
   Switch,
   type JSX,
 } from "solid-js";
+import { Dynamic } from "solid-js/web";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
+import { createPurchaseRefocus } from "../lib/createPurchaseRefocus.ts";
 import type { PurchaseState } from "../lib/createPurchases.ts";
+import { hueFor } from "../lib/hues.ts";
 import { locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
-import { createPurchaseRefocus } from "../lib/createPurchaseRefocus.ts";
-import { hueFor } from "../lib/hues.ts";
+import { itemPictureSources } from "../lib/itemPictures.ts";
 import { shopName } from "../lib/links.ts";
 import { isShort, parseMarkdown, plainText } from "../lib/markdown.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
@@ -28,16 +26,18 @@ import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import { Chip } from "./Chip.tsx";
+import { EditLabel } from "./EditLabel.tsx";
 import { ExternalLinkIcon } from "./ExternalLinkIcon.tsx";
 import { HeartIcon } from "./HeartIcon.tsx";
-import { ItemPicture } from "./ItemPicture.tsx";
-import { OccasionPicker } from "./OccasionPicker.tsx";
-import { itemPictureSources } from "../lib/itemPictures.ts";
-import { Markdown } from "./Markdown.tsx";
-import { PriceTag } from "./PriceTag.tsx";
-import { YouBoughtFor } from "./YouBoughtFor.tsx";
-import { WantedLevelText } from "./WantedLevelText.tsx";
+import { Icon } from "./Icon.tsx";
 import styles from "./ItemCard.module.css";
+import { ItemPicture } from "./ItemPicture.tsx";
+import { Markdown } from "./Markdown.tsx";
+import { OccasionPicker } from "./OccasionPicker.tsx";
+import { PriceTag } from "./PriceTag.tsx";
+import { RemoveLabel } from "./RemoveLabel.tsx";
+import { WantedLevelText } from "./WantedLevelText.tsx";
+import { YouBoughtFor } from "./YouBoughtFor.tsx";
 
 export type ItemCardProps = {
   item: Item;
@@ -58,6 +58,12 @@ export type ItemCardProps = {
   onPickOccasion?: (occasionId: OccasionId | null) => void;
   onCancelPick?: () => void;
   onUndo: () => void;
+  /**
+   * Your own purchase's "Delivered" tick. Left out, the card has no tick: the pill and Undo
+   * stay as they were (the setting "Show delivery status on item cards" switches it off).
+   */
+  delivered?: boolean;
+  onDelivered?: (delivered: boolean) => void;
   onRemove: () => void;
   /** The list's editors tap the hearts to say how much they want it (the next level, round). */
   onChangeWant?: () => void;
@@ -479,26 +485,71 @@ export function ItemCard(props: ItemCardProps) {
             <Switch>
               <Match when={props.selecting}>{null}</Match>
               <Match when={props.purchase === "mine"}>
-                <div class={u.row}>
-                  <span class={styles.bought}>
-                    {props.boughtFor ? (
-                      <YouBoughtFor occasion={props.boughtFor} />
-                    ) : (
-                      t("item.youBought")
-                    )}
+                {/* The pill holds Undo as a red end cap; with delivery status on, the tick is the
+                    next step. Words turn into icons on a narrow card (see the module's container
+                    query); a screen reader always hears them. */}
+                <div class={styles.steps} classList={{ [styles.stepsPlain]: !props.onDelivered }}>
+                  <span class={styles.stepBought}>
+                    <span class={styles.stepText}>
+                      <span>
+                        {props.boughtFor ? (
+                          <YouBoughtFor occasion={props.boughtFor} />
+                        ) : (
+                          t("item.youBought")
+                        )}
+                      </span>
+                    </span>
+                    <button
+                      type="button"
+                      class={styles.undoCap}
+                      data-purchase
+                      title={t("item.undo")}
+                      onClick={() => {
+                        pressed();
+                        props.onUndo();
+                      }}
+                    >
+                      {/* Lucide "undo-2" (ISC licence). */}
+                      <Icon>
+                        <path d="M9 14 4 9l5-5" />
+                        <path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5a5.5 5.5 0 0 1-5.5 5.5H11" />
+                      </Icon>
+                      <span class={styles.stepWord}>{t("item.undo")}</span>
+                      <span class={u.visuallyHidden}>: {props.item.name}</span>
+                    </button>
                   </span>
-                  <Button
-                    variant="secondary"
-                    size="small"
-                    data-purchase
-                    onClick={() => {
-                      pressed();
-                      props.onUndo();
-                    }}
-                  >
-                    {t("item.undo")}
-                    <span class={u.visuallyHidden}>: {props.item.name}</span>
-                  </Button>
+                  <Show when={props.onDelivered}>
+                    {(onDelivered) => (
+                      <>
+                        <span
+                          class={styles.connector}
+                          classList={{ [styles.connectorOn]: props.delivered }}
+                          aria-hidden="true"
+                        />
+                        <label
+                          class={styles.stepDelivered}
+                          classList={{ [styles.stepDeliveredOn]: props.delivered }}
+                          title={t("item.delivered")}
+                        >
+                          <input
+                            type="checkbox"
+                            class={styles.deliveredBox}
+                            checked={props.delivered ?? false}
+                            onChange={(event) => onDelivered()(event.currentTarget.checked)}
+                          />
+                          {/* A house with a parcel in front of it: shown instead of the word. */}
+                          <Icon class={styles.stepIcon} strokeWidth={1.75}>
+                            <path d="M2 10.5 10 4 14.5 7" />
+                            <path d="M4 9v10a1 1 0 0 0 1 1h2" />
+                            <path d="m16 9.5 6.5 3.5v7L16 23.5 9.5 20v-7z" />
+                            <path d="m9.5 13 6.5 3.5L22.5 13M16 16.5v7" />
+                          </Icon>
+                          <span class={styles.stepWord}>{t("item.delivered")}</span>
+                          <span class={u.visuallyHidden}>: {props.item.name}</span>
+                        </label>
+                      </>
+                    )}
+                  </Show>
                 </div>
               </Match>
               <Match when={props.purchase === "someone"}>

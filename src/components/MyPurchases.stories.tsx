@@ -34,6 +34,8 @@ const meta = {
   args: {
     today: "2026-11-09",
     onDelivered: fn(),
+    showOnCards: false,
+    onShowOnCards: fn(),
     purchases: [
       purchase(1, "Cast iron pan", "Anna", christmas, { price: 62.5, priceCurrency: "EUR" }),
       purchase(2, "Merino scarf, grey", "Anna", christmas, { delivered: true }),
@@ -55,6 +57,15 @@ export const Default: Story = {
     await expect(canvas.queryByText("Old present")).not.toBeInTheDocument();
     await userEvent.click(canvas.getByRole("checkbox", { name: /Cast iron pan/ }));
     await expect(args.onDelivered).toHaveBeenCalledWith("item-1", true);
+  },
+};
+
+/** The checkbox that adds the Delivered tick to the item cards on the lists. */
+export const ShowOnCards: Story = {
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+    await userEvent.click(canvas.getByRole("checkbox", { name: /Show delivery status/ }));
+    await expect(args.onShowOnCards).toHaveBeenCalledWith(true);
   },
 };
 

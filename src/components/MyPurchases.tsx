@@ -1,4 +1,4 @@
-import { For, Show } from "solid-js";
+import { createUniqueId, For, Show } from "solid-js";
 import type { MyPurchase } from "../lib/api/purchases.ts";
 import type { ItemId } from "../lib/ids.ts";
 import { locale, t } from "../lib/i18n.ts";
@@ -17,6 +17,9 @@ export type MyPurchasesProps = {
   /** Whether to show it ticked; defaults to what was loaded. */
   isDelivered?: (purchase: MyPurchase) => boolean;
   onDelivered: (itemId: ItemId, delivered: boolean) => void;
+  /** Whether item cards on the lists show the "Delivered" tick too. */
+  showOnCards: boolean;
+  onShowOnCards: (on: boolean) => void;
 };
 
 /**
@@ -26,11 +29,26 @@ export type MyPurchasesProps = {
 export function MyPurchases(props: MyPurchasesProps) {
   const compare = (a: string, b: string) => a.localeCompare(b, locale());
   const sections = () => purchaseSections(props.purchases, props.today, compare);
+  const hintId = createUniqueId();
 
   return (
     <Card>
       <h2>{t("myPurchases.title")}</h2>
       <p class={`${u.muted} ${u.small}`}>{t("myPurchases.help")}</p>
+      <div>
+        <Check>
+          <input
+            type="checkbox"
+            aria-describedby={hintId}
+            checked={props.showOnCards}
+            onChange={(e) => props.onShowOnCards(e.currentTarget.checked)}
+          />
+          {t("myPurchases.showOnCards")}
+        </Check>
+        <span id={hintId} class={`${u.muted} ${u.small}`}>
+          {t("myPurchases.showOnCardsHint")}
+        </span>
+      </div>
       <Show when={sections().length} fallback={<p class={u.muted}>{t("myPurchases.none")}</p>}>
         <For each={sections()}>
           {(section) => (

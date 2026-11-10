@@ -33,6 +33,7 @@ import { setProfileCardView } from "../lib/api/profiles.ts";
 import { NUDGE_EVERY_DAYS } from "../lib/api/secretSanta.ts";
 import { starterCategoryKeys, suggestCategories } from "../lib/categories.ts";
 import { chooseCardView } from "../lib/cardView.ts";
+import { showDelivery } from "../lib/showDelivery.ts";
 import { chooseListView, listView, tableFits } from "../lib/listView.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { createBulkSelect } from "../lib/createBulkSelect.ts";
@@ -350,6 +351,8 @@ export default function WishList() {
       onPickOccasion={(occasionId) => purchases.buy(item, occasionId)}
       onCancelPick={purchases.cancelPick}
       onUndo={() => purchases.onUndo(item)}
+      delivered={purchases.delivered(item)}
+      onDelivered={showDelivery() ? (on) => void purchases.onDelivered(item, on) : undefined}
       onRemove={() => onDelete(item)}
       onChangeWant={() => onChangeWant(item)}
       selecting={select.selecting()}
