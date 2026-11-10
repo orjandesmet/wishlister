@@ -8,6 +8,7 @@ import type { ActionRunner } from "./createActionRunner.ts";
 import { t } from "./i18n.ts";
 import { loadPurchases } from "./loaders.ts";
 import type { ItemId, OccasionId, ProfileId } from "./ids.ts";
+import { createOptimisticTicks } from "./createOptimisticTicks.ts";
 import { burstMoneyForTap } from "./moneyBurst.ts";
 
 /**
@@ -51,30 +52,14 @@ export function createPurchases(
   // Owners never learn what was bought, so "not bought first" only exists on other lists.
   const showBought = () => !isOwnList() && purchases() !== undefined;
 
-  // The "Delivered" tick, shown at once when changed here and put back if saving fails. Kept
-  // apart from the loaded purchases so the card (and its focused checkbox) stays as it is.
-  const [ticked, setTicked] = createSignal(new Map<ItemId, boolean>());
-  const setTick = (itemId: ItemId, on: boolean | undefined) =>
-    setTicked((map) => {
-      const next = new Map(map);
-      if (on === undefined) next.delete(itemId);
-      else next.set(itemId, on);
-      return next;
-    });
+  const ticks = createOptimisticTicks();
   const delivered = (item: Item) =>
-    ticked().get(item.id) ?? (purchaseOf().get(item.id)?.delivery ?? null) !== null;
-  const onDelivered = (item: Item, on: boolean) => {
-    setTick(item.id, on);
-    return runner.run(async () => {
-      try {
-        await setDelivered(item.id, on);
-      } catch (e) {
-        setTick(item.id, !on);
-        throw e;
-      }
+    ticks.ticked().get(item.id) ?? (purchaseOf().get(item.id)?.delivery ?? null) !== null;
+  const onDelivered = (item: Item, on: boolean) =>
+    runner.run(async () => {
+      await ticks.change(item.id, on, (next) => setDelivered(item.id, next));
       announce(t(on ? "a11y.delivered" : "a11y.undelivered", { item: item.name }));
     });
-  };
 
   // "I bought this" asks which occasion it's for, unless there's only one (or none).
   const [choosing, setChoosing] = createSignal<{ itemId: ItemId; occasions: Occasion[] }>();
@@ -98,7 +83,7 @@ export function createPurchases(
     runner.run(async () => {
       await undoBought(item.id);
       // The database dropped the tick along with the purchase.
-      setTick(item.id, undefined);
+      ticks.set(item.id, undefined);
       if (item.removed_at) {
         // The database deleted it along with the purchase.
         onRemovedItemGone(item);

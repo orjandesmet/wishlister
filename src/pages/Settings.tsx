@@ -23,6 +23,7 @@ import type { ItemId } from "../lib/ids.ts";
 import { createActionRunner } from "../lib/createActionRunner.ts";
 import { today } from "../lib/occasions.ts";
 import { cardView, chooseCardView, type CardView } from "../lib/cardView.ts";
+import { createOptimisticTicks } from "../lib/createOptimisticTicks.ts";
 import { chooseShowDelivery, showDelivery } from "../lib/showDelivery.ts";
 import { displayCurrency, setDisplayCurrency } from "../lib/currency.ts";
 import {
@@ -116,21 +117,9 @@ export default function Settings() {
     });
 
   const [purchases] = createResource(() => me().profile.id, getMyPurchases);
-  // Ticks you changed here, shown at once and put back when saving fails. Kept apart
-  // from the loaded purchases so the rows (and the focused checkbox) stay as they are.
-  const [ticked, setTicked] = createSignal(new Map<ItemId, boolean>());
-  const tick = (itemId: ItemId, on: boolean) => setTicked((map) => new Map(map).set(itemId, on));
-  const onDelivered = (itemId: ItemId, delivered: boolean) => {
-    tick(itemId, delivered);
-    void run(async () => {
-      try {
-        await setDelivered(itemId, delivered);
-      } catch (e) {
-        tick(itemId, !delivered);
-        throw e;
-      }
-    });
-  };
+  const ticks = createOptimisticTicks();
+  const onDelivered = (itemId: ItemId, delivered: boolean) =>
+    void run(() => ticks.change(itemId, delivered, (on) => setDelivered(itemId, on)));
 
   usePageTitle(() => t("account.title"));
 
@@ -194,7 +183,7 @@ export default function Settings() {
       <MyPurchases
         purchases={purchases() ?? []}
         today={today()}
-        isDelivered={(p) => ticked().get(p.itemId) ?? p.delivered}
+        isDelivered={(p) => ticks.ticked().get(p.itemId) ?? p.delivered}
         onDelivered={onDelivered}
         showOnCards={showDelivery()}
         onShowOnCards={(on) => void onShowDelivery(on)}

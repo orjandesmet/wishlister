@@ -55,8 +55,7 @@
   border-radius: 0;
 }
 
-.undoCap svg,
-.stepIcon {
+.undoCap svg {
   width: 18px;
   height: 18px;
   flex: none;
@@ -124,6 +123,7 @@ label.stepDeliveredOn {
 /* The house with a parcel stands in for the word on a narrow card. */
 .stepIcon {
   display: none;
+  flex: none;
   width: 22px;
   height: 22px;
 }
@@ -157,16 +157,6 @@ label.stepDeliveredOn {
   font-size: 13px;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .connector,
-  label.stepDelivered {
-    transition:
-      background-color 160ms,
-      border-color 160ms,
-      color 160ms;
-  }
-}
-
 @media (forced-colors: active) {
   .stepBought,
   .undoCap {
@@ -175,6 +165,14 @@ label.stepDeliveredOn {
 }
 
 @media (prefers-reduced-motion: no-preference) {
+  .connector,
+  label.stepDelivered {
+    transition:
+      background-color 160ms,
+      border-color 160ms,
+      color 160ms;
+  }
+
   @keyframes pop {
     0% {
       opacity: 0;
