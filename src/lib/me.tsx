@@ -12,6 +12,7 @@ import { useAuth } from "./auth.tsx";
 import { t } from "./i18n.ts";
 import { isReady } from "./resource.ts";
 import { setCardView } from "./cardView.ts";
+import { setShowDelivery } from "./showDelivery.ts";
 import { setGroupCollapseMode } from "./groupCollapse.ts";
 import { setSeasonalThemes } from "./theme.ts";
 import type { AccountId } from "./ids.ts";
@@ -37,13 +38,14 @@ export const MeProvider: ParentComponent = (props) => {
     getManagedProfiles,
   );
 
-  // The seasonal themes, group collapsing and card view follow the account's choice once it's known.
+  // The seasonal themes, group collapsing, card view and delivery ticks follow the account's choice once it's known.
   createEffect(() => {
     const loaded = profile();
     if (!loaded) return;
     setSeasonalThemes(loaded.seasonal_themes);
     setGroupCollapseMode(loaded.group_collapse);
     setCardView(loaded.card_view);
+    setShowDelivery(loaded.show_delivery);
   });
 
   // Wait for the children too, or "My list" turns into "My lists" (and similar) once they arrive.

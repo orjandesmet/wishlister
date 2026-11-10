@@ -176,6 +176,7 @@ const orjan: MyProfile = {
   seasonal_themes: true,
   group_collapse: "remember",
   card_view: "full",
+  show_delivery: false,
 };
 
 const member = (p: Profile, role: Member["role"]): Member => ({
@@ -287,11 +288,17 @@ function sampleData() {
     } as Record<string, Item[]>,
     items: (id: ProfileId): Promise<Item[]> => Promise.resolve(data.lists[id] ?? []),
     purchases: [
-      { item_id: "item-1" as ItemId, bought_by: "bert" as ProfileId, occasion: null },
+      {
+        item_id: "item-1" as ItemId,
+        bought_by: "bert" as ProfileId,
+        occasion: null,
+        delivery: null,
+      },
       {
         item_id: "item-4" as ItemId,
         bought_by: me,
         occasion: { name: annasBirthday.name },
+        delivery: null,
       },
     ] as Purchase[],
     /** What I bought, for the overview on the settings page. */

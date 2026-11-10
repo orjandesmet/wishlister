@@ -1,8 +1,4 @@
-import { Icon } from "./Icon.tsx";
-import { EditLabel } from "./EditLabel.tsx";
 import { A } from "@solidjs/router";
-import { Dynamic } from "solid-js/web";
-import { RemoveLabel } from "./RemoveLabel.tsx";
 import {
   createMemo,
   createSignal,
@@ -13,13 +9,15 @@ import {
   Switch,
   type JSX,
 } from "solid-js";
+import { Dynamic } from "solid-js/web";
 import type { Item } from "../lib/api/items.ts";
 import type { Occasion } from "../lib/api/occasions.ts";
+import { createPurchaseRefocus } from "../lib/createPurchaseRefocus.ts";
 import type { PurchaseState } from "../lib/createPurchases.ts";
+import { hueFor } from "../lib/hues.ts";
 import { locale, t } from "../lib/i18n.ts";
 import type { OccasionId } from "../lib/ids.ts";
-import { createPurchaseRefocus } from "../lib/createPurchaseRefocus.ts";
-import { hueFor } from "../lib/hues.ts";
+import { itemPictureSources } from "../lib/itemPictures.ts";
 import { shopName } from "../lib/links.ts";
 import { isShort, parseMarkdown, plainText } from "../lib/markdown.ts";
 import { rememberBuyTap } from "../lib/moneyBurst.ts";
@@ -28,16 +26,18 @@ import u from "../utilities.module.css";
 import { Button } from "./Button.tsx";
 import { Card } from "./Card.tsx";
 import { Chip } from "./Chip.tsx";
+import { EditLabel } from "./EditLabel.tsx";
 import { ExternalLinkIcon } from "./ExternalLinkIcon.tsx";
 import { HeartIcon } from "./HeartIcon.tsx";
-import { ItemPicture } from "./ItemPicture.tsx";
-import { OccasionPicker } from "./OccasionPicker.tsx";
-import { itemPictureSources } from "../lib/itemPictures.ts";
-import { Markdown } from "./Markdown.tsx";
-import { PriceTag } from "./PriceTag.tsx";
-import { YouBoughtFor } from "./YouBoughtFor.tsx";
-import { WantedLevelText } from "./WantedLevelText.tsx";
+import { Icon } from "./Icon.tsx";
 import styles from "./ItemCard.module.css";
+import { ItemPicture } from "./ItemPicture.tsx";
+import { Markdown } from "./Markdown.tsx";
+import { OccasionPicker } from "./OccasionPicker.tsx";
+import { PriceTag } from "./PriceTag.tsx";
+import { PurchaseSteps } from "./PurchaseSteps.tsx";
+import { RemoveLabel } from "./RemoveLabel.tsx";
+import { WantedLevelText } from "./WantedLevelText.tsx";
 
 export type ItemCardProps = {
   item: Item;
@@ -58,6 +58,12 @@ export type ItemCardProps = {
   onPickOccasion?: (occasionId: OccasionId | null) => void;
   onCancelPick?: () => void;
   onUndo: () => void;
+  /**
+   * Your own purchase's "Delivered" tick. Left out, the card has no tick: the pill and Undo
+   * stay as they were (the setting "Show delivery status on item cards" switches it off).
+   */
+  delivered?: boolean;
+  onDelivered?: (delivered: boolean) => void;
   onRemove: () => void;
   /** The list's editors tap the hearts to say how much they want it (the next level, round). */
   onChangeWant?: () => void;
@@ -479,27 +485,17 @@ export function ItemCard(props: ItemCardProps) {
             <Switch>
               <Match when={props.selecting}>{null}</Match>
               <Match when={props.purchase === "mine"}>
-                <div class={u.row}>
-                  <span class={styles.bought}>
-                    {props.boughtFor ? (
-                      <YouBoughtFor occasion={props.boughtFor} />
-                    ) : (
-                      t("item.youBought")
-                    )}
-                  </span>
-                  <Button
-                    variant="secondary"
-                    size="small"
-                    data-purchase
-                    onClick={() => {
-                      pressed();
-                      props.onUndo();
-                    }}
-                  >
-                    {t("item.undo")}
-                    <span class={u.visuallyHidden}>: {props.item.name}</span>
-                  </Button>
-                </div>
+                <PurchaseSteps
+                  name={props.item.name}
+                  boughtFor={props.boughtFor}
+                  compact={compact()}
+                  delivered={props.delivered}
+                  onDelivered={props.onDelivered}
+                  onUndo={() => {
+                    pressed();
+                    props.onUndo();
+                  }}
+                />
               </Match>
               <Match when={props.purchase === "someone"}>
                 <span class={`${styles.bought} ${styles.someone}`}>{t("item.someoneBought")}</span>

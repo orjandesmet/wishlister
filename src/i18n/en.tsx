@@ -322,6 +322,7 @@ export const en = {
     private: "Not shared with any group",
     youBought: "You bought this",
     undo: "Undo",
+    delivered: "Delivered",
     someoneBought: "Someone bought this",
     iBought: "I bought this",
     youBoughtFor: (p: { occasion: string }) => `You bought this for ${p.occasion}`,
@@ -514,6 +515,9 @@ export const en = {
     none: "You haven't bought anything for an upcoming occasion yet.",
     noOccasion: "Not for an occasion",
     delivered: "Delivered",
+    showOnCards: "Show delivery status on item cards",
+    showOnCardsHint:
+      "Adds a Delivered tick to the items you bought, on the lists. Only you see it.",
     removed: "Taken off the list after you bought it",
   },
   notifications: {
@@ -549,6 +553,8 @@ export const en = {
     wantedLevel: (p: { item: string; level: string }) => `${p.item}: ${p.level}.`,
     bought: (p: { item: string }) => `Marked ${p.item} as bought.`,
     unbought: (p: { item: string }) => `${p.item} is no longer marked as bought.`,
+    delivered: (p: { item: string }) => `Marked ${p.item} as delivered.`,
+    undelivered: (p: { item: string }) => `${p.item} is no longer marked as delivered.`,
     unboughtRemoved: (p: { item: string }) =>
       `${p.item} is no longer marked as bought, and is gone from the list.`,
     changed: (p: { count: number }) =>

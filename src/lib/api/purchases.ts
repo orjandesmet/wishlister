@@ -9,6 +9,8 @@ export type Purchase = {
   item_id: ItemId;
   bought_by: ProfileId;
   occasion: { name: string } | null;
+  /** I ticked that it arrived. Only the buyer's own row is ever returned. */
+  delivery: { delivered_at: string } | null;
 };
 
 /** Purchases on the given items. The database hides them on your own list. */
@@ -17,7 +19,9 @@ export async function getPurchases(itemIds: ItemId[]): Promise<Purchase[]> {
   return must(
     await supabase
       .from("purchases")
-      .select("item_id, bought_by, occasion:occasions(name)")
+      .select(
+        "item_id, bought_by, occasion:occasions(name), delivery:purchase_deliveries(delivered_at)",
+      )
       .in("item_id", itemIds),
   ) as unknown as Purchase[];
 }

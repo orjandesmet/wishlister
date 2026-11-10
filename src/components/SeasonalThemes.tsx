@@ -1,8 +1,8 @@
-import { Show } from "solid-js";
+import { createUniqueId, Show } from "solid-js";
 import { t } from "../lib/i18n.ts";
 import type { ThemeId } from "../lib/theme.ts";
 import u from "../utilities.module.css";
-import { Check } from "./Check.tsx";
+import { Toggle } from "./Toggle.tsx";
 
 export type SeasonalThemesProps = {
   on: boolean;
@@ -13,17 +13,16 @@ export type SeasonalThemesProps = {
 
 /** Switches the seasonal themes on or off. */
 export function SeasonalThemes(props: SeasonalThemesProps) {
+  const hintId = createUniqueId();
   return (
     <div class={`${u.stack} ${u.smallGap}`}>
-      <Check>
-        <input
-          type="checkbox"
-          checked={props.on}
-          onChange={(e) => props.onChange(e.currentTarget.checked)}
-        />
-        {t("themes.label")}
-      </Check>
-      <span class={`${u.muted} ${u.small}`}>
+      <Toggle
+        label={t("themes.label")}
+        on={props.on}
+        onChange={props.onChange}
+        describedBy={hintId}
+      />
+      <span id={hintId} class={`${u.muted} ${u.small}`}>
         {t("themes.hint")}
         <Show when={props.on && props.today}>
           {(theme) => <> {t("themes.now", { theme: t(`themes.${theme()}`) })}</>}

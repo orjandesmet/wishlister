@@ -16,10 +16,12 @@ vi.mock("./loaders.ts", () => ({
 const undoBought = vi.fn(async (itemId: ItemId) => {
   purchases.current = purchases.current.filter((p) => p.item_id !== itemId);
 });
+const setDelivered = vi.fn(async (_itemId: ItemId, _on: boolean) => {});
 vi.mock("./api/purchases.ts", () => ({
   undoBought: (itemId: ItemId) => undoBought(itemId),
   markBought: vi.fn(),
   getPurchaseOccasions: vi.fn(async () => []),
+  setDelivered: (itemId: ItemId, on: boolean) => setDelivered(itemId, on),
 }));
 vi.mock("./a11y.ts", () => ({ announce: vi.fn() }));
 
@@ -61,7 +63,9 @@ async function setup(items: Item[]) {
 
 describe("createPurchases", () => {
   it("offers 'I bought this' again after undoing an ordinary purchase", async () => {
-    purchases.current = [{ item_id: "item-1" as ItemId, bought_by: me, occasion: null }];
+    purchases.current = [
+      { item_id: "item-1" as ItemId, bought_by: me, occasion: null, delivery: null },
+    ];
     const wish = item();
     const p = await setup([wish]);
     expect(p.purchase(wish)).toBe("mine");
@@ -71,7 +75,9 @@ describe("createPurchases", () => {
   });
 
   it("drops a removed item once its purchase is undone, and never offers to buy it", async () => {
-    purchases.current = [{ item_id: "item-1" as ItemId, bought_by: me, occasion: null }];
+    purchases.current = [
+      { item_id: "item-1" as ItemId, bought_by: me, occasion: null, delivery: null },
+    ];
     const removed = item({ removed_at: "2026-10-26T09:00:00Z" });
     const p = await setup([removed]);
     expect(p.purchase(removed)).toBe("mine");
@@ -79,5 +85,34 @@ describe("createPurchases", () => {
     expect(p.gone).toHaveBeenCalledWith(removed);
     purchases.current = [];
     expect(p.purchase({ ...removed, id: "other" as ItemId })).toBe("hidden");
+  });
+
+  it("shows a delivered tick at once, and puts it back when saving fails", async () => {
+    purchases.current = [
+      { item_id: "item-1" as ItemId, bought_by: me, occasion: null, delivery: null },
+    ];
+    const wish = item();
+    const p = await setup([wish]);
+    expect(p.delivered(wish)).toBe(false);
+    await p.onDelivered(wish, true);
+    expect(setDelivered).toHaveBeenCalledWith("item-1", true);
+    expect(p.delivered(wish)).toBe(true);
+    setDelivered.mockRejectedValueOnce(new Error("offline"));
+    await p.onDelivered(wish, false);
+    expect(p.delivered(wish)).toBe(true);
+  });
+
+  it("starts ticked when the purchase was already delivered", async () => {
+    purchases.current = [
+      {
+        item_id: "item-1" as ItemId,
+        bought_by: me,
+        occasion: null,
+        delivery: { delivered_at: "2026-11-10T10:00:00Z" },
+      },
+    ];
+    const wish = item();
+    const p = await setup([wish]);
+    expect(p.delivered(wish)).toBe(true);
   });
 });

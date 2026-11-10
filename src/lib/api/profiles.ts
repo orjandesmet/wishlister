@@ -15,13 +15,17 @@ export type MyProfile = Profile & {
   group_collapse: GroupCollapseMode;
   /** How item cards show on every list. */
   card_view: CardView;
+  /** Whether item cards show the "Delivered" tick on what you bought. */
+  show_delivery: boolean;
 };
 
 export async function getMyProfile(accountId: AccountId): Promise<MyProfile> {
   return must(
     await supabase
       .from("profiles")
-      .select("id, display_name, account_id, seasonal_themes, group_collapse, card_view")
+      .select(
+        "id, display_name, account_id, seasonal_themes, group_collapse, card_view, show_delivery",
+      )
       .eq("account_id", accountId)
       .single(),
   );
@@ -108,6 +112,13 @@ export async function setProfileGroupCollapse(profileId: ProfileId, mode: GroupC
 export async function setProfileCardView(profileId: ProfileId, view: CardView) {
   must(
     await supabase.from("profiles").update({ card_view: view }).eq("id", profileId).select("id"),
+  );
+}
+
+/** Shows or hides the "Delivered" tick on item cards for your account. */
+export async function setProfileShowDelivery(profileId: ProfileId, on: boolean) {
+  must(
+    await supabase.from("profiles").update({ show_delivery: on }).eq("id", profileId).select("id"),
   );
 }
 

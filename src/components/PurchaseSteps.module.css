@@ -1,0 +1,183 @@
+/* Bought, then delivered, on the item card and in the table. The green pill holds Undo as a red end cap; the tick is the next step,
+   dashed until it is ticked. One line from about 340px of card width; narrower, the words turn
+   into icons (the words stay for screen readers) so it stays one line. */
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 0;
+  max-width: 100%;
+}
+
+.stepsPlain {
+  /* Nothing follows the pill: no connector, no gap to keep. */
+  gap: 0;
+}
+
+.stepBought {
+  display: inline-flex;
+  align-items: stretch;
+  min-width: 0;
+  max-width: 100%;
+  min-height: 44px;
+  overflow: hidden;
+  font-size: 14px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--positive-ink);
+  background: var(--positive-bg);
+  border-radius: var(--radius-small);
+}
+
+.stepText {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 6px 8px 6px 12px;
+  overflow-wrap: anywhere;
+}
+
+/* Undo: the way back, so red. */
+.undoCap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+  min-height: auto;
+  padding: 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pill-negative-ink);
+  background: var(--pill-negative-bg);
+  border: 0;
+  border-inline-start: 2px solid var(--surface);
+  border-radius: 0;
+}
+
+.undoCap svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.undoCap:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--pill-negative-bg) 70%, var(--pill-negative-ink));
+  filter: none;
+  transform: none;
+}
+
+.undoCap:focus-visible {
+  outline-offset: -3px;
+}
+
+.connector {
+  flex: none;
+  width: 10px;
+  height: 2px;
+  background: var(--control);
+}
+
+.connectorOn {
+  background: var(--positive-ink);
+}
+
+/* Over the page's own label and input rules: a row, and a box that is just a box. */
+label.stepDelivered {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  border: 2px dashed var(--control);
+  border-radius: var(--radius-small);
+  cursor: pointer;
+}
+
+label.stepDelivered:has(:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+label.stepDeliveredOn {
+  color: var(--positive-ink);
+  background: var(--positive-bg);
+  border-style: solid;
+  border-color: var(--positive-bg);
+}
+
+.deliveredBox {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  min-height: auto;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--positive-ink);
+  cursor: pointer;
+}
+
+/* The house with a parcel stands in for the word on a narrow card. */
+.stepIcon {
+  display: none;
+  flex: none;
+  width: 22px;
+  height: 22px;
+}
+
+/* Without the delivered step there is room for the word Undo, so it stays. */
+@container (max-width: 340px) {
+  .steps:not(.stepsPlain) .stepWord {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .steps:not(.stepsPlain) .undoCap {
+    padding: 0 11px;
+  }
+
+  .stepIcon {
+    display: block;
+  }
+}
+
+.compact .stepBought,
+.compact label.stepDelivered {
+  min-height: 40px;
+}
+
+.compact .stepBought {
+  font-size: 13px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .connector,
+  label.stepDelivered {
+    transition:
+      background-color 160ms,
+      border-color 160ms,
+      color 160ms;
+  }
+
+  @keyframes pop {
+    0% {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    60% {
+      opacity: 1;
+      transform: scale(1.08);
+    }
+  }
+
+  .stepBought {
+    animation: pop 420ms var(--ease-pop) backwards;
+  }
+}

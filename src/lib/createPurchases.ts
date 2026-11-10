@@ -2,12 +2,13 @@ import { createMemo, createSignal } from "solid-js";
 import { announce } from "./a11y.ts";
 import type { Item } from "./api/items.ts";
 import type { Occasion } from "./api/occasions.ts";
-import { getPurchaseOccasions, markBought, undoBought } from "./api/purchases.ts";
+import { getPurchaseOccasions, markBought, setDelivered, undoBought } from "./api/purchases.ts";
 import { createCachedResource } from "./cache.ts";
 import type { ActionRunner } from "./createActionRunner.ts";
 import { t } from "./i18n.ts";
 import { loadPurchases } from "./loaders.ts";
 import type { ItemId, OccasionId, ProfileId } from "./ids.ts";
+import { createOptimisticTicks } from "./createOptimisticTicks.ts";
 import { burstMoneyForTap } from "./moneyBurst.ts";
 
 /**
@@ -51,6 +52,15 @@ export function createPurchases(
   // Owners never learn what was bought, so "not bought first" only exists on other lists.
   const showBought = () => !isOwnList() && purchases() !== undefined;
 
+  const ticks = createOptimisticTicks();
+  const delivered = (item: Item) =>
+    ticks.ticked().get(item.id) ?? (purchaseOf().get(item.id)?.delivery ?? null) !== null;
+  const onDelivered = (item: Item, on: boolean) =>
+    runner.run(async () => {
+      await ticks.change(item.id, on, (next) => setDelivered(item.id, next));
+      announce(t(on ? "a11y.delivered" : "a11y.undelivered", { item: item.name }));
+    });
+
   // "I bought this" asks which occasion it's for, unless there's only one (or none).
   const [choosing, setChoosing] = createSignal<{ itemId: ItemId; occasions: Occasion[] }>();
   const buy = (item: Item, occasionId: OccasionId | null) =>
@@ -72,6 +82,8 @@ export function createPurchases(
   const onUndo = (item: Item) =>
     runner.run(async () => {
       await undoBought(item.id);
+      // The database dropped the tick along with the purchase.
+      ticks.set(item.id, undefined);
       if (item.removed_at) {
         // The database deleted it along with the purchase.
         onRemovedItemGone(item);
@@ -89,6 +101,8 @@ export function createPurchases(
     buy,
     onBuy,
     onUndo,
+    delivered,
+    onDelivered,
     occasionChoices,
     cancelPick: () => setChoosing(undefined),
   };

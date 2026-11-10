@@ -91,6 +91,44 @@ export const BuyAnimation: Story = {
 
 export const BoughtByYou: Story = { args: { purchase: "mine" } };
 
+/**
+ * With "Show delivery status on item cards" on (Settings): the pill ends in a red Undo, and the
+ * Delivered tick follows. Narrower than about 340px, both turn into icons.
+ */
+export const BoughtWithDeliveryTick: Story = {
+  args: { purchase: "mine", delivered: false, onDelivered: fn() },
+  render: (args) => {
+    const [delivered, setDelivered] = createSignal(args.delivered ?? false);
+    return (
+      <ItemCard
+        {...args}
+        delivered={delivered()}
+        onDelivered={(on) => {
+          setDelivered(on);
+          args.onDelivered?.(on);
+        }}
+      />
+    );
+  },
+  play: async ({ canvasElement, args }) => {
+    const box = within(canvasElement).getByRole("checkbox", { name: /Delivered/ });
+    await userEvent.click(box);
+    await expect(args.onDelivered).toHaveBeenCalledWith(true);
+    await expect(box).toBeChecked();
+  },
+};
+
+export const DeliveredForAnOccasion: Story = {
+  ...BoughtWithDeliveryTick,
+  args: {
+    purchase: "mine",
+    boughtFor: "Christmas 2026",
+    delivered: true,
+    onDelivered: fn(),
+  },
+  play: undefined,
+};
+
 export const BoughtByYouForAnOccasion: Story = {
   args: { purchase: "mine", boughtFor: "Christmas 2026" },
 };
@@ -115,6 +153,12 @@ export const ChoosingAnOccasion: Story = {
     onPickOccasion: fn(),
     onCancelPick: fn(),
   },
+};
+
+export const CompactBoughtWithDeliveryTick: Story = {
+  ...BoughtWithDeliveryTick,
+  args: { ...BoughtWithDeliveryTick.args, compact: true },
+  play: undefined,
 };
 
 export const BoughtBySomeoneElse: Story = { args: { purchase: "someone" } };
