@@ -157,13 +157,6 @@ label.stepDeliveredOn {
   font-size: 13px;
 }
 
-@media (forced-colors: active) {
-  .stepBought,
-  .undoCap {
-    border: 1px solid ButtonText;
-  }
-}
-
 @media (prefers-reduced-motion: no-preference) {
   .connector,
   label.stepDelivered {
