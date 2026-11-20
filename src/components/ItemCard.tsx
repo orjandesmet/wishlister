@@ -200,8 +200,11 @@ export function ItemCard(props: ItemCardProps) {
     !!compactPrice() ||
     !!showUrl() ||
     (!props.selecting && itemPictureSources(props.item).length > 0);
+  // Without a price, picture or link, Details joins the Edit and Remove row on an editable card.
+  // On someone else's list it keeps a row of its own, so every card there has Details in the same
+  // place and the purchase at the end of the row below.
   const detailsInManage = () => compact() && !compactInfo() && props.canEdit;
-  const detailsInActions = () => compact() && !compactInfo() && !props.canEdit;
+  const showCompactRow = () => compact() && (compactInfo() || !props.canEdit);
   // oxlint-disable-next-line no-unassigned-vars
   let detailsButton: HTMLButtonElement | undefined;
   // What changes between the two layouts, measured before and after, so it can glide over.
@@ -376,7 +379,7 @@ export function ItemCard(props: ItemCardProps) {
             </Show>
           </div>
           {/* Compact: the price, then the picture and shop as icons, and Details at the end. */}
-          <Show when={compact() && compactInfo()}>
+          <Show when={showCompactRow()}>
             <div class={styles.compactRow}>
               <Show when={compactPrice()}>
                 {(currency) => <PriceTag amount={props.item.price!} currency={currency()} small />}
@@ -540,7 +543,6 @@ export function ItemCard(props: ItemCardProps) {
                 </button>
               </Match>
             </Switch>
-            <Show when={detailsInActions()}>{detailsToggle()}</Show>
           </div>
         </div>
       </Dynamic>

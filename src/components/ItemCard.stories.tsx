@@ -505,6 +505,25 @@ export const CompactNameOnly: Story = {
   },
 };
 
+/**
+ * Someone else's list with only a name: Details keeps its row of its own, so "Ask a question"
+ * and "I bought this" sit below it like on every other card, the purchase at the end.
+ */
+export const CompactNameOnlyWithQuestions: Story = {
+  args: {
+    ...CompactNameOnly.args,
+    questions: CompactWithQuestions.args!.questions,
+  },
+  play: async ({ canvasElement }) => {
+    const card = within(canvasElement);
+    const details = card.getByRole("button", { name: /Details/ });
+    const buy = card.getByRole("button", { name: /I bought this/ });
+    await expect(details.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      buy.getBoundingClientRect().top,
+    );
+  },
+};
+
 /** Nothing for the compact row: Details sits beside Edit and Remove instead of on a row of its own. */
 export const CompactNameOnlyOnYourOwnList: Story = {
   args: {
