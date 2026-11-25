@@ -35,8 +35,10 @@ jobs:
         with:
           node-version: "24"
           cache: true
+      # Use the project's own vp: migrate pins vite-plus to the version of the CLI that
+      # runs it, so the global one could move the PR to another vite-plus release.
       - name: Run vp migrate
-        run: vp migrate --no-interactive --no-agent --no-editor --no-hooks
+        run: ./node_modules/.bin/vp migrate --no-interactive --no-agent --no-editor --no-hooks
       - name: Push the changes, if any
         id: push
         run: |
