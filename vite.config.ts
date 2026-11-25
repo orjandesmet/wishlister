@@ -1,4 +1,3 @@
-/// <reference types="vitest/config" />
 import { VitePWA } from "vite-plugin-pwa";
 import solid from "vite-plugin-solid";
 import { defineConfig, lazyPlugins } from "vite-plus";
